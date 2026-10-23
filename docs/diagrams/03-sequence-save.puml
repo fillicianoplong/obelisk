@@ -4,27 +4,45 @@ skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam dpi 140
 actor User
-participant "EditorCore" as Core
+participant "EditorCore and\nAutosaveService" as Core
 participant "IPC bridge" as IPC
 participant "FileService" as FS
 participant "FormatCodec" as Codec
 database "User folder" as Disk
 User -> Core : Ctrl+S (or 30 s autosave timer)
-Core -> IPC : save(tabId, document, lastStat)
-IPC -> FS : write(path, document, lastStat)
+Core -> IPC : file:save(handle, document, revision, expectedStat)
+IPC -> FS : check sender; handle to path
+alt handle not issued by main
+  FS --> Core : error PATH_NOT_ALLOWED
+end
+FS -> Codec : validate and encode(document)
+alt schema or limits fail
+  Codec --> FS : invalid
+  FS --> Core : error ENCODE_FAILED
+end
+Codec --> FS : bytes
 FS -> Disk : stat(path)
 alt file changed on disk (FR-13, FR-15)
-  FS --> Core : conflict
-  Core --> User : Overwrite / Save As / Cancel
-else write not finished in 5 s (NFR-11)
-  FS --> Core : timeout
-  Core --> User : "Not saved", tab stays changed
-else ok
-  FS -> Codec : encode(document)
-  Codec --> FS : bytes
-  FS -> Disk : write temp file in same folder
-  FS -> Disk : replace target with temp file
-  FS --> Core : saved(newStat)
-  Core --> User : tab mark cleared
+  FS --> Core : conflict(stat)
+  Core --> User : Overwrite / Save As / Cancel; Autosave paused
+else stat matches
+  FS -> Disk : writeAtomic: exclusive-create temp, write, flush
+  alt deadline of 5 s passed before rename (NFR-11)
+    FS -> Disk : remove temp file
+    FS --> Core : timeout (retryable)
+    Core --> User : "Not saved", Retry
+  else in time
+    loop up to 3 tries, 100 ms apart, on EPERM or EBUSY
+      FS -> Disk : rename temp over target
+    end
+    alt rename done
+      FS --> Core : ok(stat, revision)
+      Core --> User : Clean if revision unchanged
+    else retries used up, disk full, or access denied
+      FS -> Disk : remove temp file
+      FS --> Core : error(code, message, retryable)
+      Core --> User : reason, Retry if retryable
+    end
+  end
 end
 @enduml

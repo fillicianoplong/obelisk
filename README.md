@@ -4,7 +4,7 @@ Obelisk is a Windows document editor for one person on one PC. You write and lay
 
 Obelisk is being developed for CSC 481 (Software Engineering) at California State University, Dominguez Hills.
 
-**Status:** In design. Requirements and architecture version 1.0 (October 23, 2026); implementation starting.
+**Status:** In design. Requirements and architecture version 1.1 (October 23, 2026); implementation starting.
 
 ## Key features
 
@@ -35,8 +35,8 @@ Obelisk will be released only through the Microsoft Store.
 
 ## Documentation
 
-- [Software Requirements Specification](docs/SRS.md) (version 1.0; also as [Word](docs/Plong_Obelisk_SRS.docx) and [PDF](docs/out/Plong_Obelisk_SRS.pdf))
-- [Architecture (design document)](docs/ARCHITECTURE.md) (version 1.0; also as [Word](docs/Plong_Obelisk_Architecture.docx) and [PDF](docs/out/Plong_Obelisk_Architecture.pdf))
+- [Software Requirements Specification](docs/SRS.md) (version 1.1; also as [Word](docs/Plong_Obelisk_SRS.docx) and [PDF](docs/out/Plong_Obelisk_SRS.pdf))
+- [Architecture (design document)](docs/ARCHITECTURE.md) (version 1.1; also as [Word](docs/Plong_Obelisk_Architecture.docx) and [PDF](docs/out/Plong_Obelisk_Architecture.pdf))
 - [Diagrams](docs/diagrams/) (PlantUML sources, rendered in [docs/images](docs/images/))
 
 ## License
