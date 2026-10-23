@@ -1,0 +1,36 @@
+@startuml obelisk_use_case
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+left to right direction
+actor "Writer" as U
+actor "Microsoft Store" as Store
+actor "Windows" as Win
+rectangle "Obelisk" {
+  usecase "UC-01 Install and open\nfrom File Explorer" as UC1
+  usecase "UC-02 Write and save\na new document" as UC2
+  usecase "UC-03 Edit with autosave" as UC3
+  usecase "UC-04 Write an MLA paper\nwith formulas and images" as UC4
+  usecase "UC-05 Print and export" as UC5
+  usecase "UC-06 Rearrange blocks\nand columns" as UC6
+  usecase "UC-07 Table math and sort" as UC7
+  usecase "UC-08 Find and replace" as UC8
+  usecase "UC-09 Sign a letter (Should)" as UC9
+  usecase "UC-10 Recover a\nnever-saved tab (Should)" as UC10
+}
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC4
+U --> UC5
+U --> UC6
+U --> UC7
+U --> UC8
+U --> UC9
+U --> UC10
+UC1 -- Store
+UC5 -- Win
+UC4 ..> UC5 : <<include>>
+note bottom of UC3 : Autosave starts after\nthe first Save (FR-14)
+@enduml

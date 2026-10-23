@@ -1,0 +1,45 @@
+@startuml obelisk_component
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+package "Renderer (sandboxed, one per window)" {
+  [Shell and Tabs] as Shell
+  [EditorCore] as Core
+  [BlockViews] as Views
+  [FormulaRenderer] as Formula
+  [ClipboardBridge] as Clip
+}
+package "Preload" {
+  [IPC bridge] as IPC
+}
+package "Main process" {
+  [FileService] as Files
+  [FormatCodec] as Codec
+  [AutosaveService] as Auto
+  [ExportService] as Export
+  [SignatureStore] as Sig
+  [PreferencesStore] as Prefs
+  [RecoveryService] as Rec
+}
+Shell --> Core
+Core --> Views
+Views --> Formula
+Core --> Clip
+Shell --> IPC
+Core --> IPC
+IPC --> Files : save, open
+IPC --> Export : export
+IPC --> Sig
+IPC --> Prefs
+Files --> Codec
+IPC --> Rec : recovery copy
+Rec --> Codec
+Auto --> Files
+Export --> Codec
+legend bottom
+ Only the main process touches the disk (ADR-001, NFR-22).
+ Save, Save As, and autosave share FileService.write (ADR-002).
+ Single instance and recovery: ADR-009.
+endlegend
+@enduml

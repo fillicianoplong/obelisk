@@ -1,0 +1,27 @@
+@startuml obelisk_sequence_export_word
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+actor User
+participant "Shell and Tabs" as Shell
+participant "FormulaRenderer" as Formula
+participant "ExportService" as Exp
+participant "mathml2omml" as M2O
+database "User folder" as Disk
+User -> Shell : File > Export > Word
+Shell -> Formula : KaTeX MathML for each formula
+Formula --> Shell : MathML and PNG fallback
+Shell -> Exp : exportWord(document, formulas, path)
+loop each formula
+  alt Word equations built and conversion ok (FR-57)
+    Exp -> M2O : convert(MathML)
+    M2O --> Exp : OMML
+  else converter missing or fails (FR-56)
+    Exp -> Exp : embed PNG image
+  end
+end
+Exp -> Disk : write .docx (temp file, then replace)
+Exp --> Shell : done
+note over Exp : The .obk file is never written (FR-66)
+@enduml

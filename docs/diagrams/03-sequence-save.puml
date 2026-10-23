@@ -1,0 +1,30 @@
+@startuml obelisk_sequence_save
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+actor User
+participant "EditorCore" as Core
+participant "IPC bridge" as IPC
+participant "FileService" as FS
+participant "FormatCodec" as Codec
+database "User folder" as Disk
+User -> Core : Ctrl+S (or 30 s autosave timer)
+Core -> IPC : save(tabId, document, lastStat)
+IPC -> FS : write(path, document, lastStat)
+FS -> Disk : stat(path)
+alt file changed on disk (FR-13, FR-15)
+  FS --> Core : conflict
+  Core --> User : Overwrite / Save As / Cancel
+else write not finished in 5 s (NFR-11)
+  FS --> Core : timeout
+  Core --> User : "Not saved", tab stays changed
+else ok
+  FS -> Codec : encode(document)
+  Codec --> FS : bytes
+  FS -> Disk : write temp file in same folder
+  FS -> Disk : replace target with temp file
+  FS --> Core : saved(newStat)
+  Core --> User : tab mark cleared
+end
+@enduml

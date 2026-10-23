@@ -1,0 +1,37 @@
+@startuml obelisk_deployment
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+left to right direction
+node "Windows PC (x64)" {
+  node "MSIX package (read-only install folder)" {
+    artifact "Obelisk.exe (Electron main)" as Main
+    artifact "Renderer bundle" as R
+    artifact "Fonts, KaTeX, mathml2omml" as Libs
+  }
+  folder "App data (redirected by MSIX)" {
+    file "preferences.json" as P
+    file "signatures (safeStorage)" as S
+    file "Recovery copies" as Rec
+  }
+  folder "User folders (not redirected)" {
+    file "Documents (.obk)" as Docs
+    file "PDF, .docx, .md exports" as Ex
+  }
+  node "Windows services" {
+    component "Print spooler" as Spool
+    component "DPAPI" as DPAPI
+  }
+}
+cloud "Microsoft Store" as Store
+Store --> Main : install, update
+Main --> R : IPC
+Main --> P
+Main --> S
+Main --> Rec
+Main --> Docs : read, write
+Main --> Ex : write
+Main --> Spool : print
+S ..> DPAPI : encrypt key
+@enduml
