@@ -1,0 +1,25 @@
+@startuml obelisk_screen_flow
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+left to right direction
+[*] --> Editor : launch
+Editor --> RecoveryPrompt : recovery copies found
+RecoveryPrompt --> Editor : restore / discard
+Editor --> OpenDialog : Ctrl+O
+OpenDialog --> Editor : file passes checks
+Editor --> SaveDialog : first Save, Save As
+SaveDialog --> Editor
+Editor --> ExportDialog : Ctrl+Shift+E
+ExportDialog --> Editor
+Editor --> PrintDialog : Ctrl+P
+PrintDialog --> Editor
+Editor --> Preferences : Ctrl+comma (tab)
+Preferences --> Editor
+Editor --> About : Help > About
+About --> Editor
+Editor --> ClosePrompt : close changed tab
+ClosePrompt --> Editor : cancel
+ClosePrompt --> [*] : last tab closed
+@enduml

@@ -1,0 +1,24 @@
+@startsalt
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 200
+{+
+  {* File | Edit | View | Insert | Format | Tools | Help }
+  ==
+  { [ Essay.obk  x ] | [ * Lab report  x ] | [ + ] }
+  ==
+  {S
+    .
+    { .  | "Lastname 1" }
+    { :: | Heading 1: Introduction }
+    { :: | Paragraph text with an inline formula and a date chip. }
+    { :: | {# Item | Cost | Total } }
+    { :: | {# Pens | 3 | 6 } }
+    { :: | Formula block (rendered KaTeX) }
+    { :: | Image with alt text }
+    .
+  }
+  ==
+  { Page 1 of 3 - 412 words - 2,318 characters - 100% - Saved }
+}
+@endsalt

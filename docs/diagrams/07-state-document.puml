@@ -1,0 +1,21 @@
+@startuml obelisk_state_document
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+[*] --> NeverSaved : New
+[*] --> Clean : Open
+NeverSaved --> NeverSaved : edit (recovery copy, Should)
+NeverSaved --> Saving : first Save
+Clean --> Changed : edit, switch view
+Changed --> Saving : Save or 30 s autosave
+Saving --> Clean : complete file replaced
+Saving --> Changed : timeout or error
+Saving --> Conflict : file changed on disk
+Conflict --> Saving : Overwrite / Save As
+Conflict --> Changed : Cancel
+Changed --> [*] : close, discard
+Clean --> [*] : close
+NeverSaved --> [*] : close, discard
+note right of NeverSaved : Never autosaved (FR-14)
+@enduml

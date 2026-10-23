@@ -1,0 +1,62 @@
+@startuml obelisk_class
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 140
+hide methods
+class Document {
+  formatVersion: 1
+  view: Pages | Pageless
+  page: PageSetup
+}
+class PageSetup {
+  paper: Letter
+  orientation
+  margins
+}
+class HeaderFooter {
+  runs
+  pageNumber?
+}
+abstract class Block {
+  id: string
+  type
+}
+class TextBlock
+class TableBlock {
+  headerRow: bool
+}
+class Cell {
+  input: string
+}
+class ImageBlock {
+  rotation, flipH, flipV
+  altText
+}
+class FormulaBlock {
+  latex: string
+}
+class ColumnRow {
+  shares: number[2..4]
+}
+class DrawingLayer {
+  strokes
+}
+class Image {
+  sha256
+  bytes
+}
+Document "1" *-- "1" PageSetup
+Document "1" *-- "0..2" HeaderFooter
+Document "1" *-- "0..*" Block
+Block <|-- TextBlock
+Block <|-- TableBlock
+Block <|-- ImageBlock
+Block <|-- FormulaBlock
+Block <|-- ColumnRow
+TableBlock "1" *-- "1..*" Cell
+ColumnRow "1" *-- "2..4" Block
+ImageBlock "0..*" --> "1" Image
+ImageBlock "1" *-- "0..1" DrawingLayer
+note bottom of ColumnRow : No ColumnRow inside a ColumnRow (FR-71)
+@enduml
