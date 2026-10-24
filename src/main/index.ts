@@ -39,6 +39,7 @@ function createWindow(): void {
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
     title: APP_NAME,
+    backgroundColor: '#e7e2d8',
     webPreferences,
   });
 
