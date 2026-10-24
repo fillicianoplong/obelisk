@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Security probe</title>
+  </head>
+  <body>
+    <script>
+      globalThis.__runObeliskProbe = async function () {
+        function wait(ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        async function attempt(url) {
+          const started = Date.now();
+          try {
+            const response = await fetch(url, {
+              cache: 'no-store',
+              signal: AbortSignal.timeout(2000),
+            });
+            return {
+              blocked: false,
+              status: response.status,
+              name: '',
+              message: '',
+              ms: Date.now() - started,
+            };
+          } catch (error) {
+            return {
+              blocked: true,
+              status: 0,
+              name: error instanceof Error ? error.name : 'Error',
+              message: error instanceof Error ? error.message : String(error),
+              ms: Date.now() - started,
+            };
+          }
+        }
+
+        const deadline = Date.now() + 5000;
+        let heading = null;
+        while (Date.now() < deadline) {
+          const element = document.querySelector('h1');
+          heading = element ? element.textContent : null;
+          if (heading) {
+            break;
+          }
+          await wait(50);
+        }
+
+        const violations = [];
+        document.addEventListener('securitypolicyviolation', (event) => {
+          violations.push({
+            directive: event.violatedDirective,
+            blockedURI: event.blockedURI,
+            originalPolicy: event.originalPolicy,
+          });
+        });
+
+        const inline = document.createElement('script');
+        inline.textContent = 'window.__obeliskInlineRan = true';
+        document.body.appendChild(inline);
+        await wait(50);
+
+        const http = await attempt('http://example.invalid/csp-probe');
+        const https = await attempt('https://example.invalid/csp-probe');
+
+        const opened = window.open('https://example.invalid/popup');
+        const urlBefore = location.href;
+        const titleBefore = document.title;
+        try {
+          location.assign('https://example.invalid/navigate');
+        } catch (_error) {
+          // The embedder can reject the navigation.
+        }
+        try {
+          location.assign('javascript:document.title="pwned"');
+        } catch (_error) {
+          // The embedder can reject the navigation.
+        }
+        await wait(300);
+
+        const webview = document.createElement('webview');
+        webview.setAttribute('src', 'https://example.invalid/guest');
+        document.body.appendChild(webview);
+        await wait(200);
+
+        async function permissionState(name) {
+          try {
+            if (!navigator.permissions || typeof navigator.permissions.query !== 'function') {
+              return 'missing';
+            }
+            const status = await navigator.permissions.query({ name });
+            return status.state;
+          } catch (error) {
+            return error instanceof Error ? error.name : 'Error';
+          }
+        }
+
+        const cameraPermission = await permissionState('camera');
+        const microphonePermission = await permissionState('microphone');
+
+        let camera = 'missing';
+        try {
+          if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+            camera = 'missing';
+          } else {
+            camera = await Promise.race([
+              navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+                for (const track of stream.getTracks()) {
+                  track.stop();
+                }
+                return 'granted';
+              }),
+              wait(2000).then(() => 'TimeoutError'),
+            ]);
+          }
+        } catch (error) {
+          camera = error instanceof Error ? error.name : 'Error';
+        }
+
+        let notifications = 'missing';
+        try {
+          if (typeof Notification === 'undefined') {
+            notifications = 'missing';
+          } else {
+            notifications = await Notification.requestPermission();
+          }
+        } catch (error) {
+          notifications = error instanceof Error ? error.name : 'Error';
+        }
+
+        return {
+          origin: location.origin,
+          href: location.href,
+          stayed: location.href === urlBefore,
+          title: document.title,
+          titleStayed: document.title === titleBefore,
+          secureContext: window.isSecureContext,
+          heading,
+          nodeRequire: typeof require,
+          nodeProcess: typeof process,
+          http,
+          https,
+          popupBlocked: opened === null,
+          webviewGuest: typeof webview.getWebContentsId === 'function',
+          inlineRan: window.__obeliskInlineRan === true,
+          camera,
+          cameraPermission,
+          microphonePermission,
+          notifications,
+          violations,
+        };
+      };
+    </script>
+  </body>
+</html>

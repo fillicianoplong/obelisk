@@ -42,7 +42,7 @@ npm ci
 npm start
 ```
 
-`npm ci` installs the lockfile's exact versions. `npm start` typechecks, builds, and opens one window. The first start downloads the Electron 45.0.0 binary for that PC.
+`npm ci` installs the lockfile's exact versions. `npm start` typechecks, builds, and opens one window. The first start downloads the Electron 45.0.0 binary for that PC. The window loads `app://obelisk/index.html`.
 
 ```
 npm run typecheck
@@ -50,7 +50,7 @@ npm run lint
 npm test
 ```
 
-`npm test` builds the app, checks that a type error fails the TypeScript build, and checks that the built app opens one window.
+`npm test` builds the app, checks that a type error fails the TypeScript build, checks that the built app opens one window, and checks that the window blocks remote requests, navigation, popups, webviews, and permission requests.
 
 ## Documentation
 
