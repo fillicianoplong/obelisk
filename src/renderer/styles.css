@@ -6,19 +6,11 @@ body,
 }
 
 body {
-  background: #f4f1ea;
+  background: #e7e2d8;
   color: #1c1915;
-  font-family: "Segoe UI", sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
 }
 
-main {
-  align-items: center;
-  display: grid;
+#root {
   min-height: 100%;
-}
-
-h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  margin: 0;
 }

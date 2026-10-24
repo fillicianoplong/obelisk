@@ -12,6 +12,7 @@ const lcovPath = path.join(coverageDir, 'lcov.info');
 const electronTestFiles = [
   path.join('tests', 'integration', 'smoke', 'opens-window.test.mjs'),
   path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
+  path.join('tests', 'integration', 'shell', 'window-shell.test.mjs'),
 ];
 
 function exitCode(result) {
