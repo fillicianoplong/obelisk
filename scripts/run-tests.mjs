@@ -1,11 +1,18 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatCoverageReport, parseLcov } from './coverage-report.mjs';
+import { ensureElectronBinary } from './electron-binary.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const lcovPath = path.join(root, 'coverage', 'lcov.info');
+const coverageDir = path.join(root, 'coverage');
+const lcovPath = path.join(coverageDir, 'lcov.info');
+
+const electronTestFiles = [
+  path.join('tests', 'integration', 'smoke', 'opens-window.test.mjs'),
+  path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
+];
 
 function exitCode(result) {
   if (result.error) {
@@ -22,24 +29,57 @@ function run(args) {
   });
 }
 
+function collectTestFiles(directory) {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const full = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectTestFiles(full));
+    } else if (entry.isFile() && entry.name.endsWith('.test.mjs')) {
+      files.push(path.relative(root, full));
+    }
+  }
+  return files.sort();
+}
+
+function readLcov(file) {
+  try {
+    const text = readFileSync(file, 'utf8');
+    return text.endsWith('\n') ? text : `${text}\n`;
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return '';
+    }
+    throw error;
+  }
+}
+
 const build = run([path.join('scripts', 'build.mjs')]);
 const buildCode = exitCode(build);
 if (buildCode !== 0) {
   process.exit(buildCode);
 }
 
-mkdirSync(path.dirname(lcovPath), { recursive: true });
+let electronBinaryPath;
+try {
+  electronBinaryPath = ensureElectronBinary(root);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
+console.log(`Electron binary: ${electronBinaryPath}`);
+
+mkdirSync(coverageDir, { recursive: true });
 
 // NFR-23 is a reported 80% line-coverage target, not a failing threshold.
 // Do not pass --test-coverage-lines; that flag fails the process.
-const testRun = run([
+const coverageArgs = [
   '--enable-source-maps',
   '--test',
   '--experimental-test-coverage',
   '--test-reporter=spec',
   '--test-reporter=lcov',
   '--test-reporter-destination=stdout',
-  `--test-reporter-destination=${lcovPath}`,
   '--test-coverage-exclude=**/node_modules/**',
   '--test-coverage-exclude=**/tests/**',
   '--test-coverage-exclude=**/*test.mjs',
@@ -50,13 +90,43 @@ const testRun = run([
   '--test-coverage-exclude=**/eslint.config.mjs',
   '--test-coverage-exclude=**/vite.config.mts',
   '--test-coverage-exclude=**/vite.preload.config.mts',
-  ...process.argv.slice(2),
-]);
-const testCode = exitCode(testRun);
+];
+
+function runTests(lcovFile, args) {
+  return run([...coverageArgs, `--test-reporter-destination=${lcovFile}`, ...args]);
+}
+
+const extra = process.argv.slice(2);
+let testCode;
+let lcovText;
+
+if (extra.length > 0) {
+  const extraLcov = path.join(coverageDir, 'lcov.extra.info');
+  testCode = exitCode(runTests(extraLcov, extra));
+  lcovText = readLcov(extraLcov);
+} else {
+  const electronLcov = path.join(coverageDir, 'lcov.electron.info');
+  const unitLcov = path.join(coverageDir, 'lcov.unit.info');
+  const unitFiles = collectTestFiles(path.join(root, 'tests', 'unit'));
+  if (unitFiles.length === 0) {
+    console.error('No unit tests were found.');
+    process.exit(1);
+  }
+  // One Electron launch file at a time. A parallel pair used to extract and
+  // spawn the same binary together.
+  const electronCode = exitCode(
+    runTests(electronLcov, ['--test-concurrency=1', ...electronTestFiles]),
+  );
+  const unitCode = exitCode(runTests(unitLcov, unitFiles));
+  testCode = electronCode !== 0 ? electronCode : unitCode;
+  lcovText = `${readLcov(electronLcov)}${readLcov(unitLcov)}`;
+}
+
+writeFileSync(lcovPath, lcovText);
 
 let report = '';
 try {
-  report = formatCoverageReport(parseLcov(readFileSync(lcovPath, 'utf8')), {
+  report = formatCoverageReport(parseLcov(lcovText), {
     root,
     includePrefix: 'src/',
   });
