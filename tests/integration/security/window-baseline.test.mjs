@@ -6,11 +6,13 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { CONTENT_SECURITY_POLICY } from '../../../dist/main/security/csp.js';
 import {
-  closeElectron,
+  bindLaunchedApp,
   debuggerTargets,
   electronBinary,
+  evaluate,
   freePort,
   launchWithSandboxFallback,
+  openCdp,
   waitFor,
 } from '../electron-launch.mjs';
 
@@ -26,64 +28,7 @@ function blockedUrls(output) {
   return [...output.matchAll(/OBELISK_REQUEST_BLOCKED (\S+)/g)].map((match) => match[1]);
 }
 
-function cdp(wsUrl) {
-  const Socket = globalThis.WebSocket;
-  if (typeof Socket !== 'function') {
-    throw new Error('This Node version has no WebSocket client.');
-  }
-  const ws = new Socket(wsUrl);
-  let nextId = 1;
-  const pending = new Map();
-
-  ws.addEventListener('message', (event) => {
-    const message = JSON.parse(String(event.data));
-    const resolver = pending.get(message.id);
-    if (!resolver) {
-      return;
-    }
-    pending.delete(message.id);
-    if (message.error) {
-      resolver.reject(new Error(JSON.stringify(message.error)));
-      return;
-    }
-    resolver.resolve(message.result);
-  });
-
-  const opened = new Promise((resolve, reject) => {
-    ws.addEventListener('open', resolve);
-    ws.addEventListener('error', () => reject(new Error('DevTools socket failed.')));
-  });
-
-  return {
-    async send(method, params = {}) {
-      await opened;
-      const id = nextId;
-      nextId += 1;
-      const result = new Promise((resolve, reject) => {
-        pending.set(id, { resolve, reject });
-      });
-      ws.send(JSON.stringify({ id, method, params }));
-      return result;
-    },
-    close() {
-      ws.close();
-    },
-  };
-}
-
-async function evaluate(client, expression) {
-  const result = await client.send('Runtime.evaluate', {
-    expression,
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  if (result.exceptionDetails) {
-    throw new Error(JSON.stringify(result.exceptionDetails));
-  }
-  return result.result.value;
-}
-
-test('the secured window blocks fetch, navigation, popups, webviews, and permissions', { timeout: 90_000 }, async () => {
+test('the secured window blocks fetch, navigation, popups, webviews, and permissions', { timeout: 45_000 }, async (t) => {
   const binary = electronBinary();
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-security-'));
   const port = await freePort();
@@ -91,11 +36,11 @@ test('the secured window blocks fetch, navigation, popups, webviews, and permiss
   const probeHtml = await readFile(path.join(here, 'probe.html'), 'utf8');
   const probeScript = probeHtml.match(/<script>([\s\S]*?)<\/script>/);
   assert.ok(probeScript, 'probe.html is missing its script');
-  let child;
-  let client;
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
 
   try {
-    child = await launchWithSandboxFallback({
+    session.child = await launchWithSandboxFallback({
       binary,
       args,
       env: { OBELISK_SECURITY_REPORT: '1' },
@@ -114,28 +59,28 @@ test('the secured window blocks fetch, navigation, popups, webviews, and permiss
               running.output.includes('OBELISK_PRELOAD');
             return pageReady && reportedState ? pages[0] : null;
           },
-          45_000,
+          20_000,
         );
       },
     });
 
-    const options = reported(child.output, 'OBELISK_WINDOW_OPTIONS');
+    const options = reported(session.child.output, 'OBELISK_WINDOW_OPTIONS');
     assert.equal(options.contextIsolation, true);
     assert.equal(options.sandbox, true);
     assert.equal(options.nodeIntegration, false);
     assert.equal(options.webviewTag, false);
 
-    const preload = reported(child.output, 'OBELISK_PRELOAD');
+    const preload = reported(session.child.output, 'OBELISK_PRELOAD');
     assert.equal(preload.contextIsolated, true);
     assert.equal(preload.nodeRequireFs, false);
-    if (!child.spawnargs.includes('--no-sandbox')) {
+    if (!session.child.spawnargs.includes('--no-sandbox')) {
       assert.equal(preload.sandboxed, true);
     }
 
     const page = (await debuggerTargets(port)).find((target) => target.type === 'page');
     assert.ok(page?.webSocketDebuggerUrl, 'the page has no DevTools socket');
-    client = cdp(page.webSocketDebuggerUrl);
-    const probe = await evaluate(client, `${probeScript[1]}\n__runObeliskProbe()`);
+    session.client = openCdp(page.webSocketDebuggerUrl, 20_000);
+    const probe = await evaluate(session.client, `${probeScript[1]}\n__runObeliskProbe()`);
     assert.equal(probe.heading, 'Obelisk', JSON.stringify(probe));
     assert.equal(probe.origin, 'app://obelisk');
     assert.equal(probe.secureContext, true);
@@ -156,8 +101,8 @@ test('the secured window blocks fetch, navigation, popups, webviews, and permiss
     assert.equal(probe.cameraPermission, 'denied', JSON.stringify(probe));
     assert.equal(probe.microphonePermission, 'denied', JSON.stringify(probe));
     assert.equal(probe.notifications, 'denied');
-    assert.match(child.output, /OBELISK_PERMISSION_DENIED check:media/);
-    assert.match(child.output, /OBELISK_PERMISSION_DENIED request:notifications/);
+    assert.match(session.child.output, /OBELISK_PERMISSION_DENIED check:media/);
+    assert.match(session.child.output, /OBELISK_PERMISSION_DENIED request:notifications/);
 
     const policy = probe.violations.find((violation) => violation.originalPolicy)?.originalPolicy ?? '';
     assert.equal(policy.includes("default-src 'none'"), true, JSON.stringify(probe.violations));
@@ -182,20 +127,20 @@ test('the secured window blocks fetch, navigation, popups, webviews, and permiss
       JSON.stringify(targets),
     );
   } finally {
-    client?.close();
-    await closeElectron(child, userDataDir);
+    await finish();
   }
 });
 
-test('main cancels http and https requests that reach the session', { timeout: 60_000 }, async () => {
+test('main cancels http and https requests that reach the session', { timeout: 45_000 }, async (t) => {
   const binary = electronBinary();
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-filter-'));
   const harness = path.join(here, 'filter-harness.mjs');
   const args = [harness, `--user-data-dir=${userDataDir}`];
-  let child;
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
 
   try {
-    child = await launchWithSandboxFallback({
+    session.child = await launchWithSandboxFallback({
       binary,
       args,
       ready(running) {
@@ -207,8 +152,8 @@ test('main cancels http and https requests that reach the session', { timeout: 6
       },
     });
 
-    const match = child.output.match(/OBELISK_FILTER_RESULT (\[.*\])/);
-    assert.ok(match, child.output);
+    const match = session.child.output.match(/OBELISK_FILTER_RESULT (\[.*\])/);
+    assert.ok(match, session.child.output);
     const results = JSON.parse(match[1]);
     assert.deepEqual(
       results.map((item) => item.url),
@@ -218,10 +163,10 @@ test('main cancels http and https requests that reach the session', { timeout: 6
       assert.equal(item.blocked, true, JSON.stringify(item));
       assert.equal(item.name, 'TypeError', JSON.stringify(item));
     }
-    const blocked = blockedUrls(child.output);
-    assert.equal(blocked.includes('http://example.invalid/filter-probe'), true, child.output);
-    assert.equal(blocked.includes('https://example.invalid/filter-probe'), true, child.output);
+    const blocked = blockedUrls(session.child.output);
+    assert.equal(blocked.includes('http://example.invalid/filter-probe'), true, session.child.output);
+    assert.equal(blocked.includes('https://example.invalid/filter-probe'), true, session.child.output);
   } finally {
-    await closeElectron(child, userDataDir);
+    await finish();
   }
 });

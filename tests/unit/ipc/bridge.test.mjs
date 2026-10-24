@@ -278,6 +278,42 @@ test('the IPC adapter reads the sender frame and does not pass the event', async
   assert.equal(received.handle, 'tab-1');
 });
 
+test('an IPC trace names the channel and leaves the request out of the log', async () => {
+  const previous = process.env.OBELISK_IPC_TRACE;
+  process.env.OBELISK_IPC_TRACE = '1';
+  const lines = [];
+  const original = console.log;
+  console.log = (line) => {
+    lines.push(line);
+  };
+  try {
+    const registry = createIpcRegistry();
+    const listeners = new Map();
+    bindIpcHandlers(
+      {
+        handle(channel, listener) {
+          listeners.set(channel, listener);
+        },
+      },
+      registry,
+    );
+    const request = saveRequest();
+    await listeners.get('file:save')(
+      { senderFrame: { url: APP_PAGE_URL } },
+      request,
+    );
+    assert.deepEqual(lines, ['OBELISK_IPC file:save']);
+    assert.equal(JSON.stringify(lines).includes('tab-1'), false);
+  } finally {
+    console.log = original;
+    if (previous === undefined) {
+      delete process.env.OBELISK_IPC_TRACE;
+    } else {
+      process.env.OBELISK_IPC_TRACE = previous;
+    }
+  }
+});
+
 test('preload exposes only listed channels', async () => {
   const invocations = [];
   const subscriptions = [];
