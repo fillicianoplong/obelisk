@@ -33,6 +33,25 @@ Obelisk is being developed for CSC 481 (Software Engineering) at California Stat
 
 Obelisk will be released only through the Microsoft Store.
 
+## Build and run
+
+On Windows, install [Node.js 22.12 or newer](https://nodejs.org/), then from this folder:
+
+```
+npm ci
+npm start
+```
+
+`npm ci` installs the lockfile's exact versions. `npm start` typechecks, builds, and opens one window.
+
+```
+npm run typecheck
+npm run lint
+npm test
+```
+
+`npm test` builds the app, checks that a type error fails the TypeScript build, and checks that the built app opens one window.
+
 ## Documentation
 
 - [Software Requirements Specification](docs/SRS.md) (version 1.1; also as [Word](docs/Plong_Obelisk_SRS.docx) and [PDF](docs/out/Plong_Obelisk_SRS.pdf))
