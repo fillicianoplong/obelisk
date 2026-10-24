@@ -3,20 +3,20 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { APP_PAGE_URL } from '../../dist/shared/app-page.js';
+import { APP_PAGE_URL } from '../../../dist/shared/app-page.js';
 import {
   IPC_CHANNELS,
   IPC_ERROR_RETRYABLE,
   IPC_EVENT_CHANNEL,
   IPC_INVOKE_CHANNELS,
-} from '../../dist/shared/ipc/index.js';
-import { bindIpcHandlers } from '../../dist/main/ipc/bind.js';
-import { createStubHandlers } from '../../dist/main/ipc/handlers.js';
-import { createIpcRegistry } from '../../dist/main/ipc/registry.js';
-import { isAppPageSender } from '../../dist/main/ipc/sender.js';
-import { createObeliskApi, exposeObeliskApi, OBELISK_BRIDGE_KEY } from '../../dist/preload/bridge.js';
+} from '../../../dist/shared/ipc/index.js';
+import { bindIpcHandlers } from '../../../dist/main/ipc/bind.js';
+import { createStubHandlers } from '../../../dist/main/ipc/handlers.js';
+import { createIpcRegistry } from '../../../dist/main/ipc/registry.js';
+import { isAppPageSender } from '../../../dist/main/ipc/sender.js';
+import { createObeliskApi, exposeObeliskApi, OBELISK_BRIDGE_KEY } from '../../../dist/preload/bridge.js';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 function documentMessage() {
   return {

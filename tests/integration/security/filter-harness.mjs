@@ -4,10 +4,10 @@
 import { app, BrowserWindow, session } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { installRequestFilter } from '../../dist/main/security/session.js';
-import { secureWebPreferences } from '../../dist/main/security/window-options.js';
+import { installRequestFilter } from '../../../dist/main/security/session.js';
+import { secureWebPreferences } from '../../../dist/main/security/window-options.js';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const page = `<!DOCTYPE html>
 <html lang="en">

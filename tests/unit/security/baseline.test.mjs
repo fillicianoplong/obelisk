@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { readAppFile } from '../../dist/main/security/app-files.js';
-import { resolveAppFile } from '../../dist/main/security/app-path.js';
-import { CONTENT_SECURITY_POLICY } from '../../dist/main/security/csp.js';
-import { isAllowedRequestUrl } from '../../dist/main/security/request-policy.js';
-import { secureWebPreferences } from '../../dist/main/security/window-options.js';
+import { readAppFile } from '../../../dist/main/security/app-files.js';
+import { resolveAppFile } from '../../../dist/main/security/app-path.js';
+import { CONTENT_SECURITY_POLICY } from '../../../dist/main/security/csp.js';
+import { isAllowedRequestUrl } from '../../../dist/main/security/request-policy.js';
+import { secureWebPreferences } from '../../../dist/main/security/window-options.js';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const ARCHITECTURE_POLICY = [
   "default-src 'none'",

@@ -50,7 +50,9 @@ npm run lint
 npm test
 ```
 
-`npm test` builds the app, checks that a type error fails the TypeScript build, checks that the built app opens one window, and checks that the window blocks remote requests, navigation, popups, webviews, and permission requests.
+`npm test` builds the app, then runs the Node test suite under `tests/unit/` and `tests/integration/`. It checks that a type error fails the TypeScript build, that the built app opens one window, and that the window blocks remote requests, navigation, popups, webviews, and permission requests. The same run prints line coverage per module against the 80% target. The target is reported and does not fail the command.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test` on Windows for every push and pull request.
 
 ## Documentation
 
