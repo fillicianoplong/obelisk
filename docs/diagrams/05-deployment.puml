@@ -8,12 +8,13 @@ node "Windows PC (x64)" {
   node "MSIX package (read-only install folder)" {
     artifact "Obelisk.exe (Electron main)" as Main
     artifact "Renderer bundle" as R
-    artifact "Fonts, KaTeX, mathml2omml" as Libs
+    artifact "Fonts, KaTeX, Mermaid, mathml2omml" as Libs
   }
   folder "App data (redirected by MSIX)" {
     file "preferences.json" as P
-    file "signatures (safeStorage)" as S
-    file "Recovery copies" as Rec
+    file "session.json" as Ses
+    file "signatures/*.sig, index.json (safeStorage)" as S
+    file "recovery/*.obk, *.json" as Rec
   }
   folder "User folders (not redirected)" {
     file "Documents (.obk)" as Docs
@@ -28,6 +29,7 @@ cloud "Microsoft Store" as Store
 Store --> Main : install, update
 Main --> R : IPC
 Main --> P
+Main --> Ses
 Main --> S
 Main --> Rec
 Main --> Docs : read, write

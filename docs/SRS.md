@@ -1,6 +1,6 @@
 # Software Requirements Specification: Obelisk
 
-Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.0
+Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.1
 
 **Readers:** Filliciano Plong, developer and tester of Obelisk and Dr. Celly, CSC 481 instructor and reviewer.
 
@@ -29,6 +29,7 @@ Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.0
 | Version | Date | Changes |
 |---|---|---|
 | 1.0 | October 23, 2026 | First release of the requirements. |
+| 1.1 | October 23, 2026 | Applied the design, data model, and security review fixes. Added decisions OD-13 to OD-21. |
 
 ## 1. Introduction
 
@@ -61,6 +62,8 @@ Obelisk is an editor-only document processor. Each document is one .obk file in 
 | Pageless view | One long page with no page edges. Headers and footers are hidden on screen. |
 | Autosave | Writing a saved document to its own file shortly after each edit. |
 | Recovery copy | A hidden copy of a never-saved tab, kept in app data in case of a crash. |
+| Session | The list of open files kept in app data while Restore tabs on launch is on. |
+| Manifest | The manifest.json entry of an .obk file: format name, version, and image list. |
 | Slash menu | The block menu that opens when / is typed in an empty line. |
 | Typed shortcut | Markdown-style characters that turn into formatting or a block as they are typed. |
 | Formula block | A block of display math written in LaTeX and drawn by KaTeX. |
@@ -69,7 +72,7 @@ Obelisk is an editor-only document processor. Each document is one .obk file in 
 | Column row | Two to four blocks side by side, each with a share of the text width. |
 | Drawing layer | Strokes drawn over an image, kept with that image. |
 | Signature block | A visual signature: an image of a signature with an optional line and labels. Not a verified digital signature. |
-| App data | The per-user folder where Obelisk keeps preferences, signatures, and recovery copies. MSIX redirects it. |
+| App data | The per-user folder where Obelisk keeps preferences, the session, signatures, and recovery copies. MSIX redirects it. |
 | MSIX | The Windows app package format that the Microsoft Store installs and signs. |
 | KaTeX | An open-source library that draws LaTeX math in HTML and MathML. |
 | MathML, OMML | Markup for math: MathML on the web, OMML (Office Math) inside Word files. |
@@ -82,9 +85,12 @@ Obelisk is an editor-only document processor. Each document is one .obk file in 
 
 Lists of features, keys, and limits are in the named reference tables in the References section at the end.
 
-- Obelisk architecture document (Plong_Obelisk_Architecture.docx), version 1.0.
+- Obelisk architecture document (Plong_Obelisk_Architecture.docx), version 1.1.
 - Electron documentation, safeStorage API: electronjs.org/docs/latest/api/safe-storage.
+- Electron security checklist: electronjs.org/docs/latest/tutorial/security.
 - KaTeX documentation, supported functions: katex.org/docs/supported.html.
+- KaTeX documentation, options: katex.org/docs/options.html.
+- Mermaid configuration schema: mermaid.js.org/config/schema-docs/config.html.
 - mathml2omml on npm (version 0.5.0, LGPL-3.0-or-later): npmjs.com/package/mathml2omml.
 - GitHub Flavored Markdown specification: github.github.com/gfm.
 - Microsoft Store policies and app certification requirements: learn.microsoft.com/windows/apps/publish.
@@ -196,7 +202,7 @@ Obelisk is one window. Open documents sit in tabs; there is no folder tree.
 | FR-01 | The system shall show one window with a menu bar, a tab strip, the page, and a status bar. | Must | Demo: launch and point out each region. |
 | FR-02 | The system shall offer the menus and items in the [*Menus reference*](#menus-reference), each enabled only when it applies. | Must | Inspection: compare each menu with the reference. |
 | FR-03 | The system shall open each document in its own tab and mark a tab that has unsaved changes. | Must | Test: open three files, edit one, check its mark. |
-| FR-04 | The system shall show page, word, and character counts, the zoom level, and the save state in the status bar. | Must | Test: compare counts with a known sample document. |
+| FR-04 | The system shall show page, word, and character counts, zoom, and save state, including Autosave paused, in the status bar. | Must | Test: compare counts with a known sample; after a conflict Cancel, Autosave paused shows. |
 
 ### 6.2 Preferences
 
@@ -215,7 +221,7 @@ Each document is one .obk file in an ordinary Windows folder. Saving is the user
 |---|---|---|---|
 | FR-07 | The system shall create a new, never-saved document in a new tab on File > New. | Must | Test: New opens an empty tab and writes no file. |
 | FR-08 | The system shall open a file chosen in the Windows Open dialog, which lists only Obelisk (.obk) files. | Must | Test: the dialog filter shows only .obk files. |
-| FR-09 | The system shall open nothing for a file failing the [*File format reference*](#file-format-reference) checks, leave it unchanged, and say why. | Must | Test: a renamed text file, a damaged file, and a version 2 file stay byte-for-byte unchanged. |
+| FR-09 | The system shall open nothing for a file failing the [*File format reference*](#file-format-reference) checks, leave it unchanged, and say why. | Must | Test: a renamed text file, a damaged file, a newer-version file, and each hostile sample stay byte-for-byte unchanged. |
 | FR-10 | The system shall write the open document to its own file on Save. | Must | Test: save, reopen, compare content. |
 | FR-11 | The system shall ask for a folder and name in the Windows Save dialog on Save As or first Save. | Must | Demo: Save As writes a new file; the old file is unchanged. |
 | FR-12 | The system shall get the user's confirmation before Save As or an export replaces an existing file. | Must | Test: Cancel at the prompt leaves the existing file unchanged. |
@@ -226,7 +232,7 @@ Each document is one .obk file in an ordinary Windows folder. Saving is the user
 | FR-17 | The system shall store each document's view, Pages or Pageless, in its file and reopen it in that view. | Must | Test: save in Pageless, close, reopen. |
 | FR-18 | The system shall open a double-clicked .obk file in Obelisk, in a new tab if Obelisk is already running. | Should | Demo: double-click two files from File Explorer; one window, two tabs. |
 | FR-19 | The system shall keep a hidden recovery copy of each changed, never-saved tab in app data every 30 seconds. | Should | Inspection: the copy appears in app data within 30 s of an edit. |
-| FR-20 | The system shall offer each recovery copy on the next launch, to restore in a tab or discard. | Should | Test: end Obelisk from Task Manager, restart, restore. |
+| FR-20 | The system shall offer each recovery copy at every launch, to restore or discard, until the user chooses. | Should | Test: end Obelisk from Task Manager, restart, close the prompt, restart; the copy is offered again. |
 | FR-21 | The system shall delete a tab's recovery copy when that tab is saved or discarded. | Should | Inspection: the copy is gone after Save and after Discard. |
 
 **UNVERIFIED:** Whether the Windows Save dialog itself asks before replacing a file depends on dialog options Electron sets. Until checked, Obelisk shows its own confirmation for FR-12. Check: Electron dialog.showSaveDialog docs and a test on Windows 11.
@@ -301,9 +307,9 @@ Table cells hold text. A cell that starts with = holds cell-reference arithmetic
 
 | ID | Requirement | Priority | Verification |
 |---|---|---|---|
-| FR-45 | The system shall insert a table, add or delete rows and columns, and toggle a bold header row. | Must | Test: build a 3 by 4 table with a header row. |
+| FR-45 | The system shall insert a table, add or delete rows and columns, and toggle a bold header row. | Must | Test: build a 3 by 4 table with a header row; insert a row above a referenced cell; the formula follows it. |
 | FR-46 | The system shall compute a cell starting with = as cell-reference arithmetic, per the [*Table math reference*](#table-math-reference). | Must | Test: =B2+B3*2, =(B2-B3)/2, =B2^2, =[B2+B3]**2. |
-| FR-47 | The system shall show #DIV/0!, #REF!, or #CYCLE! in a cell whose formula cannot be computed. | Must | Test: =B2/0, a deleted referenced row, and a self-reference. |
+| FR-47 | The system shall show #DIV/0!, #REF!, or #CYCLE! in a cell whose formula cannot be computed. | Must | Test: =B2/0, a deleted referenced row (its reference becomes #REF!), and a self-reference. |
 | FR-48 | The system shall sort table rows by one column, ascending or descending, keeping the header row fixed. | Must | Test: sort numbers and text both ways; row 1 stays. |
 
 ### 6.10 Images
@@ -312,10 +318,12 @@ Images are stored inside the document file, so the file is complete on its own.
 
 | ID | Requirement | Priority | Verification |
 |---|---|---|---|
-| FR-49 | The system shall insert an image from a file or the clipboard, within the [*Image reference*](#image-reference) limits. | Must | Test: insert each type; a 25 MB image is refused. |
+| FR-49 | The system shall insert an image from a file or the clipboard, within the [*Image reference*](#image-reference) limits. | Must | Test: insert each type and an animated GIF; a 25 MB image and an 8001-pixel image are refused. |
 | FR-50 | The system shall resize an image by dragging a corner handle, keeping its aspect ratio. | Must | Test: drag a corner; the ratio is unchanged. |
 | FR-51 | The system shall rotate an image by quarter turns and flip it horizontally or vertically. | Must | Test: rotate, flip, save, reopen. |
 | FR-52 | The system shall store alt text for each image and write it into Word and Markdown exports. | Must | Inspection: alt text in the .docx and the .md. |
+
+**UNVERIFIED:** Counting frames and reading frame sizes from GIF and WebP headers before decoding, and taking the first frame for export, are unchecked. Check against the GIF89a and WebP container specifications in spike S-06 of the architecture.
 
 ### 6.11 Formulas
 
@@ -351,7 +359,7 @@ Print and every export use the document as it is on screen, including unsaved ch
 | FR-62 | The system shall export a PDF laid out as Pages view, whichever view is shown. | Must | Test: export from Pageless; the PDF has pages, headers, and footers. |
 | FR-63 | The system shall export a Word (.docx) file, mapping each block as listed in the [*Export reference*](#export-reference). | Must | Test: open the export in Word; check each row of the reference. |
 | FR-64 | The system shall export GitHub Flavored Markdown (.md), mapping each block as listed in the [*Export reference*](#export-reference). | Must | Test: view the export on GitHub; check each row of the reference. |
-| FR-65 | The system shall write a Markdown export's images to a folder beside the .md file, linked by relative paths. | Must | Test: move the .md and its folder together; images still show. |
+| FR-65 | The system shall write a Markdown export's images to a folder beside the .md file, linked by relative paths. | Must | Test: move the .md and its folder together; images still show. An existing folder is named in the replace prompt. |
 | FR-66 | The system shall leave the document file unchanged when printing or exporting. | Must | Test: compare the .obk bytes before and after. |
 
 ### 6.14 Date and time chip
@@ -423,17 +431,21 @@ Numbers are targets on the reference machine in section 5, not yet measured.
 | NFR-03 | Performance | The system shall open or save a 50-page, 10 MB document within 1 second (target). | Must | Test: timed on a local SSD. |
 | NFR-04 | Performance | The system shall export a 50-page document to PDF, Word, or Markdown within 10 seconds (target). | Must | Test: timed for each format. |
 
+If an export fails or stops at its 60-second limit, Obelisk says why and offers Retry. It leaves no partial file, and a file it was replacing keeps its old bytes.
+
 ### 7.2 Security and privacy
 
 | ID | Category | Requirement | Priority | Verification |
 |---|---|---|---|---|
-| NFR-05 | Security | The system shall keep all documents on this PC, open no listening port, and send no usage data. | Must | Analysis: packet capture during edit, save, and export shows no traffic. |
+| NFR-05 | Security | The system shall keep all documents on this PC, open no listening port, and send no usage data. | Must | Analysis: packet capture during editing, spelling, formulas, a diagram, save, and every export shows no traffic. |
 | NFR-06 | Security | The system shall never run scripts from document content or load remote content. | Must | Test: a file and a paste holding a script and a remote image send no request. |
-| NFR-07 | Security | The system shall build the page only from the schema in the [*File format reference*](#file-format-reference), never from stored HTML. | Must | Test: hostile sample files under Node open nothing or open safely. |
+| NFR-07 | Security | The system shall build the page only from the schema in the [*File format reference*](#file-format-reference), never from stored HTML. | Must | Test: the hostile sample set (architecture section 6.10) under Node opens nothing or opens safely. |
 | NFR-08 | Security | The system shall encrypt each saved signature with Electron safeStorage before writing it to app data. | Should | Inspection: the stored signature file holds no readable image or text. |
-| NFR-09 | Security | The system shall save no signature, and say so, when safeStorage reports encryption unavailable. | Should | Test: with encryption reported unavailable, nothing is written. |
+| NFR-09 | Security | The system shall save or show no signature, and say so, while safeStorage reports encryption unavailable. | Should | Test: with encryption reported unavailable or temporarily unavailable, nothing is written or deleted. |
 
-**UNVERIFIED:** On Windows, safeStorage protects data with DPAPI. Per the Electron docs, this protects against other Windows users, not other apps run by the same user. The synchronous API is deprecated from Electron 45 and due for removal in Electron 46; use encryptStringAsync and isAsyncEncryptionAvailable. Check: electronjs.org/docs/latest/api/safe-storage, for the Electron version chosen.
+On Windows, safeStorage protects saved signatures with DPAPI. This protects them from other Windows users on the PC, not from other apps run by the same user (Electron safeStorage docs).
+
+**UNVERIFIED:** The synchronous safeStorage API is deprecated from Electron 45 and due for removal in Electron 46, so Obelisk uses the async API and its temporarily unavailable state. Check that behavior in the Electron version chosen, and DPAPI inside an MSIX package (architecture spike S-07).
 
 ### 7.3 Reliability
 
@@ -470,7 +482,7 @@ Numbers are targets on the reference machine in section 5, not yet measured.
 |---|---|---|---|---|
 | NFR-24 | Portability | The system shall install from the Microsoft Store for the current user, without administrator rights. | Must | Test: install as a standard user. |
 | NFR-25 | Portability | The system shall run on Windows 11 and Windows 10 22H2, x64. | Must | Test: smoke test on both versions. |
-| NFR-26 | Portability | The system shall write nothing to its install folder, keeping preferences, signatures, and recovery copies in app data. | Must | Inspection: file-access log during a session. |
+| NFR-26 | Portability | The system shall write nothing to its install folder, keeping preferences, session, signatures, and recovery copies in app data. | Must | Inspection: file-access log during a session. |
 | NFR-27 | Portability | The system shall leave every document in place when uninstalled, and update only through the Microsoft Store. | Must | Test: uninstall; documents remain. |
 
 **UNVERIFIED:** The current Microsoft Store minimum Windows version for new MSIX apps (OD-11). Check: Microsoft Store policies.
@@ -509,7 +521,7 @@ One use case per key user goal. Should use cases cover Should features and are m
 | Preconditions | Windows 11 or Windows 10 22H2; a Microsoft account in the Store. |
 | Main flow | 1. User installs Obelisk from the Microsoft Store.<br>2. Store installs it for the current user, with no administrator prompt.<br>3. User double-clicks an .obk file in File Explorer.<br>4. System opens Obelisk with the file in a tab, in its stored view.<br>5. User double-clicks a second .obk file.<br>6. System opens it in a new tab of the same window.<br>7. User opens Preferences and picks the Dark theme. |
 | Expected result | Two documents open in one window, in the Dark theme. |
-| Alternatives / errors | 3a. The file fails the checks: no tab opens and a message says why.<br>5a. The file is already open: system switches to its tab. |
+| Alternatives / errors | 3a. The file fails the checks: no tab opens and a message says why.<br>3b. A newer Obelisk made the file: nothing opens; the message says to update from the Microsoft Store.<br>5a. The file is already open: system switches to its tab. |
 | Related requirements | FR-05, FR-06, FR-09, FR-17, FR-18, NFR-24, NFR-25 |
 
 ### UC-02: Write and save a new document
@@ -521,7 +533,7 @@ One use case per key user goal. Should use cases cover Should features and are m
 | Preconditions | Obelisk is open. |
 | Main flow | 1. User chooses File > New.<br>2. System opens an empty, never-saved tab in Pages view.<br>3. User types headings and paragraphs, using typed shortcuts and the slash menu.<br>4. User presses Ctrl+S.<br>5. System shows the Windows Save dialog.<br>6. User picks a folder and a name.<br>7. System writes the file and clears the tab's unsaved mark. |
 | Expected result | A complete .obk file in the chosen folder; autosave is now on for it. |
-| Alternatives / errors | 6a. A file with that name exists: system asks before replacing it.<br>7a. The write fails or passes 5 seconds: the tab stays marked changed and a message says so. |
+| Alternatives / errors | 6a. A file with that name exists: system asks before replacing it.<br>7a. The write fails or passes 5 seconds: the tab stays never-saved, a message says why, and Retry is offered when it may help. |
 | Related requirements | FR-01, FR-02, FR-03, FR-04, FR-07, FR-10, FR-11, FR-12, FR-22, FR-32, FR-33, FR-34, FR-35, FR-37, NFR-11, NFR-12 |
 
 ### UC-03: Open a document and edit it with autosave
@@ -533,8 +545,8 @@ One use case per key user goal. Should use cases cover Should features and are m
 | Preconditions | A saved .obk file exists. |
 | Main flow | 1. User presses Ctrl+O and picks the file.<br>2. System checks the file and opens it in a tab.<br>3. User edits text and formatting.<br>4. System autosaves within 30 seconds of the last edit.<br>5. User switches the document to Pageless view.<br>6. System marks the document changed and autosaves the new view.<br>7. User closes the tab. |
 | Expected result | The file holds every edit and reopens in Pageless view. |
-| Alternatives / errors | 2a. The file fails the checks: nothing opens; the file is unchanged.<br>4a. Another program changed the file: system skips the autosave and offers Overwrite, Save As, or Cancel.<br>7a. Unsaved changes remain: system asks to save, discard, or cancel. |
-| Related requirements | FR-08, FR-09, FR-13, FR-14, FR-15, FR-16, FR-17, FR-23, FR-28, FR-29, NFR-10, NFR-13 |
+| Alternatives / errors | 2a. The file fails the checks: nothing opens; the file is unchanged.<br>4a. Another program changed the file: system skips the autosave and offers Overwrite, Save As, or Cancel. After Cancel, the status bar shows Autosave paused until the next save.<br>7a. Unsaved changes remain: system asks to save, discard, or cancel. |
+| Related requirements | FR-04, FR-08, FR-09, FR-13, FR-14, FR-15, FR-16, FR-17, FR-23, FR-28, FR-29, NFR-10, NFR-13 |
 
 ### UC-04: Write an MLA paper with formulas and images
 
@@ -604,8 +616,8 @@ One use case per key user goal. Should use cases cover Should features and are m
 | Goal | Add a visual signature to a letter and send it as a PDF. |
 | Preconditions | A letter is open. |
 | Main flow | 1. User types /signature.<br>2. System inserts a signature block and opens the signature pad.<br>3. User draws a signature and chooses Save for reuse.<br>4. System encrypts and stores the signature in app data.<br>5. User sets a signature line with a name label.<br>6. User inserts a date chip beside it, then exports a PDF. |
-| Expected result | A PDF with the signature image above a labeled line, and the date. |
-| Alternatives / errors | 3a. User types a name instead: system shows it in Dancing Script.<br>4a. Encryption is unavailable: system saves no signature and says so; the block still works. |
+| Expected result | A PDF with the signature image above a labeled line, and the date. The letter holds the signature as an ordinary image. |
+| Alternatives / errors | 3a. User types a name instead: system shows it in Dancing Script.<br>4a. Encryption is unavailable: system saves no signature and says so; the block still works.<br>4b. Saved signatures are temporarily unavailable: none are shown or deleted; the user can draw or type one. |
 | Related requirements | FR-67, FR-75, FR-78, FR-79, FR-80, FR-81, NFR-08, NFR-09 |
 
 ### UC-10: Recover a never-saved tab after a crash (Should)
@@ -617,28 +629,32 @@ One use case per key user goal. Should use cases cover Should features and are m
 | Preconditions | A never-saved tab has changes; Obelisk or Windows stopped. |
 | Main flow | 1. User starts Obelisk again.<br>2. System lists each recovery copy, with its first line and time.<br>3. User chooses Restore.<br>4. System opens the copy in a new never-saved tab.<br>5. User saves it.<br>6. System deletes the recovery copy. |
 | Expected result | The work is back in a saved file; no recovery copy remains. |
-| Alternatives / errors | 3a. User chooses Discard: system deletes the copy. |
-| Related requirements | FR-19, FR-20, FR-21 |
+| Alternatives / errors | 2a. User closes the prompt: the copies stay and are offered at the next launch.<br>3a. User chooses Discard: system deletes the copy.<br>3b. A copy fails the file checks: only Discard is offered. |
+| Related requirements | FR-09, FR-19, FR-20, FR-21 |
 
 ## 9. Data requirements
 
 | Entity | Fields | Stored in | Retention | Privacy |
 |---|---|---|---|---|
-| Document (.obk file) | Format version, page setup, header, footer, view, blocks, images | User's folder | Kept until the user deletes it | Personal |
-| Block | ID, type, content, formatting; per type in the [*Block types reference*](#block-types-reference) | Inside the document | With the document | Personal |
-| Image | Bytes, type, size, alt text, rotation, flip, drawing layer | Inside the document | With the document | Personal |
-| Preferences | Theme, spelling on or off, and the rest of the [*Preferences reference*](#preferences-reference) | App data | Until uninstall | Settings |
-| Saved signature | Name, image, created date; encrypted | App data | Until deleted or uninstall | Sensitive |
-| Recovery copy | Never-saved tab content, time | App data | Until save, discard, or restore and save | Personal |
+| Document (.obk file) | Manifest (format name, version, image list), page setup, header, footer, view, blocks, images | User's folder | Kept until the user deletes it | Personal |
+| Block | ID (unique; new on paste and duplicate), type, content, formatting; per type in the [*Block types reference*](#block-types-reference) | Inside the document | With the document | Personal |
+| Image | Bytes named by content hash, type, pixel size, display width, alt text, rotation, flip, drawing layer | Inside the document | With the document; dropped on save once no block uses it | Personal |
+| Preferences | Version, theme, spelling, and the rest of the [*Preferences reference*](#preferences-reference) | App data | Until uninstall | Settings |
+| Session | Version, open file paths in tab order, active tab; never-saved tabs are not listed | App data | Replaced each session; deleted when Restore tabs is turned off | Personal (file paths) |
+| Saved signature | Name, PNG image, created date; one encrypted file each | App data | Until deleted or uninstall | Sensitive |
+| Recovery copy | A format 1 .obk file, plus created time, updated time, and first line | App data | Until saved or discarded; if ignored, kept and offered at every launch | Personal |
 
-- Not stored: zoom, selection, find text, scroll position, and undo history.
-- Units: page sizes and margins in inches; font sizes in points; image sizes in pixels.
+- Not stored in the document: zoom, selection, find text, scroll position, and undo history. Open tabs are kept only in the session.
+- Units: page sizes, margins, indents, and displayed image and signature widths in inches; font sizes and spacing in points; an image's own size in pixels. Image height is not stored; it follows the width and the aspect ratio.
 - Table cells: an empty cell is empty, not zero; table math counts it as 0 only inside a formula.
-- Dates in chips are stored as ISO 8601 local date and time; the format is stored separately.
-- Export writes new files; no format is imported in version 1.0.
+- Dates in chips are stored as local date and time to the minute (YYYY-MM-DDTHH:MM), with no time zone, because the value never changes. The format is stored separately.
+- A signature placed in a document is stored in that document like any image, not encrypted. Deleting a saved signature leaves documents that use it unchanged.
+- Recovery copies are not encrypted, even when the tab holds a signature. They are the user's own content in the per-user app data folder.
+- App data files are checked when read, like any file. A bad preference value falls back to its default; a damaged recovery copy can only be discarded.
+- Export writes new files; no format is imported in version 1.
 - No data leaves the PC except files the user saves, exports, or prints.
 
-Container, entries, and limits of the document file are in the [*File format reference*](#file-format-reference).
+Container, entries, and limits of the document file are in the [*File format reference*](#file-format-reference). The full schema is in architecture section 6.5.
 
 ## 10. External interfaces
 
@@ -679,7 +695,7 @@ Keyboard, mouse, pen, and touch input; any printer with a Windows driver. No oth
 
 ### 10.5 Communications
 
-None. Obelisk makes no network requests. Store updates are handled by Windows, not by Obelisk.
+Obelisk makes no network requests itself, and it blocks any request it did not start. Open link hands an http, https, or mailto address to the default browser or mail app after the user confirms; see the [*Links reference*](#links-reference). Store updates are handled by Windows, not by Obelisk.
 
 ## 11. Open decisions
 
@@ -699,6 +715,15 @@ Open items use the proposed default until decided. Decided items show the date.
 | OD-10 | Key choices | Ctrl+Space only; Ctrl+Space plus Ctrl+\\ | Ctrl+Space, alternate Ctrl+\\; Ctrl+Shift+V, Ctrl+Shift+X, Ctrl+U | Decided 2026-10-23 |
 | OD-11 | Supported Windows versions | Windows 11 only; plus Windows 10 22H2 | Windows 11 and Windows 10 22H2, x64 | Open |
 | OD-12 | Open from File Explorer | Not in 1.0; Should with single instance | Should: one window, new tab per file | Decided 2026-10-23 |
+| OD-13 | Do table references follow row and column insert and delete? | Rewrite them; keep them static | Rewrite them; a reference to a deleted cell becomes #REF! | Decided 2026-10-23 |
+| OD-14 | How are other format versions opened? | Refuse every other version; convert older ones | Convert older versions on open, refuse newer ones, and confirm before the first save upgrades a file | Decided 2026-10-23 |
+| OD-15 | How are saved signatures stored? | A PNG for every kind; strokes or text by kind | A PNG for every kind, one encrypted file each | Decided 2026-10-23 |
+| OD-16 | A recovery copy neither restored nor discarded | Keep it and offer it again; delete it after some days | Keep it and offer it at every launch | Decided 2026-10-23 |
+| OD-17 | Restore tabs on launch | Keep, with a session file; drop from 1.0 | Keep; open paths are stored in session.json (section 9) | Decided 2026-10-23 |
+| OD-18 | Animated GIF and WebP images | Keep the animation; keep only the first frame | Keep the original and play it in the editor; PDF, Word, and print use the first frame; Markdown keeps the original file | Decided 2026-10-23 |
+| OD-19 | Mermaid security level | strict; sandbox; loose | strict, which a diagram cannot change | Decided 2026-10-23 |
+| OD-20 | Open link | Keep, with a scheme allowlist; remove it | Keep; http, https, and mailto only, after a prompt | Decided 2026-10-23 |
+| OD-21 | Uncompressed size caps for .obk files | Caps per entry and in total; no caps | document.json 25 MB, each image 20 MB, 250 MB in total | Decided 2026-10-23 |
 
 ## 12. Acceptance criteria
 
@@ -708,10 +733,10 @@ Each check runs end to end on the reference machine with a packaged build.
 |---|---|---|
 | AC-01 | Install as a standard user on both Windows versions; launch to an editable tab within 3 s. | FR-01, NFR-01, NFR-24, NFR-25 |
 | AC-02 | Build a document with every block type, save, close, and reopen; content, view, and setup match. | FR-07, FR-08, FR-10, FR-11, FR-17, FR-24, FR-32 |
-| AC-03 | Open the hostile sample set; each file opens nothing or opens safely and stays unchanged. | FR-09, NFR-06, NFR-07 |
+| AC-03 | Open each file in the hostile sample set (architecture section 6.10); each opens nothing or opens safely and stays unchanged. | FR-09, NFR-06, NFR-07 |
 | AC-04 | End the process during 20 large saves; each target holds the old or the complete new file. | NFR-10, NFR-12, NFR-14 |
 | AC-05 | Edit a saved file for 40 s, end the process, reopen; at most 30 s of edits are lost. | FR-14, NFR-13 |
-| AC-06 | Change an open file in Notepad, then edit in Obelisk; the conflict choice appears and no autosave runs. | FR-13, FR-15 |
+| AC-06 | Change an open file in Notepad, then edit in Obelisk; the conflict choice appears, no autosave runs, and after Cancel the status bar shows Autosave paused. | FR-04, FR-13, FR-15 |
 | AC-07 | Close a changed tab and exit with one; each asks to save, discard, or cancel. | FR-03, FR-16 |
 | AC-08 | A new file opens in Pages view; switching marks it changed; the PDF from Pageless has pages. | FR-22, FR-23, FR-62 |
 | AC-09 | Create an MLA paper and compare its PDF with the [*MLA template reference*](#mla-template-reference). | FR-25, FR-27, FR-28, FR-29, FR-30 |
@@ -719,13 +744,13 @@ Each check runs end to end on the reference machine with a packaged build.
 | AC-11 | Export the formula sample to Word with conversion on, then off; equations edit, then show as images. | FR-56, FR-57, FR-63 |
 | AC-12 | Export a document with images to Markdown and view it on GitHub; images and tables show. | FR-52, FR-64, FR-65 |
 | AC-13 | Print and export a changed document; the .obk bytes are unchanged and replace prompts appear. | FR-12, FR-61, FR-66 |
-| AC-14 | Run every example in the [*Table math reference*](#table-math-reference); values, errors, and sort order match. | FR-45, FR-46, FR-47, FR-48 |
+| AC-14 | Run every example in the [*Table math reference*](#table-math-reference), then insert and delete referenced rows; values, references, errors, and sort order match. | FR-45, FR-46, FR-47, FR-48 |
 | AC-15 | Select, move, duplicate, and copy blocks between tabs and into Word and Notepad. | FR-33, FR-38, FR-39, FR-40, FR-41, FR-42 |
 | AC-16 | Run the new-document and export use cases by keyboard only, with Narrator on. | FR-02, FR-34, FR-35, FR-43, FR-44, NFR-15, NFR-16 |
 | AC-17 | Check contrast, 200% scaling, and color-only signals in Light and Dark. | NFR-17, NFR-18, NFR-19 |
 | AC-18 | Replace a word used five times with Whole word on; one undo restores all five. | FR-58, FR-59, FR-60 |
-| AC-19 | Insert each image type, resize, rotate, flip, and try one over the limit. | FR-49, FR-50, FR-51 |
-| AC-20 | Run a full session with a packet capture; no traffic leaves the PC. | NFR-05 |
+| AC-19 | Insert each image type, resize, rotate, flip, and try one over each limit, including an animated GIF with too many frames. | FR-49, FR-50, FR-51 |
+| AC-20 | Run a full session with spelling on, a formula, a diagram, and every export, under a packet capture; no traffic leaves the PC. The session does not use Open link. | NFR-05 |
 | AC-21 | Should: double-click two .obk files, with Obelisk closed and then running; both open as tabs in one window. | FR-18 |
 | AC-22 | Should: end the process with a changed never-saved tab, restart, restore, and save; the copy is gone. | FR-19, FR-20, FR-21 |
 | AC-23 | Should: insert a chip, try each format, and reopen the file a day later; the value is unchanged. | FR-67, FR-68, FR-69 |
@@ -734,6 +759,9 @@ Each check runs end to end on the reference machine with a packaged build.
 | AC-26 | Should: create each kind of signature, reuse a saved one, set its options, and export to each format. | FR-78, FR-79, FR-80, FR-81, NFR-08, NFR-09 |
 | AC-27 | Should: render a flowchart offline, then break its source; the error shows in place. | FR-82, FR-83 |
 | AC-28 | Pass Store certification; the About page lists every notice; uninstall keeps documents. | NFR-26, NFR-27, NFR-28, NFR-29, NFR-30, NFR-31 |
+| AC-29 | Open link on an https link shows the full address and asks first; file:, javascript:, and network-path links are refused on open and paste. | FR-44, NFR-05, NFR-06 |
+| AC-30 | Insert an animated GIF; it plays in the editor and stays still with Windows animations off. PDF, Word, and print show the first frame; Markdown keeps the GIF. | FR-49, FR-62, FR-63, FR-65, NFR-20 |
+| AC-31 | Turn on Restore tabs, open two files, exit, delete one file, and relaunch; the other reopens and one message names the missing file. | FR-05, FR-06 |
 
 ## 13. Future features
 
@@ -758,12 +786,12 @@ Each requirement maps to the use cases and acceptance checks that cover it. Arch
 | FR-01 | Must | UC-02 | AC-01 | Demo |
 | FR-02 | Must | UC-02 | AC-16 | Inspection |
 | FR-03 | Must | UC-02 | AC-07 | Test |
-| FR-04 | Must | UC-02 | - | Test |
-| FR-05 | Must | UC-01 | - | Inspection |
-| FR-06 | Must | UC-01 | - | Test |
+| FR-04 | Must | UC-02, UC-03 | AC-06 | Test |
+| FR-05 | Must | UC-01 | AC-31 | Inspection |
+| FR-06 | Must | UC-01 | AC-31 | Test |
 | FR-07 | Must | UC-02 | AC-02 | Test |
 | FR-08 | Must | UC-03 | AC-02 | Test |
-| FR-09 | Must | UC-01, UC-03 | AC-03 | Test |
+| FR-09 | Must | UC-01, UC-03, UC-10 | AC-03 | Test |
 | FR-10 | Must | UC-02 | AC-02 | Test |
 | FR-11 | Must | UC-02 | AC-02 | Demo |
 | FR-12 | Must | UC-02, UC-05 | AC-13 | Test |
@@ -798,12 +826,12 @@ Each requirement maps to the use cases and acceptance checks that cover it. Arch
 | FR-41 | Must | UC-06 | AC-15 | Test |
 | FR-42 | Must | UC-06 | AC-15 | Test |
 | FR-43 | Must | UC-06 | AC-16 | Test |
-| FR-44 | Must | UC-06 | AC-16 | Inspection |
+| FR-44 | Must | UC-06 | AC-16, AC-29 | Inspection |
 | FR-45 | Must | UC-07 | AC-14 | Test |
 | FR-46 | Must | UC-07 | AC-14 | Test |
 | FR-47 | Must | UC-07 | AC-14 | Test |
 | FR-48 | Must | UC-07 | AC-14 | Test |
-| FR-49 | Must | UC-04 | AC-19 | Test |
+| FR-49 | Must | UC-04 | AC-19, AC-30 | Test |
 | FR-50 | Must | UC-04 | AC-19 | Test |
 | FR-51 | Must | - | AC-19 | Test |
 | FR-52 | Must | UC-04 | AC-12 | Inspection |
@@ -816,10 +844,10 @@ Each requirement maps to the use cases and acceptance checks that cover it. Arch
 | FR-59 | Must | UC-08 | AC-18 | Test |
 | FR-60 | Must | UC-08 | AC-18 | Test |
 | FR-61 | Must | UC-05 | AC-13 | Demo |
-| FR-62 | Must | UC-04, UC-05 | AC-08 | Test |
-| FR-63 | Must | UC-05 | AC-11 | Test |
+| FR-62 | Must | UC-04, UC-05 | AC-08, AC-30 | Test |
+| FR-63 | Must | UC-05 | AC-11, AC-30 | Test |
 | FR-64 | Must | UC-05 | AC-12 | Test |
-| FR-65 | Must | UC-05 | AC-12 | Test |
+| FR-65 | Must | UC-05 | AC-12, AC-30 | Test |
 | FR-66 | Must | UC-05 | AC-13 | Test |
 | FR-67 | Should | UC-09 | AC-23 | Test |
 | FR-68 | Should | - | AC-23 | Test |
@@ -842,8 +870,8 @@ Each requirement maps to the use cases and acceptance checks that cover it. Arch
 | NFR-02 | Must | - | - | Test |
 | NFR-03 | Must | - | - | Test |
 | NFR-04 | Must | UC-05 | - | Test |
-| NFR-05 | Must | - | AC-20 | Analysis |
-| NFR-06 | Must | - | AC-03 | Test |
+| NFR-05 | Must | - | AC-20, AC-29 | Analysis |
+| NFR-06 | Must | - | AC-03, AC-29 | Test |
 | NFR-07 | Must | - | AC-03 | Test |
 | NFR-08 | Should | UC-09 | AC-26 | Inspection |
 | NFR-09 | Should | UC-09 | AC-26 | Test |
@@ -857,7 +885,7 @@ Each requirement maps to the use cases and acceptance checks that cover it. Arch
 | NFR-17 | Must | - | AC-17 | Analysis |
 | NFR-18 | Must | - | AC-17 | Inspection |
 | NFR-19 | Must | - | AC-17 | Inspection |
-| NFR-20 | Should | - | - | Demo |
+| NFR-20 | Should | - | AC-30 | Demo |
 | NFR-21 | Must | - | - | Inspection |
 | NFR-22 | Must | - | - | Inspection |
 | NFR-23 | Should | - | - | Analysis |
@@ -962,7 +990,7 @@ Composition rule: every block shows the block-handle menu plus its own items. Ev
 | Drawing pad | Block handle | Clear drawing; Reset size |
 | Diagram | Block handle | Edit source; Copy source |
 | Signature | Block handle, minus Turn into | Change signature; Edit line and labels; Blank mode; Reset size |
-| Link | Text | Open link; Edit link; Remove link |
+| Link | Text | Open link (asks first; see the [*Links reference*](#links-reference)); Edit link; Remove link |
 | Inline formula | Text | Edit LaTeX; Copy LaTeX |
 | Date chip | Text | Edit date and time; Change format; Convert to plain text; Remove |
 
@@ -996,14 +1024,14 @@ Typing after / filters the list by name or search word. Enter inserts; Esc close
 | Quote | Formatted text | Must |
 | Code block | Plain text in Consolas; no shortcuts | Must |
 | Divider | Nothing | Must |
-| Table | Cells of formatted text or formulas; optional header row | Must |
+| Table | Cells of formatted text or formulas; optional header row; up to 200 rows and 26 columns | Must |
 | Image | One image, alt text, size, rotation, flip; Should: drawing layer | Must |
-| Formula block | LaTeX source, rendered display math | Must |
+| Formula block | LaTeX source; shown rendered as display math | Must |
 | Page break | Nothing; forces a new page in Pages view and print | Must |
-| Column row | Two to four blocks side by side | Should |
+| Column row | Two to four blocks side by side; no column rows or page breaks inside | Should |
 | Drawing pad | Strokes | Should |
 | Signature | Signature image, line, labels, blank mode | Should |
-| Diagram | Mermaid source, rendered diagram | Should |
+| Diagram | Mermaid source; shown rendered | Should |
 
 ### Formatting reference
 
@@ -1031,6 +1059,8 @@ Bundled fonts are the LibreOffice Latin set plus Dancing Script (for typed signa
 | Noto Serif, Sans (Latin) | Fallback text | SIL OFL 1.1 |
 | Dancing Script | Typed signatures | SIL OFL 1.1 |
 
+A file that names a font Obelisk does not bundle still opens. The text shows in the default font, the status bar says so once, and the file keeps the font name.
+
 **UNVERIFIED:** The exact LibreOffice Latin set and each license (OD-08). Check each font's license file from its upstream source before release.
 
 ### Page setup reference
@@ -1039,10 +1069,11 @@ Bundled fonts are the LibreOffice Latin set plus Dancing Script (for typed signa
 |---|---|
 | Paper | Letter (8.5 by 11 in) only |
 | Orientation | Portrait (default), landscape |
-| Margins | Normal 1 in (default); Narrow 0.5 in; Wide 1.5 in left and right; Custom 0.25 to 3 in per side |
-| Header and footer | Editable text on every page, 0.5 in from the edge; hidden in Pageless view |
+| Margins | Normal 1 in (default); Narrow 0.5 in; Wide 1.5 in left and right; Custom 0.25 to 3 in per side; text width at least 2 in |
+| Header and footer | One paragraph of formatted text with page fields, on every page, 0.5 in from the edge; hidden in Pageless view |
+| Header and margins | The header and footer reserve their own space, so the body starts below the header whatever the margin |
 | Fields | Page number; page count |
-| Page number formats | 1, 2, 3; i, ii, iii; Page 1 of N |
+| Page number formats | 1, 2, 3; i, ii, iii; Page 1 of N; set on each field |
 | Not offered | Different first page; odd and even pages; sections |
 
 ### MLA template reference
@@ -1064,13 +1095,17 @@ Bundled fonts are the LibreOffice Latin set plus Dancing Script (for typed signa
 
 | From other apps | Kept | Dropped |
 |---|---|---|
-| Text | Paragraphs, headings, lists, bold, italic, underline, strikethrough, links | Fonts, colors, sizes, styles, classes |
+| Text | Paragraphs, headings, lists, bold, italic, underline, strikethrough, links (http, https, mailto) | Fonts, colors, sizes, styles, classes; other link schemes |
 | Tables | Cells and text | Widths, borders, cell colors, merged cells (split) |
-| Images | Images on the clipboard as image data | Images referenced by URL |
+| Images | Images on the clipboard as image data, within the [*Image reference*](#image-reference) limits | Images referenced by URL; SVG |
 | Code and markup | Shown as text | Scripts, iframes, forms, event handlers |
 | Paste as plain text | Text and line breaks | Everything else |
 
-Pasting Obelisk blocks between tabs keeps them exactly.
+Pasted HTML is read without loading anything, then mapped into Obelisk blocks; raw HTML is never inserted.
+
+Pasting Obelisk blocks between tabs keeps their content exactly. They are checked like an opened file and get new block IDs.
+
+**UNVERIFIED:** Two claims are unchecked: that HTML parsed into a detached document loads no images and runs no scripts in Electron, and how Electron reads a custom clipboard format on Windows. Check both with a test that watches the network.
 
 ### Table math reference
 
@@ -1084,7 +1119,9 @@ A cell whose text starts with = holds a formula. Formulas are cell-reference ari
 | Precedence | Power first (right to left), then * and /, then + and -; -2^2 is -4 |
 | Grouping | ( ) or [ ], nested to any depth; each must close with its own kind |
 | Empty cell | Counts as 0 |
-| #REF! | A reference outside the table, to a deleted row or column, or to a text cell |
+| #REF! | A reference outside the table or to a text cell; a reference to a deleted row or column becomes #REF! in the formula |
+| Insert and delete | Inserting or deleting a row or column rewrites references to cells that move, in the same undo step |
+| Size | Up to 200 rows and 26 columns (A to Z) |
 | #DIV/0! | Division by zero |
 | #CYCLE! | A formula that depends on itself, directly or through other cells |
 | Does not parse | Kept as text with an error underline; for example =B2+ stays text |
@@ -1101,15 +1138,21 @@ A cell whose text starts with = holds a formula. Formulas are cell-reference ari
 | `=2^3^2` | 512 (right to left) |
 | `=B2/0` | #DIV/0! |
 | `=Z99` | #REF! |
+| `=B4` | Becomes =B5 when a row is inserted above row 4 |
+| `=B3` | Becomes =#REF! when row 3 is deleted |
 
 ### Image reference
 
 | Rule | Value |
 |---|---|
-| Types | PNG, JPEG, GIF (first frame), WebP |
+| Types | PNG, JPEG, GIF, WebP, recognized by their first bytes; SVG is refused |
+| Animated GIF and WebP | Kept as is and played in the editor; shown still on the first frame when Windows animation effects are off (OD-18) |
+| Animated in exports | PDF, Word, and print use the first frame; Markdown keeps the original file |
 | Largest file | 20 MB per image |
-| Largest size | 8000 by 8000 pixels |
-| Stored | Original bytes inside the document file |
+| Largest size | 8000 by 8000 pixels, read from the image header before decoding |
+| Animation limits | Up to 1,000 frames and 250 million pixels across all frames (targets); each frame inside the image size |
+| Checked | On insert, paste, and open; a file with an image over a limit is refused |
+| Stored | Original bytes inside the document file, named by content hash; stored once when several blocks use it |
 | Default width | The smaller of the image width and the text width |
 | Rotate and flip | Quarter turns; horizontal and vertical flip; stored, not baked in |
 | Alt text | Up to 500 characters |
@@ -1122,7 +1165,8 @@ A cell whose text starts with = holds a formula. Formulas are cell-reference ari
 | Block | \$\$ at a line start, or /formula; display math, centered |
 | Inline | Between single \$ signs inside text |
 | Errors | KaTeX's message, in red, in place of the formula |
-| Not supported | Macros defined in the document; \\href and \\url; HTML extensions |
+| Not supported | \\href, \\url, \\includegraphics, and HTML extensions; macros carried from one formula to another; sizes over 50 em |
+| Limits | Up to 10,000 characters of LaTeX per formula |
 | PDF and print | Rendered KaTeX |
 | Word | OMML equation (Should); image fallback (Must) |
 | Markdown | \$...\$ and \$\$...\$\$ with the LaTeX source |
@@ -1144,13 +1188,18 @@ A cell whose text starts with = holds a formula. Formulas are cell-reference ari
 | Lists and checklist | As on the page | Word lists; checkbox symbols | -, 1., - [ ] |
 | Quote, code, divider | As on the page | Quote style; Consolas; rule | >, ```, --- |
 | Table | As on the page; values | Word table; values | GFM table; values |
-| Image | Image; drawing flattened | Image with alt text; drawing flattened | File in the images folder; alt text |
+| Image | Image; drawing flattened; first frame if animated | Image with alt text; drawing flattened; first frame if animated | Original file in the images folder; alt text |
 | Formula | Rendered | OMML (Should) or image | \$ and \$\$ LaTeX |
 | Page break | New page | Page break | Ignored |
 | Header and footer | On every page | Word header and footer | Ignored |
 | Date chip | Formatted text | Formatted text | Formatted text |
 | Column row | Side by side | Table without borders | Stacked in order |
-| Drawing, signature, diagram | Image | Image | Image file |
+| Drawing, signature, diagram | Image | Image | PNG file in the images folder |
+
+- Markdown export escapes text, alt text, and link text, so nothing in the document becomes Markdown or HTML markup. Word export writes text only as text.
+- Markdown images go to a folder named after the .md file plus _images, as image-001.png, image-002.gif, and so on. Names never come from the document.
+- An existing images folder is part of the replace prompt (FR-12). Obelisk replaces only the files it writes and never deletes others.
+- If an export fails or stops, no partial file is left; a file being replaced keeps its old bytes.
 
 ### Date formats reference
 
@@ -1202,7 +1251,8 @@ Examples show 9:05 PM on March 4, 2027.
 | Labels | Up to two lines below the line, for example a name and a title |
 | Alignment | Left, center, right |
 | Blank mode | Shows only the line and labels, for signing on paper |
-| Saved signatures | Up to 10, each with a name; delete from the block menu |
+| Saved signatures | Up to 10, each a PNG with a name of 1 to 40 characters, unique ignoring case; delete from the block menu |
+| Deleting a saved signature | Leaves documents that already use it unchanged |
 
 ### Preferences reference
 
@@ -1217,19 +1267,34 @@ Examples show 9:05 PM on March 4, 2027.
 
 Not preferences, by design: the view for new documents, the undo depth, and Markdown shortcuts.
 
+Preferences are checked when read; a bad or unknown value falls back to its default. With Restore tabs on launch on, the open files are kept in session.json in app data (section 9). Each reopens through the usual file checks, and missing files are named in one message.
+
+### Links reference
+
+| Rule | Value |
+|---|---|
+| Schemes | http, https, and mailto; any other is refused, including file:, javascript:, and network paths |
+| Checked | On open, paste, and Ctrl+K, and again just before the link is opened |
+| Open link | Shows the full address and asks first; then the default browser or mail app opens it |
+| Length | Up to 2,048 characters |
+
 ### File format reference
 
 | Rule | Value |
 |---|---|
 | Extension | .obk (OD-02) |
-| Container | ZIP archive |
-| Entries | manifest.json; document.json; images/ with one file per image |
-| Format version | 1, in manifest.json; any other version is refused |
-| Schema | document.json matches the block schema; unknown block types or fields are refused |
+| Container | ZIP archive; stored or deflated entries only; no encryption, no archives inside |
+| Entries | Exactly `manifest.json`, `document.json`, and one `images/<sha256>.<ext>` per image (png, jpg, gif, webp); any other name is refused |
+| Manifest | Format name obelisk, format version, writer version, and the image list (hash, type, bytes, pixel size), which must match the images exactly |
+| Format version | 1, a whole number. Older versions are converted on open, and the first save asks before upgrading the file. Newer versions are refused (OD-14) |
+| Schema | document.json matches the schema in architecture section 6.5; unknown block types or fields are refused |
 | Largest file | 200 MB |
 | Largest entry count | 2,000 entries |
-| Paths | No absolute paths, no .., no links; every image entry is referenced |
-| Text | UTF-8 JSON; no HTML is stored or rendered |
+| Largest uncompressed size | document.json 25 MB; each image 20 MB; 250 MB in total (OD-21) |
+| Other limits | Blocks, text, tables, drawings, and sources, as listed in architecture section 6.6 |
+| Paths | Only the entry names above; read in memory, never unpacked to disk; every image is used by a block |
+| Text | UTF-8 JSON; duplicate keys refused; no HTML is stored or rendered |
+| Checked | On open, on restoring a recovery copy or session, and on pasting Obelisk blocks |
 
 ### Open-source license reference
 

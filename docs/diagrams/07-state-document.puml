@@ -5,15 +5,17 @@ skinparam defaultFontSize 12
 skinparam dpi 140
 [*] --> NeverSaved : New
 [*] --> Clean : Open
-NeverSaved --> NeverSaved : edit (recovery copy, Should)
+NeverSaved --> NeverSaved : edit (recovery copy, Should);\nSave dialog cancelled
 NeverSaved --> Saving : first Save
 Clean --> Changed : edit, switch view
-Changed --> Saving : Save or 30 s autosave
-Saving --> Clean : complete file replaced
-Saving --> Changed : timeout or error
+Changed --> Saving : Save, or 30 s autosave\nunless Autosave paused
+Saving --> Saving : edit (revision rises)
+Saving --> Clean : ok, revision unchanged
+Saving --> Changed : ok with newer edits;\ntimeout or error
+Saving --> NeverSaved : first save fails
 Saving --> Conflict : file changed on disk
 Conflict --> Saving : Overwrite / Save As
-Conflict --> Changed : Cancel
+Conflict --> Changed : Cancel (Autosave paused)
 Changed --> [*] : close, discard
 Clean --> [*] : close
 NeverSaved --> [*] : close, discard

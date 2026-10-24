@@ -1,62 +1,90 @@
 @startuml obelisk_class
 skinparam shadowing false
 skinparam defaultFontName Arial
-skinparam defaultFontSize 12
+skinparam defaultFontSize 11
 skinparam dpi 140
 hide methods
-class Document {
+hide empty members
+class Manifest {
+  format: obelisk
   formatVersion: 1
-  view: Pages | Pageless
-  page: PageSetup
+  writer
+}
+class Document {
+  view: pages | pageless
 }
 class PageSetup {
   paper: Letter
   orientation
-  margins
+  margins: inches
 }
 class HeaderFooter {
-  runs
-  pageNumber?
+  one paragraph
+  page fields
 }
 abstract class Block {
-  id: string
+  id: UUID v4
   type
 }
-class TextBlock
+class TextBlock {
+  paragraph, heading,
+  list, quote, code
+}
+class DividerBlock
+class PageBreakBlock
 class TableBlock {
-  headerRow: bool
+  up to 200 x 26
+  column widths
 }
 class Cell {
-  input: string
+  text or formula
 }
 class ImageBlock {
-  rotation, flipH, flipV
-  altText
+  sha256, width: inches
+  rotation, flips, alt
 }
 class FormulaBlock {
-  latex: string
+  latex
 }
-class ColumnRow {
-  shares: number[2..4]
+class ColumnRow <<Should>> {
+  2 to 4 columns
 }
-class DrawingLayer {
+class DrawingBlock <<Should>> {
+  strokes
+}
+class SignatureBlock <<Should>> {
+  PNG sha256, label
+}
+class DiagramBlock <<Should>> {
+  mermaid source
+}
+class DrawingLayer <<Should>> {
   strokes
 }
 class Image {
-  sha256
-  bytes
+  sha256, type
+  bytes, width, height
+  frames
 }
+Manifest "1" *-- "0..*" Image
 Document "1" *-- "1" PageSetup
-Document "1" *-- "0..2" HeaderFooter
+Document "1" *-- "2" HeaderFooter
 Document "1" *-- "0..*" Block
 Block <|-- TextBlock
+Block <|-- DividerBlock
+Block <|-- PageBreakBlock
 Block <|-- TableBlock
 Block <|-- ImageBlock
 Block <|-- FormulaBlock
 Block <|-- ColumnRow
+Block <|-- DrawingBlock
+Block <|-- SignatureBlock
+Block <|-- DiagramBlock
 TableBlock "1" *-- "1..*" Cell
-ColumnRow "1" *-- "2..4" Block
+ColumnRow "1" *-- "2..4" Block : per column
 ImageBlock "0..*" --> "1" Image
+SignatureBlock "0..*" --> "1" Image
 ImageBlock "1" *-- "0..1" DrawingLayer
-note bottom of ColumnRow : No ColumnRow inside a ColumnRow (FR-71)
+note bottom of ColumnRow : No column rows or page breaks inside (FR-71)
+note bottom of Image : frames up to 1,000 for animated GIF and WebP (OD-18)
 @enduml

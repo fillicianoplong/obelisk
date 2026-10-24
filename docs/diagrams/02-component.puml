@@ -9,6 +9,7 @@ package "Renderer (sandboxed, one per window)" {
   [BlockViews] as Views
   [FormulaRenderer] as Formula
   [ClipboardBridge] as Clip
+  [AutosaveService] as Auto
 }
 package "Preload" {
   [IPC bridge] as IPC
@@ -16,7 +17,6 @@ package "Preload" {
 package "Main process" {
   [FileService] as Files
   [FormatCodec] as Codec
-  [AutosaveService] as Auto
   [ExportService] as Export
   [SignatureStore] as Sig
   [PreferencesStore] as Prefs
@@ -26,20 +26,25 @@ Shell --> Core
 Core --> Views
 Views --> Formula
 Core --> Clip
+Core --> Auto
 Shell --> IPC
 Core --> IPC
-IPC --> Files : save, open
-IPC --> Export : export
-IPC --> Sig
-IPC --> Prefs
-Files --> Codec
-IPC --> Rec : recovery copy
-Rec --> Codec
-Auto --> Files
+Auto --> IPC : file:save, recovery:put
+IPC --> Files : open, save, handles
+IPC --> Export : export:run
+IPC --> Sig : sig:*
+IPC --> Prefs : prefs:*, session:set
+IPC --> Rec : recovery:*
+Files --> Codec : encode, decode, checks
+Rec --> Codec : checks on restore
 Export --> Codec
+Export --> Files : writeAtomic
+Sig --> Files : writeAtomic
+Prefs --> Files : writeAtomic
+Rec --> Files : writeAtomic
 legend bottom
  Only the main process touches the disk (ADR-001, NFR-22).
- Save, Save As, and autosave share FileService.write (ADR-002).
- Single instance and recovery: ADR-009.
+ Save, Save As, and autosave share file:save; every write uses FileService.writeAtomic (ADR-002).
+ The renderer sends handles and IDs, never paths. Single instance and recovery: ADR-009.
 endlegend
 @enduml
