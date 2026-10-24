@@ -5,6 +5,7 @@ import { APP_START_URL } from './security/app-path.js';
 import { installAppProtocol, registerAppScheme } from './security/app-protocol.js';
 import { installContentsGuards } from './security/navigation.js';
 import { installSessionSecurity } from './security/session.js';
+import { installIpc } from './ipc/install.js';
 import { secureWebPreferences } from './security/window-options.js';
 
 const WINDOW_WIDTH = 1280;
@@ -12,6 +13,7 @@ const WINDOW_HEIGHT = 800;
 
 registerAppScheme();
 installContentsGuards();
+installIpc();
 
 app.setName(APP_NAME);
 Menu.setApplicationMenu(null);
