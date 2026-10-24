@@ -1,0 +1,7 @@
+.editor-host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: min(816px, 100%);
+}

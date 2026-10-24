@@ -4,24 +4,24 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  closeElectron,
+  bindLaunchedApp,
   debuggerTargets,
   electronBinary,
   freePort,
   launchWithSandboxFallback,
-  sleep,
   waitFor,
 } from '../electron-launch.mjs';
 
-test('the built app starts and opens one window', { timeout: 60_000 }, async () => {
+test('the built app starts and opens one window', { timeout: 45_000 }, async (t) => {
   const binary = electronBinary();
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-smoke-'));
   const port = await freePort();
   const args = ['.', `--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`];
-  let child;
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
 
   try {
-    child = await launchWithSandboxFallback({
+    session.child = await launchWithSandboxFallback({
       binary,
       args,
       ready(running) {
@@ -31,16 +31,15 @@ test('the built app starts and opens one window', { timeout: 60_000 }, async () 
             const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
             return pages.length === 1 && pages[0].title === 'Obelisk';
           },
-          45_000,
+          20_000,
         );
       },
     });
 
-    await sleep(500);
     const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
     assert.equal(pages.length, 1);
     assert.equal(pages[0].title, 'Obelisk');
   } finally {
-    await closeElectron(child, userDataDir);
+    await finish();
   }
 });

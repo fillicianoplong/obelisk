@@ -190,15 +190,20 @@
   box-sizing: border-box;
   caret-color: #1c1915;
   color: #1c1915;
+  flex: 1 1 auto;
   font-family: Georgia, "Times New Roman", Times, serif;
   font-size: 16px;
-  height: 100%;
   line-height: 1.5;
   margin: 0;
+  min-height: 0;
   outline: none;
+  overflow: auto;
   padding: 72px 80px;
-  resize: none;
-  width: min(816px, 100%);
+  width: 100%;
+}
+
+.page-sheet p {
+  margin: 0;
 }
 
 .status-bar {
