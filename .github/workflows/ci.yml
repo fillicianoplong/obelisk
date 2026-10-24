@@ -35,7 +35,9 @@ jobs:
         run: npm run lint
 
       # Electron 45 has no postinstall, so npm ci does not download the binary.
-      # Fetch it once here. The test step is not retried.
+      # npm test installs it once before any test process. This step is that
+      # same install, so the download finishes before the test step. It is not
+      # a retry, and the test step is not retried.
       - name: Install Electron
         run: node node_modules/electron/install.js
 
