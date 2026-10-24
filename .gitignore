@@ -4,4 +4,5 @@ docs/drafts/
 docs/pending_edits.md
 node_modules/
 dist/
+/coverage/
 *.log

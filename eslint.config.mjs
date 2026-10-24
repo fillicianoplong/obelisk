@@ -1,6 +1,11 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
+import {
+  rendererImportBanMessage,
+  rendererImportBanRegexSource,
+  rendererRequireSelectors,
+} from './scripts/renderer-import-ban.mjs';
 
 const unusedVars = {
   argsIgnorePattern: '^_',
@@ -9,7 +14,7 @@ const unusedVars = {
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'docs/**'],
+    ignores: ['dist/**', 'node_modules/**', 'docs/**', 'coverage/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -33,38 +38,25 @@ export default tseslint.config(
   {
     files: ['src/renderer/**/*.ts', 'src/renderer/**/*.tsx'],
     rules: {
+      // NFR-22: the renderer reaches the disk only through the typed IPC bridge.
       'no-restricted-imports': [
         'error',
         {
-          paths: [
-            {
-              name: 'electron',
-              message: 'The renderer cannot import Electron APIs.',
-            },
-            {
-              name: 'fs',
-              message: 'The renderer cannot import Node APIs.',
-            },
-            {
-              name: 'path',
-              message: 'The renderer cannot import Node APIs.',
-            },
-            {
-              name: 'child_process',
-              message: 'The renderer cannot import Node APIs.',
-            },
-            {
-              name: 'os',
-              message: 'The renderer cannot import Node APIs.',
-            },
-          ],
           patterns: [
             {
-              group: ['node:*', 'electron/*'],
-              message: 'The renderer cannot import Node or Electron main APIs.',
+              regex: rendererImportBanRegexSource(),
+              caseSensitive: true,
+              message: rendererImportBanMessage,
             },
           ],
         },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        ...rendererRequireSelectors().map((selector) => ({
+          selector,
+          message: rendererImportBanMessage,
+        })),
       ],
     },
   },

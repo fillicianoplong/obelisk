@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { CONTENT_SECURITY_POLICY } from '../../dist/main/security/csp.js';
+import { CONTENT_SECURITY_POLICY } from '../../../dist/main/security/csp.js';
 import {
   closeElectron,
   debuggerTargets,

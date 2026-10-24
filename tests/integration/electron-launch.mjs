@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import electronImport from 'electron';
 
-export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const OUTPUT_LIMIT = 200_000;
 
