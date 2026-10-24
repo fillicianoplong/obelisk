@@ -1,8 +1,9 @@
 import path from 'node:path';
+import { APP_HOST, APP_PAGE_URL, APP_SCHEME } from '../../shared/app-page.js';
 
-export const APP_SCHEME = 'app';
-export const APP_HOST = 'obelisk';
-export const APP_START_URL = 'app://obelisk/index.html';
+export { APP_HOST, APP_SCHEME };
+
+export const APP_START_URL = APP_PAGE_URL;
 
 const MIME_TYPES: Readonly<Record<string, string>> = {
   '.css': 'text/css; charset=utf-8',

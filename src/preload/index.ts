@@ -1,3 +1,6 @@
+import { contextBridge, ipcRenderer } from 'electron';
+import { exposeObeliskApi } from './bridge.js';
+
 declare function require(moduleName: string): unknown;
 
 interface PreloadProcess {
@@ -13,6 +16,8 @@ function nodeFileSystemAvailable(): boolean {
     return false;
   }
 }
+
+exposeObeliskApi(contextBridge, ipcRenderer);
 
 const preloadProcess = process as NodeJS.Process & PreloadProcess;
 
