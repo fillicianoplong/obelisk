@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,8 +42,14 @@ export function freePort() {
   });
 }
 
-export function stopProcess(child) {
-  if (child.exitCode !== null || child.signalCode !== null) {
+const PROCESS_EXIT_TIMEOUT_MS = 15_000;
+
+function hasExited(child) {
+  return child.exitCode !== null || child.signalCode !== null;
+}
+
+function stopProcess(child) {
+  if (!child.pid || hasExited(child)) {
     return;
   }
   if (process.platform === 'win32') {
@@ -54,6 +61,66 @@ export function stopProcess(child) {
   } catch {
     child.kill('SIGKILL');
   }
+}
+
+function waitForExit(child, timeoutMs) {
+  return new Promise((resolve) => {
+    if (hasExited(child)) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(finish, timeoutMs);
+    function finish() {
+      clearTimeout(timer);
+      child.removeListener('exit', finish);
+      resolve();
+    }
+    child.once('exit', finish);
+    if (hasExited(child)) {
+      finish();
+    }
+  });
+}
+
+function pidExists(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+async function waitUntilPidExits(pid) {
+  const deadline = Date.now() + PROCESS_EXIT_TIMEOUT_MS;
+  while (Date.now() < deadline && pidExists(pid)) {
+    await sleep(100);
+  }
+}
+
+export async function stopElectron(child) {
+  if (!child) {
+    return;
+  }
+  const exited = waitForExit(child, PROCESS_EXIT_TIMEOUT_MS);
+  stopProcess(child);
+  await exited;
+  if (child.pid) {
+    await waitUntilPidExits(child.pid);
+  }
+}
+
+export async function closeElectron(child, userDataDir) {
+  await stopElectron(child);
+  if (!userDataDir) {
+    return;
+  }
+  await rm(userDataDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 15,
+    retryDelay: 200,
+  });
 }
 
 function pause(ms) {
@@ -141,7 +208,7 @@ export async function launchWithSandboxFallback({ binary, args, env, ready }) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const sandboxBlocked = /sandbox|namespace|chrome-sandbox/i.test(message);
-    stopProcess(child);
+    await stopElectron(child);
     if (!sandboxBlocked || process.platform === 'win32') {
       throw error;
     }
@@ -152,7 +219,7 @@ export async function launchWithSandboxFallback({ binary, args, env, ready }) {
     await ready(child);
     return child;
   } catch (error) {
-    stopProcess(child);
+    await stopElectron(child);
     throw error;
   }
 }

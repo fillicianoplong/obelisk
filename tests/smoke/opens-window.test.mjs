@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
+  closeElectron,
   debuggerTargets,
   electronBinary,
   freePort,
   launchWithSandboxFallback,
   sleep,
-  stopProcess,
   waitFor,
 } from '../electron-launch.mjs';
 
@@ -41,9 +41,6 @@ test('the built app starts and opens one window', { timeout: 60_000 }, async () 
     assert.equal(pages.length, 1);
     assert.equal(pages[0].title, 'Obelisk');
   } finally {
-    if (child) {
-      stopProcess(child);
-    }
-    await rm(userDataDir, { recursive: true, force: true });
+    await closeElectron(child, userDataDir);
   }
 });
