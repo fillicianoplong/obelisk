@@ -2,3 +2,6 @@ __pycache__/
 docs/build/
 docs/drafts/
 docs/pending_edits.md
+node_modules/
+dist/
+*.log
