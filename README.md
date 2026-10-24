@@ -42,7 +42,7 @@ npm ci
 npm start
 ```
 
-`npm ci` installs the lockfile's exact versions. `npm start` typechecks, builds, and opens one window.
+`npm ci` installs the lockfile's exact versions. `npm start` typechecks, builds, and opens one window. The first start downloads the Electron 45.0.0 binary for that PC.
 
 ```
 npm run typecheck

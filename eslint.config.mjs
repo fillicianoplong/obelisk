@@ -25,7 +25,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx', 'vite.config.ts'],
+    files: ['src/**/*.ts', 'src/**/*.tsx', 'vite.config.mts'],
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', unusedVars],
     },
