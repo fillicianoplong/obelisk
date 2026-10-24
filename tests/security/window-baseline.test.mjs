@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { CONTENT_SECURITY_POLICY } from '../../dist/main/security/csp.js';
 import {
+  closeElectron,
   debuggerTargets,
   electronBinary,
   freePort,
   launchWithSandboxFallback,
-  stopProcess,
   waitFor,
 } from '../electron-launch.mjs';
 
@@ -183,10 +183,7 @@ test('the secured window blocks fetch, navigation, popups, webviews, and permiss
     );
   } finally {
     client?.close();
-    if (child) {
-      stopProcess(child);
-    }
-    await rm(userDataDir, { recursive: true, force: true });
+    await closeElectron(child, userDataDir);
   }
 });
 
@@ -225,9 +222,6 @@ test('main cancels http and https requests that reach the session', { timeout: 6
     assert.equal(blocked.includes('http://example.invalid/filter-probe'), true, child.output);
     assert.equal(blocked.includes('https://example.invalid/filter-probe'), true, child.output);
   } finally {
-    if (child) {
-      stopProcess(child);
-    }
-    await rm(userDataDir, { recursive: true, force: true });
+    await closeElectron(child, userDataDir);
   }
 });
