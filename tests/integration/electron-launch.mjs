@@ -3,20 +3,22 @@ import { rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import electronImport from 'electron';
+import { existingElectronBinary, missingElectronBinaryMessage } from '../../scripts/electron-binary.mjs';
 
 export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const OUTPUT_LIMIT = 200_000;
 
+export function electronBinaryFrom(root) {
+  const binary = existingElectronBinary(root);
+  if (!binary) {
+    throw new Error(missingElectronBinaryMessage());
+  }
+  return binary;
+}
+
 export function electronBinary() {
-  if (typeof electronImport === 'string' && electronImport.length > 0) {
-    return electronImport;
-  }
-  if (electronImport && typeof electronImport === 'object' && typeof electronImport.default === 'string') {
-    return electronImport.default;
-  }
-  throw new Error('Could not resolve the Electron binary from the electron package.');
+  return electronBinaryFrom(repoRoot);
 }
 
 export function freePort() {
@@ -129,6 +131,9 @@ function pause(ms) {
 
 export function launch(binary, args, env = {}) {
   let lastError;
+  // Linux returns ETXTBSY when exec hits a binary that is still being written.
+  // Windows returns EBUSY for the same overlap. That case is not retried: the
+  // test runner installs the binary once before these files start.
   for (let attempt = 0; attempt < 40; attempt += 1) {
     try {
       return startElectron(binary, args, env);
