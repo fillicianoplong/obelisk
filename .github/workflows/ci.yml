@@ -43,3 +43,72 @@ jobs:
 
       - name: Test and coverage
         run: npm test
+
+  dev-msix:
+    name: Dev MSIX
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Package the dev MSIX twice
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Get-Thumbprint([string] $Log) {
+            $match = Select-String -LiteralPath $Log -Pattern 'Dev certificate thumbprint: ([0-9A-F]{40})' | Select-Object -Last 1
+            if (-not $match) {
+              throw "package:msix did not print a certificate thumbprint ($Log)."
+            }
+            return $match.Matches[0].Groups[1].Value
+          }
+          cmd /c "npm run package:msix > package-1.log 2>&1"
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content -LiteralPath package-1.log
+            exit $(if ($LASTEXITCODE) { $LASTEXITCODE } else { 1 })
+          }
+          Get-Content -LiteralPath package-1.log
+          $first = Get-Thumbprint 'package-1.log'
+          cmd /c "npm run package:msix > package-2.log 2>&1"
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content -LiteralPath package-2.log
+            exit $(if ($LASTEXITCODE) { $LASTEXITCODE } else { 1 })
+          }
+          Get-Content -LiteralPath package-2.log
+          $second = Get-Thumbprint 'package-2.log'
+          if ($first -ne $second) {
+            throw "Dev certificate thumbprints differ: $first and $second."
+          }
+          if (-not (Select-String -LiteralPath package-2.log -Pattern 'Dev certificate: reused' -Quiet)) {
+            throw "The second package:msix run did not reuse the dev certificate."
+          }
+          Write-Output "package run 1 thumbprint: $first"
+          Write-Output "package run 2 thumbprint: $second"
+          Write-Output "OBELISK_DEV_CERT_THUMBPRINT $first"
+
+      - name: Check Electron fuses
+        run: npm run check:fuses -- dist/msix/Obelisk-Dev.msix
+
+      - name: Install, launch, and remove
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-msix.ps1 -Msix dist/msix/Obelisk-Dev.msix -Certificate dist/msix/obelisk-dev.cer
+
+      - name: Upload the dev MSIX and certificate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: obelisk-dev-msix
+          path: |
+            dist/msix/Obelisk-Dev.msix
+            dist/msix/obelisk-dev.cer
+          if-no-files-found: warn
