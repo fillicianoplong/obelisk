@@ -10,6 +10,7 @@ import { StatusBar } from './StatusBar.js';
 import { createTab } from './tabs.js';
 import type { PageTab } from './tabs.js';
 import { TabStrip } from './TabStrip.js';
+import { TitleBar } from './TitleBar.js';
 import './shell.css';
 
 export function Shell() {
@@ -89,6 +90,7 @@ export function Shell() {
 
   return (
     <div className="shell">
+      <TitleBar />
       <MenuBar
         openMenu={openMenu}
         onToggleMenu={(menuId) => {
