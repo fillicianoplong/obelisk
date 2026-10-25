@@ -4,8 +4,12 @@ import path from 'node:path';
 import { packager } from '@electron/packager';
 import { assertFusesOff, flipRequiredFusesOff } from './fuses.mjs';
 import {
+  APP_ICON_RELATIVE,
   assertDevManifest,
   assertNoDevPackageFiles,
+  assertPriDumpMatchesManifest,
+  buildResourceIndex,
+  dumpResourceIndex,
   chooseDevCertificate,
   DEV_CERT_INF_FILE,
   filesInDirectory,
@@ -14,6 +18,8 @@ import {
   MSIX_PACKAGE_FILE,
   MSIX_PUBLISHER,
   PACKAGER_IGNORE,
+  PRI_CONFIG_FILE,
+  PRI_RESOURCE_FILE,
   stalePackagePaths,
   withAppxVersion,
 } from './msix-plan.mjs';
@@ -219,7 +225,7 @@ function signFile(signtool, thumbprint, target) {
   }
 }
 
-async function assertLayout(layout) {
+async function assertLayout(layout, { indexed = false } = {}) {
   const required = [
     MSIX_EXECUTABLE,
     'AppxManifest.xml',
@@ -228,7 +234,11 @@ async function assertLayout(layout) {
     path.join('resources', 'app', 'dist', 'main', 'index.js'),
     path.join('resources', 'app', 'dist', 'preload', 'index.js'),
     path.join('resources', 'app', 'dist', 'renderer', 'index.html'),
+    path.join('resources', path.basename(APP_ICON_RELATIVE)),
   ];
+  if (indexed) {
+    required.push(PRI_RESOURCE_FILE);
+  }
   for (const relative of required) {
     const full = path.join(layout, relative);
     let info;
@@ -240,6 +250,18 @@ async function assertLayout(layout) {
     if (!info.isFile()) {
       throw new Error(`The MSIX layout is missing ${relative}.`);
     }
+  }
+  if (!indexed) {
+    return;
+  }
+  let configInfo;
+  try {
+    configInfo = await stat(path.join(layout, PRI_CONFIG_FILE));
+  } catch {
+    configInfo = null;
+  }
+  if (configInfo) {
+    throw new Error('priconfig.xml must not be packed. makepri already consumed it.');
   }
 }
 
@@ -254,13 +276,25 @@ try {
   run(process.execPath, [path.join(root, 'scripts', 'build.mjs')]);
 
   const tools = findKitTools(windowsKitRoots());
-  if (!tools.makeappx || !tools.signtool) {
+  if (!tools.makeappx || !tools.makepri || !tools.signtool) {
     throw new Error(
-      'makeappx.exe and signtool.exe were not found. Install the Windows 10 SDK (Windows Kits 10), then run this script again.',
+      'makeappx.exe, makepri.exe, and signtool.exe were not found. Install the Windows 10 SDK (Windows Kits 10), then run this script again.',
     );
   }
   console.log(`makeappx: ${tools.makeappx}`);
+  console.log(`makepri: ${tools.makepri}`);
   console.log(`signtool: ${tools.signtool}`);
+
+  const iconPath = path.join(root, APP_ICON_RELATIVE);
+  let iconInfo;
+  try {
+    iconInfo = await stat(iconPath);
+  } catch {
+    iconInfo = null;
+  }
+  if (!iconInfo?.isFile()) {
+    throw new Error(`The app icon is missing: ${iconPath}`);
+  }
 
   await rm(stage, { recursive: true, force: true });
   const appPaths = await packager({
@@ -275,6 +309,8 @@ try {
     prune: true,
     junk: true,
     derefSymlinks: true,
+    icon: iconPath,
+    extraResource: [iconPath],
     ignore: PACKAGER_IGNORE,
   });
   if (!Array.isArray(appPaths) || appPaths.length !== 1) {
@@ -310,6 +346,12 @@ try {
   const thumbprint = await ensureDevCertificate(cerPath);
   console.log(`Dev certificate thumbprint: ${thumbprint}`);
   signFile(tools.signtool, thumbprint, executable);
+  // Qualified names (scale-200, targetsize, altform) are used only when
+  // resources.pri indexes them under Files/assets/, matching the manifest.
+  // buildResourceIndex removes priconfig.xml.
+  await buildResourceIndex(tools.makepri, layout, run);
+  assertPriDumpMatchesManifest(await dumpResourceIndex(tools.makepri, layout, run), versioned);
+  await assertLayout(layout, { indexed: true });
   await rm(msixPath, { force: true });
   run(tools.makeappx, ['pack', '/d', layout, '/p', msixPath, '/o']);
   try {

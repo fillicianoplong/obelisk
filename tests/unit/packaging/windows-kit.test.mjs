@@ -16,15 +16,19 @@ test('the Windows SDK lookup prefers the newest x64 tools', async () => {
     await mkdir(newer, { recursive: true });
     await writeFile(path.join(older, 'makeappx.exe'), '');
     await writeFile(path.join(older, 'signtool.exe'), '');
+    await writeFile(path.join(older, 'makepri.exe'), '');
     await writeFile(path.join(newerX86, 'makeappx.exe'), '');
+    await writeFile(path.join(newerX86, 'makepri.exe'), '');
     await writeFile(path.join(newer, 'makeappx.exe'), '');
     await writeFile(path.join(newer, 'signtool.exe'), '');
+    await writeFile(path.join(newer, 'makepri.exe'), '');
     await mkdir(path.join(root, 'notes'), { recursive: true });
 
     const found = findKitTools([root, path.join(root, 'missing')]);
     assert.equal(found.makeappx, path.join(newer, 'makeappx.exe'));
     assert.equal(found.signtool, path.join(newer, 'signtool.exe'));
-    assert.deepEqual(findKitTools([]), { makeappx: null, signtool: null });
+    assert.equal(found.makepri, path.join(newer, 'makepri.exe'));
+    assert.deepEqual(findKitTools([]), { makeappx: null, signtool: null, makepri: null });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
