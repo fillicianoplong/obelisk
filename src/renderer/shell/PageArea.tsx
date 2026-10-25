@@ -1,24 +1,13 @@
-import { useEffect, useRef } from 'react';
+import type { EditorState } from 'prosemirror-state';
+import { EditorCore } from '../editor/EditorCore.js';
 
 interface PageAreaProps {
   tabId: string;
-  text: string;
-  onText: (text: string) => void;
+  state: EditorState;
+  onChange: (tabId: string, state: EditorState) => void;
 }
 
-export function PageArea({ tabId, text, onText }: PageAreaProps) {
-  const editorRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (editor === null) {
-      return;
-    }
-    editor.focus();
-    const end = editor.value.length;
-    editor.setSelectionRange(end, end);
-  }, [tabId]);
-
+export function PageArea({ tabId, state, onChange }: PageAreaProps) {
   return (
     <section
       className="page-region"
@@ -27,18 +16,7 @@ export function PageArea({ tabId, text, onText }: PageAreaProps) {
       id={`panel-${tabId}`}
       aria-labelledby={`tab-${tabId}`}
     >
-      <textarea
-        key={tabId}
-        ref={editorRef}
-        className="page-sheet"
-        data-region="page-editor"
-        aria-label="Page"
-        defaultValue={text}
-        spellCheck
-        onChange={(event) => {
-          onText(event.target.value);
-        }}
-      />
+      <EditorCore key={tabId} tabId={tabId} state={state} onChange={onChange} />
     </section>
   );
 }

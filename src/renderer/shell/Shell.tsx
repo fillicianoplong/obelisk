@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { EditorState } from 'prosemirror-state';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { editorUpdatesAreSynchronous } from '../editor/flush.js';
+import { editorText } from '../editor/state.js';
 import { MenuBar } from './MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { statusLabel } from './status.js';
@@ -31,11 +35,18 @@ export function Shell() {
     setOpenMenu(null);
   }, []);
 
-  const updateText = useCallback((text: string) => {
-    setTabs((current) => current.map((tab) => (tab.id === activeId ? { ...tab, text } : tab)));
-  }, [activeId]);
+  const updateEditor = useCallback((tabId: string, editor: EditorState) => {
+    const apply = () => {
+      setTabs((current) => current.map((tab) => (tab.id === tabId ? { ...tab, editor } : tab)));
+    };
+    if (editorUpdatesAreSynchronous()) {
+      flushSync(apply);
+    } else {
+      apply();
+    }
+  }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setOpenMenu(null);
@@ -47,8 +58,11 @@ export function Shell() {
       }
     }
     window.addEventListener('keydown', onKeyDown);
+    // Present before the first paint, so a key cannot arrive before the command exists.
+    document.documentElement.dataset.shellCommands = 'ready';
     return () => {
       window.removeEventListener('keydown', onKeyDown);
+      delete document.documentElement.dataset.shellCommands;
     };
   }, [addTab]);
 
@@ -87,8 +101,8 @@ export function Shell() {
         barRef={menuBarRef}
       />
       <TabStrip tabs={tabs} activeId={activeTab.id} onSelect={selectTab} onNew={addTab} />
-      <PageArea tabId={activeTab.id} text={activeTab.text} onText={updateText} />
-      <StatusBar label={statusLabel(activeTab.text)} />
+      <PageArea tabId={activeTab.id} state={activeTab.editor} onChange={updateEditor} />
+      <StatusBar label={statusLabel(editorText(activeTab.editor))} />
     </div>
   );
 }

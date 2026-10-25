@@ -20,13 +20,16 @@ export function frameUrlFromEvent(event: IpcSenderEvent): string | null {
 export function bindIpcHandlers(ipc: IpcMainLike, registry: IpcRegistry): string[] {
   const registered: string[] = [];
   for (const channel of IPC_INVOKE_CHANNELS) {
-    ipc.handle(channel, (event, ...args) =>
-      registry.dispatch({
+    ipc.handle(channel, (event, ...args) => {
+      if (process.env.OBELISK_IPC_TRACE === '1') {
+        console.log(`OBELISK_IPC ${channel}`);
+      }
+      return registry.dispatch({
         senderUrl: frameUrlFromEvent(event),
         channel,
         args,
-      }),
-    );
+      });
+    });
     registered.push(channel);
   }
   return registered;

@@ -9,7 +9,14 @@ interface TabStripProps {
 
 export function TabStrip({ tabs, activeId, onSelect, onNew }: TabStripProps) {
   return (
-    <div className="tab-strip" data-region="tab-strip" role="tablist" aria-label="Tabs">
+    <div
+      className="tab-strip"
+      data-region="tab-strip"
+      data-tab-count={tabs.length}
+      data-active-tab={activeId}
+      role="tablist"
+      aria-label="Tabs"
+    >
       {tabs.map((tab) => {
         const selected = tab.id === activeId;
         return (

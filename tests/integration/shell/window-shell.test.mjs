@@ -1,16 +1,19 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readdir, stat } from 'node:fs/promises';
+import { mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  closeElectron,
+  bindLaunchedApp,
   debuggerTargets,
   electronBinary,
+  evaluate,
   freePort,
   launchWithSandboxFallback,
+  openCdp,
   repoRoot,
   sleep,
+  STEP_TIMEOUT_MS,
   waitFor,
 } from '../electron-launch.mjs';
 
@@ -22,7 +25,10 @@ const SHELL_EXPRESSION = `(() => {
   const page = document.querySelector('[data-region="page"]');
   const editor = document.querySelector('[data-region="page-editor"]');
   const status = document.querySelector('[data-region="status-bar"]');
-  if (!menu || !tabs || !page || !editor || !status) {
+  if (document.documentElement.dataset.shellCommands !== 'ready') {
+    return null;
+  }
+  if (!menu || !tabs || !page || !editor || !status || !editor.editorCommands) {
     return null;
   }
   const box = (element) => {
@@ -46,7 +52,8 @@ const SHELL_EXPRESSION = `(() => {
       return null;
     }
   }
-  if (editor.tagName !== 'TEXTAREA' || editor.disabled || editor.readOnly) {
+  const paragraphs = [...editor.querySelectorAll(':scope > p')];
+  if (editor.getAttribute('contenteditable') !== 'true' || paragraphs.length === 0) {
     return null;
   }
   const tabNodes = [...tabs.querySelectorAll('[role="tab"]')];
@@ -58,67 +65,9 @@ const SHELL_EXPRESSION = `(() => {
     tabLabels: tabNodes.map((element) => element.getAttribute('data-title')),
     activeTitle: active ? active.getAttribute('data-title') : null,
     statusText: (status.textContent || '').trim(),
-    editorValue: editor.value,
+    editorValue: paragraphs.map((block) => (block.textContent || '').replace(/\\u200b/g, '')).join('\\n'),
   };
 })()`;
-
-function cdp(wsUrl) {
-  const Socket = globalThis.WebSocket;
-  if (typeof Socket !== 'function') {
-    throw new Error('This Node version has no WebSocket client.');
-  }
-  const ws = new Socket(wsUrl);
-  let nextId = 1;
-  const pending = new Map();
-
-  ws.addEventListener('message', (event) => {
-    const message = JSON.parse(String(event.data));
-    const resolver = pending.get(message.id);
-    if (!resolver) {
-      return;
-    }
-    pending.delete(message.id);
-    if (message.error) {
-      resolver.reject(new Error(JSON.stringify(message.error)));
-      return;
-    }
-    resolver.resolve(message.result);
-  });
-
-  const opened = new Promise((resolve, reject) => {
-    ws.addEventListener('open', resolve);
-    ws.addEventListener('error', () => reject(new Error('DevTools socket failed.')));
-  });
-
-  return {
-    url: wsUrl,
-    async send(method, params = {}) {
-      await opened;
-      const id = nextId;
-      nextId += 1;
-      const result = new Promise((resolve, reject) => {
-        pending.set(id, { resolve, reject });
-      });
-      ws.send(JSON.stringify({ id, method, params }));
-      return result;
-    },
-    close() {
-      ws.close();
-    },
-  };
-}
-
-async function evaluate(client, expression) {
-  const result = await client.send('Runtime.evaluate', {
-    expression,
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  if (result.exceptionDetails) {
-    throw new Error(JSON.stringify(result.exceptionDetails));
-  }
-  return result.result.value;
-}
 
 async function readShell(port, session) {
   const pages = (await debuggerTargets(port)).filter(
@@ -130,7 +79,7 @@ async function readShell(port, session) {
   const url = pages[0].webSocketDebuggerUrl;
   if (!session.client || session.client.url !== url) {
     session.client?.close();
-    session.client = cdp(url);
+    session.client = openCdp(url);
   }
   try {
     return await evaluate(session.client, SHELL_EXPRESSION);
@@ -141,14 +90,14 @@ async function readShell(port, session) {
   }
 }
 
-async function launchShell(userDataDir, port) {
+async function launchShell(session, port, env) {
   const binary = electronBinary();
-  const args = ['.', `--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`];
-  const session = { client: undefined };
+  const args = ['.', `--remote-debugging-port=${port}`, `--user-data-dir=${session.userDataDir}`];
   let elapsed = 0;
-  const child = await launchWithSandboxFallback({
+  session.child = await launchWithSandboxFallback({
     binary,
     args,
+    env,
     ready(running) {
       session.client?.close();
       session.client = undefined;
@@ -167,14 +116,82 @@ async function launchShell(userDataDir, port) {
       );
     },
   });
-  return { child, session, elapsed };
+  return elapsed;
+}
+
+async function waitForShell(port, session, predicate, label) {
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let last = null;
+  while (Date.now() < deadline) {
+    last = await readShell(port, session);
+    if (last && predicate(last)) {
+      return last;
+    }
+    await sleep(30);
+  }
+  throw new Error(`${label} did not match within ${STEP_TIMEOUT_MS} ms: ${JSON.stringify(last)}`);
 }
 
 const SKIP_DIRECTORIES = new Set(['node_modules', '.git', 'dist', 'coverage', 'docs']);
 
-async function listFiles(directory) {
-  const files = [];
-  async function walk(current) {
+// Chromium owns these profile folders. A real GPU rewrites GPUCache while the
+// window is open. That data is not a document, a recovery copy, or a temp save.
+const CHROMIUM_PROFILE_DIRECTORIES = new Set([
+  'AutofillStrikeDatabase',
+  'blob_storage',
+  'BrowserMetrics',
+  'BudgetDatabase',
+  'Cache',
+  'Code Cache',
+  'Crashpad',
+  'Crash Reports',
+  'Crowd Deny',
+  'DawnCache',
+  'DawnGraphiteCache',
+  'DawnWebGPUCache',
+  'databases',
+  'DIPS',
+  'File System',
+  'GPUCache',
+  'GraphiteDawnCache',
+  'GrShaderCache',
+  'IndexedDB',
+  'Local Storage',
+  'Network',
+  'optimization_guide_hint_cache_store',
+  'Service Worker',
+  'Session Storage',
+  'Sessions',
+  'ShaderCache',
+  'Shared Dictionary',
+  'SharedStorage',
+  'Site Characteristics Database',
+  'Storage',
+  'VideoDecodeStats',
+  'WebStorage',
+]);
+
+const APP_OWNED_DIRECTORIES = new Set(['recovery', 'documents', 'temp-save']);
+
+function isDocumentWrite(relativePath) {
+  const segments = relativePath.split(/[\\/]/);
+  const name = segments[segments.length - 1] ?? '';
+  const lower = name.toLowerCase();
+  if (lower.endsWith('.obk') || lower.endsWith('.obk.tmp') || name.includes('.~obk-')) {
+    return true;
+  }
+  if (lower.includes('autosave')) {
+    return true;
+  }
+  return segments.some((segment) => APP_OWNED_DIRECTORIES.has(segment.toLowerCase()));
+}
+
+async function listDocumentWrites(directory) {
+  const found = [];
+  async function walk(current, depth) {
+    if (depth > 20) {
+      return;
+    }
     let entries;
     try {
       entries = await readdir(current, { withFileTypes: true });
@@ -185,67 +202,19 @@ async function listFiles(directory) {
       throw error;
     }
     for (const entry of entries) {
+      if (SKIP_DIRECTORIES.has(entry.name) || CHROMIUM_PROFILE_DIRECTORIES.has(entry.name)) {
+        continue;
+      }
       const full = path.join(current, entry.name);
       if (entry.isDirectory()) {
-        await walk(full);
-      } else if (entry.isFile()) {
-        const fileStat = await stat(full);
-        files.push(`${path.relative(directory, full)}:${fileStat.size}`);
+        await walk(full, depth + 1);
+      } else if (entry.isFile() && isDocumentWrite(path.relative(directory, full))) {
+        found.push(path.relative(directory, full));
       }
     }
   }
-  await walk(directory);
-  return files.sort();
-}
-
-async function settleFiles(directory) {
-  let previous = await listFiles(directory);
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    await sleep(200);
-    const next = await listFiles(directory);
-    if (next.join('\n') === previous.join('\n')) {
-      return next;
-    }
-    previous = next;
-  }
-  return previous;
-}
-
-function fileDiff(before, after) {
-  const beforeSet = new Set(before);
-  const afterSet = new Set(after);
-  return {
-    added: after.filter((file) => !beforeSet.has(file)),
-    removed: before.filter((file) => !afterSet.has(file)),
-  };
-}
-
-async function findObkFiles(directory, depth = 0) {
-  if (depth > 8) {
-    return [];
-  }
-  const found = [];
-  let entries;
-  try {
-    entries = await readdir(directory, { withFileTypes: true });
-  } catch (error) {
-    if (error?.code === 'ENOENT' || error?.code === 'EPERM') {
-      return found;
-    }
-    throw error;
-  }
-  for (const entry of entries) {
-    if (SKIP_DIRECTORIES.has(entry.name)) {
-      continue;
-    }
-    const full = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      found.push(...(await findObkFiles(full, depth + 1)));
-    } else if (entry.isFile() && (entry.name.endsWith('.obk') || entry.name.includes('.~obk-'))) {
-      found.push(full);
-    }
-  }
-  return found;
+  await walk(directory, 0);
+  return found.sort();
 }
 
 function assertRegions(state) {
@@ -257,104 +226,118 @@ function assertRegions(state) {
   assert.match(state.statusText, /Not saved/);
 }
 
-async function chooseFileNew(client, expectedCount) {
-  const result = await evaluate(
+async function fileMenuState(client) {
+  return evaluate(
     client,
-    `(async () => {
+    `(() => {
+      if (document.documentElement.dataset.shellCommands !== 'ready') {
+        return 'commands not ready';
+      }
       const file = document.querySelector('[data-menu="file"]');
       if (!file) {
         return 'missing File menu';
       }
-      file.click();
-      const opened = Date.now() + 1000;
-      let item = null;
-      while (Date.now() < opened) {
-        item = document.querySelector('[data-region="menu-bar"] [data-command="new"]');
-        const rect = item ? item.getBoundingClientRect() : null;
-        if (item && !item.disabled && rect.width > 0 && rect.height > 0) {
-          break;
-        }
-        item = null;
-        await new Promise((resolve) => requestAnimationFrame(resolve));
+      if (file.getAttribute('aria-expanded') !== 'true') {
+        file.click();
       }
-      if (!item) {
+      const item = document.querySelector('[data-region="menu-bar"] [data-command="new"]');
+      if (!item || item.disabled) {
+        return 'pending';
+      }
+      const rect = item.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        return 'pending';
+      }
+      return 'open';
+    })()`,
+  );
+}
+
+async function chooseFileNew(port, session, expectedCount) {
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let menu = 'pending';
+  while (Date.now() < deadline && (menu === 'pending' || menu === 'commands not ready')) {
+    menu = await fileMenuState(session.client);
+    if (menu === 'pending' || menu === 'commands not ready') {
+      await sleep(30);
+    }
+  }
+  if (menu !== 'open') {
+    throw new Error(`File > New did not appear within ${STEP_TIMEOUT_MS} ms (${menu}).`);
+  }
+  const clicked = await evaluate(
+    session.client,
+    `(() => {
+      const item = document.querySelector('[data-region="menu-bar"] [data-command="new"]');
+      if (!item || item.disabled) {
         return 'missing File > New';
       }
       item.click();
-      const added = Date.now() + 1000;
-      while (Date.now() < added) {
-        const titles = [...document.querySelectorAll('[role="tab"]')].map((tab) => tab.getAttribute('data-title'));
-        if (titles.length === ${expectedCount}) {
-          return 'ok';
-        }
-        await new Promise((resolve) => requestAnimationFrame(resolve));
+      return 'clicked';
+    })()`,
+  );
+  assert.equal(clicked, 'clicked', clicked);
+  return waitForShell(
+    port,
+    session,
+    (state) => state.tabLabels.length === expectedCount && state.activeTitle === `Untitled ${expectedCount}`,
+    'File > New',
+  );
+}
+
+async function replacePageText(port, session, text) {
+  const result = await evaluate(
+    session.client,
+    `(() => {
+      const editor = document.querySelector('[data-region="page-editor"]');
+      const commands = editor && editor.editorCommands;
+      if (!commands) {
+        return 'editor commands are not ready';
       }
-      return 'File > New did not open a tab';
+      commands.replaceText(${JSON.stringify(text)});
+      return 'ok';
     })()`,
   );
   assert.equal(result, 'ok', result);
+  return waitForShell(port, session, (state) => state.editorValue === text, `page text ${JSON.stringify(text)}`);
 }
 
-async function replacePageText(client, text) {
-  const value = await evaluate(
-    client,
-    `(() => {
-      const editor = document.querySelector('[data-region="page-editor"]');
-      if (!editor) {
-        return null;
-      }
-      editor.focus();
-      const prototype = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
-      prototype.set.call(editor, ${JSON.stringify(text)});
-      editor.dispatchEvent(new Event('input', { bubbles: true }));
-      return editor.value;
-    })()`,
-  );
-  assert.equal(value, text);
-}
-
-async function selectTab(client, tabId) {
+async function selectTab(port, session, tabId) {
   const title = await evaluate(
-    client,
-    `(async () => {
+    session.client,
+    `(() => {
       const tab = document.querySelector('[data-tab-id=${JSON.stringify(tabId)}]');
       if (!tab) {
-        return null;
+        return 'missing tab';
       }
-      const expected = tab.getAttribute('data-title');
       tab.click();
-      const deadline = Date.now() + 1000;
-      while (Date.now() < deadline) {
-        const active = document.querySelector('[role="tab"][aria-selected="true"]')?.getAttribute('data-title') ?? null;
-        const editor = document.querySelector('[data-region="page-editor"]');
-        if (active === expected && editor) {
-          return { active, value: editor.value };
-        }
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-      }
-      return { active: null, value: null };
+      return tab.getAttribute('data-title');
     })()`,
   );
-  assert.ok(title, `missing tab ${tabId}`);
-  return title;
+  assert.notEqual(title, 'missing tab', `missing tab ${tabId}`);
+  const state = await waitForShell(
+    port,
+    session,
+    (current) => current.activeTitle === title && current.editorValue !== undefined,
+    `tab ${tabId}`,
+  );
+  return { active: state.activeTitle, value: state.editorValue };
 }
 
-test('launch shows the four shell regions and an editable tab within 3 seconds', { timeout: 60_000 }, async () => {
+test('launch shows the four shell regions and an editable tab within 3 seconds', { timeout: 45_000 }, async (t) => {
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-shell-launch-'));
   const port = await freePort();
-  let child;
-  let session;
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
 
   try {
-    const launched = await launchShell(userDataDir, port);
-    child = launched.child;
-    session = launched.session;
+    const elapsed = await launchShell(session, port);
     const state = await readShell(port, session);
     assert.ok(state, 'the shell did not render');
-    console.log(`NFR-01 launch to editable tab: ${launched.elapsed} ms`);
+    console.log(`NFR-01 launch to editable tab: ${elapsed} ms`);
     assert.ok(
-      launched.elapsed < LAUNCH_LIMIT_MS,
-      `NFR-01 launch to editable tab took ${launched.elapsed} ms, limit is ${LAUNCH_LIMIT_MS} ms`,
+      elapsed < LAUNCH_LIMIT_MS,
+      `NFR-01 launch to editable tab took ${elapsed} ms, limit is ${LAUNCH_LIMIT_MS} ms`,
     );
     assertRegions(state);
     assert.deepEqual(state.tabLabels, ['Untitled 1']);
@@ -364,64 +347,60 @@ test('launch shows the four shell regions and an editable tab within 3 seconds',
     const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
     assert.equal(pages.length, 1);
   } finally {
-    session?.client?.close();
-    await closeElectron(child, userDataDir);
+    await finish();
   }
 });
 
-test('File > New adds a never-saved tab and writes no file', { timeout: 60_000 }, async () => {
+test('File > New adds a never-saved tab and writes no file', { timeout: 45_000 }, async (t) => {
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-shell-new-'));
   const port = await freePort();
-  let child;
-  let session;
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
 
   try {
-    const launched = await launchShell(userDataDir, port);
-    child = launched.child;
-    session = launched.session;
-    const beforeFiles = await settleFiles(userDataDir);
-    const beforeObk = [
-      ...(await findObkFiles(userDataDir)),
-      ...(await findObkFiles(repoRoot)),
+    await launchShell(session, port, { OBELISK_IPC_TRACE: '1' });
+    const beforeDocuments = [
+      ...(await listDocumentWrites(userDataDir)),
+      ...(await listDocumentWrites(repoRoot)),
     ];
-    assert.deepEqual(beforeObk, []);
+    assert.deepEqual(beforeDocuments, []);
 
-    await replacePageText(session.client, 'First page notes');
-    let state = await readShell(port, session);
+    let state = await replacePageText(port, session, 'First page notes');
+    state = await waitForShell(
+      port,
+      session,
+      (current) => current.statusText === 'Page 1 of 1 - 3 words - 16 characters - 100% - Not saved',
+      'first page status',
+    );
     assert.equal(state.editorValue, 'First page notes');
     assert.equal(state.statusText, 'Page 1 of 1 - 3 words - 16 characters - 100% - Not saved');
 
-    await chooseFileNew(session.client, 2);
-    state = await readShell(port, session);
+    state = await chooseFileNew(port, session, 2);
     assert.deepEqual(state.tabLabels, ['Untitled 1', 'Untitled 2']);
     assert.equal(state.activeTitle, 'Untitled 2');
     assert.equal(state.editorValue, '');
     assert.match(state.statusText, /Not saved/);
 
-    await replacePageText(session.client, 'Second page');
-    await chooseFileNew(session.client, 3);
-    state = await readShell(port, session);
+    await replacePageText(port, session, 'Second page');
+    state = await chooseFileNew(port, session, 3);
     assert.deepEqual(state.tabLabels, ['Untitled 1', 'Untitled 2', 'Untitled 3']);
     assert.equal(state.activeTitle, 'Untitled 3');
     assert.equal(state.editorValue, '');
 
-    const firstTab = await selectTab(session.client, 'untitled-1');
+    const firstTab = await selectTab(port, session, 'untitled-1');
     assert.equal(firstTab.active, 'Untitled 1');
     assert.equal(firstTab.value, 'First page notes');
-    const secondTab = await selectTab(session.client, 'untitled-2');
+    const secondTab = await selectTab(port, session, 'untitled-2');
     assert.equal(secondTab.active, 'Untitled 2');
     assert.equal(secondTab.value, 'Second page');
 
-    const afterFiles = await settleFiles(userDataDir);
-    const diff = fileDiff(beforeFiles, afterFiles);
-    assert.deepEqual(diff, { added: [], removed: [] }, JSON.stringify(diff));
-    const afterObk = [
-      ...(await findObkFiles(userDataDir)),
-      ...(await findObkFiles(repoRoot)),
+    const afterDocuments = [
+      ...(await listDocumentWrites(userDataDir)),
+      ...(await listDocumentWrites(repoRoot)),
     ];
-    assert.deepEqual(afterObk, []);
+    assert.deepEqual(afterDocuments, [], JSON.stringify(afterDocuments));
+    assert.doesNotMatch(session.child.output, /OBELISK_IPC file:save(?:As)?(?:\s|$)/);
   } finally {
-    session?.client?.close();
-    await closeElectron(child, userDataDir);
+    await finish();
   }
 });

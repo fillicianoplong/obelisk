@@ -13,6 +13,7 @@ const electronTestFiles = [
   path.join('tests', 'integration', 'smoke', 'opens-window.test.mjs'),
   path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
   path.join('tests', 'integration', 'shell', 'window-shell.test.mjs'),
+  path.join('tests', 'integration', 'editor', 'tab-editor.test.mjs'),
 ];
 
 function exitCode(result) {
@@ -75,6 +76,7 @@ mkdirSync(coverageDir, { recursive: true });
 // NFR-23 is a reported 80% line-coverage target, not a failing threshold.
 // Do not pass --test-coverage-lines; that flag fails the process.
 const coverageArgs = [
+  '--disable-warning=MODULE_TYPELESS_PACKAGE_JSON',
   '--enable-source-maps',
   '--test',
   '--experimental-test-coverage',

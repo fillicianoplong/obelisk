@@ -1,7 +1,10 @@
+import type { EditorState } from 'prosemirror-state';
+import { createTabEditorState } from '../editor/state.js';
+
 export interface PageTab {
   id: string;
   title: string;
-  text: string;
+  editor: EditorState;
 }
 
 export function untitledTitle(number: number): string {
@@ -12,6 +15,6 @@ export function createTab(number: number): PageTab {
   return {
     id: `untitled-${number}`,
     title: untitledTitle(number),
-    text: '',
+    editor: createTabEditorState(),
   };
 }
