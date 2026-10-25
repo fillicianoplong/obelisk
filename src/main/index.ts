@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, nativeTheme } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
@@ -10,6 +10,7 @@ import { installSessionSecurity } from './security/session.js';
 import { configureWritablePaths } from './security/writable-paths.js';
 import { installIpc } from './ipc/install.js';
 import { secureWebPreferences } from './security/window-options.js';
+import { shellFrameColors } from './shell-theme.js';
 
 const WINDOW_WIDTH = 1280;
 const WINDOW_HEIGHT = 800;
@@ -37,6 +38,20 @@ function windowIconPath(): string | null {
   return null;
 }
 
+function applyShellFrame(target: BrowserWindow): void {
+  const frame = shellFrameColors(nativeTheme.shouldUseDarkColors);
+  // The page follows prefers-color-scheme on its own. The caption buttons and
+  // this background do not, and the background shows through as a line at the
+  // top of the window, so both have to move with the Windows theme.
+  target.setBackgroundColor(frame.backgroundColor);
+  if (process.platform === 'win32') {
+    target.setTitleBarOverlay({
+      color: frame.overlayColor,
+      symbolColor: frame.symbolColor,
+    });
+  }
+}
+
 function createWindow(): void {
   const webPreferences = secureWebPreferences(path.join(__dirname, '../preload/index.js'));
   reportSecurity(
@@ -51,11 +66,25 @@ function createWindow(): void {
   // The .ico path lets Windows load the 16 px frame at 100%, 20 px at 125%,
   // and 24 px at 150%. One file is used on both light and dark taskbars.
   const windowIcon = windowIconPath();
+  // Same system setting the style sheet reads through prefers-color-scheme.
+  const frame = shellFrameColors(nativeTheme.shouldUseDarkColors);
+  const windowsFrame =
+    process.platform === 'win32'
+      ? {
+          titleBarStyle: 'hidden' as const,
+          titleBarOverlay: {
+            color: frame.overlayColor,
+            symbolColor: frame.symbolColor,
+            height: frame.titleBarHeight,
+          },
+        }
+      : {};
   const window = new BrowserWindow({
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
     title: APP_NAME,
-    backgroundColor: '#e7e2d8',
+    backgroundColor: frame.backgroundColor,
+    ...windowsFrame,
     ...(windowIcon ? { icon: windowIcon } : {}),
     webPreferences,
   });
@@ -68,6 +97,17 @@ function createWindow(): void {
 
   window.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
     console.error(`Renderer failed to load (${errorCode}): ${errorDescription} ${validatedURL}`);
+  });
+
+  const onThemeUpdated = () => {
+    if (window.isDestroyed()) {
+      return;
+    }
+    applyShellFrame(window);
+  };
+  nativeTheme.on('updated', onThemeUpdated);
+  window.on('closed', () => {
+    nativeTheme.off('updated', onThemeUpdated);
   });
 
   void window.loadURL(APP_START_URL);

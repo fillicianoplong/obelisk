@@ -1,0 +1,348 @@
+/*
+ * Obelisk design tokens: Slate
+ * One source of truth for colors, type, spacing, radii, elevation, and motion.
+ *
+ * Theme selection
+ *   Match Windows (default): no data-theme attribute; prefers-color-scheme decides.
+ *   Light / Dark preference: <html data-theme="light"> or <html data-theme="dark">.
+ *   Windows contrast themes: the forced-colors block at the end maps tokens to system colors.
+ *   Windows animation effects off: the reduced-motion block sets every duration to 0 ms.
+ *
+ * Use only semantic tokens in components. Never hard-code a color or size.
+ */
+
+/* ---------- Theme-independent tokens ---------- */
+:root {
+  /* Type families */
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", Selawik, system-ui, sans-serif;
+  --font-ui-display: "Segoe UI Variable Display", "Segoe UI", Selawik, system-ui, sans-serif;
+  --font-page: "Liberation Serif", "Times New Roman", serif;   /* Preferences default font */
+  --font-code: "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  --font-signature: "Dancing Script", cursive;                  /* FR-78 typed signature */
+
+  /* UI type scale (size / line height) */
+  --font-size-caption: 12px;     --line-height-caption: 16px;   /* status bar, tooltips, hints */
+  --font-size-body-small: 13px;  --line-height-body-small: 18px; /* tab titles */
+  --font-size-body: 14px;        --line-height-body: 20px;      /* menus, dialogs, controls */
+  --font-size-subtitle: 20px;    --line-height-subtitle: 28px;  /* dialog titles */
+  --font-size-title: 28px;       --line-height-title: 36px;     /* Preferences page title */
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+
+  /* Page type: 12 pt default (Preferences reference); 1 pt = 4/3 CSS px at 100% zoom */
+  --font-size-page: 12pt;
+  --line-height-page: 1.15;
+
+  /* Spacing scale (4 px grid) */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-m: 12px;
+  --space-l: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+
+  /* Radii */
+  --radius-control: 4px;   /* buttons, inputs, checkboxes, tooltips */
+  --radius-tab: 6px;       /* top corners of tabs */
+  --radius-overlay: 8px;   /* menus, dialogs, find bar */
+  --radius-round: 999px;   /* toggles, radio dots, scrollbar thumbs */
+
+  /* Shell region sizes */
+  --size-titlebar: 32px;
+  --size-menubar: 32px;
+  --size-tabstrip: 40px;
+  --size-statusbar: 28px;
+  --size-control: 32px;
+  --size-control-small: 24px;
+  --size-caption-button: 46px;
+  --size-tab-min: 96px;
+  --size-tab-max: 220px;
+  --size-focus-ring: 2px;
+  --size-scrollbar: 12px;
+  --size-scrollbar-thin: 4px;
+
+  /* Page geometry (Page setup reference: Letter, Normal margins) */
+  --page-width: 8.5in;
+  --page-height: 11in;
+  --page-margin: 1in;
+  --page-header-offset: 0.5in;
+  --page-gap: 24px;
+
+  /* Motion (Fluent-like) */
+  --duration-instant: 0ms;
+  --duration-fast: 83ms;     /* hover and pressed fades */
+  --duration-normal: 167ms;  /* menus, tooltips, tab moves */
+  --duration-slow: 250ms;    /* dialogs */
+  --easing-standard: cubic-bezier(0.33, 0, 0.67, 1);
+  --easing-decelerate: cubic-bezier(0, 0, 0, 1);
+  --easing-accelerate: cubic-bezier(1, 0, 1, 1);
+}
+
+/* ---------- Light (default, and data-theme="light") ---------- */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-surface-chrome: #E6EAF0;          /* title bar, menu bar, tab strip, status bar */
+  --color-surface-chrome-hover: #D3D9E2;
+  --color-surface-chrome-pressed: #C9D0DA;
+  --color-surface-canvas: #EDF0F4;          /* behind pages; also the active tab */
+  --color-surface-page: #FFFFFF;
+  --color-surface-raised: #FFFFFF;          /* menus, dialogs, find bar, tooltips */
+  --color-surface-raised-hover: #E6EAF0;    /* menu item hover */
+  --color-surface-raised-pressed: #D3D9E2;
+  --color-surface-input: #FFFFFF;
+  --color-surface-subtle: #F4F6F9;          /* formula, code, quiet panels */
+  --color-surface-table-header: #EEF1F5;
+  --color-surface-overlay: rgba(31, 38, 48, 0.40);   /* dialog scrim */
+
+  --color-text-primary: #1F2630;
+  --color-text-secondary: #4A5361;
+  --color-text-heading: #2F3640;
+  --color-text-chrome: #1F2630;
+  --color-text-tab: #465060;
+  --color-text-status: #3A4350;
+  --color-text-disabled: #6E7785;
+  --color-text-on-accent: #FFFFFF;
+  --color-text-link: #2B5797;
+
+  --color-border-subtle: #C9D0DA;           /* region dividers, tab edges, cards */
+  --color-border-control: #7E8898;          /* input, checkbox, radio, toggle outlines (3:1) */
+  --color-border-control-hover: #5F6977;
+  --color-border-disabled: #B4BBC6;
+
+  --color-accent: #3B4654;                  /* primary button, checked controls, active tab bar */
+  --color-accent-hover: #2F3640;
+  --color-accent-pressed: #252B33;
+  --color-accent-subtle: #D3DCEA;
+
+  --color-focus-outer: #1F2630;
+  --color-focus-inner: #FFFFFF;
+  --color-selection: #D3DCEA;               /* text selection on the page */
+  --color-selection-text: #1F2630;
+  --color-find-match: #F3E3A1;              /* every match, also outlined */
+  --color-find-current: #E0B83A;            /* current match, also underlined */
+
+  --color-success: #0E6B0E;
+  --color-warning: #8A5100;
+  --color-error: #B3261E;
+  --color-success-surface: #DFF0DD;
+  --color-warning-surface: #FCEFD6;
+  --color-error-surface: #FBE4E2;
+
+  --color-control-fill: #FFFFFF;
+  --color-control-fill-hover: #F4F6F9;
+  --color-control-fill-pressed: #E6EAF0;
+  --color-control-fill-disabled: #EEF1F5;
+  --color-subtle-fill-hover: #DCE1E8;       /* subtle button hover on chrome or raised */
+  --color-subtle-fill-pressed: #CDD4DE;
+  --color-close-hover: #C42B1C;             /* window close button only */
+  --color-close-hover-text: #FFFFFF;
+
+  --color-scrollbar-thumb: #788292;
+  --color-scrollbar-thumb-hover: #6E7785;
+  --color-scrollbar-track: transparent;
+
+  --shadow-page: 0 1px 3px rgba(31, 38, 48, 0.10), 0 0 0 1px rgba(31, 38, 48, 0.06);
+  --shadow-tooltip: 0 4px 8px rgba(31, 38, 48, 0.14);
+  --shadow-menu: 0 8px 16px rgba(31, 38, 48, 0.14), 0 0 0 1px rgba(31, 38, 48, 0.08);
+  --shadow-dialog: 0 32px 64px rgba(31, 38, 48, 0.19), 0 2px 21px rgba(31, 38, 48, 0.15), 0 0 0 1px rgba(31, 38, 48, 0.08);
+}
+
+/* ---------- Dark values (shared by Match Windows dark and data-theme="dark") ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-surface-chrome: #20252C;
+    --color-surface-chrome-hover: #2F3640;
+    --color-surface-chrome-pressed: #3A424D;
+    --color-surface-canvas: #16191E;
+    --color-surface-page: #252B33;
+    --color-surface-raised: #2B313A;
+    --color-surface-raised-hover: #3A424D;
+    --color-surface-raised-pressed: #444D59;
+    --color-surface-input: #1F242B;
+    --color-surface-subtle: #1F242B;
+    --color-surface-table-header: #2B313A;
+    --color-surface-overlay: rgba(0, 0, 0, 0.55);
+    --color-text-primary: #E6EAF0;
+    --color-text-secondary: #AEB6C2;
+    --color-text-heading: #F2F4F7;
+    --color-text-chrome: #E6EAF0;
+    --color-text-tab: #AEB6C2;
+    --color-text-status: #C3CBD6;
+    --color-text-disabled: #8C95A3;
+    --color-text-on-accent: #1B1F25;
+    --color-text-link: #9CC0F0;
+    --color-border-subtle: #3A424D;
+    --color-border-control: #7D8796;
+    --color-border-control-hover: #9AA4B2;
+    --color-border-disabled: #4A5361;
+    --color-accent: #C3CBD6;
+    --color-accent-hover: #D5DBE3;
+    --color-accent-pressed: #AEB6C2;
+    --color-accent-subtle: #3C4A5E;
+    --color-focus-outer: #FFFFFF;
+    --color-focus-inner: #000000;
+    --color-selection: #3C4A5E;
+    --color-selection-text: #F2F4F7;
+    --color-find-match: #5A4A1A;
+    --color-find-current: #7A5E0E;
+    --color-success: #6CCB5F;
+    --color-warning: #F2C661;
+    --color-error: #FF99A4;
+    --color-success-surface: #1E3A1E;
+    --color-warning-surface: #3D3115;
+    --color-error-surface: #44201F;
+    --color-control-fill: #2B313A;
+    --color-control-fill-hover: #333A44;
+    --color-control-fill-pressed: #252B33;
+    --color-control-fill-disabled: #252B33;
+    --color-subtle-fill-hover: #353C47;
+    --color-subtle-fill-pressed: #2B313A;
+    --color-close-hover: #C42B1C;
+    --color-close-hover-text: #FFFFFF;
+    --color-scrollbar-thumb: #6E7887;
+    --color-scrollbar-thumb-hover: #8C95A3;
+    --color-scrollbar-track: transparent;
+    --shadow-page: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --shadow-tooltip: 0 4px 8px rgba(0, 0, 0, 0.40);
+    --shadow-menu: 0 8px 16px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --shadow-dialog: 0 32px 64px rgba(0, 0, 0, 0.55), 0 2px 21px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface-chrome: #20252C;
+  --color-surface-chrome-hover: #2F3640;
+  --color-surface-chrome-pressed: #3A424D;
+  --color-surface-canvas: #16191E;
+  --color-surface-page: #252B33;
+  --color-surface-raised: #2B313A;
+  --color-surface-raised-hover: #3A424D;
+  --color-surface-raised-pressed: #444D59;
+  --color-surface-input: #1F242B;
+  --color-surface-subtle: #1F242B;
+  --color-surface-table-header: #2B313A;
+  --color-surface-overlay: rgba(0, 0, 0, 0.55);
+  --color-text-primary: #E6EAF0;
+  --color-text-secondary: #AEB6C2;
+  --color-text-heading: #F2F4F7;
+  --color-text-chrome: #E6EAF0;
+  --color-text-tab: #AEB6C2;
+  --color-text-status: #C3CBD6;
+  --color-text-disabled: #8C95A3;
+  --color-text-on-accent: #1B1F25;
+  --color-text-link: #9CC0F0;
+  --color-border-subtle: #3A424D;
+  --color-border-control: #7D8796;
+  --color-border-control-hover: #9AA4B2;
+  --color-border-disabled: #4A5361;
+  --color-accent: #C3CBD6;
+  --color-accent-hover: #D5DBE3;
+  --color-accent-pressed: #AEB6C2;
+  --color-accent-subtle: #3C4A5E;
+  --color-focus-outer: #FFFFFF;
+  --color-focus-inner: #000000;
+  --color-selection: #3C4A5E;
+  --color-selection-text: #F2F4F7;
+  --color-find-match: #5A4A1A;
+  --color-find-current: #7A5E0E;
+  --color-success: #6CCB5F;
+  --color-warning: #F2C661;
+  --color-error: #FF99A4;
+  --color-success-surface: #1E3A1E;
+  --color-warning-surface: #3D3115;
+  --color-error-surface: #44201F;
+  --color-control-fill: #2B313A;
+  --color-control-fill-hover: #333A44;
+  --color-control-fill-pressed: #252B33;
+  --color-control-fill-disabled: #252B33;
+  --color-subtle-fill-hover: #353C47;
+  --color-subtle-fill-pressed: #2B313A;
+  --color-close-hover: #C42B1C;
+  --color-close-hover-text: #FFFFFF;
+  --color-scrollbar-thumb: #6E7887;
+  --color-scrollbar-thumb-hover: #8C95A3;
+  --color-scrollbar-track: transparent;
+  --shadow-page: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-tooltip: 0 4px 8px rgba(0, 0, 0, 0.40);
+  --shadow-menu: 0 8px 16px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-dialog: 0 32px 64px rgba(0, 0, 0, 0.55), 0 2px 21px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Windows animation effects off (NFR-20) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
+/* ---------- Windows contrast themes (NFR-17) ---------- */
+/* System colors replace every color token; shadows go away; borders carry the shape. */
+@media (forced-colors: active) {
+  :root,
+  :root[data-theme="light"],
+  :root[data-theme="dark"] {
+    --color-surface-chrome: Canvas;
+    --color-surface-chrome-hover: Highlight;
+    --color-surface-chrome-pressed: Highlight;
+    --color-surface-canvas: Canvas;
+    --color-surface-page: Canvas;
+    --color-surface-raised: Canvas;
+    --color-surface-raised-hover: Highlight;
+    --color-surface-raised-pressed: Highlight;
+    --color-surface-input: Field;
+    --color-surface-subtle: Canvas;
+    --color-surface-table-header: Canvas;
+    --color-surface-overlay: transparent;
+    --color-text-primary: CanvasText;
+    --color-text-secondary: CanvasText;
+    --color-text-heading: CanvasText;
+    --color-text-chrome: CanvasText;
+    --color-text-tab: CanvasText;
+    --color-text-status: CanvasText;
+    --color-text-disabled: GrayText;
+    --color-text-on-accent: HighlightText;
+    --color-text-link: LinkText;
+    --color-border-subtle: CanvasText;
+    --color-border-control: ButtonText;
+    --color-border-control-hover: Highlight;
+    --color-border-disabled: GrayText;
+    --color-accent: Highlight;
+    --color-accent-hover: Highlight;
+    --color-accent-pressed: Highlight;
+    --color-accent-subtle: Highlight;
+    --color-focus-outer: Highlight;
+    --color-focus-inner: Canvas;
+    --color-selection: Highlight;
+    --color-selection-text: HighlightText;
+    --color-find-match: Canvas;
+    --color-find-current: Highlight;
+    --color-success: CanvasText;
+    --color-warning: CanvasText;
+    --color-error: CanvasText;
+    --color-success-surface: Canvas;
+    --color-warning-surface: Canvas;
+    --color-error-surface: Canvas;
+    --color-control-fill: ButtonFace;
+    --color-control-fill-hover: ButtonFace;
+    --color-control-fill-pressed: ButtonFace;
+    --color-control-fill-disabled: ButtonFace;
+    --color-subtle-fill-hover: Highlight;
+    --color-subtle-fill-pressed: Highlight;
+    --color-close-hover: Highlight;
+    --color-close-hover-text: HighlightText;
+    --color-scrollbar-thumb: ButtonText;
+    --color-scrollbar-thumb-hover: Highlight;
+    --color-scrollbar-track: Canvas;
+    --shadow-page: none;
+    --shadow-tooltip: none;
+    --shadow-menu: none;
+    --shadow-dialog: none;
+  }
+}

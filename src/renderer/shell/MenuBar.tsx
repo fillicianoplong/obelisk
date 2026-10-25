@@ -1,5 +1,4 @@
 import type { RefObject } from 'react';
-import { APP_NAME } from '../../shared/app-info.js';
 import { APP_MENUS, isSeparator } from './menus.js';
 import type { AppMenu } from './menus.js';
 
@@ -46,7 +45,6 @@ function MenuPanel({ menu, onNew }: { menu: AppMenu; onNew: () => void }) {
 export function MenuBar({ openMenu, onToggleMenu, onHoverMenu, onNew, barRef }: MenuBarProps) {
   return (
     <header className="menu-bar" data-region="menu-bar" role="menubar" aria-label="Menu bar" ref={barRef}>
-      <h1 className="visually-hidden">{APP_NAME}</h1>
       {APP_MENUS.map((menu) => {
         const open = openMenu === menu.id;
         return (
