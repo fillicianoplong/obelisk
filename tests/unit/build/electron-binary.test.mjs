@@ -104,6 +104,8 @@ test('Electron launch tests do not import the electron package', async () => {
     'tests/integration/smoke/opens-window.test.mjs',
     'tests/integration/security/window-baseline.test.mjs',
     'tests/integration/shell/window-shell.test.mjs',
+    'tests/integration/editor/tab-editor.test.mjs',
+    'tests/integration/packaging/writes-app-data.test.mjs',
   ];
   const importsElectron = /(?:from\s+|require\(\s*|import\(\s*)['"]electron['"]/;
   for (const file of files) {

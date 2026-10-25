@@ -52,7 +52,41 @@ npm test
 
 `npm test` builds the app, then runs the Node test suite under `tests/unit/` and `tests/integration/`. It checks that a type error fails the TypeScript build, that the built app opens one window, and that the window blocks remote requests, navigation, popups, webviews, and permission requests. The same run prints line coverage per module against the 80% target. The target is reported and does not fail the command.
 
-GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test` on Windows for every push and pull request.
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test` on Windows for every push and pull request. A second Windows job builds the dev MSIX, checks Electron fuses, installs and launches the package, and uploads `Obelisk-Dev.msix` and `obelisk-dev.cer`.
+
+## Dev MSIX
+
+On Windows, install the [Windows 10 SDK](https://developer.microsoft.com/windows/downloads/windows-sdk/) (it provides `makeappx.exe` and `signtool.exe`), then:
+
+```
+npm ci
+npm run package:msix
+npm run check:fuses -- dist/msix/Obelisk-Dev.msix
+```
+
+`package:msix` builds the app, packs an x64 MSIX, and signs it with a self-signed dev certificate. It reuses the `CN=Obelisk Dev` certificate in `Cert:\CurrentUser\My` while that certificate is still valid, and creates one only when none is there or it has expired. Each run overwrites `dist/msix/Obelisk-Dev.msix` and `dist/msix/obelisk-dev.cer`. The private key stays in the current-user store and is not written to the repository. The package contains `package.json` and the built `dist` files. Source maps stay out of the package. Trust the public certificate again only after a new one is created.
+
+Trusting the dev certificate takes one administrator step on the machine. Install and launch then run as a standard user. Store builds are signed by Microsoft, so that administrator step is only for this dev certificate.
+
+In an administrator PowerShell:
+
+```powershell
+Import-Certificate -FilePath .\obelisk-dev.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople
+```
+
+Then, as a standard user:
+
+```powershell
+Add-AppxPackage -Path .\Obelisk-Dev.msix
+$pkg = Get-AppxPackage -Name Obelisk.Dev
+Start-Process "shell:AppsFolder\$($pkg.PackageFamilyName)!Obelisk"
+```
+
+The Start-menu app id is `Obelisk`. The package is per user. Check the install folder (the `InstallLocation` from `Get-AppxPackage -Name Obelisk.Dev`) and confirm the app did not add or change files there. App data is under `%APPDATA%\Obelisk`, which MSIX may redirect to `%LOCALAPPDATA%\Packages\<package family>\LocalCache\Roaming\Obelisk`. Remove the package with:
+
+```powershell
+Get-AppxPackage -Name Obelisk.Dev | Remove-AppxPackage
+```
 
 ## Documentation
 
