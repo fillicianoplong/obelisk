@@ -52,9 +52,21 @@ const READ_TABS = `(() => {
   const stripStyle = getComputedStyle(strip);
   const tabStyle = tabs.length > 0 ? getComputedStyle(list.querySelector('[role="tab"]')) : null;
   const active = list.querySelector('[role="tab"][aria-selected="true"]');
+  const last = list.querySelector('[role="tab"]:last-child');
   const listRect = list.getBoundingClientRect();
+  const stripRect = strip.getBoundingClientRect();
   const activeRect = active ? active.getBoundingClientRect() : null;
+  const lastRect = last ? last.getBoundingClientRect() : null;
   const newTab = document.querySelector('[aria-label="New tab"]');
+  const newRect = newTab ? newTab.getBoundingClientRect() : null;
+  const closeButton = active ? active.querySelector('.tab-close') : null;
+  const closeButtonRect = closeButton ? closeButton.getBoundingClientRect() : null;
+  const closeIcon = document.querySelector('.tab-close .tab-glyph');
+  const newIcon = document.querySelector('.tab-new .tab-glyph');
+  const closeIconRect = closeIcon ? closeIcon.getBoundingClientRect() : null;
+  const newIconRect = newIcon ? newIcon.getBoundingClientRect() : null;
+  const newStyle = newTab ? getComputedStyle(newTab) : null;
+  const tabGap = parseFloat(getComputedStyle(list).columnGap);
   return {
     tabs,
     text: paragraphs.map((block) => (block.textContent || '').replace(/\\u200b/g, '')).join('\\n'),
@@ -64,8 +76,38 @@ const READ_TABS = `(() => {
     listLabel: list.getAttribute('aria-label'),
     orientation: list.getAttribute('aria-orientation'),
     newTabInsideList: newTab ? list.contains(newTab) : null,
+    closeIconWidth: closeIconRect ? closeIconRect.width : null,
+    closeIconHeight: closeIconRect ? closeIconRect.height : null,
+    newIconWidth: newIconRect ? newIconRect.width : null,
+    newIconHeight: newIconRect ? newIconRect.height : null,
+    tabGap,
+    stripGap: parseFloat(stripStyle.columnGap),
+    tabPaddingLeft: tabStyle ? parseFloat(tabStyle.paddingLeft) : null,
+    tabPaddingRight: tabStyle ? parseFloat(tabStyle.paddingRight) : null,
+    closeRightInset: closeButtonRect && activeRect ? activeRect.right - closeButtonRect.right : null,
+    closeCenterDelta: closeButtonRect && activeRect
+      ? (closeButtonRect.top + closeButtonRect.bottom) / 2 - (activeRect.top + activeRect.bottom) / 2
+      : null,
+    newTabTopInset: newRect && lastRect ? newRect.top - lastRect.top : null,
+    newTabBottomInset: newRect && lastRect ? lastRect.bottom - newRect.bottom : null,
+    newTabWidth: newRect ? newRect.width : null,
+    newTabHeight: newRect ? newRect.height : null,
+    newRadiusTop: newStyle ? parseFloat(newStyle.borderTopLeftRadius) : null,
+    newRadiusBottom: newStyle ? parseFloat(newStyle.borderBottomLeftRadius) : null,
+    newTabGap: newRect && lastRect ? newRect.left - lastRect.right : null,
+    newTabLeft: newRect ? newRect.left : null,
+    newTabRightInset: newRect ? stripRect.right - newRect.right : null,
+    stripPaddingRight: parseFloat(stripStyle.paddingRight),
+    newTabInsideStrip: newRect
+      ? newRect.left >= stripRect.left - 1 &&
+        newRect.right <= stripRect.right + 1 &&
+        newRect.top >= stripRect.top - 1 &&
+        newRect.bottom <= stripRect.bottom + 1
+      : false,
+    newTabClearsTabs: newRect ? newRect.left >= listRect.right - 1 : false,
     scrollWidth: list.scrollWidth,
     clientWidth: list.clientWidth,
+    scrollLeft: list.scrollLeft,
     activeInView: activeRect
       ? activeRect.left >= listRect.left - 1 && activeRect.right <= listRect.right + 1
       : false,
@@ -166,6 +208,28 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
     assert.equal(state.listLabel, 'Tabs');
     assert.equal(state.orientation, 'horizontal');
     assert.equal(state.newTabInsideList, false);
+    assert.ok(Math.abs(state.closeIconWidth - 8) <= 0.5, `close icon width ${state.closeIconWidth}`);
+    assert.ok(Math.abs(state.closeIconHeight - 8) <= 0.5, `close icon height ${state.closeIconHeight}`);
+    assert.ok(Math.abs(state.newIconWidth - 10) <= 0.5, `new-tab icon width ${state.newIconWidth}`);
+    assert.ok(Math.abs(state.newIconHeight - 10) <= 0.5, `new-tab icon height ${state.newIconHeight}`);
+    assert.ok(Math.abs(state.newTabWidth - 32) <= 0.5, `new-tab button width ${state.newTabWidth}`);
+    assert.ok(Math.abs(state.newTabHeight - 32) <= 0.5, `new-tab button height ${state.newTabHeight}`);
+    assert.equal(state.newRadiusTop, 6);
+    assert.equal(state.newRadiusBottom, 0);
+    assert.equal(state.tabPaddingLeft, 12);
+    assert.equal(state.tabPaddingRight, 4);
+    assert.equal(state.stripGap, 2);
+    assert.equal(state.stripGap, state.tabGap);
+    assert.ok(Math.abs(state.newTabGap - state.tabGap) <= 1, `the new-tab button follows the tab by ${state.newTabGap}px`);
+    assert.ok(Math.abs(state.newTabTopInset) <= 1, `new-tab top inset ${state.newTabTopInset}`);
+    assert.ok(Math.abs(state.newTabBottomInset) <= 1, `new-tab bottom inset ${state.newTabBottomInset}`);
+    assert.ok(Math.abs(state.closeRightInset - 4) <= 1, `close button inset ${state.closeRightInset}`);
+    assert.ok(Math.abs(state.closeCenterDelta) <= 1, `close button vertical offset ${state.closeCenterDelta}`);
+    assert.ok(
+      state.newTabRightInset > state.stripPaddingRight + 32,
+      `with one tab the new-tab button is ${state.newTabRightInset}px in from the strip edge`,
+    );
+    const oneTabButton = state.newTabLeft;
     assert.equal(state.stripHeight, '40px');
     assert.equal(state.tabMin, '96px');
     assert.equal(state.tabMax, '220px');
@@ -242,6 +306,12 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
       (current) => current.tabs.length === 3 && tabById(current, 'untitled-3')?.selected,
       'third tab',
     );
+    assert.ok(
+      state.newTabLeft > oneTabButton + 48,
+      `the new-tab button moved from ${oneTabButton} to ${state.newTabLeft} after two tabs were added`,
+    );
+    assert.ok(Math.abs(state.newTabGap - state.tabGap) <= 1, `three-tab gap ${state.newTabGap}`);
+    const threeTabButton = state.newTabLeft;
 
     await runInPage(
       session,
@@ -360,6 +430,10 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
       'the close button closes the tab on the end and activates the tab on the left',
     );
     assert.equal(state.tabs[0].name, 'Untitled 1, Unsaved changes');
+    assert.ok(
+      state.newTabLeft < threeTabButton - 48,
+      `the new-tab button moved from ${threeTabButton} to ${state.newTabLeft} after tabs were closed`,
+    );
 
     await runInPage(
       session,
@@ -388,6 +462,24 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
     );
     assert.ok(state.scrollWidth > state.clientWidth);
     assert.equal(state.activeInView, true);
+    assert.equal(state.newTabInsideStrip, true);
+    assert.equal(state.newTabClearsTabs, true);
+    assert.ok(
+      state.newTabRightInset <= state.stripPaddingRight + 2,
+      `the new-tab button stays at the strip edge, ${state.newTabRightInset}px in`,
+    );
+    const pinnedLeft = state.newTabLeft;
+    await runInPage(session, `document.querySelector('[role="tablist"]').scrollLeft = 0;`);
+    state = await waitForTabs(
+      port,
+      session,
+      (current) => current.scrollLeft === 0 && current.newTabInsideStrip && current.newTabClearsTabs,
+      'scrolling the tabs leaves the new-tab button in the strip',
+    );
+    assert.ok(
+      Math.abs(state.newTabLeft - pinnedLeft) <= 1,
+      `the new-tab button moved from ${pinnedLeft} to ${state.newTabLeft} when the strip scrolled`,
+    );
     const widths = await evaluate(
       session.client,
       `(() => [...document.querySelectorAll('[role="tab"]')].map((tab) => tab.getBoundingClientRect().width))()`,
