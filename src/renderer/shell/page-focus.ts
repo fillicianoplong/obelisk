@@ -48,10 +48,25 @@ export function pageFocusIsKeyboard(): boolean {
 }
 
 export function applyPageFocusSource(page: HTMLElement): void {
-  if (modality === 'keyboard' && page.ownerDocument.activeElement === page) {
+  const focused = page.ownerDocument.activeElement === page || page.matches(':focus');
+  if (modality === 'keyboard' && focused) {
     page.setAttribute('data-focus-source', 'keyboard');
   } else {
     page.removeAttribute('data-focus-source');
+  }
+}
+
+// focus() does not fire a focus event when the page is already focused.
+// Escape and F6 still moved here from the keyboard, so record that source.
+export function commitPageKeyboardFocus(page: HTMLElement): void {
+  if (!page.isConnected) {
+    return;
+  }
+  if (page.ownerDocument.activeElement !== page) {
+    page.focus({ preventScroll: true });
+  }
+  if (modality === 'keyboard' && page.ownerDocument.activeElement === page) {
+    page.setAttribute('data-focus-source', 'keyboard');
   }
 }
 
