@@ -196,8 +196,6 @@ test('qualified icon names and the exe icon match their pixel sizes', async () =
   const indexSource = await readFile(path.join(root, 'src', 'main', 'index.ts'), 'utf8');
   assert.match(indexSource, /icon: windowIcon/);
   assert.equal(indexSource.includes('setIcon'), false);
-  assert.equal(indexSource.includes('nativeTheme.themeSource'), false);
-  assert.match(indexSource, /nativeTheme\.shouldUseDarkColors/);
   assert.equal(indexSource.includes('nativeImage'), false);
   assert.equal(indexSource.includes('SystemUsesLightTheme'), false);
   assert.equal(indexSource.includes('taskbar-icon'), false);

@@ -33,3 +33,30 @@ export function shellFrameColors(useDarkColors: boolean): ShellFrameColors {
     titleBarHeight: SHELL_FRAME.titleBarHeight,
   };
 }
+
+export interface ContrastFrameColors {
+  background: string;
+  symbol: string;
+}
+
+export function contrastFrameColors(colors: ContrastFrameColors): ShellFrameColors {
+  return {
+    backgroundColor: colors.background,
+    overlayColor: colors.background,
+    symbolColor: colors.symbol,
+    titleBarHeight: SHELL_FRAME.titleBarHeight,
+  };
+}
+
+// A contrast theme wins over Light, Dark, and Match Windows. Without a system
+// color to copy, the Slate frame is the fallback so the window still opens.
+export function frameColorsFor(options: {
+  highContrast: boolean;
+  dark: boolean;
+  contrast: ContrastFrameColors | null;
+}): ShellFrameColors {
+  if (options.highContrast && options.contrast !== null) {
+    return contrastFrameColors(options.contrast);
+  }
+  return shellFrameColors(options.dark);
+}

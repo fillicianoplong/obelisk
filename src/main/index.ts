@@ -1,7 +1,8 @@
-import { app, BrowserWindow, Menu, nativeTheme } from 'electron';
+import { app, BrowserWindow, Menu, nativeTheme, systemPreferences } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
+import { THEME_CHANGED_CHANNEL, themeLaunchArgument, type ThemeSetting } from '../shared/theme.js';
 import { SMOKE_MARKER_FILE } from './security/app-data.js';
 import { APP_START_URL } from './security/app-path.js';
 import { installAppProtocol, registerAppScheme } from './security/app-protocol.js';
@@ -9,8 +10,11 @@ import { installContentsGuards } from './security/navigation.js';
 import { installSessionSecurity } from './security/session.js';
 import { configureWritablePaths } from './security/writable-paths.js';
 import { installIpc } from './ipc/install.js';
+import { readThemeSetting } from './settings.js';
 import { secureWebPreferences } from './security/window-options.js';
-import { shellFrameColors } from './shell-theme.js';
+import { readSystemCaptionColors } from './window/caption.js';
+import { installThemeIpc } from './window/install-theme-ipc.js';
+import { activateThemeSource, frameForNativeTheme, watchThemeFrame } from './window/theme.js';
 
 const WINDOW_WIDTH = 1280;
 const WINDOW_HEIGHT = 800;
@@ -38,22 +42,18 @@ function windowIconPath(): string | null {
   return null;
 }
 
-function applyShellFrame(target: BrowserWindow): void {
-  const frame = shellFrameColors(nativeTheme.shouldUseDarkColors);
-  // The page follows prefers-color-scheme on its own. The caption buttons and
-  // this background do not, and the background shows through as a line at the
-  // top of the window, so both have to move with the Windows theme.
-  target.setBackgroundColor(frame.backgroundColor);
-  if (process.platform === 'win32') {
-    target.setTitleBarOverlay({
-      color: frame.overlayColor,
-      symbolColor: frame.symbolColor,
-    });
-  }
+function readContrastColors() {
+  return readSystemCaptionColors(process.platform, (name) => systemPreferences.getColor(name));
 }
 
-function createWindow(): void {
-  const webPreferences = secureWebPreferences(path.join(__dirname, '../preload/index.js'));
+function createWindow(theme: ThemeSetting): void {
+  // Before the window exists, so the first frame is already the chosen theme.
+  activateThemeSource(nativeTheme, theme);
+  const frame = frameForNativeTheme(nativeTheme, readContrastColors);
+  const webPreferences = {
+    ...secureWebPreferences(path.join(__dirname, '../preload/index.js')),
+    additionalArguments: [themeLaunchArgument(theme)],
+  };
   reportSecurity(
     `OBELISK_WINDOW_OPTIONS ${JSON.stringify({
       contextIsolation: webPreferences.contextIsolation,
@@ -66,8 +66,6 @@ function createWindow(): void {
   // The .ico path lets Windows load the 16 px frame at 100%, 20 px at 125%,
   // and 24 px at 150%. One file is used on both light and dark taskbars.
   const windowIcon = windowIconPath();
-  // Same system setting the style sheet reads through prefers-color-scheme.
-  const frame = shellFrameColors(nativeTheme.shouldUseDarkColors);
   const windowsFrame =
     process.platform === 'win32'
       ? {
@@ -99,23 +97,28 @@ function createWindow(): void {
     console.error(`Renderer failed to load (${errorCode}): ${errorDescription} ${validatedURL}`);
   });
 
-  const onThemeUpdated = () => {
-    if (window.isDestroyed()) {
-      return;
-    }
-    applyShellFrame(window);
-  };
-  nativeTheme.on('updated', onThemeUpdated);
-  window.on('closed', () => {
-    nativeTheme.off('updated', onThemeUpdated);
+  watchThemeFrame({
+    nativeTheme,
+    window,
+    platform: process.platform,
+    readContrast: readContrastColors,
+    theme,
+    notify(message) {
+      if (window.isDestroyed()) {
+        return;
+      }
+      window.webContents.send(THEME_CHANGED_CHANNEL, message);
+    },
   });
 
   void window.loadURL(APP_START_URL);
 }
 
 function startApp(): void {
+  const theme = readThemeSetting(userData);
   installContentsGuards();
   installIpc();
+  installThemeIpc(() => theme);
 
   void app.whenReady().then(() => {
     installSessionSecurity({
@@ -127,7 +130,7 @@ function startApp(): void {
       },
     });
     installAppProtocol(path.join(__dirname, '../renderer'));
-    createWindow();
+    createWindow(theme);
   }).catch((error: unknown) => {
     console.error(error);
     app.exit(1);
