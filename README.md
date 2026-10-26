@@ -4,9 +4,27 @@ Obelisk is a Windows document editor for one person on one PC. You write and lay
 
 Obelisk is being developed for CSC 481 (Software Engineering) at California State University, Dominguez Hills.
 
-**Status:** Milestone 1 is in progress. Working so far are the window shell, themes, the app icon, and the tab strip. See the [Changelog](CHANGELOG.md).
+**Status:** Milestone 1 is finished, and Milestone 2 (de-risking spikes) is next.
+
+## Working today
+
+This is what Milestone 1 shipped. The [Changelog](CHANGELOG.md) has the detail for each version.
+
+- The window shell has a custom title bar, a menu bar, a tab strip, a page, and a status bar.
+- The menu bar has access keys. Alt or F10 focuses it, Alt plus a letter opens a menu, and the arrow keys, Home, and End move through it. File > New and Tools > Settings open a tab. File > Close tab closes an unchanged tab. Submenus open, and every other command is unavailable.
+- The tab strip shows an unsaved mark. Ctrl+W, the close button, or File > Close tab closes an unchanged tab, and a changed tab stays open. The keyboard moves between tabs, and extra tabs shrink and scroll.
+- The status bar shows word and character counts and the save state for the active tab. An unchanged tab says Saved, and a changed tab says Unsaved changes. The page, the view, and the zoom are placeholders.
+- Themes are Light, Dark, and Match Windows, including contrast themes. The choice is `theme` in `settings.json`, read when Obelisk starts.
+- F6 and Shift+F6 move between the menu bar, the tabs, the page, and the status bar. The focus ring follows the keyboard.
+- Escape returns to the page and restores the caret. An open menu closes one level first.
+- A new document is a Letter page, 8.5 by 11 inches, with 1 inch margins and an empty header. Each tab edits paragraphs in Liberation Serif at 12 pt.
+- The window stops at 640 by 400, and it stays readable from 100% to 200% display scale.
+- The app icon is a bold forward slash on a rounded square.
+- CI runs typecheck, lint, tests, and coverage, and a dev MSIX can be sideloaded.
 
 ## Key features
+
+These describe the finished app. What runs now is the list above.
 
 - **Tabs:** several documents open at once, one per tab, saved as `.obk` files in any Windows folder.
 - **Pages or pageless:** Letter pages with headers, footers, and page numbers, or one continuous page.
@@ -52,9 +70,9 @@ npm run lint
 npm test
 ```
 
-`npm test` builds the app, then runs the Node test suite under `tests/unit/` and `tests/integration/`. It checks that a type error fails the TypeScript build, that the built app opens one window, and that the window blocks remote requests, navigation, popups, webviews, and permission requests. The same run prints line coverage per module against the 80% target. The target is reported and does not fail the command.
+`npm test` builds the app, then runs the Node test suite under `tests/unit/` and `tests/integration/`. It checks that a type error fails the TypeScript build, that the built app opens one window, and that the window blocks remote requests, navigation, popups, webviews, and permission requests. It also checks the menu bar, the tab strip, the status bar, themes, the Letter page, F6 and Escape, and the paragraph editor. The same run prints line coverage per module against the 80% target. The target is reported and does not fail the command.
 
-GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test` on Windows for every push and pull request. A second Windows job builds the dev MSIX, checks Electron fuses, installs and launches the package, and uploads `Obelisk-Dev.msix` and `obelisk-dev.cer`.
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test` on Windows. A pull request runs that job once. A push to main runs it again after the merge. The same job then checks a 1280 by 800 window at 100%, 125%, 150%, 175%, and 200% scale, and the 640 by 400 minimum, in Light and Dark, and uploads the screenshots. A second Windows job builds the dev MSIX, checks Electron fuses, installs and launches the package, and uploads `Obelisk-Dev.msix` and `obelisk-dev.cer`.
 
 ## Dev MSIX
 
