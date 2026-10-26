@@ -1,4 +1,5 @@
 import { readdirSync } from 'node:fs';
+import { readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export const MSIX_PACKAGE_NAME = 'Obelisk.Dev';
@@ -40,6 +41,248 @@ export const MSIX_ASSETS = {
   'assets\\Square310x310Logo.png': { width: 310, height: 310 },
   'assets\\SplashScreen.png': { width: 620, height: 300 },
 };
+
+// The manifest names the scale-100 file. Windows picks scale-200 and the
+// altform target sizes from resources.pri.
+//
+// A packaged app's taskbar (running and pinned) uses Square44x44Logo from
+// this index, not the window icon. An unqualified targetsize file is the
+// plated tile, and the shell selects it for the taskbar when it is present.
+// unplated and lightunplated are the same tile, so both Windows
+// modes show that full tile. The sizes cover the Windows 11 taskbar slots
+// (24 at 100%, 30 at 125%, 36 at 150%, 48 at 200%, and the rest of the list).
+export const SQUARE44_UNPLATED_SIZES = [16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 256];
+
+// Title bar and Explorer icon frames. Each one is drawn at that size.
+// BMP below 256, PNG at 256. 16 px is the 100% title bar, 20 is 125%, 24 is 150%.
+export const WINDOW_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 256];
+
+export const PRI_CONFIG_FILE = 'priconfig.xml';
+
+export const PRI_RESOURCE_FILE = 'resources.pri';
+
+export const APP_ICON_RELATIVE = path.join('packaging', 'icons', 'obelisk.ico');
+
+export const APP_ICON_PNG = path.join('packaging', 'icons', 'obelisk-256.png');
+
+export const APP_ICON_SIZES = WINDOW_ICON_SIZES;
+
+// makepri's folder indexer would otherwise pick up the Electron runtime.
+// The manifest logos live under assets\. These excludes keep the index there
+// while startIndexAt stays the layout root, so the resource name keeps assets\.
+export const PRI_INDEX_EXCLUDES = [
+  ['path', 'locales'],
+  ['path', 'resources'],
+  ['path', 'LICENSE'],
+  ['path', 'version'],
+  ['extension', '.exe'],
+  ['extension', '.dll'],
+  ['extension', '.pak'],
+  ['extension', '.bin'],
+  ['extension', '.dat'],
+  ['extension', '.json'],
+  ['extension', '.html'],
+  ['extension', '.js'],
+  ['extension', '.css'],
+  ['extension', '.xml'],
+  ['extension', '.node'],
+  ['extension', '.asar'],
+  ['extension', '.txt'],
+  ['extension', '.ico'],
+];
+
+function scale200Name(assetPath) {
+  const file = assetPath.slice(assetPath.lastIndexOf('\\') + 1);
+  const stem = file.slice(0, -'.png'.length);
+  return `assets\\${stem}.scale-200.png`;
+}
+
+function withQualifiedAssets(base) {
+  const assets = { ...base };
+  for (const [name, size] of Object.entries(base)) {
+    assets[scale200Name(name)] = { width: size.width * 2, height: size.height * 2 };
+  }
+  for (const target of SQUARE44_UNPLATED_SIZES) {
+    assets[`assets\\Square44x44Logo.targetsize-${target}_altform-unplated.png`] = {
+      width: target,
+      height: target,
+    };
+    assets[`assets\\Square44x44Logo.targetsize-${target}_altform-lightunplated.png`] = {
+      width: target,
+      height: target,
+    };
+  }
+  return assets;
+}
+
+export const MSIX_PACKAGE_ASSETS = withQualifiedAssets(MSIX_ASSETS);
+
+// makepri indexes scale-200, targetsize, and altform names. priconfig.xml is
+// removed afterwards so makeappx does not pack it. /pr is the package layout
+// root and startIndexAt stays that root. The manifest paths are assets\....png,
+// so the resource names have to be Files/assets/....png. Indexing from the
+// assets folder drops that prefix and Windows falls back to the loose tile.
+// The resource-pack split is removed so one resources.pri holds every variant.
+export function resourceIndexPlan(layout) {
+  const configPath = path.join(layout, PRI_CONFIG_FILE);
+  const outputPath = path.join(layout, PRI_RESOURCE_FILE);
+  return {
+    configPath,
+    outputPath,
+    createConfig: ['createconfig', '/cf', configPath, '/dq', 'en-US', '/pv', '10.0.0', '/o'],
+    createIndex: [
+      'new',
+      '/pr',
+      layout,
+      '/cf',
+      configPath,
+      '/mn',
+      path.join(layout, 'AppxManifest.xml'),
+      '/of',
+      outputPath,
+      '/o',
+    ],
+  };
+}
+
+function decodePriConfig(buffer) {
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return { text: buffer.toString('utf16le', 2), encoding: 'utf16le' };
+  }
+  return { text: buffer.toString('utf8').replace(/^\uFEFF/, ''), encoding: 'utf8' };
+}
+
+function encodePriConfig(text, encoding) {
+  if (encoding === 'utf16le') {
+    return Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]);
+  }
+  return Buffer.from(text, 'utf8');
+}
+
+function excludeElement(kind, value) {
+  return `<exclude type="${kind}" value="${value}" doNotTraverse="true" doNotIndex="true"/>`;
+}
+
+function ensureIndexerExcludes(text) {
+  const excludes = PRI_INDEX_EXCLUDES.map(([kind, value]) => excludeElement(kind, value)).join('');
+  const selfClosing = /<indexer-config\b[^>]*\btype="folder"[^>]*\/>/;
+  if (selfClosing.test(text)) {
+    return text.replace(selfClosing, (tag) => `${tag.slice(0, -2)}>${excludes}</indexer-config>`);
+  }
+  const open = /<indexer-config\b[^>]*\btype="folder"[^>]*>/;
+  if (open.test(text)) {
+    return text.replace(open, (tag) => `${tag}${excludes}`);
+  }
+  if (!text.includes('</index>')) {
+    throw new Error('makepri createconfig did not write an index element.');
+  }
+  const block = `<indexer-config type="folder" foldernameAsQualifier="true" filenameAsQualifier="true" qualifierDelimiter=".">${excludes}</indexer-config>`;
+  return text.replace('</index>', `${block}</index>`);
+}
+
+export function preparePriConfigText(text) {
+  if (!/startIndexAt="[^"]*"/.test(text)) {
+    throw new Error('makepri createconfig did not write startIndexAt.');
+  }
+  const rooted = text
+    .replace(/startIndexAt="[^"]*"/, 'startIndexAt="\\"')
+    .replace(/<packaging>[\s\S]*?<\/packaging>\s*/, '');
+  const prepared = ensureIndexerExcludes(rooted);
+  if (!/startIndexAt="\\"/.test(prepared)) {
+    throw new Error('makepri config is not indexed from the layout root.');
+  }
+  if (/startIndexAt="assets"/.test(prepared)) {
+    throw new Error('makepri config still indexes from the assets folder.');
+  }
+  if (!/foldernameAsQualifier="true"/.test(prepared) || !/filenameAsQualifier="true"/.test(prepared)) {
+    throw new Error('makepri config must keep folder and file qualifiers.');
+  }
+  return prepared;
+}
+
+async function preparePriConfig(configPath) {
+  const decoded = decodePriConfig(await readFile(configPath));
+  const prepared = preparePriConfigText(decoded.text);
+  await writeFile(configPath, encodePriConfig(prepared, decoded.encoding));
+}
+
+export function priResourceUri(manifestPath) {
+  return `Files/${String(manifestPath).replace(/\\/g, '/')}`;
+}
+
+export function assertPriDumpMatchesManifest(dump, manifestXml) {
+  // makepri's name attribute is the file name. The path Windows looks up is
+  // the uri, and that has to be Files/assets/... to match the manifest.
+  if (/\/Files\/Square44x44Logo\.png"/.test(dump)) {
+    throw new Error('resources.pri names Square44x44Logo.png without the assets folder.');
+  }
+  const uris = manifestAssetPaths(manifestXml).map((asset) => priResourceUri(asset));
+  const missing = uris.filter((uri) => !dump.includes(uri));
+  if (missing.length > 0) {
+    throw new Error(`resources.pri is missing manifest logo resources: ${missing.join(', ')}.`);
+  }
+  const marker = 'Files/assets/Square44x44Logo.png';
+  const at = dump.indexOf(marker);
+  if (at < 0) {
+    throw new Error('resources.pri has no Files/assets/Square44x44Logo.png resource.');
+  }
+  const next = dump.indexOf('<NamedResource', at + marker.length);
+  const block = dump.slice(at, next === -1 ? undefined : next);
+  if (!/[^A-Za-z]unplated/i.test(block)) {
+    throw new Error('Files/assets/Square44x44Logo.png has no altform-unplated candidate.');
+  }
+  if (!/lightunplated/i.test(block)) {
+    throw new Error('Files/assets/Square44x44Logo.png has no altform-lightunplated candidate.');
+  }
+}
+
+function decodePriDump(buffer) {
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return buffer.toString('utf16le', 2);
+  }
+  return buffer.toString('utf8').replace(/^\uFEFF/, '');
+}
+
+export async function dumpResourceIndex(makepri, layout, run) {
+  const priPath = path.join(layout, PRI_RESOURCE_FILE);
+  const dumpPath = path.join(layout, 'resources.pri.xml');
+  try {
+    run(makepri, ['dump', '/if', priPath, '/of', dumpPath, '/dt', 'detailed', '/o']);
+    const dump = decodePriDump(await readFile(dumpPath));
+    console.log('resources.pri NamedResource:');
+    for (const match of dump.matchAll(/<NamedResource\b[^>]*>/g)) {
+      console.log(match[0]);
+    }
+    return dump;
+  } finally {
+    await rm(dumpPath, { force: true });
+  }
+}
+
+export async function buildResourceIndex(makepri, layout, run) {
+  const plan = resourceIndexPlan(layout);
+  console.log(`makepri ${JSON.stringify([makepri, ...plan.createIndex])}`);
+  try {
+    run(makepri, plan.createConfig);
+    await preparePriConfig(plan.configPath);
+    run(makepri, plan.createIndex);
+  } finally {
+    await rm(plan.configPath, { force: true });
+  }
+  let info;
+  try {
+    info = await stat(plan.outputPath);
+  } catch {
+    info = null;
+  }
+  if (!info?.isFile() || info.size === 0) {
+    throw new Error('makepri did not write resources.pri.');
+  }
+  const extras = (await readdir(layout)).filter((name) => name.endsWith('.pri') && name !== PRI_RESOURCE_FILE);
+  if (extras.length > 0) {
+    throw new Error(`makepri wrote extra resource indexes: ${extras.join(', ')}.`);
+  }
+}
 
 function fileNamePattern(name) {
   return new RegExp(`[\\\\/]${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);

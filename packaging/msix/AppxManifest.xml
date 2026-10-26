@@ -8,7 +8,7 @@
   <Identity
     Name="Obelisk.Dev"
     Publisher="CN=Obelisk Dev"
-    Version="0.1.0.0"
+    Version="0.1.8.0"
     ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>Obelisk</DisplayName>
@@ -26,7 +26,7 @@
       <uap:VisualElements
         DisplayName="Obelisk"
         Description="Obelisk is a Windows document editor."
-        BackgroundColor="#2C3A4A"
+        BackgroundColor="transparent"
         Square150x150Logo="assets\Square150x150Logo.png"
         Square44x44Logo="assets\Square44x44Logo.png">
         <uap:DefaultTile

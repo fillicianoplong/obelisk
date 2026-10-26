@@ -20,7 +20,7 @@ export function findKitTools(roots) {
         continue;
       }
       for (const arch of ['x64', 'arm64', 'x86']) {
-        for (const tool of ['makeappx.exe', 'signtool.exe']) {
+        for (const tool of ['makeappx.exe', 'signtool.exe', 'makepri.exe']) {
           const candidate = path.join(root, version.name, arch, tool);
           if (existsSync(candidate)) {
             hits.push({ tool, version: version.name, arch, candidate });
@@ -38,13 +38,16 @@ export function findKitTools(roots) {
     return (ARCH_RANK[left.arch] ?? 0) - (ARCH_RANK[right.arch] ?? 0);
   });
 
-  const found = { makeappx: null, signtool: null };
+  const found = { makeappx: null, signtool: null, makepri: null };
   for (const hit of hits) {
     if (hit.tool === 'makeappx.exe') {
       found.makeappx = hit.candidate;
     }
     if (hit.tool === 'signtool.exe') {
       found.signtool = hit.candidate;
+    }
+    if (hit.tool === 'makepri.exe') {
+      found.makepri = hit.candidate;
     }
   }
   return found;

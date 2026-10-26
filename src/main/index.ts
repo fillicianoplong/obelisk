@@ -20,6 +20,23 @@ function reportSecurity(line: string): void {
   }
 }
 
+const WINDOW_ICON_FILE = 'obelisk.ico';
+
+function windowIconPath(): string | null {
+  if (process.platform !== 'win32') {
+    return null;
+  }
+  const packaged = path.join(process.resourcesPath, WINDOW_ICON_FILE);
+  if (fs.existsSync(packaged)) {
+    return packaged;
+  }
+  const dev = path.join(app.getAppPath(), 'packaging', 'icons', WINDOW_ICON_FILE);
+  if (fs.existsSync(dev)) {
+    return dev;
+  }
+  return null;
+}
+
 function createWindow(): void {
   const webPreferences = secureWebPreferences(path.join(__dirname, '../preload/index.js'));
   reportSecurity(
@@ -31,11 +48,15 @@ function createWindow(): void {
     })}`,
   );
 
+  // The .ico path lets Windows load the 16 px frame at 100%, 20 px at 125%,
+  // and 24 px at 150%. One file is used on both light and dark taskbars.
+  const windowIcon = windowIconPath();
   const window = new BrowserWindow({
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
     title: APP_NAME,
     backgroundColor: '#e7e2d8',
+    ...(windowIcon ? { icon: windowIcon } : {}),
     webPreferences,
   });
 
