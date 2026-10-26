@@ -218,6 +218,34 @@ test('the active tab is canvas and semibold, with a border only under forced col
   assert.equal(contrastActive.get('border-style'), 'solid');
 });
 
+test('the tab close hover uses the overlay token', async () => {
+  const css = stripComments(await readFile(path.join(root, 'src/renderer/shell/shell.css'), 'utf8'));
+  const tokens = stripComments(await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8'));
+  const contrastOpen = css.indexOf('@media (forced-colors: active)');
+  const rest = css.slice(0, contrastOpen);
+  assert.match(rest, /\.tab-close:hover\s*\{[^}]*background:\s*var\(--color-tab-close-hover\)/);
+  assert.match(rest, /\.tab-close:active\s*\{[^}]*background:\s*var\(--color-tab-close-pressed\)/);
+
+  const darkMedia = takeMedia(tokens, '@media (prefers-color-scheme: dark)');
+  const reducedMotion = takeMedia(darkMedia.rest, '@media (prefers-reduced-motion: reduce)');
+  const contrast = takeMedia(reducedMotion.rest, '@media (forced-colors: active)');
+  const rules = topLevelRules(contrast.rest);
+  const light = customProperties(ruleBody(rules, ':root, :root[data-theme="light"]'));
+  const dark = customProperties(ruleBody(rules, ':root[data-theme="dark"]'));
+  const contrastTokens = customProperties(topLevelRules(contrast.inner)[0].body);
+  assert.equal(light.get('--color-tab-close-hover'), 'rgba(70, 80, 96, 0.18)');
+  assert.equal(light.get('--color-tab-close-pressed'), 'rgba(70, 80, 96, 0.32)');
+  assert.equal(dark.get('--color-tab-close-hover'), 'rgba(174, 182, 194, 0.18)');
+  assert.equal(dark.get('--color-tab-close-pressed'), 'rgba(174, 182, 194, 0.32)');
+  assert.equal(contrastTokens.get('--color-tab-close-hover'), 'ButtonFace');
+  assert.equal(contrastTokens.get('--color-tab-close-pressed'), 'ButtonFace');
+
+  const forced = css.slice(css.indexOf('{', contrastOpen) + 1, findMatchingBrace(css, css.indexOf('{', contrastOpen)));
+  assert.match(forced, /\.tab-close:hover,\s*\.tab-close:active\s*\{[^}]*background:\s*ButtonFace/);
+  assert.match(forced, /\.tab-close:hover,\s*\.tab-close:active\s*\{[^}]*color:\s*ButtonText/);
+  assert.match(forced, /\.tab-close:hover,\s*\.tab-close:active\s*\{[^}]*solid Highlight/);
+});
+
 test('shell styles take every color, size, radius, shadow, and duration from tokens', async () => {
   for (const relative of SHELL_STYLE_FILES) {
     const css = await readFile(path.join(root, relative), 'utf8');

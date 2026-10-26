@@ -3,7 +3,7 @@ export interface MenuItem {
   label: string;
   shortcut?: string;
   submenu?: boolean;
-  command?: 'new';
+  command?: 'new' | 'close-tab';
 }
 
 export interface MenuSeparator {
@@ -31,8 +31,8 @@ function separator(id: string): MenuSeparator {
   return { id, separator: true };
 }
 
-// Menus reference in the SRS. Only File > New runs in this shell; later
-// milestones enable the rest. The native application menu stays off.
+// Menus reference in the SRS. File > New and File > Close tab run in this
+// shell; later milestones enable the rest. The native application menu stays off.
 export const APP_MENUS: readonly AppMenu[] = [
   {
     id: 'file',
@@ -48,7 +48,7 @@ export const APP_MENUS: readonly AppMenu[] = [
       item('print', 'Print'),
       item('export', 'Export', { submenu: true }),
       separator('file-sep-3'),
-      item('close-tab', 'Close tab'),
+      item('close-tab', 'Close tab', { shortcut: 'Ctrl+W', command: 'close-tab' }),
       item('exit', 'Exit'),
     ],
   },
