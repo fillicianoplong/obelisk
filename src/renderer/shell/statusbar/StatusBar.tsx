@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { STATUS_BAR_LABEL } from '../focus/regions.js';
 import { CountItems, ViewItem, ZoomItem } from './items.js';
 import { LiveRegion } from './LiveRegion.js';
 import { isSaveState, nextViewLabel, saveStateLabel, textCounts } from './model.js';
@@ -91,7 +92,7 @@ export function StatusBar({ text, saveState }: StatusBarProps) {
       data-region="status-bar"
       data-save-state={shown}
       role="status"
-      aria-label="Status bar"
+      aria-label={STATUS_BAR_LABEL}
       aria-live="off"
       tabIndex={-1}
       ref={barRef}

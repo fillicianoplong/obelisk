@@ -1,0 +1,88 @@
+/*
+ * Two-tone focus ring.
+ * Outer: 2 px --color-focus-outer. Inner: 1 px --color-focus-inner, just inside the outer.
+ * The ring is inset on every side so a neighbour, the window edge, or a scrollport cannot clip it.
+ * Contrast themes name Highlight and Canvas. A generated box keeps those system colors when
+ * the contrast theme would otherwise drop a shadow.
+ * The page ring is keyboard only. A click leaves the caret as the indicator.
+ * A keyboard menu item does not draw the accent bar. Pointer hover does not draw the ring.
+ */
+
+.menu-button:focus-visible,
+.tab:focus-visible,
+.tab-new:focus-visible,
+.tab-close:focus-visible,
+.status-bar:focus-visible,
+.status-save:focus-visible,
+.menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+  box-shadow:
+    inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer),
+    inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) var(--color-focus-inner);
+}
+
+.menu-item:focus-visible {
+  outline: none;
+}
+
+/* The status bar's top border is the divider. A ring drawn on the border edge
+   paints over that border and the top stroke becomes thicker than the other sides. */
+.status-bar:focus-visible {
+  outline-color: transparent;
+}
+
+.page-sheet[data-focus-source='keyboard']:focus {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+  box-shadow:
+    var(--shadow-page),
+    inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer),
+    inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) var(--color-focus-inner);
+}
+
+@media (forced-colors: active) {
+  .menu-button:focus-visible,
+  .tab:focus-visible,
+  .tab-new:focus-visible,
+  .tab-close:focus-visible,
+  .status-bar:focus-visible,
+  .status-save:focus-visible,
+  .page-sheet[data-focus-source='keyboard']:focus,
+  .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
+    outline-color: Highlight;
+    box-shadow:
+      inset 0 0 0 var(--size-focus-ring) Highlight,
+      inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) Canvas;
+  }
+
+  .menu-button:focus-visible,
+  .tab:focus-visible,
+  .tab-new:focus-visible,
+  .tab-close:focus-visible,
+  .status-bar:focus-visible,
+  .status-save:focus-visible,
+  .page-sheet[data-focus-source='keyboard']:focus,
+  .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
+    position: relative;
+  }
+
+  .menu-button:focus-visible::after,
+  .tab:focus-visible::after,
+  .tab-new:focus-visible::after,
+  .tab-close:focus-visible::after,
+  .status-bar:focus-visible::after,
+  .status-save:focus-visible::after,
+  .page-sheet[data-focus-source='keyboard']:focus::after,
+  .menu-bar[data-input='keyboard'] .menu-item[data-focused='true']::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    forced-color-adjust: none;
+    box-shadow:
+      inset 0 0 0 var(--size-focus-ring) Highlight,
+      inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) Canvas;
+  }
+}

@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { onMenuRegionLeave } from '../focus/menu-leave.js';
+import { MENU_BAR_LABEL } from '../focus/regions.js';
 import { MenuCheck, MenuChevron } from './icons.js';
 import {
   accessKeysVisible,
@@ -290,6 +292,12 @@ export function MenuBar({ onCommand }: MenuBarProps) {
   }, [session]);
 
   useEffect(() => {
+    return onMenuRegionLeave(() => {
+      applyRef.current(pointerDismiss(sessionRef.current));
+    });
+  }, []);
+
+  useEffect(() => {
     if (session.menuId === null && !session.keyboard) {
       return undefined;
     }
@@ -321,7 +329,7 @@ export function MenuBar({ onCommand }: MenuBarProps) {
       data-access-keys={showKeys ? 'true' : 'false'}
       data-input={session.keyboard ? 'keyboard' : 'pointer'}
       role="menubar"
-      aria-label="Menu bar"
+      aria-label={MENU_BAR_LABEL}
       aria-orientation="horizontal"
       ref={barRef}
       onPointerDown={onBarPointerDown}
