@@ -4,11 +4,15 @@ import { createTabEditorState } from '../../editor/state.js';
 
 export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
 
+export const SETTINGS_TAB_ID = 'settings';
+
 export interface PageTab {
   id: string;
   title: string;
   /** Present once the document has a saved path. A never-saved tab omits it. */
   path?: string;
+  /** A document tab omits this. Settings is the Tools > Settings tab. */
+  kind?: 'document' | 'settings';
   editor: EditorState;
   /** The document at the last save, or the empty document for a new tab. */
   savedDoc: Node;
@@ -28,7 +32,21 @@ export function createTab(number: number): PageTab {
   };
 }
 
+export function createSettingsTab(): PageTab {
+  const editor = createTabEditorState();
+  return {
+    id: SETTINGS_TAB_ID,
+    title: 'Settings',
+    kind: 'settings',
+    editor,
+    savedDoc: editor.doc,
+  };
+}
+
 export function tabHasUnsavedChanges(tab: PageTab): boolean {
+  if (tab.kind === 'settings') {
+    return false;
+  }
   return !tab.editor.doc.eq(tab.savedDoc);
 }
 
