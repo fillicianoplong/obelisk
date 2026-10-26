@@ -35,6 +35,7 @@ export function TabStrip({ tabs, activeId, onSelect, onNew }: TabStripProps) {
             }}
           >
             <span className="tab-title">{tab.title}</span>
+            <span className="tab-unsaved" aria-hidden="true" />
             <span className="tab-close" aria-hidden="true">
               ×
             </span>

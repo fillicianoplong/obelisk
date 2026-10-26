@@ -52,20 +52,27 @@ test('shell frame colors match the Slate title bar and window tokens', async () 
   assert.ok(height);
   assert.equal(`${height[1]}px`, prop(css, ':root {', '--size-titlebar'));
 
-  assert.match(entry, /shellFrameColors\(nativeTheme\.shouldUseDarkColors\)/);
+  assert.match(entry, /activateThemeSource\(nativeTheme, theme\)/);
   assert.match(entry, /backgroundColor: frame\.backgroundColor/);
-  assert.match(entry, /setBackgroundColor\(frame\.backgroundColor\)/);
   assert.match(entry, /titleBarStyle: 'hidden'/);
   assert.match(entry, /titleBarOverlay:/);
-  assert.match(entry, /setTitleBarOverlay\(\{/);
   assert.match(entry, /color: frame\.overlayColor/);
   assert.match(entry, /symbolColor: frame\.symbolColor/);
   assert.match(entry, /height: frame\.titleBarHeight/);
   assert.match(entry, /process\.platform === 'win32'/);
-  assert.match(entry, /nativeTheme\.on\('updated'/);
-  assert.equal(entry.includes('themeSource'), false);
   assert.equal(entry.includes('#E6EAF0'), false);
   assert.equal(entry.includes('#20252C'), false);
+  const activateAt = entry.indexOf('activateThemeSource(nativeTheme, theme)');
+  const windowAt = entry.indexOf('new BrowserWindow(');
+  assert.ok(activateAt !== -1 && windowAt !== -1 && activateAt < windowAt);
+
+  const themeModule = await readFile(path.join(root, 'src/main/window/theme.ts'), 'utf8');
+  assert.match(themeModule, /nativeTheme\.themeSource = themeSourceFor\(theme\)/);
+  assert.match(themeModule, /setBackgroundColor\(frame\.backgroundColor\)/);
+  assert.match(themeModule, /setTitleBarOverlay\(\{/);
+  assert.match(themeModule, /shouldUseHighContrastColors/);
+  assert.match(themeModule, /\.on\('updated', onUpdated\)/);
+  assert.match(themeModule, /\.off\('updated', onUpdated\)/);
 });
 
 test('each Windows theme maps to that theme’s caption overlay and window background', async () => {

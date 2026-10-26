@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { exposeObeliskApi } from './bridge.js';
+import { installThemeBridge } from './theme.js';
 
 declare function require(moduleName: string): unknown;
 
@@ -18,6 +19,10 @@ function nodeFileSystemAvailable(): boolean {
 }
 
 exposeObeliskApi(contextBridge, ipcRenderer);
+
+const themeRoot = (globalThis as { document?: { documentElement?: { dataset: { theme?: string } } | null } }).document
+  ?.documentElement;
+installThemeBridge(contextBridge, ipcRenderer, process.argv, themeRoot ?? null);
 
 const preloadProcess = process as NodeJS.Process & PreloadProcess;
 

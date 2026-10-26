@@ -10,6 +10,7 @@ import { StatusBar } from './StatusBar.js';
 import { createTab } from './tabs.js';
 import type { PageTab } from './tabs.js';
 import { TabStrip } from './TabStrip.js';
+import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
 import './shell.css';
 
@@ -90,6 +91,7 @@ export function Shell() {
 
   return (
     <div className="shell">
+      <ThemeSync />
       <TitleBar />
       <MenuBar
         openMenu={openMenu}
