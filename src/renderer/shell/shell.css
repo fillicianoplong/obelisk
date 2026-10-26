@@ -85,12 +85,18 @@
 }
 
 .menu-button:hover,
-.menu-button[aria-expanded='true'] {
+.menu-button[aria-expanded='true'],
+.menu-button:focus-visible {
   background: var(--color-surface-chrome-hover);
 }
 
 .menu-button:active {
   background: var(--color-surface-chrome-pressed);
+}
+
+.menu-bar[data-access-keys='true'] .menu-key {
+  text-decoration-line: underline;
+  text-underline-offset: var(--space-2xs);
 }
 
 .menu-panel {
@@ -99,46 +105,72 @@
   box-shadow: var(--shadow-menu);
   color: var(--color-text-primary);
   left: 0;
+  min-width: max-content;
+  outline: 0;
   padding: var(--space-xs) 0;
   position: absolute;
   top: calc(100% + var(--space-xs));
   z-index: 1;
 }
 
+.menu-panel .menu-panel {
+  left: calc(100% - var(--space-2xs));
+  top: 0;
+}
+
+.menu-item-slot {
+  position: relative;
+}
+
 .menu-item {
   -webkit-app-region: no-drag;
   align-items: center;
+  appearance: none;
   background: transparent;
   border: 0;
-  border-left: var(--space-xs) solid transparent;
   box-sizing: border-box;
+  outline: none;
   color: var(--color-text-primary);
   display: flex;
   font: inherit;
-  gap: var(--space-xl);
-  justify-content: space-between;
+  gap: var(--space-s);
   min-height: var(--size-control);
-  padding: var(--space-xs) var(--space-m);
+  padding: var(--space-xs) var(--space-m) var(--space-xs) calc(var(--space-m) + var(--size-menu-accent));
+  position: relative;
   text-align: left;
   transition-duration: var(--duration-fast);
-  transition-property: background-color, border-color, color;
+  transition-property: background-color, color;
   transition-timing-function: var(--easing-standard);
   white-space: nowrap;
   width: 100%;
 }
 
-.menu-item:not(:disabled):hover,
-.menu-item:not(:disabled):focus-visible {
+.menu-bar[data-input='pointer'] .menu-item:not([aria-disabled='true']):hover,
+.menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
   background: var(--color-surface-raised-hover);
-  border-left-color: var(--color-accent);
   color: var(--color-text-primary);
 }
 
+/* Pointer only. Keyboard focus hides the bar so the ring is the same on every side. */
+.menu-bar[data-input='pointer'] .menu-item:not([aria-disabled='true']):hover {
+  box-shadow: inset var(--size-menu-accent) 0 0 var(--color-accent);
+}
+
+.menu-item:focus-visible {
+  outline: none;
+}
+
 .menu-button:focus-visible,
-.menu-item:not(:disabled):focus-visible,
 .tab-new:focus-visible {
   outline: var(--size-focus-ring) solid var(--color-focus-outer);
   outline-offset: calc(var(--space-2xs) / -2);
+}
+
+/* Same even ring as a tab: 2 px inside every edge, so neighbours cannot clip it. */
+.menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+  box-shadow: inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer);
 }
 
 /* Inside the tab. The strip scrolls, and an outline outside the tab is clipped. */
@@ -148,18 +180,46 @@
   box-shadow: inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer);
 }
 
-.menu-item:disabled {
+.menu-item[aria-disabled='true'],
+.menu-item[aria-disabled='true'] .menu-shortcut,
+.menu-item[aria-disabled='true'] .menu-chevron {
   color: var(--color-text-disabled);
+}
+
+.menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.menu-trailing {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: var(--space-s);
+  margin-left: auto;
+  padding-left: var(--space-xl);
+}
+
+.menu-check {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 var(--space-l);
+  justify-content: center;
+  width: var(--space-l);
+}
+
+.menu-chevron,
+.menu-check-icon {
+  display: block;
+  flex: 0 0 auto;
+  height: var(--space-m);
+  width: var(--space-m);
 }
 
 .menu-shortcut {
   color: var(--color-text-secondary);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-caption);
-}
-
-.menu-submenu {
-  color: var(--color-text-secondary);
 }
 
 .menu-separator {
@@ -385,6 +445,16 @@
   outline-offset: calc(var(--space-2xs) / -2);
 }
 
+.settings-title {
+  color: var(--color-text-heading);
+  font-family: var(--font-ui-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-title);
+  margin: 0;
+  width: 100%;
+}
+
 .status-bar {
   align-items: center;
   background: var(--color-surface-chrome);
@@ -554,5 +624,21 @@
   .menu-panel,
   .status-tooltip {
     border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  }
+
+  .menu-bar[data-input='pointer'] .menu-item:not([aria-disabled='true']):hover,
+  .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
+    color: HighlightText;
+  }
+
+  .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
+    outline-color: Highlight;
+    box-shadow: inset 0 0 0 var(--size-focus-ring) Highlight;
+  }
+
+  .menu-item[aria-disabled='true'],
+  .menu-item[aria-disabled='true'] .menu-shortcut,
+  .menu-item[aria-disabled='true'] .menu-chevron {
+    color: GrayText;
   }
 }
