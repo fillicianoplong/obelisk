@@ -233,6 +233,25 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
     assert.equal(state.stripHeight, '40px');
     assert.equal(state.tabMin, '96px');
     assert.equal(state.tabMax, '220px');
+    const fittedWheel = await evaluate(
+      session.client,
+      `(() => {
+        const list = document.querySelector('[role="tablist"]');
+        const strip = document.querySelector('[data-region="tab-strip"]');
+        const before = list.scrollLeft;
+        const event = new WheelEvent('wheel', { deltaX: 40, deltaY: 160, bubbles: true, cancelable: true });
+        strip.dispatchEvent(event);
+        return {
+          overflow: list.scrollWidth > list.clientWidth,
+          scrollLeft: list.scrollLeft,
+          before,
+          defaultPrevented: event.defaultPrevented,
+        };
+      })()`,
+    );
+    assert.equal(fittedWheel.overflow, false);
+    assert.equal(fittedWheel.defaultPrevented, false);
+    assert.equal(fittedWheel.scrollLeft, fittedWheel.before);
     assert.equal(state.tabs[0].unsaved, false);
     assert.equal(state.tabs[0].markDisplay, 'none');
     assert.equal(state.tabs[0].closeDisplay, 'flex');
@@ -487,6 +506,45 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
     for (const width of widths) {
       assert.ok(width >= 95 && width <= 221, `tab width ${width}`);
     }
+    const wheeled = await evaluate(
+      session.client,
+      `(() => {
+        const list = document.querySelector('[role="tablist"]');
+        const strip = document.querySelector('[data-region="tab-strip"]');
+        list.scrollLeft = 0;
+        const origin = list.scrollLeft;
+        const vertical = new WheelEvent('wheel', { deltaX: 0, deltaY: 80, bubbles: true, cancelable: true });
+        strip.dispatchEvent(vertical);
+        const afterVertical = list.scrollLeft;
+        const horizontal = new WheelEvent('wheel', { deltaX: 40, deltaY: 0, bubbles: true, cancelable: true });
+        strip.dispatchEvent(horizontal);
+        const newTab = document.querySelector('[aria-label="New tab"]');
+        return {
+          overflow: list.scrollWidth > list.clientWidth,
+          origin,
+          afterVertical,
+          scrollLeft: list.scrollLeft,
+          verticalPrevented: vertical.defaultPrevented,
+          horizontalPrevented: horizontal.defaultPrevented,
+          newTabLeft: newTab.getBoundingClientRect().left,
+        };
+      })()`,
+    );
+    assert.equal(wheeled.overflow, true);
+    assert.equal(wheeled.verticalPrevented, true);
+    assert.equal(wheeled.horizontalPrevented, true);
+    assert.ok(
+      Math.abs(wheeled.afterVertical - wheeled.origin - 80) < 1,
+      `a vertical wheel moved the row from ${wheeled.origin} to ${wheeled.afterVertical}`,
+    );
+    assert.ok(
+      Math.abs(wheeled.scrollLeft - wheeled.afterVertical - 40) < 1,
+      `a sideways wheel moved the row from ${wheeled.afterVertical} to ${wheeled.scrollLeft}`,
+    );
+    assert.ok(
+      Math.abs(wheeled.newTabLeft - pinnedLeft) <= 1,
+      `the new-tab button moved from ${pinnedLeft} to ${wheeled.newTabLeft} when the wheel scrolled the tabs`,
+    );
   } finally {
     await finish();
   }

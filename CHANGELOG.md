@@ -2,6 +2,19 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.16.1] - 2026-10-26
+
+### Added
+
+- The window stops at 640 by 400. At that size the tabs shrink and scroll, the page scrolls sideways from its left edge, and the status bar keeps the counts, the save state, and the zoom. ([#111](https://github.com/fillicianoplong/obelisk/pull/111))
+- A scale check captures a 1280 by 800 window at 100%, 125%, 150%, 175%, and 200%, and the minimum size, in Light and Dark. It fails if text or a control is clipped or overlapping, and CI keeps the screenshots. ([#111](https://github.com/fillicianoplong/obelisk/pull/111))
+- The token contrast check runs with the tests. Every text and control color pair passes in Light and Dark. ([#111](https://github.com/fillicianoplong/obelisk/pull/111))
+
+### Fixed
+
+- Shrinking the window keeps the active tab on screen. ([#111](https://github.com/fillicianoplong/obelisk/pull/111))
+- The mouse wheel scrolls the tab row sideways when the tabs overflow. A sideways swipe does too. ([#111](https://github.com/fillicianoplong/obelisk/pull/111))
+
 ## [0.1.15.0] - 2026-10-26
 
 ### Added
