@@ -1,3 +1,5 @@
+@import './styles/tokens.css';
+
 html,
 body,
 #root {
@@ -6,9 +8,12 @@ body,
 }
 
 body {
-  background: #e7e2d8;
-  color: #1c1915;
-  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+  background: var(--color-surface-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
 }
 
 #root {

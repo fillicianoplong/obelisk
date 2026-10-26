@@ -1,6 +1,6 @@
 {
   "name": "obelisk",
-  "version": "0.1.8",
+  "version": "0.1.9.2",
   "private": true,
   "description": "Obelisk is a Windows document editor.",
   "main": "dist/main/index.js",

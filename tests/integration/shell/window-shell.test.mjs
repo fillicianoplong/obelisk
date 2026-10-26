@@ -20,6 +20,7 @@ import {
 const LAUNCH_LIMIT_MS = 3_000;
 
 const SHELL_EXPRESSION = `(() => {
+  const titleBar = document.querySelector('[data-region="title-bar"]');
   const menu = document.querySelector('[data-region="menu-bar"]');
   const tabs = document.querySelector('[data-region="tab-strip"]');
   const page = document.querySelector('[data-region="page"]');
@@ -28,7 +29,7 @@ const SHELL_EXPRESSION = `(() => {
   if (document.documentElement.dataset.shellCommands !== 'ready') {
     return null;
   }
-  if (!menu || !tabs || !page || !editor || !status || !editor.editorCommands) {
+  if (!titleBar || !menu || !tabs || !page || !editor || !status || !editor.editorCommands) {
     return null;
   }
   const box = (element) => {
@@ -41,7 +42,9 @@ const SHELL_EXPRESSION = `(() => {
       hidden: style.display === 'none' || style.visibility === 'hidden',
     };
   };
+  const region = (element) => getComputedStyle(element).getPropertyValue('-webkit-app-region');
   const regions = {
+    titleBar: box(titleBar),
     menu: box(menu),
     tabs: box(tabs),
     page: box(page),
@@ -60,6 +63,10 @@ const SHELL_EXPRESSION = `(() => {
   const active = tabs.querySelector('[role="tab"][aria-selected="true"]');
   return {
     title: document.title,
+    titleText: (titleBar.querySelector('h1')?.textContent || '').trim(),
+    titleDrag: region(titleBar),
+    menuDrag: region(menu),
+    tabsDrag: region(tabs),
     regions,
     menuLabels: [...menu.querySelectorAll('[data-menu]')].map((element) => element.textContent.trim()),
     tabLabels: tabNodes.map((element) => element.getAttribute('data-title')),
@@ -219,7 +226,13 @@ async function listDocumentWrites(directory) {
 
 function assertRegions(state) {
   assert.equal(state.title, 'Obelisk');
+  assert.equal(state.titleText, 'Obelisk');
+  assert.equal(state.titleDrag, 'drag');
+  assert.equal(state.menuDrag, 'no-drag');
+  assert.equal(state.tabsDrag, 'no-drag');
+  assert.ok(state.regions.titleBar.height >= 30 && state.regions.titleBar.height <= 34);
   assert.deepEqual(state.menuLabels, ['File', 'Edit', 'View', 'Insert', 'Format', 'Tools', 'Help']);
+  assert.ok(state.regions.titleBar.top < state.regions.menu.top, 'title bar is above the menu bar');
   assert.ok(state.regions.menu.top < state.regions.tabs.top, 'menu bar is above the tab strip');
   assert.ok(state.regions.tabs.top < state.regions.page.top, 'tab strip is above the page');
   assert.ok(state.regions.page.top < state.regions.status.top, 'page is above the status bar');
