@@ -8,7 +8,8 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   root: path.join(rootDir, 'src/renderer'),
   base: './',
-  publicDir: false,
+  // assets/fonts is copied to dist/renderer/fonts. The page loads Liberation Serif from there.
+  publicDir: path.join(rootDir, 'assets'),
   plugins: [react()],
   build: {
     outDir: path.join(rootDir, 'dist/renderer'),

@@ -10,6 +10,8 @@ import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
 import { bindPageFocus, pageFocusIsKeyboard } from '../shell/page-focus.js';
 import { editorSchema } from './schema.js';
 import { runWithSynchronousEditorUpdate } from './flush.js';
+import { pageFrameStyle, pageHeaderStyle } from './layout/page.js';
+import { bindPageOriginScroll } from './layout/page-scroll.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
 
 interface EditorCoreProps {
@@ -255,8 +257,23 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
     view.dom.ownerDocument.addEventListener('selectionchange', onSelectionChange);
     const unbindPageFocus = bindPageFocus(view.dom);
     view.focus();
+    const pageRegion = host.closest('.page-region');
+    const unbindPageScroll = pageRegion instanceof HTMLElement
+      ? bindPageOriginScroll(pageRegion, () => {
+          if (view.isDestroyed) {
+            return null;
+          }
+          try {
+            const head = view.coordsAtPos(view.state.selection.head);
+            return { left: head.left, right: head.right };
+          } catch {
+            return null;
+          }
+        })
+      : () => {};
 
     return () => {
+      unbindPageScroll();
       unbindPageFocus();
       view.dom.ownerDocument.removeEventListener('selectionchange', onSelectionChange);
       adoptDomSelection(view);
@@ -267,5 +284,17 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
     // `state` is the tab snapshot at mount. Later edits stay in the view.
   }, [tabId]);
 
-  return <div ref={hostRef} className="editor-host" />;
+  return (
+    <div className="page-canvas">
+      <div className="page-frame" style={pageFrameStyle()}>
+        <div ref={hostRef} className="editor-host" />
+        <div
+          className="page-header"
+          style={pageHeaderStyle()}
+          data-page-part="header"
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  );
 }

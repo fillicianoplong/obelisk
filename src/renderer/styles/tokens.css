@@ -16,7 +16,7 @@
   /* Type families */
   --font-ui: "Segoe UI Variable Text", "Segoe UI", Selawik, system-ui, sans-serif;
   --font-ui-display: "Segoe UI Variable Display", "Segoe UI", Selawik, system-ui, sans-serif;
-  --font-page: "Liberation Serif", "Times New Roman", serif;   /* Preferences default font */
+  --font-page: "Liberation Serif", "Times New Roman", serif;   /* Preferences default; the face is bundled */
   --font-code: "Cascadia Mono", Consolas, "Liberation Mono", monospace;
   --font-signature: "Dancing Script", cursive;                  /* FR-78 typed signature */
 

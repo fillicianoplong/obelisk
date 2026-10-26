@@ -5,6 +5,7 @@ import { packager } from '@electron/packager';
 import { assertFusesOff, flipRequiredFusesOff } from './fuses.mjs';
 import {
   APP_ICON_RELATIVE,
+  bundledPageFontLayoutPaths,
   assertDevManifest,
   assertNoDevPackageFiles,
   assertPriDumpMatchesManifest,
@@ -235,6 +236,7 @@ async function assertLayout(layout, { indexed = false } = {}) {
     path.join('resources', 'app', 'dist', 'preload', 'index.js'),
     path.join('resources', 'app', 'dist', 'renderer', 'index.html'),
     path.join('resources', path.basename(APP_ICON_RELATIVE)),
+    ...bundledPageFontLayoutPaths(),
   ];
   if (indexed) {
     required.push(PRI_RESOURCE_FILE);
