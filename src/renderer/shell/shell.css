@@ -136,10 +136,16 @@
 
 .menu-button:focus-visible,
 .menu-item:not(:disabled):focus-visible,
-.tab:focus-visible,
 .tab-new:focus-visible {
   outline: var(--size-focus-ring) solid var(--color-focus-outer);
   outline-offset: calc(var(--space-2xs) / -2);
+}
+
+/* Inside the tab. The strip scrolls, and an outline outside the tab is clipped. */
+.tab:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+  box-shadow: inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer);
 }
 
 .menu-item:disabled {
@@ -169,13 +175,26 @@
   box-shadow: inset 0 calc(var(--space-2xs) / -2) 0 var(--color-border-subtle);
   box-sizing: border-box;
   display: flex;
-  gap: var(--space-2xs);
   height: var(--size-tabstrip);
+  min-width: 0;
+  padding: var(--space-s) var(--space-s) 0;
+  user-select: none;
+}
+
+.tab-list {
+  align-items: flex-end;
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--space-2xs);
+  height: 100%;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: var(--space-s) var(--space-s) 0;
-  user-select: none;
+  scrollbar-width: none;
+}
+
+.tab-list::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
@@ -212,6 +231,15 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.tab-trailing {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  height: var(--size-control-small);
+  justify-content: center;
+  width: var(--size-control-small);
+}
+
 .tab-unsaved {
   background: var(--color-text-tab);
   border: calc(var(--space-2xs) / 2) solid var(--color-text-tab);
@@ -225,6 +253,10 @@
 
 .tab[data-unsaved='true'] .tab-unsaved {
   display: block;
+}
+
+.tab[data-unsaved='true']:hover .tab-unsaved {
+  display: none;
 }
 
 .tab-title {
@@ -242,6 +274,7 @@
   border: 0;
   border-radius: var(--radius-control);
   color: var(--color-text-secondary);
+  cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
   font: inherit;
@@ -250,6 +283,28 @@
   line-height: var(--line-height-body-small);
   padding: 0;
   width: var(--size-control-small);
+}
+
+.tab-close {
+  display: none;
+  transition-duration: var(--duration-fast);
+  transition-property: background-color, color;
+  transition-timing-function: var(--easing-standard);
+}
+
+.tab:hover .tab-close,
+.tab[aria-selected='true']:not([data-unsaved='true']) .tab-close {
+  display: inline-flex;
+}
+
+.tab-close:hover {
+  background: var(--color-tab-close-hover);
+  color: var(--color-text-chrome);
+}
+
+.tab-close:active {
+  background: var(--color-tab-close-pressed);
+  color: var(--color-text-chrome);
 }
 
 .tab-new {
@@ -341,9 +396,29 @@
     border-width: var(--size-focus-ring) calc(var(--space-2xs) / 2) 0;
   }
 
+  .tab:focus-visible {
+    box-shadow: none;
+  }
+
+  .tab:not([aria-selected='true']):hover {
+    color: HighlightText;
+  }
+
+  .tab:not([aria-selected='true']):hover .tab-close {
+    color: HighlightText;
+  }
+
   .tab-unsaved {
     background: var(--color-text-tab);
     border-color: var(--color-text-tab);
+  }
+
+  .tab-close:hover,
+  .tab-close:active {
+    background: ButtonFace;
+    color: ButtonText;
+    outline: var(--size-focus-ring) solid Highlight;
+    outline-offset: calc(var(--size-focus-ring) * -1);
   }
 
   .page-sheet,

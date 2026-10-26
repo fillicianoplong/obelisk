@@ -140,6 +140,8 @@
   --color-subtle-fill-pressed: #CDD4DE;
   --color-close-hover: #C42B1C;             /* window close button only */
   --color-close-hover-text: #FFFFFF;
+  --color-tab-close-hover: rgba(70, 80, 96, 0.18);    /* tab text wash; same on canvas and chrome */
+  --color-tab-close-pressed: rgba(70, 80, 96, 0.32);
 
   --color-scrollbar-thumb: #788292;
   --color-scrollbar-thumb-hover: #6E7785;
@@ -204,6 +206,8 @@
     --color-subtle-fill-pressed: #2B313A;
     --color-close-hover: #C42B1C;
     --color-close-hover-text: #FFFFFF;
+    --color-tab-close-hover: rgba(174, 182, 194, 0.18);
+    --color-tab-close-pressed: rgba(174, 182, 194, 0.32);
     --color-scrollbar-thumb: #6E7887;
     --color-scrollbar-thumb-hover: #8C95A3;
     --color-scrollbar-track: transparent;
@@ -264,6 +268,8 @@
   --color-subtle-fill-pressed: #2B313A;
   --color-close-hover: #C42B1C;
   --color-close-hover-text: #FFFFFF;
+  --color-tab-close-hover: rgba(174, 182, 194, 0.18);
+  --color-tab-close-pressed: rgba(174, 182, 194, 0.32);
   --color-scrollbar-thumb: #6E7887;
   --color-scrollbar-thumb-hover: #8C95A3;
   --color-scrollbar-track: transparent;
@@ -337,6 +343,8 @@
     --color-subtle-fill-pressed: Highlight;
     --color-close-hover: Highlight;
     --color-close-hover-text: HighlightText;
+    --color-tab-close-hover: ButtonFace;
+    --color-tab-close-pressed: ButtonFace;
     --color-scrollbar-thumb: ButtonText;
     --color-scrollbar-thumb-hover: Highlight;
     --color-scrollbar-track: Canvas;
