@@ -6,6 +6,7 @@ import { EditorView } from 'prosemirror-view';
 import { useLayoutEffect, useRef } from 'react';
 import 'prosemirror-view/style/prosemirror.css';
 import './editor.css';
+import { bindPageFocus } from '../shell/page-focus.js';
 import { editorSchema } from './schema.js';
 import { runWithSynchronousEditorUpdate } from './flush.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
@@ -216,9 +217,11 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
       }
     };
     view.dom.ownerDocument.addEventListener('selectionchange', onSelectionChange);
+    const unbindPageFocus = bindPageFocus(view.dom);
     view.focus();
 
     return () => {
+      unbindPageFocus();
       view.dom.ownerDocument.removeEventListener('selectionchange', onSelectionChange);
       adoptDomSelection(view);
       onChangeRef.current(ownedTabId, view.state);

@@ -134,6 +134,14 @@
   color: var(--color-text-primary);
 }
 
+.menu-button:focus-visible,
+.menu-item:not(:disabled):focus-visible,
+.tab:focus-visible,
+.tab-new:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--space-2xs) / -2);
+}
+
 .menu-item:disabled {
   color: var(--color-text-disabled);
 }
@@ -204,12 +212,19 @@
   font-weight: var(--font-weight-semibold);
 }
 
-@media (forced-colors: active) {
-  .tab[aria-selected='true'] {
-    border-color: var(--color-accent);
-    border-style: solid;
-    border-width: var(--size-focus-ring) calc(var(--space-2xs) / 2) 0;
-  }
+.tab-unsaved {
+  background: var(--color-text-tab);
+  border: calc(var(--space-2xs) / 2) solid var(--color-text-tab);
+  border-radius: var(--radius-round);
+  box-sizing: border-box;
+  display: none;
+  flex: 0 0 auto;
+  height: var(--space-s);
+  width: var(--space-s);
+}
+
+.tab[data-unsaved='true'] .tab-unsaved {
+  display: block;
 }
 
 .tab-title {
@@ -274,7 +289,7 @@
   line-height: var(--line-height-page);
   margin: 0;
   min-height: 0;
-  outline: none;
+  outline: 0;
   overflow: auto;
   padding: var(--page-margin);
   width: 100%;
@@ -288,6 +303,11 @@
 
 .page-sheet p {
   margin: 0;
+}
+
+.page-sheet[data-focus-source='keyboard']:focus {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--space-2xs) / -2);
 }
 
 .status-bar {
@@ -306,4 +326,28 @@
   padding: 0 var(--space-m);
   user-select: none;
   white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+  /* Caption buttons are ButtonFace and ButtonText. The strip uses that pair. */
+  .title-bar {
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .tab[aria-selected='true'] {
+    border-color: var(--color-accent);
+    border-style: solid;
+    border-width: var(--size-focus-ring) calc(var(--space-2xs) / 2) 0;
+  }
+
+  .tab-unsaved {
+    background: var(--color-text-tab);
+    border-color: var(--color-text-tab);
+  }
+
+  .page-sheet,
+  .menu-panel {
+    border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  }
 }
