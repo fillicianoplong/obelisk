@@ -1,5 +1,6 @@
 import type { EditorState } from 'prosemirror-state';
 import { EditorCore } from '../editor/EditorCore.js';
+import { DOCUMENT_LABEL } from './focus/regions.js';
 
 interface PageAreaProps {
   tabId: string;
@@ -17,7 +18,8 @@ export function PageArea({ tabId, kind = 'document', state, onChange }: PageArea
         data-page="settings"
         role="tabpanel"
         id={`panel-${tabId}`}
-        aria-labelledby={`tab-${tabId}`}
+        aria-label={DOCUMENT_LABEL}
+        tabIndex={-1}
       >
         <h1 className="settings-title">Settings</h1>
       </section>

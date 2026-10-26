@@ -43,7 +43,7 @@ npm run check:fuses -- dist/msix/Obelisk-Dev.msix
 
 ## Package version
 
-- The package version in `package.json` is what the MSIX identity uses (0.1.13.2).
+- The package version in `package.json` is what the MSIX identity uses (0.1.14.0).
 - Raise it when the icons change so Windows does not keep the previous install's cached icons.
 
 ## Certificate
