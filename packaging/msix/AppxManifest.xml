@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap5 rescap">
+  <Identity
+    Name="Obelisk.Dev"
+    Publisher="CN=Obelisk Dev"
+    Version="0.1.0.0"
+    ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>Obelisk</DisplayName>
+    <PublisherDisplayName>Obelisk Dev</PublisherDisplayName>
+    <Logo>assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+  <Applications>
+    <Application Id="Obelisk" Executable="Obelisk.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Obelisk"
+        Description="Obelisk is a Windows document editor."
+        BackgroundColor="#2C3A4A"
+        Square150x150Logo="assets\Square150x150Logo.png"
+        Square44x44Logo="assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="assets\Wide310x150Logo.png"
+          Square310x310Logo="assets\Square310x310Logo.png" />
+        <uap:SplashScreen Image="assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="obk">
+            <uap:SupportedFileTypes>
+              <uap:FileType>.obk</uap:FileType>
+            </uap:SupportedFileTypes>
+            <uap:DisplayName>Obelisk Document</uap:DisplayName>
+            <uap:Logo>assets\Square44x44Logo.png</uap:Logo>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+        <uap5:Extension Category="windows.appExecutionAlias">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="Obelisk.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

@@ -14,6 +14,7 @@ const electronTestFiles = [
   path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
   path.join('tests', 'integration', 'shell', 'window-shell.test.mjs'),
   path.join('tests', 'integration', 'editor', 'tab-editor.test.mjs'),
+  path.join('tests', 'integration', 'packaging', 'writes-app-data.test.mjs'),
 ];
 
 function exitCode(result) {

@@ -1,22 +1,18 @@
 import { app, BrowserWindow, Menu } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
+import { SMOKE_MARKER_FILE } from './security/app-data.js';
 import { APP_START_URL } from './security/app-path.js';
 import { installAppProtocol, registerAppScheme } from './security/app-protocol.js';
 import { installContentsGuards } from './security/navigation.js';
 import { installSessionSecurity } from './security/session.js';
+import { configureWritablePaths } from './security/writable-paths.js';
 import { installIpc } from './ipc/install.js';
 import { secureWebPreferences } from './security/window-options.js';
 
 const WINDOW_WIDTH = 1280;
 const WINDOW_HEIGHT = 800;
-
-registerAppScheme();
-installContentsGuards();
-installIpc();
-
-app.setName(APP_NAME);
-Menu.setApplicationMenu(null);
 
 function reportSecurity(line: string): void {
   if (process.env.OBELISK_SECURITY_REPORT === '1') {
@@ -56,22 +52,44 @@ function createWindow(): void {
   void window.loadURL(APP_START_URL);
 }
 
-void app.whenReady().then(() => {
-  installSessionSecurity({
-    onBlocked: (url) => {
-      reportSecurity(`OBELISK_REQUEST_BLOCKED ${url}`);
-    },
-    onPermission: (kind) => {
-      reportSecurity(`OBELISK_PERMISSION_DENIED ${kind}`);
-    },
-  });
-  installAppProtocol(path.join(__dirname, '../renderer'));
-  createWindow();
-}).catch((error: unknown) => {
-  console.error(error);
-  app.exit(1);
-});
+function startApp(): void {
+  installContentsGuards();
+  installIpc();
 
-app.on('window-all-closed', () => {
-  app.quit();
-});
+  void app.whenReady().then(() => {
+    installSessionSecurity({
+      onBlocked: (url) => {
+        reportSecurity(`OBELISK_REQUEST_BLOCKED ${url}`);
+      },
+      onPermission: (kind) => {
+        reportSecurity(`OBELISK_PERMISSION_DENIED ${kind}`);
+      },
+    });
+    installAppProtocol(path.join(__dirname, '../renderer'));
+    createWindow();
+  }).catch((error: unknown) => {
+    console.error(error);
+    app.exit(1);
+  });
+
+  app.on('window-all-closed', () => {
+    app.quit();
+  });
+}
+
+registerAppScheme();
+app.setName(APP_NAME);
+Menu.setApplicationMenu(null);
+
+const userData = configureWritablePaths();
+if (process.env.OBELISK_PACKAGED_SMOKE === '1') {
+  const marker = [
+    `userData=${app.getPath('userData')}`,
+    `exe=${app.getPath('exe')}`,
+    `cwd=${process.cwd()}`,
+  ].join('\n');
+  fs.writeFileSync(path.join(userData, SMOKE_MARKER_FILE), `${marker}\n`);
+  app.exit(0);
+} else {
+  startApp();
+}

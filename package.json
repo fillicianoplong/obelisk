@@ -11,7 +11,9 @@
     "typecheck": "node scripts/typecheck.mjs",
     "lint": "eslint .",
     "start": "npm run build && electron .",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs",
+    "package:msix": "node scripts/package-msix.mjs",
+    "check:fuses": "node scripts/check-fuses.mjs"
   },
   "dependencies": {
     "prosemirror-commands": "1.7.2",
@@ -25,6 +27,8 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@electron/fuses": "2.1.3",
+    "@electron/packager": "20.3.0",
     "@eslint/js": "10.0.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
