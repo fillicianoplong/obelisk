@@ -1,7 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { announceFocusRegion } from '../focus/bind.js';
 import { onMenuRegionLeave } from '../focus/menu-leave.js';
-import { MENU_BAR_LABEL } from '../focus/regions.js';
+import { MENU_BAR_LABEL, PAGE_REGION } from '../focus/regions.js';
+import { commitPageKeyboardFocus } from '../page-focus.js';
 import { MenuCheck, MenuChevron } from './icons.js';
 import {
   accessKeysVisible,
@@ -26,10 +28,20 @@ function noteOutsideFocus(bar: HTMLElement | null, slot: { current: HTMLElement 
   if (!(active instanceof HTMLElement)) {
     return;
   }
+  // Closing a menu removes the focused item. Focus falls on the root until the
+  // bar button is focused, and that root is not where the user was working.
+  if (active === document.body || active === document.documentElement) {
+    return;
+  }
   if (bar !== null && bar.contains(active)) {
     return;
   }
   slot.current = active;
+}
+
+function returnToPage(page: HTMLElement): void {
+  commitPageKeyboardFocus(page);
+  announceFocusRegion(window, PAGE_REGION);
 }
 
 function focusWorkSurface(): void {
@@ -38,7 +50,10 @@ function focusWorkSurface(): void {
     selected.focus({ preventScroll: true });
     return;
   }
-  document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus({ preventScroll: true });
+  const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+  if (page !== null) {
+    returnToPage(page);
+  }
 }
 
 function focusTargetId(session: MenuSession): string | null {
@@ -261,7 +276,16 @@ export function MenuBar({ onCommand }: MenuBarProps) {
         pendingRestore.current = false;
         const node = outsideFocus.current;
         outsideFocus.current = null;
-        if (node !== null && node.isConnected) {
+        if (
+          node !== null
+          && node.isConnected
+          && node !== document.body
+          && node !== document.documentElement
+        ) {
+          if (node.matches('.page-sheet')) {
+            returnToPage(node);
+            return;
+          }
           node.focus({ preventScroll: true });
           return;
         }

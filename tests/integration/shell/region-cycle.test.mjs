@@ -214,3 +214,195 @@ test('F6 cycles the four regions and the page selection survives', { timeout: 60
     await finish();
   }
 });
+
+const RETURNED = `(() => {
+  const page = document.querySelector('.page-sheet');
+  const style = getComputedStyle(page);
+  const swatch = document.createElement('span');
+  swatch.style.color = 'var(--color-focus-outer)';
+  document.body.appendChild(swatch);
+  const token = getComputedStyle(swatch).color;
+  swatch.style.color = 'Highlight';
+  const highlight = getComputedStyle(swatch).color;
+  swatch.remove();
+  const active = document.activeElement;
+  const marked = active && active.closest ? active.closest('[data-region]') : null;
+  const marker = marked ? marked.getAttribute('data-region') : null;
+  const region = marker === 'page-editor' || marker === 'page' ? 'page' : marker;
+  const editor = document.querySelector('[data-region="page-editor"]');
+  const selection = editor && editor.editorCommands ? editor.editorCommands.selection() : null;
+  const announcer = document.getElementById('focus-region-announce');
+  return {
+    region,
+    id: active && active.id ? active.id : null,
+    panels: document.querySelectorAll('[role="menu"]').length,
+    selection,
+    source: page.getAttribute('data-focus-source'),
+    outlineStyle: style.outlineStyle,
+    outlineWidth: style.outlineWidth,
+    outlineColor: style.outlineColor,
+    token,
+    highlight,
+    forced: window.matchMedia('(forced-colors: active)').matches,
+    theme: document.documentElement.getAttribute('data-theme'),
+    announcement: announcer ? (announcer.dataset.regionAnnouncement || '') : '',
+    liveText: announcer ? (announcer.textContent || '') : '',
+  };
+})()`;
+
+async function readReturn(client) {
+  return evaluate(client, RETURNED);
+}
+
+async function waitUntil(client, check, label) {
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let last = null;
+  let lastError = null;
+  while (Date.now() < deadline) {
+    last = await readReturn(client);
+    try {
+      check(last);
+      return last;
+    } catch (error) {
+      lastError = error;
+    }
+    await sleep(30);
+  }
+  const detail = lastError instanceof Error ? lastError.message : String(lastError ?? '');
+  throw new Error(`${label} did not settle: ${detail} ${JSON.stringify(last)}`);
+}
+
+function assertPageReturn(state, placed, label) {
+  assert.equal(state.region, 'page', `${label} ${JSON.stringify(state)}`);
+  assert.equal(state.selection.anchor, placed.anchor, `${label} anchor`);
+  assert.equal(state.selection.head, placed.head, `${label} head`);
+  assert.equal(state.selection.text, placed.text, `${label} text`);
+  assert.equal(state.source, 'keyboard', `${label} ${JSON.stringify(state)}`);
+  assert.equal(state.outlineStyle, 'solid', `${label} ${JSON.stringify(state)}`);
+  assert.ok(parseFloat(state.outlineWidth) > 0, `${label} ${JSON.stringify(state)}`);
+  const expected = state.forced ? state.highlight : state.token;
+  assert.equal(state.outlineColor, expected, `${label} ${JSON.stringify(state)}`);
+  assert.equal(state.announcement, 'Document', `${label} ${JSON.stringify(state)}`);
+  assert.equal(state.liveText, 'Document', `${label} ${JSON.stringify(state)}`);
+  assert.equal(state.panels, 0, `${label} ${JSON.stringify(state)}`);
+}
+
+async function pressEscape(client) {
+  await pressKey(client, 'Escape', 'Escape', 27);
+}
+
+async function escapeBack(client, placed, label) {
+  await pressEscape(client);
+  return waitUntil(client, (state) => assertPageReturn(state, placed, label), label);
+}
+
+test('Escape returns to the page from the menu bar, tabs, and status bar', { timeout: 60_000 }, async (t) => {
+  const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-region-escape-'));
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
+
+  try {
+    const binary = electronBinary();
+    const port = await freePort();
+    session.child = await launchWithSandboxFallback({
+      binary,
+      args: ['.', `--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`],
+      ready(running) {
+        return waitFor(
+          running,
+          async () => {
+            const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
+            if (pages.length !== 1 || pages[0].title !== 'Obelisk') {
+              return null;
+            }
+            const client = await openPage(port, session);
+            return evaluate(client, READY);
+          },
+          20_000,
+        );
+      },
+    });
+    const client = await openPage(port, session);
+    const placed = await evaluate(
+      client,
+      `(() => {
+        const editor = document.querySelector('[data-region="page-editor"]');
+        editor.editorCommands.insertText('Pendulum lab');
+        editor.editorCommands.setSelection(1, 9);
+        document.documentElement.setAttribute('data-theme', 'light');
+        return editor.editorCommands.selection();
+      })()`,
+    );
+    assert.equal(placed.text, 'Pendulum');
+
+    await pressF6(client);
+    const status = await readReturn(client);
+    assert.equal(status.region, 'status-bar', JSON.stringify(status));
+    const fromStatus = await escapeBack(client, placed, 'Light Escape from the status bar');
+    assert.equal(fromStatus.theme, 'light');
+    assert.equal(fromStatus.forced, false);
+
+    await pressEscape(client);
+    const stayed = await readReturn(client);
+    assertPageReturn(stayed, placed, 'Escape on the page');
+
+    await pressF6(client, true);
+    const tabs = await readReturn(client);
+    assert.equal(tabs.region, 'tab-strip', JSON.stringify(tabs));
+    await escapeBack(client, placed, 'Light Escape from the tabs');
+
+    await pressF6(client);
+    await pressF6(client);
+    const menu = await readReturn(client);
+    assert.equal(menu.region, 'menu-bar', JSON.stringify(menu));
+    assert.equal(menu.panels, 0, JSON.stringify(menu));
+    await escapeBack(client, placed, 'Light Escape from the menu bar');
+
+    await pressKey(client, 'F10', 'F10', 121);
+    await pressKey(client, 'f', 'KeyF', 70);
+    await waitUntil(
+      client,
+      (state) => {
+        assert.ok(state.panels > 0, JSON.stringify(state));
+        assert.equal(state.region, 'menu-bar', JSON.stringify(state));
+      },
+      'File menu opens',
+    );
+    await pressEscape(client);
+    await waitUntil(
+      client,
+      (state) => {
+        assert.equal(state.panels, 0, JSON.stringify(state));
+        assert.equal(state.region, 'menu-bar', JSON.stringify(state));
+        assert.equal(state.id, 'menu-top-file', JSON.stringify(state));
+      },
+      'Escape closes the menu',
+    );
+    await escapeBack(client, placed, 'Escape leaves the menu bar');
+
+    await evaluate(client, `document.documentElement.setAttribute('data-theme', 'dark')`);
+    await pressF6(client);
+    const darkStatus = await readReturn(client);
+    assert.equal(darkStatus.region, 'status-bar', JSON.stringify(darkStatus));
+    const fromDark = await escapeBack(client, placed, 'Dark Escape from the status bar');
+    assert.equal(fromDark.theme, 'dark');
+    assert.equal(fromDark.forced, false);
+
+    await client.send('Emulation.setEmulatedMedia', {
+      features: [{ name: 'forced-colors', value: 'active' }],
+    });
+    await pressF6(client, true);
+    const contrastTabs = await readReturn(client);
+    assert.equal(contrastTabs.region, 'tab-strip', JSON.stringify(contrastTabs));
+    const fromContrast = await escapeBack(client, placed, 'contrast Escape from the tabs');
+    assert.equal(fromContrast.forced, true);
+
+    await pressF6(client);
+    await pressF6(client);
+    const contrastMenu = await readReturn(client);
+    assert.equal(contrastMenu.region, 'menu-bar', JSON.stringify(contrastMenu));
+    await escapeBack(client, placed, 'contrast Escape from the menu bar');
+  } finally {
+    await finish();
+  }
+});
