@@ -488,16 +488,43 @@ test('an edited tab shows the unsaved mark and Narrator name', { timeout: 60_000
       `the new-tab button stays at the strip edge, ${state.newTabRightInset}px in`,
     );
     const pinnedLeft = state.newTabLeft;
-    await runInPage(session, `document.querySelector('[role="tablist"]').scrollLeft = 0;`);
-    state = await waitForTabs(
-      port,
-      session,
-      (current) => current.scrollLeft === 0 && current.newTabInsideStrip && current.newTabClearsTabs,
-      'scrolling the tabs leaves the new-tab button in the strip',
+    // The strip scrolls the active tab back into view on a later frame. Read the
+    // row in the same turn that moves it, before that scroll replaces scrollLeft.
+    const scrolled = await evaluate(
+      session.client,
+      `(() => {
+        const list = document.querySelector('[role="tablist"]');
+        const strip = document.querySelector('[data-region="tab-strip"]');
+        const button = document.querySelector('[aria-label="New tab"]');
+        const before = list.scrollLeft;
+        list.scrollLeft = 0;
+        const buttonRect = button.getBoundingClientRect();
+        const stripRect = strip.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
+        return {
+          before,
+          scrollLeft: list.scrollLeft,
+          newTabLeft: buttonRect.left,
+          newTabInsideStrip:
+            buttonRect.left >= stripRect.left - 1 &&
+            buttonRect.right <= stripRect.right + 1 &&
+            buttonRect.top >= stripRect.top - 1 &&
+            buttonRect.bottom <= stripRect.bottom + 1,
+          newTabClearsTabs: buttonRect.left >= listRect.right - 1,
+        };
+      })()`,
     );
+    assert.ok(scrolled.before > 0, `the tab row was already at ${scrolled.before}`);
+    assert.equal(
+      scrolled.scrollLeft,
+      0,
+      `scrolling the tabs leaves the new-tab button in the strip, row at ${scrolled.scrollLeft}`,
+    );
+    assert.equal(scrolled.newTabInsideStrip, true);
+    assert.equal(scrolled.newTabClearsTabs, true);
     assert.ok(
-      Math.abs(state.newTabLeft - pinnedLeft) <= 1,
-      `the new-tab button moved from ${pinnedLeft} to ${state.newTabLeft} when the strip scrolled`,
+      Math.abs(scrolled.newTabLeft - pinnedLeft) <= 1,
+      `the new-tab button moved from ${pinnedLeft} to ${scrolled.newTabLeft} when the strip scrolled`,
     );
     const widths = await evaluate(
       session.client,
