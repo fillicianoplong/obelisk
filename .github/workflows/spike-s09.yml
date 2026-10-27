@@ -1,0 +1,82 @@
+name: Spike S-09
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/s09/**'
+      - '.github/workflows/spike-s09.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'spikes/s09/**'
+      - '.github/workflows/spike-s09.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-s09-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docx:
+    name: docx samples (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+
+      - name: Install the app
+        run: npm ci
+
+      - name: Install the spike
+        working-directory: spikes/s09
+        run: npm ci
+
+      - name: Typecheck the spike
+        working-directory: spikes/s09
+        run: npm run typecheck
+
+      - name: Lint the spike
+        working-directory: spikes/s09
+        run: npm run lint
+
+      - name: Install LibreOffice
+        if: runner.os == 'Linux'
+        timeout-minutes: 5
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice-writer
+
+      - name: Run the spike
+        timeout-minutes: 8
+        working-directory: spikes/s09
+        run: npm start
+
+      - name: Upload the docx files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s09-docx-${{ matrix.os }}
+          path: |
+            spikes/s09/output/*.docx
+            spikes/s09/output/SAMPLES.md
+            spikes/s09/output/spike-report.json
+          if-no-files-found: warn
