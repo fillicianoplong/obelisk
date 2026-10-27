@@ -1,0 +1,90 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f4f1ea;
+  color: #1c1917;
+}
+
+html, body {
+  background: #f4f1ea;
+  color: #1c1917;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  /* Windows draws the caption overlay over the top 32px, the same as the Obelisk window. */
+  padding-top: 32px;
+}
+
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 5.5rem;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 0.25rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0.9rem 0 0.35rem;
+}
+
+p, li {
+  line-height: 1.45;
+}
+
+.meta, .path, .doing {
+  font-family: Consolas, "Cascadia Mono", ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.banner, .card {
+  background: #fff;
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 650;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: #e7e5e4;
+}
+
+.tag.pass { background: #dcfce7; }
+.tag.fail { background: #fee2e2; }
+.tag.outside { background: #dbeafe; }
+.tag.running { background: #fef3c7; }
+
+button {
+  font: inherit;
+  background: #1d4e89;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.action {
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(48rem, 100%);
+  box-sizing: border-box;
+  background: #f4f1ea;
+  border-top: 1px solid #d6d3d1;
+  padding: 0.75rem 1.25rem 1rem;
+}
