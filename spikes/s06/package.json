@@ -1,0 +1,19 @@
+{
+  "name": "obelisk-spike-s06",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Throwaway checks for GIF and WebP frame counting. Not part of the Obelisk app and not shipped.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json && node -e \"require('fs').copyFileSync('src/page.html','dist/page.html')\"",
+    "start": "npm run build && node dist/run-spike.js"
+  },
+  "dependencies": {
+    "omggif": "1.0.10",
+    "wasm-webp": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}
