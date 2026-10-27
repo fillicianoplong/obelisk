@@ -2,6 +2,20 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.13.2] - 2026-10-26
+
+### Added
+
+- Alt or F10 focuses the menu bar and shows the access keys: File (F), Edit (E), View (V), Insert (I), Format (O), Tools (T), and Help (H). ([#108](https://github.com/fillicianoplong/obelisk/pull/108))
+- Alt plus a letter opens that menu. Arrow keys, Home, and End move through it, Right opens a submenu, Enter runs the item, and Esc closes one level. ([#108](https://github.com/fillicianoplong/obelisk/pull/108))
+- Shortcuts sit on the right of each item and are part of its name. A disabled item stays in the list and is read as unavailable. ([#108](https://github.com/fillicianoplong/obelisk/pull/108))
+- Tools > Settings opens a Settings tab. ([#108](https://github.com/fillicianoplong/obelisk/pull/108))
+
+### Fixed
+
+- Pointer hover shows the hover fill and the accent bar on the item under the pointer. It does not show the focus ring, and the previous item returns to rest (0.1.13.0 added the menus; 0.1.13.1 keeps the ring for the keyboard). ([#108](https://github.com/fillicianoplong/obelisk/pull/108))
+- The menu focus ring is an even 2 px on every side. While it shows, the accent bar is hidden so the left edge matches the other sides (0.1.13.0 drew the ring; 0.1.13.1 evened it; 0.1.13.2 hides the accent bar). ([#108](https://github.com/fillicianoplong/obelisk/pull/108))
+
 ## [0.1.12.3] - 2026-10-26
 
 ### Added

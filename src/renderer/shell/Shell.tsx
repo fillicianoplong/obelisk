@@ -1,14 +1,14 @@
 import type { EditorState } from 'prosemirror-state';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { editorText } from '../editor/state.js';
-import { MenuBar } from './MenuBar.js';
+import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { StatusBar } from './statusbar/StatusBar.js';
 import { saveStateFromChanged } from './statusbar/model.js';
 import { closeTab, confirmClosePrompt } from './tabs/close.js';
-import { createTab, replaceTabEditor, tabHasUnsavedChanges } from './tabs/model.js';
+import { SETTINGS_TAB_ID, createSettingsTab, createTab, replaceTabEditor, tabHasUnsavedChanges } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
 import { TabStrip } from './tabs/TabStrip.js';
 import { ThemeSync } from './theme/ThemeSync.js';
@@ -18,10 +18,8 @@ import './shell.css';
 export function Shell() {
   const [tabs, setTabs] = useState<PageTab[]>(() => [createTab(1)]);
   const [activeId, setActiveId] = useState('untitled-1');
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [closePromptId, setClosePromptId] = useState<string | null>(null);
   const nextNumber = useRef(2);
-  const menuBarRef = useRef<HTMLElement>(null);
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
@@ -35,12 +33,10 @@ export function Shell() {
     const tab = createTab(number);
     setTabs((current) => [...current, tab]);
     setActiveId(tab.id);
-    setOpenMenu(null);
   }, []);
 
   const selectTab = useCallback((tabId: string) => {
     setActiveId(tabId);
-    setOpenMenu(null);
   }, []);
 
   const closeTabById = useCallback((tabId: string) => {
@@ -83,8 +79,34 @@ export function Shell() {
       setTabs(remaining);
       setActiveId(nextActive);
     }
-    setOpenMenu(null);
   }, []);
+
+  const openSettings = useCallback(() => {
+    setTabs((current) => {
+      if (current.some((tab) => tab.id === SETTINGS_TAB_ID)) {
+        return current;
+      }
+      return [...current, createSettingsTab()];
+    });
+    setActiveId(SETTINGS_TAB_ID);
+  }, []);
+
+  const onMenuCommand = useCallback(
+    (command: string) => {
+      if (command === 'new') {
+        addTab();
+        return;
+      }
+      if (command === 'close-tab') {
+        closeTabById(activeIdRef.current);
+        return;
+      }
+      if (command === 'settings') {
+        openSettings();
+      }
+    },
+    [addTab, closeTabById, openSettings],
+  );
 
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
@@ -99,13 +121,18 @@ export function Shell() {
 
   useLayoutEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setOpenMenu(null);
+      if (event.altKey || event.shiftKey || event.repeat || !(event.ctrlKey || event.metaKey)) {
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'n') {
+      const key = event.key.toLowerCase();
+      if (key === 'n') {
         event.preventDefault();
         addTab();
+        return;
+      }
+      if (key === ',') {
+        event.preventDefault();
+        openSettings();
       }
     }
     window.addEventListener('keydown', onKeyDown);
@@ -115,24 +142,7 @@ export function Shell() {
       window.removeEventListener('keydown', onKeyDown);
       delete document.documentElement.dataset.shellCommands;
     };
-  }, [addTab]);
-
-  useEffect(() => {
-    if (openMenu === null) {
-      return;
-    }
-    function onPointerDown(event: PointerEvent) {
-      const target = event.target;
-      if (!(target instanceof Node) || menuBarRef.current?.contains(target)) {
-        return;
-      }
-      setOpenMenu(null);
-    }
-    window.addEventListener('pointerdown', onPointerDown);
-    return () => {
-      window.removeEventListener('pointerdown', onPointerDown);
-    };
-  }, [openMenu]);
+  }, [addTab, openSettings]);
 
   if (activeTab === undefined) {
     return null;
@@ -142,20 +152,7 @@ export function Shell() {
     <div className="shell">
       <ThemeSync />
       <TitleBar />
-      <MenuBar
-        openMenu={openMenu}
-        onToggleMenu={(menuId) => {
-          setOpenMenu((current) => (current === menuId ? null : menuId));
-        }}
-        onHoverMenu={(menuId) => {
-          setOpenMenu((current) => (current === null ? current : menuId));
-        }}
-        onNew={addTab}
-        onCloseTab={() => {
-          closeTabById(activeTab.id);
-        }}
-        barRef={menuBarRef}
-      />
+      <MenuBar onCommand={onMenuCommand} />
       <TabStrip
         tabs={tabs}
         activeId={activeTab.id}
@@ -164,11 +161,26 @@ export function Shell() {
         onClose={closeTabById}
         onNew={addTab}
       />
-      <PageArea tabId={activeTab.id} state={activeTab.editor} onChange={updateEditor} />
-      <StatusBar
-        text={editorText(activeTab.editor)}
-        saveState={saveStateFromChanged(tabHasUnsavedChanges(activeTab))}
+      <PageArea
+        tabId={activeTab.id}
+        kind={activeTab.kind}
+        state={activeTab.editor}
+        onChange={updateEditor}
       />
+      {activeTab.kind === 'settings' ? (
+        <footer
+          className="status-bar"
+          data-region="status-bar"
+          data-status-mode="settings"
+          role="status"
+          aria-label="Status bar"
+        />
+      ) : (
+        <StatusBar
+          text={editorText(activeTab.editor)}
+          saveState={saveStateFromChanged(tabHasUnsavedChanges(activeTab))}
+        />
+      )}
     </div>
   );
 }
