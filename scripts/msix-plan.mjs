@@ -61,6 +61,28 @@ export const PRI_CONFIG_FILE = 'priconfig.xml';
 
 export const PRI_RESOURCE_FILE = 'resources.pri';
 
+// Liberation Serif only. The license file ships next to the faces.
+export const BUNDLED_PAGE_FONTS = [
+  'LiberationSerif-Regular.ttf',
+  'LiberationSerif-Bold.ttf',
+  'LiberationSerif-Italic.ttf',
+  'LiberationSerif-BoldItalic.ttf',
+  'OFL.txt',
+];
+
+export function bundledPageFontPaths() {
+  const paths = [];
+  for (const name of BUNDLED_PAGE_FONTS) {
+    paths.push(path.join('assets', 'fonts', name));
+    paths.push(path.join('dist', 'renderer', 'fonts', name));
+  }
+  return paths;
+}
+
+export function bundledPageFontLayoutPaths() {
+  return bundledPageFontPaths().map((relative) => path.join('resources', 'app', relative));
+}
+
 export const APP_ICON_RELATIVE = path.join('packaging', 'icons', 'obelisk.ico');
 
 export const APP_ICON_PNG = path.join('packaging', 'icons', 'obelisk-256.png');

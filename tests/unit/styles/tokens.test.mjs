@@ -109,6 +109,7 @@ const SHELL_STYLE_FILES = [
   'src/renderer/styles.css',
   'src/renderer/styles/focus.css',
   'src/renderer/editor/editor.css',
+  'src/renderer/editor/layout/page.css',
 ];
 
 const RAW_VALUE = /#[0-9a-fA-F]{3,8}\b|\d+(?:\.\d+)?(?:px|ms)\b|rgba?\(|hsla?\(/;

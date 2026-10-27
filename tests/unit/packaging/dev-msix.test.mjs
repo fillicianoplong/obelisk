@@ -11,6 +11,8 @@ import {
   APP_ICON_PNG,
   APP_ICON_RELATIVE,
   APP_ICON_SIZES,
+  BUNDLED_PAGE_FONTS,
+  bundledPageFontLayoutPaths,
   applicationAttributes,
   assertDevManifest,
   assertNoDevPackageFiles,
@@ -378,6 +380,24 @@ test('makepri writes resources.pri for the icon set when the Windows SDK is inst
   } finally {
     await rm(layout, { recursive: true, force: true });
   }
+});
+
+test('the dev package keeps Liberation Serif and its license', async () => {
+  const packageScript = await readFile(path.join(root, 'scripts/package-msix.mjs'), 'utf8');
+  assert.match(packageScript, /bundledPageFontLayoutPaths\(\)/);
+  const layoutPaths = bundledPageFontLayoutPaths();
+  assert.equal(layoutPaths.length, BUNDLED_PAGE_FONTS.length * 2);
+  for (const name of BUNDLED_PAGE_FONTS) {
+    const source = path.join(root, 'assets', 'fonts', name);
+    const info = await stat(source);
+    assert.equal(info.isFile(), true, name);
+    assert.equal(ignoredByPackager(source), false, name);
+    assert.equal(ignoredByPackager(path.join(root, 'dist', 'renderer', 'fonts', name)), false, name);
+    assert.equal(layoutPaths.filter((item) => item.endsWith(name)).length, 2, name);
+  }
+  const license = await readFile(path.join(root, 'assets', 'fonts', 'OFL.txt'), 'utf8');
+  assert.match(license, /SIL Open Font License/);
+  assert.match(license, /Liberation/);
 });
 
 test('the packager ignores source and tools but keeps the built app', () => {

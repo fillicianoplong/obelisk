@@ -2,6 +2,18 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.15.0] - 2026-10-26
+
+### Added
+
+- A new document opens as a Letter page, 8.5 by 11 inches, with 1 inch margins, centered on the canvas. ([#110](https://github.com/fillicianoplong/obelisk/pull/110))
+- An empty header area sits half an inch from the top of the page. ([#110](https://github.com/fillicianoplong/obelisk/pull/110))
+- Page text uses Liberation Serif at 12 pt, bundled with the app. ([#110](https://github.com/fillicianoplong/obelisk/pull/110))
+
+### Changed
+
+- A window narrower than the page scrolls the canvas sideways, starting at the page's left edge. The page keeps its width. ([#110](https://github.com/fillicianoplong/obelisk/pull/110))
+
 ## [0.1.14.0] - 2026-10-26
 
 ### Added

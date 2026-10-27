@@ -1,0 +1,81 @@
+/* Liberation Serif is bundled under assets/fonts and copied to /fonts.
+   The src is that file, so the page does not ask the system for the face. */
+
+@font-face {
+  font-family: "Liberation Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/LiberationSerif-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Liberation Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/LiberationSerif-Italic.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Liberation Serif";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("/fonts/LiberationSerif-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Liberation Serif";
+  font-style: italic;
+  font-weight: 700;
+  font-display: block;
+  src: url("/fonts/LiberationSerif-BoldItalic.ttf") format("truetype");
+}
+
+/* The sheet stays centered when the window is wider than the page.
+   width: max-content keeps it from shrinking, so a narrower window scrolls
+   the region instead. The frame's auto margins do that centering only while
+   the canvas is wider than the sheet. When the sheet is wider, those margins
+   stay zero and the page's left edge stays at the start of the scroll. */
+.page-canvas {
+  align-items: flex-start;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-gap);
+  min-width: 100%;
+  width: max-content;
+}
+
+.page-frame {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  height: var(--page-height);
+  margin-inline: auto;
+  max-height: var(--page-height);
+  max-width: var(--page-width);
+  min-height: var(--page-height);
+  min-width: var(--page-width);
+  position: relative;
+  width: var(--page-width);
+}
+
+.page-header {
+  box-sizing: border-box;
+  height: calc(var(--page-margin) - var(--page-header-offset));
+  left: var(--page-margin);
+  pointer-events: none;
+  position: absolute;
+  right: var(--page-margin);
+  top: var(--page-header-offset);
+}
+
+.editor-host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 100%;
+  width: 100%;
+}
