@@ -1,6 +1,6 @@
 # Architecture and Design: Obelisk
 
-Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.1
+Prepared by: Filliciano Plong · Date: October 26, 2026 · Version: 1.2
 
 **Readers:** Filliciano Plong, sole developer. Helps decide module boundaries, the save path, and the export pipeline before code starts.
 
@@ -26,12 +26,13 @@ Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.1
 |---|---|---|
 | 1.0 | October 23, 2026 | First release of the architecture. |
 | 1.1 | October 23, 2026 | Applied the design, data model, and security review fixes. Based on SRS 1.1. |
+| 1.2 | October 26, 2026 | Added ADR-012 (docx for Word export) and ADR-013 (yauzl and yazl for .obk files). Set the Word file and ZIP rows in the stack table. Added spike S-09 and widened S-08. Based on SRS 1.2. |
 
 ## 1. Context and scope
 
-This document shows how Obelisk will meet its SRS. It cites requirement IDs from the SRS (Plong_Obelisk_SRS.docx, version 1.1) instead of repeating them.
+This document shows how Obelisk will meet its SRS. It cites requirement IDs from the SRS (Plong_Obelisk_SRS.docx, version 1.2) instead of repeating them.
 
-Everything here is a proposal until accepted. Technology versions are unverified until the spikes in section 9 confirm them.
+Everything here is a proposal until accepted. Technology versions marked UNVERIFIED stay so until the spikes in section 9 confirm them.
 
 ### 1.1 Actors
 
@@ -45,7 +46,8 @@ Everything here is a proposal until accepted. Technology versions are unverified
 
 - Electron (Chromium and Node.js), React, TypeScript.
 - A ProseMirror-based editor core (proposal, ADR-004).
-- KaTeX for formulas; mathml2omml for Word equations (Should).
+- KaTeX for formulas; mathml2omml for Word equations (Should); docx for Word files (ADR-012).
+- yauzl and yazl for reading and writing .obk files (ADR-013).
 - Mermaid for the diagram block (Should, OD-05).
 - Bundled fonts: the LibreOffice Latin set plus Dancing Script (OD-08).
 
@@ -490,7 +492,7 @@ Each sample runs under Node against FormatCodec and, where marked by the case, i
 
 ## 7. Architecture decisions
 
-Decisions are based on SRS 1.1. They are Proposed until accepted; the two marked Accepted follow decisions made on October 23, 2026. Structure: ADR-001. Failure handling: ADR-002.
+Decisions are based on SRS 1.2. They are Proposed until accepted. ADR-010 and ADR-011 were accepted on October 23, 2026, and ADR-012 and ADR-013 on October 26, 2026. Structure: ADR-001. Failure handling: ADR-002.
 
 | ADR | Decision | Status |
 |---|---|---|
@@ -505,6 +507,8 @@ Decisions are based on SRS 1.1. They are Proposed until accepted; the two marked
 | ADR-009 | Single instance with file activation, and recovery copies in app data | Proposed |
 | ADR-010 | Diagrams render in the renderer with Mermaid at securityLevel strict | Accepted 2026-10-23 |
 | ADR-011 | Older format versions convert forward; newer ones are refused | Accepted 2026-10-23 |
+| ADR-012 | Word export uses the docx library | Accepted 2026-10-26 |
+| ADR-013 | .obk files are read with yauzl and written with yazl | Accepted 2026-10-26 |
 
 ### ADR-001 The main process owns all file access
 
@@ -627,6 +631,28 @@ Decisions are based on SRS 1.1. They are Proposed until accepted; the two marked
 | Consequences | Old files keep opening and users are told before an upgrade. Cost: conversion code kept for every past version. |
 | Revisit when | A change cannot be written as a one-way conversion. |
 
+### ADR-012 Word export uses the docx library
+
+| Field | Content |
+|---|---|
+| Status | Accepted 2026-10-26 |
+| Context | The Word export maps each block as listed in the SRS Export reference (FR-63).<br>Formulas become editable Word equations through mathml2omml (FR-57), or images when conversion is off or fails (FR-56).<br>Each image carries its alt text into the .docx (FR-52).<br>The Word exporter is one module behind the shared interface (ADR-006). |
+| Decision | The Word exporter builds the .docx with the `docx` package (MIT; 9.14.0 tested). It runs in main under Node.<br>OMML from mathml2omml goes into a paragraph through `ImportedXmlComponent.fromXmlString()`. |
+| Alternatives | docxtemplater: fills placeholders in an existing template instead of building a document, and images need a paid module.<br>Write the OOXML ourselves: full control, but weeks of work (content types, relationships, numbering, styles, image sizing, headers and footers, escaping). Possible later behind the ADR-006 interface if docx falls short.<br>html-to-docx: stale (last release March 2023) and has no OMML path. |
+| Consequences | Letter is not the default, so the exporter sets Letter page size and margins itself.<br>The package is about 21 MB unpacked because it ships several builds; only one is loaded.<br>It depends on JSZip, which is MIT or GPLv3; Obelisk uses it under MIT. Both notices go on the About page (NFR-28).<br>mathml2omml stays a separate LGPL module (NFR-29); docx does not change that.<br>Word fidelity is checked by hand in Word (spike S-09). |
+| Revisit when | docx fails spike S-09, stops being maintained, or cannot write a block the Export reference needs. |
+
+### ADR-013 .obk files are read with yauzl and written with yazl
+
+| Field | Content |
+|---|---|
+| Status | Accepted 2026-10-26 |
+| Context | An .obk file is one ZIP container (ADR-003).<br>Section 6.6: caps count the bytes actually read, entries are read in memory only, and entry names are strict.<br>A file that fails a check opens nothing and stays unchanged (FR-09).<br>Decoding may move to a sandboxed utilityProcess (R-08, spike S-08). |
+| Decision | FormatCodec reads .obk files with `yauzl` (3.4.0, MIT) and writes them with `yazl` (3.3.1, MIT). Types come from DefinitelyTyped.<br>yauzl reads the central directory first, so names and declared sizes are known before anything is inflated.<br>It errors when the real bytes pass the declared size, refuses ../ and absolute paths by default, and never writes to disk.<br>yazl writes with a fixed modified time, so the same document gives the same bytes. |
+| Alternatives | @zip.js/zip.js (BSD-3-Clause): a close second. No dependencies, bundled types, and clean caps, but larger and built on Web Streams.<br>fflate: in a test it read about 67 MB past a 25 MB cap, and it does no name checks.<br>JSZip: silently renamed a ../evil.txt entry to evil.txt.<br>adm-zip: inflated a whole 300 MB bomb into memory, with no cap. |
+| Consequences | Our own checks are still needed for the name allowlist, case duplicates, encrypted entries, and headers that disagree (H-03, H-06, H-07).<br>yauzl's callback API is wrapped in a small promise helper inside FormatCodec.<br>yazl's last release was November 2024. It is small and stable, but worth watching. |
+| Revisit when | Either package is abandoned or has an unfixed security issue, spike S-08 fails, or format version 2 needs features they lack. |
+
 ## 8. Risks
 
 | ID | Risk | Likelihood | Impact | Mitigation | Owner |
@@ -649,14 +675,14 @@ Decisions are based on SRS 1.1. They are Proposed until accepted; the two marked
 | Editor core | ProseMirror-based library (proposal) | UNVERIFIED | Schema, undo, input rules | MIT |
 | Math | KaTeX | UNVERIFIED | Fast, offline, MathML output | MIT |
 | Word math | mathml2omml | 0.5.0 (npm) | MathML to OMML | LGPL-3.0-or-later |
-| Word file | A .docx writer library (proposal) | UNVERIFIED | Builds .docx under Node | UNVERIFIED |
+| Word file | docx | 9.14.0 (tested); pin at implementation | Builds .docx under Node, including OMML and alt text (ADR-012) | MIT |
 | PDF and print | Electron printToPDF and print | With Electron | Same layout as the screen | MIT |
 | Diagram | Mermaid, securityLevel strict | UNVERIFIED | Text diagrams, offline | MIT (UNVERIFIED) |
-| ZIP | A ZIP library for Node (proposal) | UNVERIFIED | Reads and writes .obk | UNVERIFIED |
+| ZIP | yauzl (read) + yazl (write) | 3.4.0 + 3.3.1 | Reads and writes .obk with real-byte caps (ADR-013) | MIT |
 | Tests | A Node test runner with coverage (proposal) | UNVERIFIED | NFR-21, NFR-23 | UNVERIFIED |
 | Packaging | MSIX tooling for Electron (proposal) | UNVERIFIED | Store package | UNVERIFIED |
 
-**UNVERIFIED:** Versions and the licenses marked UNVERIFIED. Fix them after the spikes below, from each project's package page.
+**UNVERIFIED:** Versions and licenses still marked UNVERIFIED. The Word math, Word file, and ZIP rows were checked on npm. Fix the rest after the spikes below, from each project's package page.
 
 ### 9.1 Spikes
 
@@ -669,7 +695,8 @@ Decisions are based on SRS 1.1. They are Proposed until accepted; the two marked
 | S-05 | Confirm whether the Windows Save dialog asks before replacing a file, as Electron sets it. | FR-12 |
 | S-06 | Count frames and read frame sizes of animated GIF and WebP files without decoding, and make a first-frame PNG in the renderer. | OD-18 |
 | S-07 | In a packaged MSIX build, encrypt and decrypt a signature with the async safeStorage API, and force the unavailable and re-encrypt states. | OD-15 |
-| S-08 | Decode .obk files in a sandboxed Electron utilityProcess instead of main. | R-08 |
+| S-08 | Decode .obk files in a sandboxed Electron utilityProcess instead of main. Run FormatCodec on yauzl and yazl under Node and inside an Electron 45 utilityProcess:<br>Hostile samples H-01 to H-09 are refused, including a bomb with a forged small size, stopped at the 25 MB, 20 MB, and 250 MB real-byte caps.<br>Bad names are refused: ../, a leading slash, a backslash, drive letters, network paths, stream suffixes, CON, and case duplicates.<br>Saving a 200-image document twice gives byte-identical files.<br>Each refused file stays unchanged (FR-09). | R-08, ADR-013, FR-09 |
+| S-09 | Export with docx and open the results in current Word for Windows:<br>The formula samples stay editable with conversion on (AC-11), and appear as images with conversion off.<br>Each Export reference row opens cleanly in Word.<br>Image alt text shows in Word's Alt Text pane.<br>Hostile text (`<`, `&`, `]]>`, control characters, unpaired surrogates) stays text, not markup (H-26).<br>A large export finishes in under 10 seconds with no network calls (NFR-04). | ADR-012, FR-52, FR-56, FR-57, FR-63 |
 
 ## 10. Traceability
 
@@ -685,7 +712,7 @@ Every Must FR maps to at least one component. Package-wide requirements map to t
 | FR-06 | Must | PreferencesStore | - | Test |
 | FR-07 | Must | Shell and Tabs | - | Test |
 | FR-08 | Must | FileService | - | Test |
-| FR-09 | Must | FormatCodec | ADR-011 | Test |
+| FR-09 | Must | FormatCodec | ADR-011, ADR-013 | Test |
 | FR-10 | Must | FileService | - | Test |
 | FR-11 | Must | FileService | - | Demo |
 | FR-12 | Must | FileService | - | Test |
@@ -728,18 +755,18 @@ Every Must FR maps to at least one component. Package-wide requirements map to t
 | FR-49 | Must | BlockViews | ADR-003 | Test |
 | FR-50 | Must | BlockViews | - | Test |
 | FR-51 | Must | BlockViews | - | Test |
-| FR-52 | Must | BlockViews | - | Inspection |
+| FR-52 | Must | BlockViews | ADR-012 | Inspection |
 | FR-53 | Must | FormulaRenderer | ADR-005 | Test |
 | FR-54 | Must | FormulaRenderer | - | Demo |
 | FR-55 | Must | FormulaRenderer | - | Test |
-| FR-56 | Must | ExportService | ADR-005 | Test |
-| FR-57 | Should | ExportService | ADR-005 | Test |
+| FR-56 | Must | ExportService | ADR-005, ADR-012 | Test |
+| FR-57 | Should | ExportService | ADR-005, ADR-012 | Test |
 | FR-58 | Must | EditorCore | - | Test |
 | FR-59 | Must | EditorCore | - | Test |
 | FR-60 | Must | EditorCore | - | Test |
 | FR-61 | Must | ExportService | - | Demo |
 | FR-62 | Must | ExportService | - | Test |
-| FR-63 | Must | ExportService | - | Test |
+| FR-63 | Must | ExportService | ADR-012 | Test |
 | FR-64 | Must | ExportService | - | Test |
 | FR-65 | Must | ExportService | - | Test |
 | FR-66 | Must | ExportService | - | Test |
@@ -787,8 +814,8 @@ Every Must FR maps to at least one component. Package-wide requirements map to t
 | NFR-25 | Must | Build and release | - | Test |
 | NFR-26 | Must | PreferencesStore | - | Inspection |
 | NFR-27 | Must | Build and release | ADR-008 | Test |
-| NFR-28 | Must | Build and release | - | Inspection |
-| NFR-29 | Must | Build and release | ADR-005 | Inspection |
+| NFR-28 | Must | Build and release | ADR-012 | Inspection |
+| NFR-29 | Must | Build and release | ADR-005, ADR-012 | Inspection |
 | NFR-30 | Must | Build and release | - | Inspection |
 | NFR-31 | Must | Build and release | ADR-008 | Demo |
 
@@ -832,20 +859,21 @@ These SRS open decisions affect the architecture. IDs match the SRS.
 | Item | Detail |
 |---|---|
 | Author | Filliciano Plong |
-| Version and date | 1.1, October 23, 2026 |
-| Based on | SRS version 1.1 |
+| Version and date | 1.2, October 26, 2026 |
+| Based on | SRS version 1.2 |
 | Update when | An ADR changes status, a component is added or renamed, or a spike changes a decision |
 | Security updates | Lockfile and dependency audit in every build; fuses checked in the build; Electron security releases shipped within 30 days (target) |
 | Diagram sources | docs/diagrams/*.puml, rendered to docs/images/; shipped in Plong_Obelisk_DiagramSources.zip |
 
 ### 12.1 References
 
-- Obelisk SRS (Plong_Obelisk_SRS.docx), version 1.1.
+- Obelisk SRS (Plong_Obelisk_SRS.docx), version 1.2.
 - arc42 template: arc42.org. C4 model: c4model.com.
 - Electron security checklist: electronjs.org/docs/latest/tutorial/security.
 - Electron safeStorage: electronjs.org/docs/latest/api/safe-storage.
 - Electron app.requestSingleInstanceLock: electronjs.org/docs/latest/api/app.
 - MSIX file system behavior: learn.microsoft.com/windows/msix/desktop/desktop-to-uwp-behind-the-scenes.
 - mathml2omml: npmjs.com/package/mathml2omml.
+- docx: npmjs.com/package/docx. yauzl and yazl: npmjs.com/package/yauzl and npmjs.com/package/yazl.
 - KaTeX options: katex.org/docs/options.
 - Mermaid configuration schema: mermaid.js.org/config/schema-docs/config.

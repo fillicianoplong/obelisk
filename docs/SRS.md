@@ -1,6 +1,6 @@
 # Software Requirements Specification: Obelisk
 
-Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.1
+Prepared by: Filliciano Plong · Date: October 26, 2026 · Version: 1.2
 
 **Readers:** Filliciano Plong, developer and tester of Obelisk and Dr. Celly, CSC 481 instructor and reviewer.
 
@@ -30,6 +30,7 @@ Prepared by: Filliciano Plong · Date: October 23, 2026 · Version: 1.1
 |---|---|---|
 | 1.0 | October 23, 2026 | First release of the requirements. |
 | 1.1 | October 23, 2026 | Applied the design, data model, and security review fixes. Added decisions OD-13 to OD-21. |
+| 1.2 | October 26, 2026 | Added the Word export and .obk file libraries (docx, JSZip, yauzl, yazl) to the license reference and the software libraries table. |
 
 ## 1. Introduction
 
@@ -85,7 +86,7 @@ Obelisk is an editor-only document processor. Each document is one .obk file in 
 
 Lists of features, keys, and limits are in the named reference tables in the References section at the end.
 
-- Obelisk architecture document (Plong_Obelisk_Architecture.docx), version 1.1.
+- Obelisk architecture document (Plong_Obelisk_Architecture.docx), version 1.2.
 - Electron documentation, safeStorage API: electronjs.org/docs/latest/api/safe-storage.
 - Electron security checklist: electronjs.org/docs/latest/tutorial/security.
 - KaTeX documentation, supported functions: katex.org/docs/supported.html.
@@ -688,10 +689,14 @@ Keyboard, mouse, pen, and touch input; any printer with a Windows driver. No oth
 | ProseMirror | Editor core (proposed) | MIT | prosemirror.net |
 | KaTeX | Formula rendering | MIT | katex.org |
 | mathml2omml | Word equations | LGPL-3.0-or-later | npmjs.com/package/mathml2omml |
+| docx | Word export | MIT | npmjs.com/package/docx |
+| JSZip | Used by docx to package the .docx | MIT (chosen from MIT or GPLv3) | npmjs.com/package/jszip |
+| yauzl | Reading .obk files | MIT | npmjs.com/package/yauzl |
+| yazl | Writing .obk files | MIT | npmjs.com/package/yazl |
 | Mermaid | Diagram block (proposed) | MIT (UNVERIFIED) | mermaid.js.org |
 | Bundled fonts | Text and signatures | See the [*Fonts reference*](#fonts-reference) | Each font's license file |
 
-**UNVERIFIED:** Licenses other than mathml2omml (checked on npm, version 0.5.0) are as published by each project, not yet rechecked. Versions are set in the architecture document.
+**UNVERIFIED:** Licenses other than mathml2omml, docx, JSZip, yauzl, and yazl (checked on npm) are as published by each project, not yet rechecked. Versions are set in the architecture document.
 
 ### 10.5 Communications
 
@@ -1305,6 +1310,10 @@ Preferences are checked when read; a bad or unknown value falls back to its defa
 | ProseMirror | MIT | About |
 | KaTeX | MIT | About |
 | mathml2omml | LGPL-3.0-or-later | About, full text, source link |
+| docx | MIT | About |
+| JSZip (used by docx) | MIT (chosen from its MIT or GPLv3 dual license) | About |
+| yauzl | MIT | About |
+| yazl | MIT | About |
 | Mermaid | MIT (UNVERIFIED) | About |
 | Bundled fonts | Per the [*Fonts reference*](#fonts-reference) | About, each license file |
 
