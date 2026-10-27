@@ -7,17 +7,26 @@ interface MenuBarProps {
   onToggleMenu: (menuId: string) => void;
   onHoverMenu: (menuId: string) => void;
   onNew: () => void;
+  onCloseTab: () => void;
   barRef: RefObject<HTMLElement | null>;
 }
 
-function MenuPanel({ menu, onNew }: { menu: AppMenu; onNew: () => void }) {
+function MenuPanel({
+  menu,
+  onNew,
+  onCloseTab,
+}: {
+  menu: AppMenu;
+  onNew: () => void;
+  onCloseTab: () => void;
+}) {
   return (
     <div className="menu-panel" role="menu" aria-label={menu.label}>
       {menu.entries.map((entry) => {
         if (isSeparator(entry)) {
           return <div key={entry.id} className="menu-separator" role="separator" />;
         }
-        const enabled = entry.command === 'new';
+        const enabled = entry.command === 'new' || entry.command === 'close-tab';
         return (
           <button
             key={entry.id}
@@ -29,6 +38,8 @@ function MenuPanel({ menu, onNew }: { menu: AppMenu; onNew: () => void }) {
             onClick={() => {
               if (entry.command === 'new') {
                 onNew();
+              } else if (entry.command === 'close-tab') {
+                onCloseTab();
               }
             }}
           >
@@ -42,7 +53,7 @@ function MenuPanel({ menu, onNew }: { menu: AppMenu; onNew: () => void }) {
   );
 }
 
-export function MenuBar({ openMenu, onToggleMenu, onHoverMenu, onNew, barRef }: MenuBarProps) {
+export function MenuBar({ openMenu, onToggleMenu, onHoverMenu, onNew, onCloseTab, barRef }: MenuBarProps) {
   return (
     <header className="menu-bar" data-region="menu-bar" role="menubar" aria-label="Menu bar" ref={barRef}>
       {APP_MENUS.map((menu) => {
@@ -68,7 +79,7 @@ export function MenuBar({ openMenu, onToggleMenu, onHoverMenu, onNew, barRef }: 
             >
               {menu.label}
             </button>
-            {open ? <MenuPanel menu={menu} onNew={onNew} /> : null}
+            {open ? <MenuPanel menu={menu} onNew={onNew} onCloseTab={onCloseTab} /> : null}
           </div>
         );
       })}
