@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react';
+import { TabGlyph } from './TabGlyph.js';
 import { tabAccessibleName, tabHasUnsavedChanges, tabTooltip } from './model.js';
 import type { PageTab } from './model.js';
 
@@ -49,7 +50,7 @@ export function Tab({ tab, selected, tabIndex, onSelect, onClose }: TabProps) {
           onMouseDown={closeFromPointer}
           onClick={closeFromPointer}
         >
-          <span aria-hidden="true">×</span>
+          <TabGlyph kind="close" />
         </button>
       </span>
     </div>

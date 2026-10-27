@@ -6,7 +6,7 @@ import { TextSelection } from 'prosemirror-state';
 import { loadRenderer } from './load-renderer.mjs';
 
 const stateUrl = new URL('../../../src/renderer/editor/state.ts', import.meta.url);
-const statusUrl = new URL('../../../src/renderer/shell/status.ts', import.meta.url);
+const statusUrl = new URL('../../../src/renderer/shell/statusbar/model.ts', import.meta.url);
 
 async function editorModule() {
   return loadRenderer(stateUrl);
@@ -14,14 +14,15 @@ async function editorModule() {
 
 test('a new tab state is one empty paragraph', async () => {
   const { createTabEditorState, editorCaret, editorText } = await editorModule();
-  const { statusLabel } = await loadRenderer(statusUrl);
+  const { characterCount, wordCount } = await loadRenderer(statusUrl);
   const state = createTabEditorState();
   assert.equal(state.doc.childCount, 1);
   assert.equal(state.doc.firstChild.type.name, 'paragraph');
   assert.equal(editorText(state), '');
   assert.equal(state.selection.empty, true);
   assert.deepEqual(editorCaret(state), { anchor: 1, head: 1 });
-  assert.equal(statusLabel(editorText(state)), 'Page 1 of 1 - 0 words - 0 characters - 100% - Not saved');
+  assert.equal(wordCount(editorText(state)), 0);
+  assert.equal(characterCount(editorText(state)), 0);
 });
 
 test('undo and redo on an untouched tab leave it empty', async () => {
@@ -34,15 +35,16 @@ test('undo and redo on an untouched tab leave it empty', async () => {
 
 test('editor text feeds the status word and character counts', async () => {
   const { createTabEditorState, editorText, insertText } = await editorModule();
-  const { statusLabel } = await loadRenderer(statusUrl);
+  const { characterCount, wordCount } = await loadRenderer(statusUrl);
   const state = insertText(createTabEditorState(), 'First page notes');
   assert.equal(editorText(state), 'First page notes');
-  assert.equal(statusLabel(editorText(state)), 'Page 1 of 1 - 3 words - 16 characters - 100% - Not saved');
+  assert.equal(wordCount(editorText(state)), 3);
+  assert.equal(characterCount(editorText(state)), 16);
 });
 
 test('enter splits a paragraph and the text keeps the break', async () => {
   const { createTabEditorState, editorText, insertText } = await editorModule();
-  const { statusLabel } = await loadRenderer(statusUrl);
+  const { characterCount, wordCount } = await loadRenderer(statusUrl);
   let state = insertText(createTabEditorState(), 'Hello');
   let split = null;
   assert.equal(splitBlock(state, (transaction) => {
@@ -51,7 +53,8 @@ test('enter splits a paragraph and the text keeps the break', async () => {
   state = insertText(split, 'World');
   assert.equal(state.doc.childCount, 2);
   assert.equal(editorText(state), 'Hello\nWorld');
-  assert.equal(statusLabel(editorText(state)), 'Page 1 of 1 - 2 words - 11 characters - 100% - Not saved');
+  assert.equal(wordCount(editorText(state)), 2);
+  assert.equal(characterCount(editorText(state)), 11);
 });
 
 test('each editor state keeps its own text, caret, and undo history', async () => {

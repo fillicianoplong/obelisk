@@ -53,9 +53,19 @@ const READ_PAGE = `(() => {
   const styled = [...editor.querySelectorAll('[style]')].map((element) => element.getAttribute('style'));
   const reported = editor.getAttribute('data-editor-caret');
   const reportedMatch = reported && /^(\\d+):(\\d+)$/.exec(reported);
+  const statusText = (name) => {
+    const node = status.querySelector('[data-status-item="' + name + '"]');
+    return node ? (node.textContent || '').replace(/\\s+/g, ' ').trim() : '';
+  };
   return {
     text: paragraphs.map((block) => (block.textContent || '').replace(/\\u200b/g, '')).join('\\n'),
-    status: (status.textContent || '').trim(),
+    status: {
+      page: statusText('page'),
+      words: statusText('words'),
+      characters: statusText('characters'),
+      save: statusText('save'),
+      zoom: statusText('zoom'),
+    },
     tabs: [...document.querySelectorAll('[role="tab"]')].map((tab) => tab.getAttribute('data-title')),
     active: document.querySelector('[role="tab"][aria-selected="true"]')?.getAttribute('data-title') ?? null,
     caret,
@@ -244,11 +254,17 @@ test('typed text, caret, and undo stay with each tab', { timeout: 45_000 }, asyn
       port,
       session,
       (current) => current.text === TAB_ONE
-        && current.status === 'Page 1 of 1 - 3 words - 17 characters - 100% - Not saved',
+        && current.status.words === '3 words'
+        && current.status.characters === '17 characters'
+        && current.status.save === 'Unsaved changes',
       'first tab text',
     );
     assert.equal(page.text, TAB_ONE);
-    assert.equal(page.status, 'Page 1 of 1 - 3 words - 17 characters - 100% - Not saved');
+    assert.equal(page.status.page, 'Page 1 of 1');
+    assert.equal(page.status.words, '3 words');
+    assert.equal(page.status.characters, '17 characters');
+    assert.equal(page.status.save, 'Unsaved changes');
+    assert.equal(page.status.zoom, '100%');
     assert.ok(['pre-wrap', 'break-spaces'].includes(page.whiteSpace), page.whiteSpace);
     assert.equal(page.editorStyle, null);
     assert.deepEqual(page.styled, []);
@@ -272,18 +288,24 @@ test('typed text, caret, and undo stay with each tab', { timeout: 45_000 }, asyn
       'new tab',
     );
     assert.equal(page.text, '');
-    assert.equal(page.status, 'Page 1 of 1 - 0 words - 0 characters - 100% - Not saved');
+    assert.equal(page.status.words, '0 words');
+    assert.equal(page.status.characters, '0 characters');
+    assert.equal(page.status.save, 'Saved');
 
     await typeText(port, session, TAB_TWO);
     page = await waitForPage(
       port,
       session,
       (current) => current.text === TAB_TWO
-        && current.status === 'Page 1 of 1 - 3 words - 21 characters - 100% - Not saved',
+        && current.status.words === '3 words'
+        && current.status.characters === '21 characters'
+        && current.status.save === 'Unsaved changes',
       'second tab text',
     );
     assert.equal(page.text, TAB_TWO);
-    assert.equal(page.status, 'Page 1 of 1 - 3 words - 21 characters - 100% - Not saved');
+    assert.equal(page.status.words, '3 words');
+    assert.equal(page.status.characters, '21 characters');
+    assert.equal(page.status.save, 'Unsaved changes');
     assert.deepEqual(page.tabs, ['Untitled 1', 'Untitled 2']);
 
     for (let step = 0; step < TAB_TWO.length + 2 && page.text !== ''; step += 1) {
@@ -311,7 +333,9 @@ test('typed text, caret, and undo stay with each tab', { timeout: 45_000 }, asyn
       'first tab after undo',
     );
     assert.equal(page.text, TAB_ONE);
-    assert.equal(page.status, 'Page 1 of 1 - 3 words - 17 characters - 100% - Not saved');
+    assert.equal(page.status.words, '3 words');
+    assert.equal(page.status.characters, '17 characters');
+    assert.equal(page.status.save, 'Unsaved changes');
     assert.deepEqual(page.reportedCaret, tabOneCaret);
     assert.deepEqual(page.caret, tabOneCaret);
 
@@ -323,7 +347,9 @@ test('typed text, caret, and undo stay with each tab', { timeout: 45_000 }, asyn
       'empty second tab',
     );
     assert.equal(page.text, '');
-    assert.equal(page.status, 'Page 1 of 1 - 0 words - 0 characters - 100% - Not saved');
+    assert.equal(page.status.words, '0 words');
+    assert.equal(page.status.characters, '0 characters');
+    assert.equal(page.status.save, 'Saved');
 
     for (let step = 0; step < TAB_TWO.length + 2 && page.text !== TAB_TWO; step += 1) {
       const previous = page.text;

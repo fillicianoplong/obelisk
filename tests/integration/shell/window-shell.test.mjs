@@ -61,6 +61,11 @@ const SHELL_EXPRESSION = `(() => {
   }
   const tabNodes = [...tabs.querySelectorAll('[role="tab"]')];
   const active = tabs.querySelector('[role="tab"][aria-selected="true"]');
+  const statusText = (name) => {
+    const node = status.querySelector('[data-status-item="' + name + '"]');
+    return node ? (node.textContent || '').replace(/\\s+/g, ' ').trim() : '';
+  };
+  const view = status.querySelector('[data-status-item="view"]');
   return {
     title: document.title,
     titleText: (titleBar.querySelector('h1')?.textContent || '').trim(),
@@ -71,7 +76,16 @@ const SHELL_EXPRESSION = `(() => {
     menuLabels: [...menu.querySelectorAll('[data-menu]')].map((element) => element.textContent.trim()),
     tabLabels: tabNodes.map((element) => element.getAttribute('data-title')),
     activeTitle: active ? active.getAttribute('data-title') : null,
-    statusText: (status.textContent || '').trim(),
+    status: {
+      page: statusText('page'),
+      words: statusText('words'),
+      characters: statusText('characters'),
+      save: statusText('save'),
+      saveState: status.getAttribute('data-save-state'),
+      view: statusText('view'),
+      viewHidden: view ? view.classList.contains('status-view-hidden') : true,
+      zoom: statusText('zoom'),
+    },
     editorValue: paragraphs.map((block) => (block.textContent || '').replace(/\\u200b/g, '')).join('\\n'),
   };
 })()`;
@@ -236,7 +250,15 @@ function assertRegions(state) {
   assert.ok(state.regions.menu.top < state.regions.tabs.top, 'menu bar is above the tab strip');
   assert.ok(state.regions.tabs.top < state.regions.page.top, 'tab strip is above the page');
   assert.ok(state.regions.page.top < state.regions.status.top, 'page is above the status bar');
-  assert.match(state.statusText, /Not saved/);
+  assert.ok(state.regions.status.height >= 27 && state.regions.status.height <= 29, state.regions.status.height);
+  assert.equal(state.status.page, 'Page 1 of 1');
+  assert.equal(state.status.words, '0 words');
+  assert.equal(state.status.characters, '0 characters');
+  assert.equal(state.status.save, 'Saved');
+  assert.equal(state.status.saveState, 'saved');
+  assert.equal(state.status.view, 'Pages');
+  assert.equal(state.status.viewHidden, false);
+  assert.equal(state.status.zoom, '100%');
 }
 
 async function fileMenuState(client) {
@@ -334,7 +356,7 @@ async function selectTab(port, session, tabId) {
     (current) => current.activeTitle === title && current.editorValue !== undefined,
     `tab ${tabId}`,
   );
-  return { active: state.activeTitle, value: state.editorValue };
+  return { active: state.activeTitle, value: state.editorValue, status: state.status };
 }
 
 test('launch shows the four shell regions and an editable tab within 3 seconds', { timeout: 45_000 }, async (t) => {
@@ -356,7 +378,10 @@ test('launch shows the four shell regions and an editable tab within 3 seconds',
     assert.deepEqual(state.tabLabels, ['Untitled 1']);
     assert.equal(state.activeTitle, 'Untitled 1');
     assert.equal(state.editorValue, '');
-    assert.equal(state.statusText, 'Page 1 of 1 - 0 words - 0 characters - 100% - Not saved');
+    assert.equal(state.status.save, 'Saved');
+    assert.equal(state.status.words, '0 words');
+    assert.equal(state.status.characters, '0 characters');
+    assert.equal(state.status.zoom, '100%');
     const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
     assert.equal(pages.length, 1);
   } finally {
@@ -382,17 +407,25 @@ test('File > New adds a never-saved tab and writes no file', { timeout: 45_000 }
     state = await waitForShell(
       port,
       session,
-      (current) => current.statusText === 'Page 1 of 1 - 3 words - 16 characters - 100% - Not saved',
+      (current) => current.status.words === '3 words'
+        && current.status.characters === '16 characters'
+        && current.status.save === 'Unsaved changes',
       'first page status',
     );
     assert.equal(state.editorValue, 'First page notes');
-    assert.equal(state.statusText, 'Page 1 of 1 - 3 words - 16 characters - 100% - Not saved');
+    assert.equal(state.status.page, 'Page 1 of 1');
+    assert.equal(state.status.words, '3 words');
+    assert.equal(state.status.characters, '16 characters');
+    assert.equal(state.status.save, 'Unsaved changes');
+    assert.equal(state.status.saveState, 'unsaved');
+    assert.equal(state.status.zoom, '100%');
 
     state = await chooseFileNew(port, session, 2);
     assert.deepEqual(state.tabLabels, ['Untitled 1', 'Untitled 2']);
     assert.equal(state.activeTitle, 'Untitled 2');
     assert.equal(state.editorValue, '');
-    assert.match(state.statusText, /Not saved/);
+    assert.equal(state.status.save, 'Saved');
+    assert.equal(state.status.words, '0 words');
 
     await replacePageText(port, session, 'Second page');
     state = await chooseFileNew(port, session, 3);
@@ -403,9 +436,15 @@ test('File > New adds a never-saved tab and writes no file', { timeout: 45_000 }
     const firstTab = await selectTab(port, session, 'untitled-1');
     assert.equal(firstTab.active, 'Untitled 1');
     assert.equal(firstTab.value, 'First page notes');
+    assert.equal(firstTab.status.words, '3 words');
+    assert.equal(firstTab.status.characters, '16 characters');
+    assert.equal(firstTab.status.save, 'Unsaved changes');
     const secondTab = await selectTab(port, session, 'untitled-2');
     assert.equal(secondTab.active, 'Untitled 2');
     assert.equal(secondTab.value, 'Second page');
+    assert.equal(secondTab.status.words, '2 words');
+    assert.equal(secondTab.status.characters, '11 characters');
+    assert.equal(secondTab.status.save, 'Unsaved changes');
 
     const afterDocuments = [
       ...(await listDocumentWrites(userDataDir)),

@@ -5,8 +5,8 @@ import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { editorText } from '../editor/state.js';
 import { MenuBar } from './MenuBar.js';
 import { PageArea } from './PageArea.js';
-import { statusLabel } from './status.js';
-import { StatusBar } from './StatusBar.js';
+import { StatusBar } from './statusbar/StatusBar.js';
+import { saveStateFromChanged } from './statusbar/model.js';
 import { closeTab, confirmClosePrompt } from './tabs/close.js';
 import { createTab, replaceTabEditor, tabHasUnsavedChanges } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
@@ -165,7 +165,10 @@ export function Shell() {
         onNew={addTab}
       />
       <PageArea tabId={activeTab.id} state={activeTab.editor} onChange={updateEditor} />
-      <StatusBar label={statusLabel(editorText(activeTab.editor))} />
+      <StatusBar
+        text={editorText(activeTab.editor)}
+        saveState={saveStateFromChanged(tabHasUnsavedChanges(activeTab))}
+      />
     </div>
   );
 }

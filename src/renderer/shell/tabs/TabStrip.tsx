@@ -3,6 +3,7 @@ import type { FocusEvent, KeyboardEvent } from 'react';
 import { tabAfterCycle, tabAfterFocusKey } from './order.js';
 import type { TabFocusKey } from './order.js';
 import { Tab } from './Tab.js';
+import { TabGlyph } from './TabGlyph.js';
 import type { PageTab } from './model.js';
 
 interface TabStripProps {
@@ -161,7 +162,7 @@ export function TabStrip({ tabs, activeId, closePromptId, onSelect, onClose, onN
         ))}
       </div>
       <button type="button" className="tab-new" aria-label="New tab" onClick={onNew}>
-        +
+        <TabGlyph kind="new" />
       </button>
     </div>
   );
