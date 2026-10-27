@@ -270,7 +270,20 @@ export function MenuBar({ onCommand }: MenuBarProps) {
 
   useLayoutEffect(() => {
     // Focus after the key event. Doing it in the key listener runs before the
-    // page records that the focus came from the keyboard.
+    // page records that the focus came from the keyboard. Blur runs in this
+    // layout pass: a pointer move must not leave the keyboard ring on the item
+    // the pointer left.
+    if (!pendingRestore.current && !session.keyboard) {
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        barRef.current?.contains(active) &&
+        (active.classList.contains('menu-item') || active.classList.contains('menu-panel'))
+      ) {
+        active.blur();
+      }
+      return;
+    }
     const timer = window.setTimeout(() => {
       if (pendingRestore.current) {
         pendingRestore.current = false;
@@ -290,18 +303,6 @@ export function MenuBar({ onCommand }: MenuBarProps) {
           return;
         }
         focusWorkSurface();
-        return;
-      }
-      if (!session.keyboard) {
-        // Hover must not leave the keyboard ring on the item the pointer left.
-        const active = document.activeElement;
-        if (
-          active instanceof HTMLElement &&
-          barRef.current?.contains(active) &&
-          (active.classList.contains('menu-item') || active.classList.contains('menu-panel'))
-        ) {
-          active.blur();
-        }
         return;
       }
       const id = focusTargetId(session);
