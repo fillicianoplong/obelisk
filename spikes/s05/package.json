@@ -1,0 +1,15 @@
+{
+  "name": "obelisk-spike-s05",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Throwaway check for the Windows Save dialog replace prompt. Not part of the Obelisk app and not shipped.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.renderer.json",
+    "start": "npm run build && node dist/run-spike.js"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}
