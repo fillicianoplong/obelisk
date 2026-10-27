@@ -1,0 +1,102 @@
+name: Spike S-02
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/s02/**'
+      - '.github/workflows/spike-s02.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/fuses.mjs'
+      - 'scripts/msix-plan.mjs'
+      - 'scripts/windows-kit.mjs'
+      - 'scripts/windows-shell.mjs'
+  pull_request:
+    paths:
+      - 'spikes/s02/**'
+      - '.github/workflows/spike-s02.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/fuses.mjs'
+      - 'scripts/msix-plan.mjs'
+      - 'scripts/windows-kit.mjs'
+      - 'scripts/windows-shell.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-s02-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  msix-activation:
+    name: MSIX second instance (windows-latest)
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+
+      - name: Install the app
+        run: npm ci
+
+      # Electron 45 has no postinstall. The unpackaged check and the packager both use this binary.
+      - name: Install Electron
+        run: node node_modules/electron/install.js
+
+      - name: Install the spike
+        working-directory: spikes/s02
+        run: npm ci
+
+      - name: Typecheck the spike
+        working-directory: spikes/s02
+        run: npm run typecheck
+
+      - name: Lint the spike
+        run: npx eslint spikes/s02 --max-warnings 0
+
+      # CI is set, so npm start is the unpackaged check. It does not install the MSIX.
+      # It opens one window, launches Electron again with a file, and checks second-instance.
+      - name: Run the unpackaged check
+        timeout-minutes: 8
+        working-directory: spikes/s02
+        run: npm start
+
+      - name: Package the spike MSIX
+        timeout-minutes: 20
+        working-directory: spikes/s02
+        run: npm run package:msix
+
+      # Installs Obelisk.SpikeS02, launches the packaged exe twice with a file argument,
+      # and checks that the second launch reaches the first through second-instance.
+      # It removes Obelisk.SpikeS02. It does not remove Obelisk.Dev.
+      - name: Install, launch twice, and remove the spike package
+        timeout-minutes: 15
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File spikes/s02/install-spike.ps1 -Action Ci -Msix spikes/s02/dist/msix/Obelisk-Spike-S02.msix -Certificate spikes/s02/dist/msix/obelisk-spike-s02.cer
+
+      - name: Upload the spike report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s02-report
+          path: spikes/s02/output/
+          if-no-files-found: warn
+
+      - name: Upload the spike MSIX and certificate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s02-msix
+          path: |
+            spikes/s02/dist/msix/Obelisk-Spike-S02.msix
+            spikes/s02/dist/msix/obelisk-spike-s02.cer
+          if-no-files-found: warn
