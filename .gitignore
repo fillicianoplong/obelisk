@@ -4,6 +4,8 @@ docs/drafts/
 docs/pending_edits.md
 node_modules/
 dist/
+spikes/*/dist/
+spikes/*/output/
 /coverage/
 tests/visual/output/
 *.log
