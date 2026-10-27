@@ -28,6 +28,7 @@ function findMatchingBrace(css, openIndex) {
 
 test('contrast keeps the page edge, active tab, unsaved mark, and focus ring visible', async () => {
   const css = stripComments(await readFile(path.join(root, 'src/renderer/shell/shell.css'), 'utf8'));
+  const focus = stripComments(await readFile(path.join(root, 'src/renderer/styles/focus.css'), 'utf8'));
   const tokens = stripComments(await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8'));
   const motionStart = tokens.indexOf('@media (prefers-reduced-motion: reduce)');
   const contrastStart = tokens.indexOf('@media (forced-colors: active)');
@@ -44,14 +45,15 @@ test('contrast keeps the page edge, active tab, unsaved mark, and focus ring vis
   assert.match(body, /\.tab-unsaved[\s\S]*background:\s*var\(--color-text-tab\)/);
   assert.match(body, /\.tab-unsaved[\s\S]*border-color:\s*var\(--color-text-tab\)/);
   assert.match(body, /\.page-sheet,\s*\.menu-panel[\s\S]*border:\s*calc\(var\(--space-2xs\) \/ 2\) solid var\(--color-border-subtle\)/);
-  assert.match(css, /\.tab:focus-visible[\s\S]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/);
-  const sharedFocus = css.match(/\.menu-button:focus-visible[\s\S]*?\{/);
+  assert.match(focus, /\.tab:focus-visible[\s\S]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/);
+  const sharedFocus = focus.match(/\.menu-button:focus-visible[\s\S]*?\{/);
   assert.ok(sharedFocus);
   assert.equal(sharedFocus[0].includes('.page-sheet'), false);
   assert.match(
-    css,
+    focus,
     /\.page-sheet\[data-focus-source='keyboard'\]:focus\s*\{[^}]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/,
   );
+  assert.match(focus, /outline-color:\s*Highlight/);
   assert.match(css, /\.tab\[data-unsaved='true'\] \.tab-unsaved/);
 
   const activeOutside = css.slice(0, open);

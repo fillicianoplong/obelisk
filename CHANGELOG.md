@@ -2,6 +2,18 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.14.0] - 2026-10-26
+
+### Added
+
+- F6 and Shift+F6 move between the menu bar, the tabs, the page, and the status bar, and then wrap. ([#109](https://github.com/fillicianoplong/obelisk/pull/109))
+- Each region keeps the last focused control. Coming back to the page restores the caret and the selection. ([#109](https://github.com/fillicianoplong/obelisk/pull/109))
+- Arriving in a region reads its name: Menu bar, Tabs, Document, or Status bar. ([#109](https://github.com/fillicianoplong/obelisk/pull/109))
+
+### Changed
+
+- The focus ring is a 2 px outer line and a 1 px inner line, in Light, Dark, and a contrast theme. It stays even on every side, and inset where a neighbour would clip it. ([#109](https://github.com/fillicianoplong/obelisk/pull/109))
+
 ## [0.1.13.2] - 2026-10-26
 
 ### Added

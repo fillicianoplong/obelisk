@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FocusEvent, KeyboardEvent } from 'react';
+import { TABS_LABEL } from '../focus/regions.js';
 import { tabAfterCycle, tabAfterFocusKey } from './order.js';
 import type { TabFocusKey } from './order.js';
 import { Tab } from './Tab.js';
@@ -145,7 +146,7 @@ export function TabStrip({ tabs, activeId, closePromptId, onSelect, onClose, onN
       <div
         className="tab-list"
         role="tablist"
-        aria-label="Tabs"
+        aria-label={TABS_LABEL}
         aria-orientation="horizontal"
         onKeyDown={onStripKeyDown}
         onBlur={onStripBlur}

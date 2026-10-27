@@ -60,6 +60,7 @@
   --size-tab-min: 96px;
   --size-tab-max: 220px;
   --size-focus-ring: 2px;
+  --size-focus-inner: 1px;
   --size-menu-accent: 3px;   /* menu item hover and keyboard bar */
   --size-scrollbar: 12px;
   --size-scrollbar-thin: 4px;

@@ -3,6 +3,8 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { editorText } from '../editor/state.js';
+import { FocusCycle } from './focus/FocusCycle.js';
+import { STATUS_BAR_LABEL } from './focus/regions.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { StatusBar } from './statusbar/StatusBar.js';
@@ -151,6 +153,7 @@ export function Shell() {
   return (
     <div className="shell">
       <ThemeSync />
+      <FocusCycle />
       <TitleBar />
       <MenuBar onCommand={onMenuCommand} />
       <TabStrip
@@ -173,7 +176,8 @@ export function Shell() {
           data-region="status-bar"
           data-status-mode="settings"
           role="status"
-          aria-label="Status bar"
+          aria-label={STATUS_BAR_LABEL}
+          tabIndex={-1}
         />
       ) : (
         <StatusBar

@@ -43,6 +43,10 @@ function installPageFocusModality(view: Window): void {
   view.addEventListener('mousedown', onPointing, true);
 }
 
+export function pageFocusIsKeyboard(): boolean {
+  return modality === 'keyboard';
+}
+
 export function applyPageFocusSource(page: HTMLElement): void {
   if (modality === 'keyboard' && page.ownerDocument.activeElement === page) {
     page.setAttribute('data-focus-source', 'keyboard');

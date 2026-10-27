@@ -156,30 +156,6 @@
   box-shadow: inset var(--size-menu-accent) 0 0 var(--color-accent);
 }
 
-.menu-item:focus-visible {
-  outline: none;
-}
-
-.menu-button:focus-visible,
-.tab-new:focus-visible {
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: calc(var(--space-2xs) / -2);
-}
-
-/* Same even ring as a tab: 2 px inside every edge, so neighbours cannot clip it. */
-.menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: calc(var(--size-focus-ring) * -1);
-  box-shadow: inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer);
-}
-
-/* Inside the tab. The strip scrolls, and an outline outside the tab is clipped. */
-.tab:focus-visible {
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: calc(var(--size-focus-ring) * -1);
-  box-shadow: inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer);
-}
-
 .menu-item[aria-disabled='true'],
 .menu-item[aria-disabled='true'] .menu-shortcut,
 .menu-item[aria-disabled='true'] .menu-chevron {
@@ -390,11 +366,6 @@
   color: var(--color-text-chrome);
 }
 
-.tab-new:focus-visible {
-  box-shadow: inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer);
-  outline-offset: calc(var(--size-focus-ring) * -1);
-}
-
 .tab-new:active {
   background: var(--color-surface-chrome-pressed);
   color: var(--color-text-chrome);
@@ -440,11 +411,6 @@
   margin: 0;
 }
 
-.page-sheet[data-focus-source='keyboard']:focus {
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: calc(var(--space-2xs) / -2);
-}
-
 .settings-title {
   color: var(--color-text-heading);
   font-family: var(--font-ui-display);
@@ -473,12 +439,6 @@
   position: relative;
   user-select: none;
   white-space: nowrap;
-}
-
-.status-bar:focus-visible,
-.status-save:focus-visible {
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: calc(var(--size-focus-ring) * -1);
 }
 
 .status-bar-leading,
@@ -591,11 +551,6 @@
     border-width: var(--size-focus-ring) calc(var(--space-2xs) / 2) 0;
   }
 
-  .tab:focus-visible,
-  .tab-new:focus-visible {
-    box-shadow: none;
-  }
-
   .tab:not([aria-selected='true']):hover,
   .tab-new:hover,
   .tab-new:focus-visible,
@@ -629,11 +584,6 @@
   .menu-bar[data-input='pointer'] .menu-item:not([aria-disabled='true']):hover,
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
     color: HighlightText;
-  }
-
-  .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
-    outline-color: Highlight;
-    box-shadow: inset 0 0 0 var(--size-focus-ring) Highlight;
   }
 
   .menu-item[aria-disabled='true'],

@@ -6,7 +6,8 @@ import { EditorView } from 'prosemirror-view';
 import { useLayoutEffect, useRef } from 'react';
 import 'prosemirror-view/style/prosemirror.css';
 import './editor.css';
-import { bindPageFocus } from '../shell/page-focus.js';
+import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
+import { bindPageFocus, pageFocusIsKeyboard } from '../shell/page-focus.js';
 import { editorSchema } from './schema.js';
 import { runWithSynchronousEditorUpdate } from './flush.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
@@ -86,6 +87,21 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
         view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, position)));
       });
       placeSelection(view);
+    },
+    setSelection(anchor: number, head: number) {
+      runWithSynchronousEditorUpdate(() => {
+        view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, anchor, head)));
+      });
+      placeSelection(view);
+    },
+    selection() {
+      const { anchor, head, empty } = view.state.selection;
+      return {
+        anchor,
+        head,
+        empty,
+        text: view.state.doc.textBetween(view.state.selection.from, view.state.selection.to),
+      };
     },
     replaceText(text: string) {
       runWithSynchronousEditorUpdate(() => {
@@ -169,7 +185,7 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
     const view = new EditorView(host, {
       state,
       attributes: {
-        'aria-label': 'Page',
+        'aria-label': DOCUMENT_LABEL,
         class: 'page-sheet',
         'data-region': 'page-editor',
         spellcheck: 'true',
@@ -199,6 +215,26 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
       handleDOMEvents: {
         blur() {
           adoptDomSelection(view);
+          return false;
+        },
+        focus() {
+          // Chromium can park the caret at an edge when the page is focused again.
+          // Put the stored caret and selection back when the keyboard moved focus here.
+          if (!pageFocusIsKeyboard()) {
+            return false;
+          }
+          const restore = () => {
+            if (view.isDestroyed || !pageFocusIsKeyboard()) {
+              return;
+            }
+            if (view.dom.ownerDocument.activeElement !== view.dom) {
+              return;
+            }
+            placeSelectionInDom(view);
+          };
+          restore();
+          queueMicrotask(restore);
+          view.dom.ownerDocument.defaultView?.requestAnimationFrame(restore);
           return false;
         },
       },

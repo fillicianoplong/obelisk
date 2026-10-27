@@ -138,5 +138,6 @@ test('status bar colours come from tokens', async () => {
   assert.match(rules, /\.status-bar \{[^}]*height:\s*var\(--size-statusbar\)/);
   assert.match(rules, /\.status-save\[data-save-state='saved'\] \{[^}]*color:\s*var\(--color-success\)/);
   assert.match(rules, /\.status-save\[data-save-state='autosave-paused'\] \{[^}]*color:\s*var\(--color-warning\)/);
-  assert.match(rules, /\.status-bar:focus-visible,\s*\.status-save:focus-visible/);
+  const focus = await readFile(path.join(root, 'src/renderer/styles/focus.css'), 'utf8');
+  assert.match(focus, /\.status-bar:focus-visible,\s*\.status-save:focus-visible/);
 });

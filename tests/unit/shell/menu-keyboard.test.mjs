@@ -359,6 +359,7 @@ test('pointer hover clears the keyboard highlight and keeps one item current', a
 
 test('the menu bar uses the raised surface, accent bar, and access-key underline', async () => {
   const css = await readFile(path.join(root, 'src/renderer/shell/shell.css'), 'utf8');
+  const focus = await readFile(path.join(root, 'src/renderer/styles/focus.css'), 'utf8');
   const tokens = await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8');
   assert.match(tokens, /--size-menu-accent:\s*3px/);
   assert.match(css, /\.menu-panel\s*\{[^}]*background:\s*var\(--color-surface-raised\)/);
@@ -378,18 +379,19 @@ test('the menu bar uses the raised surface, accent bar, and access-key underline
     /\.menu-bar\[data-input='keyboard'\][^{]*::before\s*\{[^}]*background:\s*var\(--color-accent\)/,
   );
   assert.match(
-    css,
+    focus,
     /\.menu-bar\[data-input='keyboard'\] \.menu-item\[data-focused='true'\]\s*\{[^}]*box-shadow:\s*inset 0 0 0 var\(--size-focus-ring\) var\(--color-focus-outer\)/,
   );
   assert.match(
-    css,
+    focus,
     /\.menu-bar\[data-input='keyboard'\] \.menu-item\[data-focused='true'\]\s*\{[^}]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/,
   );
   assert.match(
-    css,
+    focus,
     /\.menu-bar\[data-input='keyboard'\] \.menu-item\[data-focused='true'\]\s*\{[^}]*outline-offset:\s*calc\(var\(--size-focus-ring\) \* -1\)/,
   );
-  assert.match(css, /\.menu-item:focus-visible\s*\{[^}]*outline:\s*none/);
+  assert.match(focus, /\.menu-item:focus-visible\s*\{[^}]*outline:\s*none/);
+  assert.doesNotMatch(focus, /--size-menu-accent/);
   assert.match(css, /\.menu-bar\[data-access-keys='true'\] \.menu-key\s*\{[^}]*text-decoration-line:\s*underline/);
   assert.match(css, /\.menu-bar\s*\{[^}]*height:\s*var\(--size-menubar\)/);
   assert.match(css, /\.menu-shortcut\s*\{[^}]*color:\s*var\(--color-text-secondary\)/);
