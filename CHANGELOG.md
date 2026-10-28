@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.19.0] - 2026-10-27
+
+### Added
+
+- A bad .obk is refused before it is read. The check stops a file over 200 MB or 2,000 entries before reading entries, stops an entry at its inflate cap, and refuses unsafe names, encryption, unknown compression, multi-disk archives, names that differ only by case, repeated names, disagreeing headers, folders, links, nested archives, and a missing document.json. The file is left unchanged. ([#137](https://github.com/fillicianoplong/obelisk/pull/137))
+
 ## [0.1.18.0] - 2026-10-27
 
 ### Added

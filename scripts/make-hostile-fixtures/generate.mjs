@@ -39,8 +39,10 @@ import {
 } from './limits.mjs';
 import { craftZip, deflatedEntry, eocdEntryCount, localUncompressedSizes, storedEntry } from './zip.mjs';
 
-const MANIFEST = Buffer.from('{"format":"obelisk","formatVersion":1,"images":[]}');
-const DOCUMENT = Buffer.from('{"view":"pageless","blocks":[]}');
+export const HOSTILE_MANIFEST = Buffer.from('{"format":"obelisk","formatVersion":1,"images":[]}');
+export const HOSTILE_DOCUMENT = Buffer.from('{"view":"pageless","blocks":[]}');
+const MANIFEST = HOSTILE_MANIFEST;
+const DOCUMENT = HOSTILE_DOCUMENT;
 
 const UPDATE_MESSAGE = 'Made by a newer Obelisk; update it from the Microsoft Store';
 
@@ -124,15 +126,32 @@ function single(name, data, extra) {
   return craftZip({ entries: [storedEntry(name, data, extra)] });
 }
 
-function archive(key, title, bytes, issue = 19) {
+function archive(key, title, bytes, issue = 19, expected = null) {
+  const active = issue === 19;
+  if (active && (!expected || typeof expected.reason !== 'string' || typeof expected.path !== 'string')) {
+    throw new Error(`${key} needs an archive reason and path.`);
+  }
   return spec({
     id: key.slice(0, 4),
     key,
     fileName: `${key}.obk`,
     title,
-    pending: [issue],
+    pending: active ? [] : [issue],
+    check: active ? 'archive' : null,
+    expectReason: expected ? expected.reason : null,
+    expectPath: expected ? expected.path : null,
     bytes,
   });
+}
+
+function totalImageCount() {
+  const imageSize = IMAGE_MAX_BYTES - 1;
+  const overhead = MANIFEST.length + DOCUMENT.length;
+  let count = 1;
+  while (overhead + count * imageSize <= ARCHIVE_MAX_UNCOMPRESSED_BYTES) {
+    count += 1;
+  }
+  return count;
 }
 
 function requireHeader(zip, index, declared, label) {
@@ -167,10 +186,7 @@ function imageBomb() {
 function totalBomb() {
   const imageSize = IMAGE_MAX_BYTES - 1;
   const overhead = MANIFEST.length + DOCUMENT.length;
-  let count = 1;
-  while (overhead + count * imageSize <= ARCHIVE_MAX_UNCOMPRESSED_BYTES) {
-    count += 1;
-  }
+  const count = totalImageCount();
   const entries = [
     storedEntry('manifest.json', MANIFEST),
     storedEntry('document.json', DOCUMENT),
@@ -236,43 +252,72 @@ function buildSpecs(writer) {
       key: 'H-01-file-size',
       fileName: 'H-01-file-size.obk',
       title: 'File over 200 MB',
-      pending: [19],
+      check: 'archive',
+      expectReason: 'file-too-large',
+      expectPath: '',
       sparseBytes: FILE_MAX_BYTES + 1,
     }),
-    archive('H-01-entry-count', 'Archive with 2,001 entries', entryCountZip()),
-    archive('H-02-document-cap', 'document.json inflates past 25 MB from a 64-byte header', documentBomb()),
-    archive('H-02-image-cap', 'An image inflates past 20 MB from a 64-byte header', imageBomb()),
-    archive('H-02-total-cap', 'Entries inflate past 250 MB together', totalBomb()),
-    archive('H-02-declared-lie', 'Declared size 32, real size 1,000, under the caps', declaredLie()),
-    archive('H-03-encrypted', 'Encrypted entry', single('manifest.json', Buffer.from('x'), { flags: 1 })),
-    archive('H-03-method', 'Unknown compression method', single('manifest.json', Buffer.from('x'), { method: 99 })),
+    archive('H-01-entry-count', 'Archive with 2,001 entries', entryCountZip(), 19, {
+      reason: 'too-many-entries',
+      path: '',
+    }),
+    archive('H-02-document-cap', 'document.json inflates past 25 MB from a 64-byte header', documentBomb(), 19, {
+      reason: 'document-cap',
+      path: 'document.json',
+    }),
+    archive('H-02-image-cap', 'An image inflates past 20 MB from a 64-byte header', imageBomb(), 19, {
+      reason: 'image-cap',
+      path: imageName(1),
+    }),
+    archive('H-02-total-cap', 'Entries inflate past 250 MB together', totalBomb(), 19, {
+      reason: 'total-cap',
+      path: imageName(totalImageCount() - 1),
+    }),
+    archive('H-02-declared-lie', 'Declared size 32, real size 1,000, under the caps', declaredLie(), 19, {
+      reason: 'declared-size-mismatch',
+      path: 'document.json',
+    }),
+    archive('H-03-encrypted', 'Encrypted entry', single('manifest.json', Buffer.from('x'), { flags: 1 }), 19, {
+      reason: 'encrypted',
+      path: 'manifest.json',
+    }),
+    archive('H-03-method', 'Unknown compression method', single('manifest.json', Buffer.from('x'), { method: 99 }), 19, {
+      reason: 'unsupported-compression',
+      path: 'manifest.json',
+    }),
     archive('H-03-multidisk', 'Multi-disk archive', craftZip({
       diskNumber: 1,
       entries: [storedEntry('manifest.json', MANIFEST)],
-    })),
-    archive('H-03-entry-disk', 'Entry stored on another disk', single('manifest.json', MANIFEST, { diskNumberStart: 1 })),
+    }), 19, {
+      reason: 'multi-disk',
+      path: '',
+    }),
+    archive('H-03-entry-disk', 'Entry stored on another disk', single('manifest.json', MANIFEST, { diskNumberStart: 1 }), 19, {
+      reason: 'multi-disk',
+      path: 'manifest.json',
+    }),
   ];
 
   const names = [
-    ['H-04-dotdot', '../evil.txt', 'Entry name ../'],
-    ['H-04-dotdot-nested', 'images/../../out.txt', 'Entry name with nested ../'],
-    ['H-04-leading-slash', '/etc/passwd', 'Entry name with a leading slash'],
-    ['H-04-backslash', 'images\\evil.png', 'Entry name with a backslash'],
-    ['H-04-drive', 'C:/evil.txt', 'Entry name with a drive letter'],
-    ['H-04-drive-backslash', 'C:\\evil.txt', 'Entry name C:\\evil.txt'],
-    ['H-04-drive-bare', 'D:evil.txt', 'Entry name D:evil.txt'],
-    ['H-04-extra', 'extra.txt', 'Entry name outside the allowlist'],
-    ['H-05-unc', '\\\\server\\share\\evil.txt', 'Network path'],
-    ['H-05-network-slash', '//server/share/evil.txt', 'Network path with slashes'],
-    ['H-05-stream', 'manifest.json:Zone.Identifier', 'Stream suffix'],
-    ['H-05-stream-data', 'document.json::$DATA', '::$DATA stream suffix'],
-    ['H-05-con', 'CON', 'Device name CON'],
-    ['H-05-con-ext', 'CON.txt', 'Device name CON.txt'],
-    ['H-05-con-lower', 'con', 'Device name con'],
-    ['H-05-con-path', 'images/CON.png', 'Device name inside images/'],
+    ['H-04-dotdot', '../evil.txt', 'Entry name ../', 'dot-dot'],
+    ['H-04-dotdot-nested', 'images/../../out.txt', 'Entry name with nested ../', 'dot-dot'],
+    ['H-04-leading-slash', '/etc/passwd', 'Entry name with a leading slash', 'leading-slash'],
+    ['H-04-backslash', 'images\\evil.png', 'Entry name with a backslash', 'backslash'],
+    ['H-04-drive', 'C:/evil.txt', 'Entry name with a drive letter', 'drive-letter'],
+    ['H-04-drive-backslash', 'C:\\evil.txt', 'Entry name C:\\evil.txt', 'drive-letter'],
+    ['H-04-drive-bare', 'D:evil.txt', 'Entry name D:evil.txt', 'drive-letter'],
+    ['H-04-extra', 'extra.txt', 'Entry name outside the allowlist', 'name-not-allowed'],
+    ['H-05-unc', '\\\\server\\share\\evil.txt', 'Network path', 'network-path'],
+    ['H-05-network-slash', '//server/share/evil.txt', 'Network path with slashes', 'network-path'],
+    ['H-05-stream', 'manifest.json:Zone.Identifier', 'Stream suffix', 'stream-suffix'],
+    ['H-05-stream-data', 'document.json::$DATA', '::$DATA stream suffix', 'stream-suffix'],
+    ['H-05-con', 'CON', 'Device name CON', 'device-name'],
+    ['H-05-con-ext', 'CON.txt', 'Device name CON.txt', 'device-name'],
+    ['H-05-con-lower', 'con', 'Device name con', 'device-name'],
+    ['H-05-con-path', 'images/CON.png', 'Device name inside images/', 'device-name'],
   ];
-  for (const [key, name, title] of names) {
-    specs.push(archive(key, title, single(name, Buffer.from('x'))));
+  for (const [key, name, title, reason] of names) {
+    specs.push(archive(key, title, single(name, Buffer.from('x')), 19, { reason, path: name }));
   }
 
   specs.push(
@@ -281,37 +326,46 @@ function buildSpecs(writer) {
         storedEntry('manifest.json', MANIFEST),
         storedEntry('Manifest.json', MANIFEST),
       ],
-    })),
+    }), 19, { reason: 'case-duplicate', path: 'Manifest.json' }),
     archive('H-06-repeat', 'document.json twice', craftZip({
       entries: [
         storedEntry('document.json', DOCUMENT),
         storedEntry('document.json', DOCUMENT),
       ],
-    })),
+    }), 19, { reason: 'repeated-name', path: 'document.json' }),
     archive('H-07-headers', 'Local name and CRC differ from the central header', single(
       'manifest.json',
       Buffer.from('hello'),
       { localName: '../evil.txt', localCrc: 1 },
-    )),
+    ), 19, { reason: 'header-mismatch', path: 'manifest.json' }),
     archive('H-08-directory', 'Folder entry', single('images/', Buffer.alloc(0), {
       crc: 0,
       declaredUncompressed: 0,
       externalAttributes: 0x10,
-    })),
+    }), 19, { reason: 'directory', path: 'images/' }),
     archive('H-08-symlink', 'Link entry', single('manifest.json', Buffer.from('evil'), {
       versionMadeBy: (3 << 8) | 20,
       externalAttributes: (0o120777 << 16) >>> 0,
-    })),
-    archive('H-08-nested-name', 'Entry named nested.zip', single('nested.zip', Buffer.from('x'))),
+    }), 19, { reason: 'symlink', path: 'manifest.json' }),
+    archive('H-08-nested-name', 'Entry named nested.zip', single('nested.zip', Buffer.from('x')), 19, {
+      reason: 'nested-zip',
+      path: 'nested.zip',
+    }),
     archive('H-08-nested-bytes', 'Image bytes that are a zip', craftZip({
       entries: [
         storedEntry(imageName(9), craftZip({ entries: [storedEntry('evil.txt', Buffer.from('nested'))] })),
         storedEntry('manifest.json', MANIFEST),
         storedEntry('document.json', DOCUMENT),
       ],
-    })),
-    archive('H-09-missing-manifest', 'Missing manifest.json', single('document.json', DOCUMENT)),
-    archive('H-09-missing-document', 'Missing document.json', single('manifest.json', MANIFEST)),
+    }), 19, { reason: 'nested-zip', path: imageName(9) }),
+    archive('H-09-missing-manifest', 'Missing manifest.json', single('document.json', DOCUMENT), 19, {
+      reason: 'missing-manifest',
+      path: 'manifest.json',
+    }),
+    archive('H-09-missing-document', 'Missing document.json', single('manifest.json', MANIFEST), 19, {
+      reason: 'missing-document',
+      path: 'document.json',
+    }),
   );
 
   const unknown = minimalDocument();
