@@ -32,9 +32,52 @@ interface ReadStop {
   hitCap: boolean;
   zipMagic: boolean;
   crc: number;
+  body: Buffer | null;
 }
 
+interface ArchivePayload {
+  manifest: Buffer;
+  document: Buffer;
+}
+
+type InspectedArchive = ArchiveResult & { payload?: ArchivePayload };
+
 export async function readArchive(filePath: string): Promise<ArchiveResult> {
+  return inspectArchive(filePath, false);
+}
+
+// Same checks as readArchive. On success the two JSON entries are kept so the
+// decode path can parse the bytes that already passed the caps and the CRC.
+export async function readArchivePayload(
+  filePath: string,
+): Promise<
+  | { ok: true; manifest: Buffer; document: Buffer; result: ArchiveResult }
+  | { ok: false; result: ArchiveResult }
+> {
+  const inspected = await inspectArchive(filePath, true);
+  if (!inspected.ok) {
+    return { ok: false, result: inspected };
+  }
+  if (!inspected.payload) {
+    return {
+      ok: false,
+      result: refused('zip-error', '', {
+        opened: true,
+        entriesRead: inspected.entriesRead,
+        payloadsRead: inspected.payloadsRead,
+        bytesRead: inspected.bytesRead,
+      }),
+    };
+  }
+  return {
+    ok: true,
+    manifest: inspected.payload.manifest,
+    document: inspected.payload.document,
+    result: inspected,
+  };
+}
+
+async function inspectArchive(filePath: string, retainJson: boolean): Promise<InspectedArchive> {
   let fileStat;
   try {
     fileStat = await stat(filePath);
@@ -59,7 +102,7 @@ export async function readArchive(filePath: string): Promise<ArchiveResult> {
       return refused('too-many-entries', '', { opened: true });
     }
     const disks = await readEntryDisks(filePath, fileStat.size, zip.entryCount);
-    return await decodeZip(zip, disks);
+    return await decodeZip(zip, disks, retainJson);
   } catch (error) {
     return refused(classifyZipError(error), '', { opened });
   } finally {
@@ -67,7 +110,7 @@ export async function readArchive(filePath: string): Promise<ArchiveResult> {
   }
 }
 
-async function decodeZip(zip: ZipFile, disks: readonly number[]): Promise<ArchiveResult> {
+async function decodeZip(zip: ZipFile, disks: readonly number[], retainJson: boolean): Promise<InspectedArchive> {
   const entries: Entry[] = [];
   for await (const entry of zip.eachEntry()) {
     entries.push(entry);
@@ -118,6 +161,8 @@ async function decodeZip(zip: ZipFile, disks: readonly number[]): Promise<Archiv
 
   let bytesRead = 0;
   let payloadsRead = 0;
+  let manifest: Buffer | null = null;
+  let document: Buffer | null = null;
   for (let index = 0; index < entries.length; index += 1) {
     const entry = entries[index];
     const name = names[index] ?? '';
@@ -136,10 +181,18 @@ async function decodeZip(zip: ZipFile, disks: readonly number[]): Promise<Archiv
     }
     const entryCap = capFor(name);
     const maxBytes = entryCap === null ? room : Math.min(entryCap, room);
+    const retain = retainJson && (name === 'manifest.json' || name === 'document.json');
     const stream = await zip.openReadStreamPromise(entry);
     payloadsRead += 1;
-    const read = await readCapped(stream, maxBytes);
+    const read = await readCapped(stream, maxBytes, retain);
     bytesRead += read.bytesRead;
+    if (retain && read.body && !read.hitCap && !read.zipMagic) {
+      if (name === 'manifest.json') {
+        manifest = read.body;
+      } else {
+        document = read.body;
+      }
+    }
     if (read.zipMagic) {
       return refused('nested-zip', name, {
         opened: true,
@@ -177,7 +230,7 @@ async function decodeZip(zip: ZipFile, disks: readonly number[]): Promise<Archiv
     }
   }
 
-  return {
+  const success: InspectedArchive = {
     ok: true,
     reason: 'ok',
     path: '',
@@ -188,6 +241,19 @@ async function decodeZip(zip: ZipFile, disks: readonly number[]): Promise<Archiv
     bytesRead,
     cappedEntryBytesRead: null,
   };
+  if (!retainJson) {
+    return success;
+  }
+  if (!manifest || !document) {
+    return refused('zip-error', '', {
+      opened: true,
+      entriesRead: entries.length,
+      payloadsRead,
+      bytesRead,
+    });
+  }
+  success.payload = { manifest, document };
+  return success;
 }
 
 function capFor(name: string): number | null {
@@ -288,13 +354,14 @@ async function headerMismatch(zip: ZipFile, entry: Entry): Promise<boolean> {
   return local.generalPurposeBitFlag !== entry.generalPurposeBitFlag;
 }
 
-function readCapped(stream: Readable, maxBytes: number): Promise<ReadStop> {
+function readCapped(stream: Readable, maxBytes: number, retain: boolean): Promise<ReadStop> {
   return new Promise((resolve, reject) => {
     let bytesRead = 0;
     let crc = 0;
     let crcStarted = false;
     const prefix: Buffer[] = [];
     let prefixLength = 0;
+    const chunks: Buffer[] = [];
     let settled = false;
     let stopping = false;
 
@@ -309,6 +376,7 @@ function readCapped(stream: Readable, maxBytes: number): Promise<ReadStop> {
         hitCap,
         zipMagic,
         crc: crc >>> 0,
+        body: retain ? Buffer.concat(chunks) : null,
       });
     }
 
@@ -350,6 +418,9 @@ function readCapped(stream: Readable, maxBytes: number): Promise<ReadStop> {
       bytesRead += slice.length;
       crc = crcStarted ? crc32(slice, crc) : crc32(slice);
       crcStarted = true;
+      if (retain) {
+        chunks.push(Buffer.from(slice));
+      }
       if (prefixLength < ZIP_MAGIC.length) {
         const piece = slice.subarray(0, ZIP_MAGIC.length - prefixLength);
         prefix.push(piece);

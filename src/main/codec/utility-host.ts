@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { app, utilityProcess, type UtilityProcess } from 'electron';
-import type { ArchiveResult } from './archive/index.js';
+import type { DecodeResult } from './decode.js';
 
 // FormatCodec runs here, not in the renderer and not on the main thread's
 // inflate. Spike S-08: Electron 45 does not OS-sandbox this process. The
-// archive checks are the defence. serviceName matches that spike.
+// checks are the defence. serviceName matches that spike.
 
 const SERVICE_NAME = 'obk-decode';
 const CHECK_TIMEOUT_MS = 120_000;
@@ -22,7 +22,7 @@ function childEnv(): Record<string, string> {
 
 interface ArchiveResponse {
   id: number;
-  result: ArchiveResult;
+  result: DecodeResult;
 }
 
 function isResponse(value: unknown): value is ArchiveResponse {
@@ -33,7 +33,7 @@ function isResponse(value: unknown): value is ArchiveResponse {
   return typeof record.id === 'number' && typeof record.result === 'object' && record.result !== null;
 }
 
-export function readInUtilityProcess(filePath: string): Promise<ArchiveResult> {
+export function readInUtilityProcess(filePath: string): Promise<DecodeResult> {
   return new Promise((resolve, reject) => {
     let child: UtilityProcess;
     try {
@@ -51,7 +51,7 @@ export function readInUtilityProcess(filePath: string): Promise<ArchiveResult> {
     const id = 1;
     const timer = setTimeout(() => {
       finish(() => {
-        reject(new Error('The archive check did not finish.'));
+        reject(new Error('The file check did not finish.'));
       });
     }, CHECK_TIMEOUT_MS);
 
@@ -71,7 +71,7 @@ export function readInUtilityProcess(filePath: string): Promise<ArchiveResult> {
     child.on('message', (message: unknown) => {
       if (!isResponse(message) || message.id !== id) {
         finish(() => {
-          reject(new Error('The archive check returned a response this request did not ask for.'));
+          reject(new Error('The file check returned a response this request did not ask for.'));
         });
         return;
       }
@@ -81,7 +81,7 @@ export function readInUtilityProcess(filePath: string): Promise<ArchiveResult> {
     });
     child.once('exit', (code) => {
       finish(() => {
-        reject(new Error(`The archive check stopped (${code ?? 'no code'}).`));
+        reject(new Error(`The file check stopped (${code ?? 'no code'}).`));
       });
     });
   });
