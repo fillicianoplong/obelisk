@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.20.0] - 2026-10-28
+
+### Added
+
+- document.json is checked after the archive checks. Duplicate keys, NaN, Infinity, and unpaired surrogates are refused, and so are an unknown field, a wrong type, a value out of range, a repeated block id, more than 20,000 blocks, a table over 200 by 26, and columns inside columns. The file is left unchanged. ([#138](https://github.com/fillicianoplong/obelisk/pull/138))
+
 ## [0.1.19.0] - 2026-10-27
 
 ### Added
