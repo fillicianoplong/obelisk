@@ -1,7 +1,17 @@
+import { commitPageKeyboardFocus } from '../page-focus.js';
 import { recallFocus, rememberFocus, emptyFocusMemory } from './memory.js';
 import type { FocusMemory } from './memory.js';
 import { leaveMenuRegion } from './menu-leave.js';
-import { MENU_BAR_REGION, REGION_LABEL, cycleRegionId, regionAfter, regionCycle } from './regions.js';
+import {
+  MENU_BAR_REGION,
+  PAGE_REGION,
+  REGION_LABEL,
+  STATUS_BAR_REGION,
+  TABS_REGION,
+  cycleRegionId,
+  regionAfter,
+  regionCycle,
+} from './regions.js';
 import type { RegionDirection } from './regions.js';
 import { focusTargetKey } from './target.js';
 import type { FocusTargetParts } from './target.js';
@@ -88,6 +98,9 @@ function defaultTarget(doc: Document, regionId: string): HTMLElement | null {
 
 function focusKeyboard(element: HTMLElement): void {
   element.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
+  if (element.matches('.page-sheet')) {
+    commitPageKeyboardFocus(element);
+  }
 }
 
 function announcer(doc: Document): HTMLElement {
@@ -105,7 +118,7 @@ function announcer(doc: Document): HTMLElement {
   return node;
 }
 
-function announceRegion(view: Window, regionId: string): void {
+export function announceFocusRegion(view: Window, regionId: string): void {
   const label = REGION_LABEL[regionId];
   if (label === undefined) {
     return;
@@ -153,15 +166,50 @@ export function bindRegionCycle(view: Window): () => void {
     memory = rememberFocus(memory, regionId, key);
   };
 
+  const focusRegion = (regionId: string) => {
+    const target = rememberedTarget(doc, memory, regionId) ?? defaultTarget(doc, regionId);
+    if (target === null) {
+      return false;
+    }
+    focusKeyboard(target);
+    announceFocusRegion(view, regionId);
+    return true;
+  };
+
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key !== 'F6' || event.altKey || event.ctrlKey || event.metaKey || event.isComposing) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.isComposing) {
+      return;
+    }
+    const active = doc.activeElement instanceof HTMLElement ? doc.activeElement : null;
+    const current = active === null ? null : regionForElement(active);
+
+    // Escape returns to the page from the menu bar, the tabs, or the status bar.
+    // An open menu consumes Escape first and closes one level. The find bar and
+    // the page keep their own Escape behavior.
+    if (event.key === 'Escape' && !event.shiftKey && !event.defaultPrevented) {
+      if (
+        current !== MENU_BAR_REGION
+        && current !== TABS_REGION
+        && current !== STATUS_BAR_REGION
+      ) {
+        return;
+      }
+      if (current === MENU_BAR_REGION) {
+        leaveMenuRegion();
+      }
+      if (!focusRegion(PAGE_REGION)) {
+        return;
+      }
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key !== 'F6') {
       return;
     }
     const direction: RegionDirection = event.shiftKey ? -1 : 1;
     // The find bar is not open. regionCycle(['find-bar']) adds it after the tabs.
     const order = regionCycle();
-    const active = doc.activeElement instanceof HTMLElement ? doc.activeElement : null;
-    const current = active === null ? null : regionForElement(active);
     const next = regionAfter(order, current, direction);
     if (current === MENU_BAR_REGION && next !== MENU_BAR_REGION) {
       leaveMenuRegion();
@@ -172,7 +220,7 @@ export function bindRegionCycle(view: Window): () => void {
     }
     event.preventDefault();
     focusKeyboard(target);
-    announceRegion(view, next);
+    announceFocusRegion(view, next);
   };
 
   doc.addEventListener('focusin', onFocusIn, true);

@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.16.3] - 2026-10-26
+
+### Fixed
+
+- Escape back to the page draws the focus ring when the page already had focus, including in a contrast theme. ([#114](https://github.com/fillicianoplong/obelisk/pull/114))
+- Escape from the menu bar, the tabs, or the status bar returns to the page, restores the caret and selection, and draws the focus ring. An open menu still closes one level first. ([#114](https://github.com/fillicianoplong/obelisk/pull/114))
+
 ## [0.1.16.1] - 2026-10-26
 
 ### Added

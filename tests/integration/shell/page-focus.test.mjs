@@ -11,6 +11,8 @@ import {
   freePort,
   launchWithSandboxFallback,
   openCdp,
+  sleep,
+  STEP_TIMEOUT_MS,
   waitFor,
 } from '../electron-launch.mjs';
 
@@ -141,6 +143,29 @@ function assertKeyboardRing(state, label) {
   assert.equal(state.outlineColor, expected, `${label} ${JSON.stringify(state)}`);
 }
 
+async function readRing(client) {
+  return evaluate(client, ringExpression());
+}
+
+// The keyboard source is recorded on the focus event. Escape restores the page
+// on a timer, and that timer is what records the source when the page is
+// already focused. Read the ring after that settles.
+async function settleRing(client, check, label) {
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let lastError = null;
+  while (Date.now() < deadline) {
+    const state = await readRing(client);
+    try {
+      check(state, label);
+      return state;
+    } catch (error) {
+      lastError = error;
+    }
+    await sleep(30);
+  }
+  throw lastError ?? new Error(`${label} did not settle within ${STEP_TIMEOUT_MS} ms`);
+}
+
 test('the page focus ring follows keyboard focus and stays off for a click', { timeout: 60_000 }, async (t) => {
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-page-focus-'));
   const session = { child: undefined, client: undefined, userDataDir };
@@ -172,24 +197,32 @@ test('the page focus ring follows keyboard focus and stays off for a click', { t
       client,
       `(() => {
         window.addEventListener('keydown', (event) => {
-          if (event.key === 'F6' || event.key === 'Escape') {
-            document.querySelector('.page-sheet').focus();
+          if (event.key !== 'F6' && event.key !== 'Escape') {
+            return;
           }
+          const page = document.querySelector('.page-sheet');
+          // A second focus() on the page does not fire a focus event, so the
+          // keyboard source would stay unset. Leave and come back.
+          if (document.activeElement === page) {
+            page.blur();
+          }
+          page.focus();
         });
       })()`,
     );
 
     await clickPage(client);
-    const clicked = await evaluate(client, ringExpression());
-    assertNoPageRing(clicked, 'click');
-    assert.equal(clicked.focusVisible, true, JSON.stringify(clicked));
+    await settleRing(client, (state, label) => {
+      assertNoPageRing(state, label);
+      assert.equal(state.focusVisible, true, JSON.stringify(state));
+    }, 'click');
 
     await evaluate(client, `document.querySelector('.tab-new').focus()`);
     await pressKey(client, 'Tab', 'Tab', 9);
-    assertKeyboardRing(await evaluate(client, ringExpression()), 'Tab');
+    await settleRing(client, assertKeyboardRing, 'Tab');
 
     await clickPage(client);
-    assertNoPageRing(await evaluate(client, ringExpression()), 'click after keyboard focus');
+    await settleRing(client, assertNoPageRing, 'click after keyboard focus');
 
     const menu = await evaluate(
       client,
@@ -212,27 +245,28 @@ test('the page focus ring follows keyboard focus and stays off for a click', { t
     assert.equal(menu.pageWidth, '0px', JSON.stringify(menu));
 
     await pressKey(client, 'F6', 'F6', 117);
-    assertKeyboardRing(await evaluate(client, ringExpression()), 'F6');
+    await settleRing(client, assertKeyboardRing, 'F6');
 
     await clickMenu(client);
     await pressKey(client, 'F6', 'F6', 117, 8);
-    assertKeyboardRing(await evaluate(client, ringExpression()), 'Shift+F6');
+    await settleRing(client, assertKeyboardRing, 'Shift+F6');
 
     await clickMenu(client);
     await pressKey(client, 'Escape', 'Escape', 27);
-    assertKeyboardRing(await evaluate(client, ringExpression()), 'Escape');
+    await settleRing(client, assertKeyboardRing, 'Escape');
 
     await client.send('Emulation.setEmulatedMedia', {
       features: [{ name: 'forced-colors', value: 'active' }],
     });
     await clickPage(client);
-    const contrastClick = await evaluate(client, ringExpression());
-    assert.equal(contrastClick.forced, true, JSON.stringify(contrastClick));
-    assertNoPageRing(contrastClick, 'contrast click');
+    await settleRing(client, (state, label) => {
+      assert.equal(state.forced, true, JSON.stringify(state));
+      assertNoPageRing(state, label);
+    }, 'contrast click');
 
     await clickMenu(client);
     await pressKey(client, 'Escape', 'Escape', 27);
-    assertKeyboardRing(await evaluate(client, ringExpression()), 'contrast Escape');
+    await settleRing(client, assertKeyboardRing, 'contrast Escape');
   } finally {
     await finish();
   }
