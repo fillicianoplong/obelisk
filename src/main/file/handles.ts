@@ -24,6 +24,9 @@ export interface HandleMap {
   handleForPath(filePath: string): string | null;
   // Drops every handle that is not in the list. An unknown handle changes nothing.
   retain(handles: readonly string[]): boolean;
+  // The stat main recorded at open or the last successful save.
+  remember(handle: string, stat: FileStat): boolean;
+  forget(handle: string): void;
 }
 
 function pathKey(filePath: string): string {
@@ -76,6 +79,25 @@ export function createHandleMap(): HandleMap {
         byPath.delete(pathKey(issued.filePath));
       }
       return true;
+    },
+    remember(handle, stat) {
+      const issued = byHandle.get(handle);
+      if (issued === undefined) {
+        return false;
+      }
+      issued.stat = stat;
+      return true;
+    },
+    forget(handle) {
+      const issued = byHandle.get(handle);
+      if (issued === undefined) {
+        return;
+      }
+      byHandle.delete(handle);
+      const key = pathKey(issued.filePath);
+      if (byPath.get(key) === handle) {
+        byPath.delete(key);
+      }
     },
   };
 }

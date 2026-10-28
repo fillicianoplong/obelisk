@@ -42,8 +42,33 @@ export async function checkUnissuedHandle(call: UnissuedCall): Promise<UnissuedC
     showOpenDialog() {
       throw new Error('The Open dialog ran for a handle main did not issue.');
     },
+    showSaveDialog() {
+      throw new Error('The Save dialog ran for a handle main did not issue.');
+    },
+    confirmReplace() {
+      throw new Error('The replace prompt ran for a handle main did not issue.');
+    },
     readObk() {
       throw new Error('A file was read for a handle main did not issue.');
+    },
+    atomic: {
+      fs: {
+        open() {
+          throw new Error('A file was written for a handle main did not issue.');
+        },
+        rename() {
+          throw new Error('A file was renamed for a handle main did not issue.');
+        },
+        unlink() {
+          throw new Error('A file was removed for a handle main did not issue.');
+        },
+        stat() {
+          throw new Error('A file was stat-ed for a handle main did not issue.');
+        },
+        readdir() {
+          throw new Error('A folder was listed for a handle main did not issue.');
+        },
+      },
     },
   });
   const registry = createIpcRegistry(createAppHandlers(files));

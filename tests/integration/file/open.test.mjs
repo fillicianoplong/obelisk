@@ -199,8 +199,9 @@ test('a valid file opens with a handle and the file is unchanged', async () => {
       args: saveArgs(result.handle, result.stat),
     });
     assert.equal(saved.status, 'error');
-    assert.equal(saved.code, 'NOT_IMPLEMENTED');
-    assertUnchanged(before, await snapshot(file), 'save not started');
+    assert.equal(saved.code, 'ENCODE_FAILED');
+    assert.equal(saved.message, 'This document is not valid, so it was not saved.');
+    assertUnchanged(before, await snapshot(file), 'invalid document was not written');
     assert.deepEqual(await readdir(directory), ['Lab notes.obk']);
   });
 });
