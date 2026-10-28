@@ -1,6 +1,7 @@
 import type { IpcErrorResult, IpcTimeoutResult } from './errors.js';
+import { DOCUMENT_VIEWS, FONT_SIZES_PT } from '../schema/limits.js';
 
-export const DOCUMENT_VIEWS = ['pages', 'pageless'] as const;
+export { DOCUMENT_VIEWS, FONT_SIZES_PT };
 
 export type DocumentView = (typeof DOCUMENT_VIEWS)[number];
 
@@ -22,9 +23,6 @@ export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
 export const THEME_VALUES = ['light', 'dark', 'match-windows'] as const;
 
 export type ThemePreference = (typeof THEME_VALUES)[number];
-
-// Architecture formatting reference, 8 to 72 pt.
-export const FONT_SIZES_PT = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72] as const;
 
 export type FontSizePt = (typeof FONT_SIZES_PT)[number];
 
