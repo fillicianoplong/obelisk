@@ -6,6 +6,7 @@ import type { TabFocusKey } from './order.js';
 import { Tab } from './Tab.js';
 import { TabGlyph } from './TabGlyph.js';
 import type { PageTab } from './model.js';
+import { scrollTabsFromWheel } from './wheel.js';
 
 interface TabStripProps {
   tabs: readonly PageTab[];
@@ -47,6 +48,27 @@ export function TabStrip({ tabs, activeId, closePromptId, onSelect, onClose, onN
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const reclaimFocusId = useRef<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (strip === null) {
+      return undefined;
+    }
+    // Not passive, so a vertical wheel can move the row instead of the page.
+    const onWheel = (event: WheelEvent) => {
+      const list = listRef.current;
+      if (list === null) {
+        return;
+      }
+      scrollTabsFromWheel(list, event);
+    };
+    strip.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      strip.removeEventListener('wheel', onWheel);
+    };
+  }, []);
 
   useEffect(() => {
     function onKeyDown(event: globalThis.KeyboardEvent) {
@@ -100,7 +122,20 @@ export function TabStrip({ tabs, activeId, closePromptId, onSelect, onClose, onN
   }, [activeId]);
 
   useEffect(() => {
-    scrollTabIntoView(activeId);
+    const list = listRef.current;
+    const scrollActive = () => {
+      scrollTabIntoView(activeId);
+    };
+    scrollActive();
+    if (list === null) {
+      return undefined;
+    }
+    // A narrower window scrolls the strip. Keep the active tab on screen.
+    const observer = new ResizeObserver(scrollActive);
+    observer.observe(list);
+    return () => {
+      observer.disconnect();
+    };
   }, [activeId]);
 
   function onStripKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -139,6 +174,7 @@ export function TabStrip({ tabs, activeId, closePromptId, onSelect, onClose, onN
     <div
       className="tab-strip"
       data-region="tab-strip"
+      ref={stripRef}
       data-tab-count={tabs.length}
       data-active-tab={activeId}
       {...(closePromptId !== null ? { 'data-close-prompt': closePromptId } : {})}
@@ -146,6 +182,7 @@ export function TabStrip({ tabs, activeId, closePromptId, onSelect, onClose, onN
       <div
         className="tab-list"
         role="tablist"
+        ref={listRef}
         aria-label={TABS_LABEL}
         aria-orientation="horizontal"
         onKeyDown={onStripKeyDown}

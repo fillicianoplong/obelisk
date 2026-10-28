@@ -14,10 +14,8 @@ import { readThemeSetting } from './settings.js';
 import { secureWebPreferences } from './security/window-options.js';
 import { readSystemCaptionColors } from './window/caption.js';
 import { installThemeIpc } from './window/install-theme-ipc.js';
+import { applyMinimumWindowSize, defaultWindowSize, minimumWindowSize } from './window/minimum.js';
 import { activateThemeSource, frameForNativeTheme, watchThemeFrame } from './window/theme.js';
-
-const WINDOW_WIDTH = 1280;
-const WINDOW_HEIGHT = 800;
 
 function reportSecurity(line: string): void {
   if (process.env.OBELISK_SECURITY_REPORT === '1') {
@@ -77,15 +75,20 @@ function createWindow(theme: ThemeSetting): void {
           },
         }
       : {};
+  const size = defaultWindowSize();
+  const minimum = minimumWindowSize();
   const window = new BrowserWindow({
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT,
+    width: size.width,
+    height: size.height,
+    minWidth: minimum.width,
+    minHeight: minimum.height,
     title: APP_NAME,
     backgroundColor: frame.backgroundColor,
     ...windowsFrame,
     ...(windowIcon ? { icon: windowIcon } : {}),
     webPreferences,
   });
+  applyMinimumWindowSize(window);
 
   window.webContents.on('console-message', (details) => {
     if (details.message.startsWith('OBELISK_PRELOAD ')) {

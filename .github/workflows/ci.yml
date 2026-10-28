@@ -45,6 +45,17 @@ jobs:
       - name: Test and coverage
         run: npm test
 
+      - name: Scale and smallest window
+        run: node tests/visual/scale-window.mjs
+
+      - name: Upload scale screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scale-screenshots
+          path: tests/visual/output/*.png
+          if-no-files-found: warn
+
   dev-msix:
     name: Dev MSIX
     runs-on: windows-latest
