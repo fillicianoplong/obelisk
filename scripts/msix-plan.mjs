@@ -1,5 +1,6 @@
-import { readdirSync } from 'node:fs';
-import { readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export const MSIX_PACKAGE_NAME = 'Obelisk.Dev';
@@ -362,6 +363,136 @@ export function assertNoDevPackageFiles(directory) {
 
 export function ignoredByPackager(candidate) {
   return PACKAGER_IGNORE.some((pattern) => pattern.test(candidate));
+}
+
+// Main and the utility process are tsc output. They load yauzl and yazl with
+// require. The packager ignore still drops the rest of node_modules, including
+// dev dependencies and the libraries the renderer bundle already contains.
+export const ZIP_RUNTIME_ROOTS = ['yauzl', 'yazl'];
+
+const RUNTIME_SKIP_DIRS = new Set(['node_modules', 'test', 'tests']);
+
+function packageJsonAt(directory) {
+  return JSON.parse(readFileSync(path.join(directory, 'package.json'), 'utf8'));
+}
+
+function runtimeDependencies(pkg) {
+  return {
+    ...(pkg.dependencies ?? {}),
+    ...(pkg.optionalDependencies ?? {}),
+  };
+}
+
+export function zipRuntimeClosure(nodeModulesDir, roots = ZIP_RUNTIME_ROOTS) {
+  const names = [];
+  const seen = new Set();
+  const visit = (name) => {
+    if (seen.has(name)) {
+      return;
+    }
+    const directory = path.join(nodeModulesDir, name);
+    if (!existsSync(path.join(directory, 'package.json'))) {
+      throw new Error(`The zip runtime is missing ${name}.`);
+    }
+    seen.add(name);
+    names.push(name);
+    for (const dependency of Object.keys(runtimeDependencies(packageJsonAt(directory)))) {
+      visit(dependency);
+    }
+  };
+  for (const root of roots) {
+    visit(root);
+  }
+  return names;
+}
+
+function entryPoints(pkg) {
+  const entries = new Set();
+  if (typeof pkg.main === 'string' && pkg.main.length > 0) {
+    entries.add(pkg.main);
+  }
+  const exported = pkg.exports?.['.'];
+  if (typeof exported === 'string') {
+    entries.add(exported);
+  } else if (exported && typeof exported === 'object') {
+    for (const value of Object.values(exported)) {
+      if (typeof value === 'string') {
+        entries.add(value);
+      }
+    }
+  }
+  if (entries.size === 0) {
+    entries.add('index.js');
+  }
+  return [...entries];
+}
+
+function listedFiles(packageDir, pkg) {
+  const listed = Array.isArray(pkg.files) && pkg.files.length > 0 ? pkg.files : entryPoints(pkg);
+  const files = new Set(['package.json']);
+  for (const license of ['LICENSE', 'LICENSE.md', 'LICENSE.txt']) {
+    if (existsSync(path.join(packageDir, license))) {
+      files.add(license);
+    }
+  }
+  for (const entry of [...listed, ...entryPoints(pkg)]) {
+    const relative = entry.replace(/^\.\//, '');
+    const full = path.join(packageDir, relative);
+    if (!existsSync(full)) {
+      continue;
+    }
+    if (statSync(full).isDirectory()) {
+      for (const nested of walkRuntimeDir(packageDir, relative)) {
+        files.add(nested);
+      }
+      continue;
+    }
+    files.add(relative.split(path.sep).join('/'));
+  }
+  return [...files].filter((relative) => !relative.endsWith('.map') && !relative.endsWith('.md') && !relative.endsWith('.d.ts'));
+}
+
+function walkRuntimeDir(packageDir, relativeDir) {
+  const found = [];
+  const fullDir = path.join(packageDir, relativeDir);
+  for (const entry of readdirSync(fullDir, { withFileTypes: true })) {
+    if (RUNTIME_SKIP_DIRS.has(entry.name)) {
+      continue;
+    }
+    const relative = path.join(relativeDir, entry.name).split(path.sep).join('/');
+    if (entry.isDirectory()) {
+      found.push(...walkRuntimeDir(packageDir, relative));
+      continue;
+    }
+    if (entry.isFile() && !entry.name.endsWith('.map') && !entry.name.endsWith('.md')) {
+      found.push(relative);
+    }
+  }
+  return found;
+}
+
+export async function copyZipRuntime(nodeModulesDir, destinationDir) {
+  const names = zipRuntimeClosure(nodeModulesDir);
+  await rm(destinationDir, { recursive: true, force: true });
+  await mkdir(destinationDir, { recursive: true });
+  for (const name of names) {
+    const source = path.join(nodeModulesDir, name);
+    const pkg = packageJsonAt(source);
+    const target = path.join(destinationDir, name);
+    await mkdir(target, { recursive: true });
+    for (const relative of listedFiles(source, pkg)) {
+      const from = path.join(source, relative);
+      const to = path.join(target, relative);
+      await mkdir(path.dirname(to), { recursive: true });
+      await cp(from, to);
+    }
+  }
+  const requireRuntime = createRequire(path.join(destinationDir, 'yazl', 'package.json'));
+  requireRuntime('yazl');
+  requireRuntime('yauzl');
+  requireRuntime('pend');
+  requireRuntime('buffer-crc32');
+  return names;
 }
 
 export function stalePackagePaths(directory) {

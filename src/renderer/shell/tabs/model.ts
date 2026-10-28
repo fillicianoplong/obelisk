@@ -1,15 +1,19 @@
 import type { Node } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
+import type { DocumentMessage, FileStat } from '../../../shared/ipc/types.js';
 import { createTabEditorState } from '../../editor/state.js';
+import { createBaseDocument } from './document.js';
 
 export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
 
 export const SETTINGS_TAB_ID = 'settings';
 
+export type SavePhase = 'saving' | 'not-saved' | null;
+
 export interface PageTab {
   id: string;
   title: string;
-  /** Not set by Open. The renderer does not keep a real path. */
+  /** Not set by Open or Save. The renderer does not keep a real path. */
   path?: string;
   /** Opaque id main issued for this file. A new tab omits it. */
   handle?: string;
@@ -18,6 +22,15 @@ export interface PageTab {
   editor: EditorState;
   /** The document at the last save, or the empty document for a new tab. */
   savedDoc: Node;
+  /** Increments when the editor document changes. Save echoes the value it wrote. */
+  revision: number;
+  /** Stat main recorded at open or the last successful save. */
+  stat: FileStat | null;
+  /** Saving… while a save is in flight. Not saved after a save that did not finish. */
+  savePhase: SavePhase;
+  /** The document last opened or written. Paragraph text is filled from the editor at save. */
+  baseDocument: DocumentMessage;
+  blockIds: string[];
 }
 
 export function untitledTitle(number: number): string {
@@ -26,22 +39,34 @@ export function untitledTitle(number: number): string {
 
 export function createTab(number: number): PageTab {
   const editor = createTabEditorState();
+  const base = createBaseDocument();
   return {
     id: `untitled-${number}`,
     title: untitledTitle(number),
     editor,
     savedDoc: editor.doc,
+    revision: 0,
+    stat: null,
+    savePhase: null,
+    baseDocument: base.document,
+    blockIds: base.blockIds,
   };
 }
 
 export function createSettingsTab(): PageTab {
   const editor = createTabEditorState();
+  const base = createBaseDocument();
   return {
     id: SETTINGS_TAB_ID,
     title: 'Settings',
     kind: 'settings',
     editor,
     savedDoc: editor.doc,
+    revision: 0,
+    stat: null,
+    savePhase: null,
+    baseDocument: base.document,
+    blockIds: base.blockIds,
   };
 }
 

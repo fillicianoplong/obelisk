@@ -12,6 +12,7 @@ import {
   buildResourceIndex,
   dumpResourceIndex,
   chooseDevCertificate,
+  copyZipRuntime,
   DEV_CERT_INF_FILE,
   filesInDirectory,
   MSIX_CERTIFICATE_FILE,
@@ -335,6 +336,11 @@ try {
   });
   await assertLayout(layout);
   const appDir = path.join(layout, 'resources', 'app');
+  const zipModules = await copyZipRuntime(
+    path.join(root, 'node_modules'),
+    path.join(appDir, 'node_modules'),
+  );
+  console.log(`Zip runtime: ${zipModules.join(', ')}`);
   assertNoDevPackageFiles(appDir);
   console.log('Packaged app files:');
   for (const relative of filesInDirectory(appDir)) {

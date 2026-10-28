@@ -173,14 +173,18 @@ function Find-SmokeMarkers([string] $Family) {
   return $found
 }
 
-function Start-PackagedApp([string] $Executable, [string] $LogDir) {
+function Start-PackagedApp([string] $Executable, [string] $LogDir, [hashtable] $Environment) {
   $info = New-Object System.Diagnostics.ProcessStartInfo
   $info.FileName = $Executable
   $info.WorkingDirectory = $env:TEMP
   $info.UseShellExecute = $false
   $info.RedirectStandardOutput = $true
   $info.RedirectStandardError = $true
-  $info.EnvironmentVariables['OBELISK_PACKAGED_SMOKE'] = '1'
+  if ($Environment) {
+    foreach ($key in $Environment.Keys) {
+      $info.EnvironmentVariables[$key] = [string]$Environment[$key]
+    }
+  }
   $process = New-Object System.Diagnostics.Process
   $process.StartInfo = $info
   if (-not $process.Start()) {
@@ -272,7 +276,7 @@ try {
   $before = Get-InstallStamp $install
   $logDir = Join-Path $env:TEMP 'obelisk-msix-smoke'
   New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-  $run = Start-PackagedApp $executable $logDir
+  $run = Start-PackagedApp $executable $logDir @{ OBELISK_PACKAGED_SMOKE = '1' }
   if ($run.ExitCode -ne 0) {
     Write-Output $run.StdOut
     Write-Output $run.StdErr
@@ -323,6 +327,42 @@ try {
   if ($before -ne $after) {
     throw 'The install folder changed while the app was running.'
   }
+  $ioDir = Join-Path $env:TEMP 'obelisk-package-io'
+  if (Test-Path -LiteralPath $ioDir) {
+    Remove-Item -LiteralPath $ioDir -Recurse -Force
+  }
+  New-Item -ItemType Directory -Force -Path $ioDir | Out-Null
+  $openFile = Join-Path $ioDir 'opened.obk'
+  $saveFile = Join-Path $ioDir 'saved.obk'
+  $openText = 'Lab notes'
+  $saveText = 'test'
+  $fixture = Join-Path $PSScriptRoot 'write-package-io-fixture.mjs'
+  & node $fixture $openFile $openText
+  if ($LASTEXITCODE -ne 0) {
+    throw 'The package check could not write the .obk to open.'
+  }
+  $ioLog = Join-Path $logDir 'package-io'
+  New-Item -ItemType Directory -Force -Path $ioLog | Out-Null
+  $io = Start-PackagedApp $executable $ioLog @{
+    OBELISK_PACKAGE_IO = '1'
+    OBELISK_PACKAGE_IO_OPEN = $openFile
+    OBELISK_PACKAGE_IO_SAVE = $saveFile
+    OBELISK_PACKAGE_IO_OPEN_TEXT = $openText
+    OBELISK_PACKAGE_IO_SAVE_TEXT = $saveText
+  }
+  if ($io.ExitCode -ne 0 -or $io.StdOut -notmatch 'OBELISK_PACKAGE_IO_OK') {
+    Write-Output $io.StdOut
+    Write-Output $io.StdErr
+    throw 'The installed app did not save a document and reopen it.'
+  }
+  if (-not (Test-Path -LiteralPath $saveFile)) {
+    throw 'The installed app did not write the saved file.'
+  }
+  $afterIo = Get-InstallStamp $install
+  if ($before -ne $afterIo) {
+    throw 'The install folder changed while the app saved and reopened.'
+  }
+  Write-Output ($io.StdOut.Trim())
   Write-Output 'OBELISK_SMOKE_OK install-folder=unchanged'
 } catch {
   $script:Failed = $true

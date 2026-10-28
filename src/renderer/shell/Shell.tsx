@@ -3,17 +3,32 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { editorText } from '../editor/state.js';
-import type { FileOpenResult } from '../../shared/ipc/types.js';
+import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from '../../shared/ipc/types.js';
 import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
+import { shellShortcut } from './shortcuts.js';
 import { StatusBar } from './statusbar/StatusBar.js';
-import { saveStateFromChanged } from './statusbar/model.js';
 import { closeTab, confirmClosePrompt } from './tabs/close.js';
-import { SETTINGS_TAB_ID, createSettingsTab, createTab, replaceTabEditor, tabHasUnsavedChanges } from './tabs/model.js';
+import { SETTINGS_TAB_ID, createSettingsTab, createTab, tabHasUnsavedChanges } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
 import { applyOpenResult } from './tabs/opened.js';
+import { SaveConflict } from './tabs/SaveConflict.js';
+import {
+  EXISTS_MESSAGE,
+  applySavedTab,
+  documentForTab,
+  markSaveFailed,
+  markSaveIdle,
+  markSaving,
+  noteEditorChange,
+  saveAsRequest,
+  saveRequest,
+  sessionHandles,
+  tabSaveState,
+} from './tabs/save.js';
+import type { ConflictChoice } from './tabs/save.js';
 import { TabStrip } from './tabs/TabStrip.js';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
@@ -24,8 +39,11 @@ export function Shell() {
   const [activeId, setActiveId] = useState('untitled-1');
   const [closePromptId, setClosePromptId] = useState<string | null>(null);
   const [openMessage, setOpenMessage] = useState<string | null>(null);
+  const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
   const nextNumber = useRef(2);
   const opening = useRef(false);
+  const saving = useRef(false);
+  const conflictRef = useRef<{ tabId: string; stat: FileStat } | null>(null);
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
@@ -135,6 +153,102 @@ export function Shell() {
     })();
   }, []);
 
+  const putTab = useCallback((next: PageTab) => {
+    const current = tabsRef.current.map((tab) => (tab.id === next.id ? next : tab));
+    tabsRef.current = current;
+    setTabs(current);
+  }, []);
+
+  const runSave = useCallback((kind: 'save' | 'save-as', overwriteStat: FileStat | null = null, tabId?: string) => {
+    if (saving.current || conflictRef.current !== null) {
+      return;
+    }
+    const id = tabId ?? activeIdRef.current;
+    const tab = tabsRef.current.find((item) => item.id === id);
+    if (!tab || tab.kind === 'settings') {
+      return;
+    }
+    saving.current = true;
+    const savingTab = markSaving(tab);
+    const built = documentForTab(savingTab);
+    putTab(savingTab);
+    void (async () => {
+      try {
+        let result: FileSaveResult | FileSaveAsResult;
+        if (kind === 'save' && savingTab.handle) {
+          const request = saveRequest(savingTab, built.document, overwriteStat ?? savingTab.stat, overwriteStat !== null);
+          if (!request) {
+            putTab(markSaveFailed(tabsRef.current.find((item) => item.id === savingTab.id) ?? savingTab));
+            setOpenMessage('The save failed, so it was not saved.');
+            return;
+          }
+          result = await window.obelisk['file:save'](request);
+        } else {
+          result = await window.obelisk['file:saveAs'](saveAsRequest(savingTab, built.document));
+        }
+        const current = tabsRef.current.find((item) => item.id === savingTab.id) ?? savingTab;
+        if (result.status === 'ok') {
+          const next = applySavedTab(current, {
+            revision: result.revision,
+            stat: result.stat,
+            document: built.document,
+            blockIds: built.blockIds,
+            handle: 'handle' in result ? result.handle : current.handle,
+            name: 'name' in result ? result.name : undefined,
+          });
+          putTab(next);
+          if (next.handle !== savingTab.handle) {
+            const session = sessionHandles(tabsRef.current, activeIdRef.current);
+            try {
+              const response = await window.obelisk['session:set'](session);
+              if (response.status !== 'ok') {
+                setOpenMessage(response.status === 'error' ? response.message : 'The tab could not be updated.');
+              }
+            } catch {
+              setOpenMessage('The tab could not be updated.');
+            }
+          }
+          return;
+        }
+        if (result.status === 'cancelled') {
+          putTab(markSaveIdle(current));
+          return;
+        }
+        if (result.status === 'conflict') {
+          putTab(markSaveIdle(current));
+          const prompt = { tabId: current.id, stat: result.stat };
+          conflictRef.current = prompt;
+          setConflict(prompt);
+          return;
+        }
+        putTab(markSaveFailed(current));
+        setOpenMessage(result.status === 'exists' ? EXISTS_MESSAGE : result.message);
+      } catch {
+        const current = tabsRef.current.find((item) => item.id === savingTab.id);
+        if (current) {
+          putTab(markSaveFailed(current));
+        }
+        setOpenMessage('The save failed, so it was not saved.');
+      } finally {
+        saving.current = false;
+      }
+    })();
+  }, [putTab]);
+
+  const chooseConflict = useCallback((choice: ConflictChoice) => {
+    const prompt = conflictRef.current;
+    conflictRef.current = null;
+    setConflict(null);
+    if (!prompt || choice === 'cancel') {
+      return;
+    }
+    if (choice === 'overwrite') {
+      runSave('save', prompt.stat, prompt.tabId);
+      return;
+    }
+    runSave('save-as', null, prompt.tabId);
+  }, [runSave]);
+
   const openSettings = useCallback(() => {
     setTabs((current) => {
       if (current.some((tab) => tab.id === SETTINGS_TAB_ID)) {
@@ -161,14 +275,26 @@ export function Shell() {
       }
       if (command === 'settings') {
         openSettings();
+        return;
+      }
+      if (command === 'save') {
+        runSave('save');
+        return;
+      }
+      if (command === 'save-as') {
+        runSave('save-as');
       }
     },
-    [addTab, closeTabById, openDocument, openSettings],
+    [addTab, closeTabById, openDocument, openSettings, runSave],
   );
 
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
-      setTabs((current) => current.map((tab) => (tab.id === tabId ? replaceTabEditor(tab, editor) : tab)));
+      setTabs((current) => {
+        const next = current.map((tab) => (tab.id === tabId ? noteEditorChange(tab, editor) : tab));
+        tabsRef.current = next;
+        return next;
+      });
     };
     if (editorUpdatesAreSynchronous()) {
       flushSync(apply);
@@ -179,24 +305,28 @@ export function Shell() {
 
   useLayoutEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.altKey || event.shiftKey || event.repeat || !(event.ctrlKey || event.metaKey)) {
+      const command = shellShortcut(event);
+      if (command === null) {
         return;
       }
-      const key = event.key.toLowerCase();
-      if (key === 'n') {
-        event.preventDefault();
+      event.preventDefault();
+      if (command === 'new') {
         addTab();
         return;
       }
-      if (key === 'o') {
-        event.preventDefault();
+      if (command === 'open') {
         openDocument();
         return;
       }
-      if (key === ',') {
-        event.preventDefault();
+      if (command === 'settings') {
         openSettings();
+        return;
       }
+      if (command === 'save') {
+        runSave('save');
+        return;
+      }
+      runSave('save-as');
     }
     window.addEventListener('keydown', onKeyDown);
     // Present before the first paint, so a key cannot arrive before the command exists.
@@ -205,7 +335,7 @@ export function Shell() {
       window.removeEventListener('keydown', onKeyDown);
       delete document.documentElement.dataset.shellCommands;
     };
-  }, [addTab, openDocument, openSettings]);
+  }, [addTab, openDocument, openSettings, runSave]);
 
   if (activeTab === undefined) {
     return null;
@@ -217,6 +347,7 @@ export function Shell() {
       <FocusCycle />
       <TitleBar />
       <MenuBar onCommand={onMenuCommand} />
+      {conflict !== null ? <SaveConflict onChoose={chooseConflict} /> : null}
       {openMessage !== null ? (
         <div className="open-notice" role="alert" data-open-notice="">
           <p className="open-notice-text">{openMessage}</p>
@@ -251,7 +382,7 @@ export function Shell() {
       ) : (
         <StatusBar
           text={editorText(activeTab.editor)}
-          saveState={saveStateFromChanged(tabHasUnsavedChanges(activeTab))}
+          saveState={tabSaveState(activeTab)}
         />
       )}
     </div>
