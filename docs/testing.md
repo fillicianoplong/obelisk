@@ -15,7 +15,7 @@ npm test
 - `npm run typecheck` runs `node scripts/typecheck.mjs`. It covers `src` and the Vite config files, and it does not write build output.
 - `npm run lint` runs `eslint .`.
 - `npm test` runs `node scripts/run-tests.mjs`. It builds the app before any test, and a failed build stops the run. Electron 45 has no postinstall, so the test run installs the Electron binary once if it is missing.
-- The Node test suite lives under `tests/unit/` and `tests/integration/`. Every `*.test.mjs` file under `tests/unit/` runs, and so does the atomic-save integration test. The Electron launch files are named in `scripts/run-tests.mjs`, and those files launch Electron one at a time.
+- The Node test suite lives under `tests/unit/` and `tests/integration/`. Every `*.test.mjs` file under `tests/unit/` runs, and so do the atomic-save and hostile-sample integration tests. The Electron launch files are named in `scripts/run-tests.mjs`, and those files launch Electron one at a time.
 
 ## What the suite checks
 
@@ -26,6 +26,7 @@ npm test
 - **Themes.** Themes are Light, Dark, and Match Windows. Contrast themes keep the page edge, the active tab, the unsaved mark, and the focus ring visible.
 - **Page and editor.** A new document is a Letter page, 8.5 by 11 inches, with 1 inch margins, and typed text uses the bundled Liberation Serif. The editor schema is paragraphs of text. Each tab keeps its own text, caret, and undo history. The page sizes come from the shared format 1 limits.
 - **Document schema.** Format 1 is one schema. A valid document passes. An unknown field, a wrong type, or an out-of-range value fails, and the view is required. The limits match the File format reference.
+- **Hostile samples.** `scripts/make-hostile-fixtures.mjs` builds H-01 through H-32 while the tests run. Zip bombs and the file over 200 MB are created then, and they are not stored in the repository. The harness names each sample and the result in architecture section 6.10. A check that is not built yet stays pending and names the issue that will run it. A sample the format 1 schema already decides is checked, and that fixture's bytes stay unchanged.
 - **Focus and keyboard.** F6 and Shift+F6 move between the menu bar, the tabs, the page, and the status bar. Escape returns to the page, and an open menu closes one level first. The page focus ring follows the keyboard, and a click in the page does not draw that ring.
 - **Saves.** A save writes a `.~obk-<hex>.tmp` file in the same folder and renames it over the target. A locked rename is tried 3 times, 100 ms apart. A write that stalls for 5 seconds leaves the target unchanged. Ending the process during 20 large saves leaves the old file or the complete new one.
 - **Project rules.** A type error fails the TypeScript build and names the file. Renderer files do not import Node built-ins or Electron main APIs. `package.json` and the lockfile pin exact versions. IPC calls stay on the listed channels, and an unknown channel, a bad argument, or a call from an unknown frame is refused. App data is the Obelisk folder under the app data directory, and the app does not write that data beside the executable.
