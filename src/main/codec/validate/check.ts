@@ -8,8 +8,8 @@ import {
 
 // Format 1 has one schema. These checks are that schema: unknown fields,
 // types, ranges, repeated block ids, the block and table caps, and a column
-// row that contains another column row or a page break. Image bytes are a
-// later check.
+// row that contains another column row or a page break. Image bytes are
+// checked after this, from the headers, in the image stage.
 
 export type JsonEntry = 'manifest.json' | 'document.json';
 

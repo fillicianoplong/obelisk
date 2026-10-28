@@ -1,12 +1,14 @@
 import type { Document, Manifest } from '../../shared/schema/index.js';
 import { readArchivePayload, type ArchiveResult } from './archive/index.js';
+import { checkImageEntries } from './images/index.js';
 import { jsonFileMessage, parseJson, type JsonReason } from './json/index.js';
 import { validateOpened, type JsonEntry } from './validate/index.js';
 
 // Archive checks run first. JSON is parsed only from bytes that passed them.
-// The schema runs only after both JSON values parse. Nothing here writes the file.
+// The schema runs only after both JSON values parse. Image headers run after
+// the schema, on the same bytes, and do not decode pixels. Nothing here writes the file.
 
-export type DecodeStage = 'archive' | 'json' | 'schema' | 'document';
+export type DecodeStage = 'archive' | 'json' | 'schema' | 'image' | 'document';
 
 interface DecodeCounts {
   opened: boolean;
@@ -18,7 +20,7 @@ interface DecodeCounts {
 
 export interface DecodeFailure extends DecodeCounts {
   ok: false;
-  stage: 'archive' | 'json' | 'schema';
+  stage: 'archive' | 'json' | 'schema' | 'image';
   reason: string;
   path: string;
   message: string;
@@ -96,6 +98,19 @@ export async function decodeObk(filePath: string): Promise<DecodeResult> {
       path: checked.path,
       message: checked.message,
       entry: checked.entry,
+      ...countsOf(opened.result),
+    };
+  }
+
+  const images = checkImageEntries(checked.manifest, opened.images);
+  if (!images.ok) {
+    return {
+      ok: false,
+      stage: 'image',
+      reason: images.reason,
+      path: images.path,
+      message: images.message,
+      entry: images.path,
       ...countsOf(opened.result),
     };
   }

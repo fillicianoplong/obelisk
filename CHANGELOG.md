@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.21.0] - 2026-10-28
+
+### Added
+
+- Images are checked after the schema, before any pixel is decoded. A type that does not match the first bytes, a header over 8000 by 8000, an SVG, a GIF over 1,000 frames, a WebP over 250 million pixels, a frame outside the image, and an entry missing from the manifest or with the wrong hash are refused. The file is left unchanged. ([#139](https://github.com/fillicianoplong/obelisk/pull/139))
+
 ## [0.1.20.0] - 2026-10-28
 
 ### Added

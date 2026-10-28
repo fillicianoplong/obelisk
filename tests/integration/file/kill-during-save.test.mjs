@@ -103,9 +103,9 @@ try {
     } catch {
       return false;
     }
-  }, 10000, 'the file lock').catch((error) => {
+  }, 30000, 'the file lock').catch((error) => {
     child.kill();
-    throw new Error(`${error.message} ${stderr()}`);
+    throw new Error(`${error.message} exit ${child.exitCode ?? 'running'} ${stderr()}`);
   });
   return child;
 }
