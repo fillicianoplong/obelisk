@@ -1,0 +1,117 @@
+name: Spike S-07
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/s07/**'
+      - '.github/workflows/spike-s07.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/fuses.mjs'
+      - 'scripts/msix-plan.mjs'
+      - 'scripts/windows-kit.mjs'
+      - 'scripts/windows-shell.mjs'
+  pull_request:
+    paths:
+      - 'spikes/s07/**'
+      - '.github/workflows/spike-s07.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/fuses.mjs'
+      - 'scripts/msix-plan.mjs'
+      - 'scripts/windows-kit.mjs'
+      - 'scripts/windows-shell.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-s07-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  msix-safestorage:
+    name: MSIX safeStorage (windows-latest)
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+
+      - name: Install the app
+        run: npm ci
+
+      # Electron 45 has no postinstall. The unpackaged check and the packager both use this binary.
+      - name: Install Electron
+        run: node node_modules/electron/install.js
+
+      - name: Install the spike
+        working-directory: spikes/s07
+        run: npm ci
+
+      - name: Typecheck the spike
+        working-directory: spikes/s07
+        run: npm run typecheck
+
+      - name: Lint the spike
+        run: npx eslint spikes/s07 --max-warnings 0
+
+      # CI is set, so npm start is the unpackaged check. It does not install the MSIX.
+      # It encrypts a signature, starts Electron again, and decrypts it.
+      - name: Run the unpackaged check
+        timeout-minutes: 8
+        working-directory: spikes/s07
+        run: npm start
+
+      # The runner has no CN=Obelisk Dev certificate. This step stores one in CurrentUser\My.
+      # package:msix does not create a certificate. It reuses this one.
+      - name: Prepare the dev certificate
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File spikes/s07/ensure-dev-cert.ps1 -AllowCreate
+
+      - name: Package the spike MSIX
+        timeout-minutes: 20
+        shell: powershell
+        working-directory: spikes/s07
+        run: |
+          npm run package:msix *> package-msix.log
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content -LiteralPath package-msix.log
+            exit $LASTEXITCODE
+          }
+          Get-Content -LiteralPath package-msix.log
+          $log = Get-Content -LiteralPath package-msix.log -Raw
+          if ($log -notmatch 'Dev certificate: reused') { throw 'The package step did not log that the dev certificate was reused.' }
+          if ($log -match 'Dev certificate: created') { throw 'The package step created a certificate.' }
+
+      # Installs Obelisk.SpikeS07, encrypts, restarts and decrypts, and removes Obelisk.SpikeS07.
+      # It does not remove Obelisk.Dev. If the session cannot encrypt, the job records that and still checks the report.
+      - name: Install, run, and remove the spike package
+        timeout-minutes: 20
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File spikes/s07/install-spike.ps1 -Action Ci -Msix spikes/s07/dist/msix/Obelisk-Spike-S07.msix -Certificate spikes/s07/dist/msix/obelisk-spike-s07.cer
+
+      - name: Upload the spike report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s07-report
+          path: spikes/s07/output/
+          if-no-files-found: warn
+
+      - name: Upload the spike MSIX and certificate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s07-msix
+          path: |
+            spikes/s07/dist/msix/Obelisk-Spike-S07.msix
+            spikes/s07/dist/msix/obelisk-spike-s07.cer
+          if-no-files-found: warn
