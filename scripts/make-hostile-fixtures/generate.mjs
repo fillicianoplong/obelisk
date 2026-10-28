@@ -596,7 +596,9 @@ function buildSpecs(writer) {
       key: 'H-15-message',
       fileName: 'H-15-version.obk',
       title: `Refused with "${UPDATE_MESSAGE}"`,
-      pending: [22],
+      check: 'decode',
+      expectReason: 'out-of-range',
+      expectPath: '/formatVersion',
       shared: true,
     }),
   );
