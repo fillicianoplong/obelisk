@@ -9,6 +9,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { archiveMessage, readArchive } from '../../dist/main/codec/archive/index.js';
 import { decodeObk } from '../../dist/main/codec/decode.js';
+import { checkUnissuedHandle } from '../../dist/main/file/unissued.js';
 import { NEWER_VERSION_MESSAGE } from '../../dist/main/codec/migrate/index.js';
 import {
   ARCHIVE_MAX_UNCOMPRESSED_BYTES,
@@ -148,7 +149,9 @@ async function assertAttempt(item) {
     ? await readArchive(item.filePath)
     : item.check === 'decode'
       ? await decodeObk(item.filePath)
-      : runCheck(item.check, await readFile(item.filePath));
+      : item.check === 'handle'
+        ? await checkUnissuedHandle(JSON.parse(await readFile(item.filePath, 'utf8')))
+        : runCheck(item.check, await readFile(item.filePath));
   if (item.outcome === 'refused') {
     assert.equal(result.ok, false, `${item.key}: ${JSON.stringify(result)}`);
     assert.equal(result.reason, item.expectReason, item.key);

@@ -58,7 +58,7 @@ jobs:
 
       - name: Install LibreOffice
         if: runner.os == 'Linux'
-        timeout-minutes: 5
+        timeout-minutes: 12
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |

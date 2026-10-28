@@ -872,7 +872,9 @@ function buildSpecs(writer) {
       key: 'H-30-handle',
       fileName: 'H-30-handle.json',
       title: 'Unknown handle',
-      pending: [24],
+      check: 'handle',
+      expectReason: 'PATH_NOT_ALLOWED',
+      expectPath: '',
       json: { channel: 'file:save', handle: 'not-issued-by-main' },
     }),
     spec({
