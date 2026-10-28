@@ -127,20 +127,20 @@ test('arrows, Home, and End skip disabled items and wrap', async () => {
     [keydown('Alt'), keydown('f', { altKey: true })],
     initialMenuSession(),
   ).session;
-  const steps = ['ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown'];
+  const steps = ['ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown'];
   const seen = ['file-new'];
   for (const key of steps) {
     session = reduceMenuKey(APP_MENUS, session, keydown(key)).session;
     seen.push(session.panels[0]);
   }
-  assert.deepEqual(seen, ['file-new', 'file-template', 'file-export', 'file-close', 'file-new']);
+  assert.deepEqual(seen, ['file-new', 'file-template', 'file-open', 'file-export', 'file-close', 'file-new']);
   session = reduceMenuKey(APP_MENUS, session, keydown('ArrowUp')).session;
   assert.equal(session.panels[0], 'file-close');
   session = reduceMenuKey(APP_MENUS, session, keydown('Home')).session;
   assert.equal(session.panels[0], 'file-new');
   session = reduceMenuKey(APP_MENUS, session, keydown('End')).session;
   assert.equal(session.panels[0], 'file-close');
-  assert.equal(seen.includes('file-open'), false);
+  assert.equal(seen.includes('file-open'), true);
 });
 
 test('Right opens a submenu and Left closes it', async () => {
@@ -148,7 +148,7 @@ test('Right opens a submenu and Left closes it', async () => {
   let session = play(
     reduceMenuKey,
     APP_MENUS,
-    [keydown('Alt'), keydown('f', { altKey: true }), keydown('ArrowDown'), keydown('ArrowDown')],
+    [keydown('Alt'), keydown('f', { altKey: true }), keydown('ArrowDown'), keydown('ArrowDown'), keydown('ArrowDown')],
     initialMenuSession(),
   ).session;
   assert.equal(session.panels[0], 'file-export');
@@ -179,7 +179,10 @@ test('Enter runs an enabled item and does not run a disabled one', async () => {
   const byLetter = reduceMenuKey(APP_MENUS, opened, keydown('c'));
   assert.equal(byLetter.command, 'close-tab');
 
-  const disabled = reduceMenuKey(APP_MENUS, opened, keydown('o'));
+  const open = reduceMenuKey(APP_MENUS, opened, keydown('o'));
+  assert.equal(open.command, 'open');
+
+  const disabled = reduceMenuKey(APP_MENUS, opened, keydown('s'));
   assert.equal(disabled.command, null);
   assert.equal(disabled.session.menuId, 'file');
   assert.deepEqual(disabled.session.panels, ['file-new']);
@@ -325,7 +328,8 @@ test('top menus use F E V I O T H, and each menu keeps its access keys unique', 
   }
   const open = APP_MENUS[0].entries.find((entry) => !isSeparator(entry) && entry.id === 'file-open');
   assert.equal(accessibleName(open), 'Open… Ctrl+O');
-  assert.equal(open.enabled, false);
+  assert.equal(open.enabled, true);
+  assert.equal(open.command, 'open');
   assert.equal(open.ellipsis, true);
   const settings = APP_MENUS.find((menu) => menu.id === 'tools').entries.find(
     (entry) => !isSeparator(entry) && entry.id === 'tools-settings',

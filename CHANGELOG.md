@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.23.0] - 2026-10-28
+
+### Added
+
+- File > Open lists only .obk files. A valid file opens in a new tab. A file that fails a check opens nothing, shows why, and stays unchanged. A handle main did not issue returns PATH_NOT_ALLOWED and touches nothing. ([#141](https://github.com/fillicianoplong/obelisk/pull/141))
+
 ## [0.1.22.0] - 2026-10-28
 
 ### Added
