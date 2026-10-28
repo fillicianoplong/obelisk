@@ -2,6 +2,7 @@ import type { Document, Manifest } from '../../shared/schema/index.js';
 import { readArchivePayload, type ArchiveResult } from './archive/index.js';
 import { checkImageEntries } from './images/index.js';
 import { jsonFileMessage, parseJson, type JsonReason } from './json/index.js';
+import { migrateOpened } from './migrate/index.js';
 import { validateOpened, type JsonEntry } from './validate/index.js';
 
 // Archive checks run first. JSON is parsed only from bytes that passed them.
@@ -89,7 +90,20 @@ export async function decodeObk(filePath: string): Promise<DecodeResult> {
     return jsonFailure('document.json', documentParsed.reason, documentParsed.path, opened.result);
   }
 
-  const checked = validateOpened(documentParsed.value, manifestParsed.value);
+  const migrated = migrateOpened(documentParsed.value, manifestParsed.value);
+  if (!migrated.ok) {
+    return {
+      ok: false,
+      stage: 'schema',
+      reason: migrated.reason,
+      path: migrated.path,
+      message: migrated.message,
+      entry: 'manifest.json',
+      ...countsOf(opened.result),
+    };
+  }
+
+  const checked = validateOpened(migrated.document, migrated.manifest);
   if (!checked.ok) {
     return {
       ok: false,
