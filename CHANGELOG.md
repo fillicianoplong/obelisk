@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.17.0] - 2026-10-27
+
+### Added
+
+- Format 1 documents share one schema. A valid document passes. An unknown field, a wrong type, or an out-of-range value fails, and the view, Pages or Pageless, is required. ([#135](https://github.com/fillicianoplong/obelisk/pull/135))
+
 ## [0.1.16.3] - 2026-10-26
 
 ### Fixed
