@@ -14,12 +14,19 @@ const unusedVars = {
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'docs/**', 'coverage/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'docs/**',
+      'coverage/**',
+      'spikes/**/dist/**',
+      'spikes/**/output/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['scripts/**/*.mjs', 'tests/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'tests/**/*.mjs', 'spikes/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
