@@ -1,0 +1,82 @@
+name: Spike S-03
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/s03/**'
+      - '.github/workflows/spike-s03.yml'
+  pull_request:
+    paths:
+      - 'spikes/s03/**'
+      - '.github/workflows/spike-s03.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-s03-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  equations:
+    name: OMML docx (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+          cache-dependency-path: spikes/s03/package-lock.json
+
+      # This spike does not launch Electron, so it does not install the app.
+      - name: Install LibreOffice
+        if: runner.os == 'Linux'
+        timeout-minutes: 12
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update \
+            -o Acquire::Retries=3 \
+            -o Acquire::http::Timeout=30 \
+            -o Acquire::https::Timeout=30
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            -o Acquire::Retries=3 \
+            -o Acquire::http::Timeout=30 \
+            -o Acquire::https::Timeout=30 \
+            libreoffice-writer libreoffice-math
+
+      - name: Install the spike
+        working-directory: spikes/s03
+        run: npm ci
+
+      - name: Typecheck the spike
+        working-directory: spikes/s03
+        run: npm run typecheck
+
+      - name: Lint the spike
+        working-directory: spikes/s03
+        run: npm run lint
+
+      - name: Run the spike
+        working-directory: spikes/s03
+        timeout-minutes: 5
+        run: npm start
+
+      - name: Upload the Word files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s03-docx-${{ matrix.os }}
+          path: |
+            spikes/s03/output/*.docx
+            spikes/s03/output/FILES.txt
+            spikes/s03/output/spike-report.json
+          if-no-files-found: warn

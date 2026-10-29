@@ -1,0 +1,27 @@
+{
+  "name": "obelisk-spike-s03",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Throwaway check: SRS formula samples through mathml2omml into a docx equation. Not part of the Obelisk app and not shipped.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint -c eslint.spike.config.mjs .",
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && node dist/run-spike.js"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "0.8.15",
+    "docx": "9.14.0",
+    "jszip": "3.10.1",
+    "katex": "0.19.1",
+    "mathml2omml": "0.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0"
+  }
+}
