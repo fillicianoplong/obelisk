@@ -1,0 +1,20 @@
+{
+  "name": "obelisk-spike-s04",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Throwaway checks for Mermaid at securityLevel strict and KaTeX under the app CSP. Not part of the Obelisk app and not shipped.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "build": "tsc -p tsconfig.json && node dist/bundle-renderer.js",
+    "start": "npm run build && node dist/run-spike.js"
+  },
+  "dependencies": {
+    "katex": "0.19.1",
+    "mermaid": "12.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "esbuild": "0.28.2",
+    "typescript": "6.0.3"
+  }
+}

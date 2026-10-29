@@ -1,0 +1,49 @@
+html,
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #1c1917;
+  font-family: sans-serif;
+}
+
+body {
+  padding: 28px 36px 36px;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.policy {
+  margin: 0 0 20px;
+  color: #44403c;
+  font-size: 13px;
+}
+
+h2 {
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.slot {
+  min-height: 48px;
+}
+
+.slot svg {
+  max-width: 720px;
+  height: auto;
+}
+
+#s04-sentinel,
+#s04-outside {
+  margin-top: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #1c1917;
+  display: block;
+}
