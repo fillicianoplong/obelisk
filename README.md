@@ -4,7 +4,7 @@ Obelisk is a Windows document editor for one person on one PC. You write and lay
 
 Obelisk is being developed for CSC 481 (Software Engineering) at California State University, Dominguez Hills.
 
-**Status:** Milestone 1 is finished, and Milestone 2 (de-risking spikes) is next.
+**Status:** Milestone 1 is finished, and Milestone 2 (de-risking spikes) is in progress.
 
 ## Working today
 
@@ -70,9 +70,9 @@ npm run lint
 npm test
 ```
 
-`npm test` builds the app, then runs the Node test suite under `tests/unit/` and `tests/integration/`. It checks that a type error fails the TypeScript build, that the built app opens one window, and that the window blocks remote requests, navigation, popups, webviews, and permission requests. It also checks the menu bar, the tab strip, the status bar, themes, the Letter page, F6 and Escape, and the paragraph editor. The same run prints line coverage per module against the 80% target. The target is reported and does not fail the command.
+`npm test` builds the app and runs the unit and integration tests, then prints line coverage against the 80% target.
 
-GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test` on Windows. A pull request runs that job once. A push to main runs it again after the merge. The same job then checks a 1280 by 800 window at 100%, 125%, 150%, 175%, and 200% scale, and the 640 by 400 minimum, in Light and Dark, and uploads the screenshots. A second Windows job builds the dev MSIX, checks Electron fuses, installs and launches the package, and uploads `Obelisk-Dev.msix` and `obelisk-dev.cer`.
+GitHub Actions runs these checks on Windows for every pull request and every push to main. It also takes UI screenshots and builds the dev MSIX. [Testing](docs/testing.md) has the full list of what's checked.
 
 ## Dev MSIX
 
@@ -112,10 +112,11 @@ Until [Settings (#60)](https://github.com/fillicianoplong/obelisk/issues/60) rep
 
 ## Documentation
 
-- [Software Requirements Specification](docs/SRS.md) (version 1.1; also as [Word](docs/Plong_Obelisk_SRS.docx) and [PDF](docs/out/Plong_Obelisk_SRS.pdf))
-- [Architecture (design document)](docs/ARCHITECTURE.md) (version 1.1; also as [Word](docs/Plong_Obelisk_Architecture.docx) and [PDF](docs/out/Plong_Obelisk_Architecture.pdf))
+- [Software Requirements Specification](docs/SRS.md) (version 1.2; also as [Word](docs/Plong_Obelisk_SRS.docx) and [PDF](docs/out/Plong_Obelisk_SRS.pdf))
+- [Architecture (design document)](docs/ARCHITECTURE.md) (version 1.2; also as [Word](docs/Plong_Obelisk_Architecture.docx) and [PDF](docs/out/Plong_Obelisk_Architecture.pdf))
 - [Diagrams](docs/diagrams/) (PlantUML sources, rendered in [docs/images](docs/images/))
 - [Packaging](docs/packaging.md)
+- [Testing](docs/testing.md)
 - [Changelog](CHANGELOG.md)
 
 ## License
