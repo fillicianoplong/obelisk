@@ -8,6 +8,7 @@ import { listNodeSpecs } from './lists.js';
 import { pageBreakSpec } from './page-break.js';
 import { paragraphSpec } from './paragraph.js';
 import { quoteSpec } from './quote.js';
+import { markSpecs } from './marks.js';
 
 const blockTypes = [
   'paragraph',
@@ -37,7 +38,7 @@ export const editorSchema = new Schema({
     foreign_block: foreignBlockSpec,
     ...inlineSpecs,
   },
-  marks: {},
+  marks: markSpecs,
 });
 
 export type TextBlockKind =

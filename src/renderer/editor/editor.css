@@ -53,5 +53,12 @@
   margin: 0.5em 0;
   padding: var(--space-2xs) var(--space-xs);
   color: var(--color-text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-body-small);
+}
+
+.page-sheet code.inline-code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-xs);
+  padding: 0 var(--space-2xs);
 }

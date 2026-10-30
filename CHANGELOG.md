@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.28.0] - 2026-10-30
+
+### Added
+
+- Bold, italic, underline, strikethrough, superscript, subscript, inline code, text color, highlight, font, and font size apply to selected text, clear with Clear formatting, and round-trip through save and reopen. Word and character counts include every text block.
+
 ## [0.1.27.0] - 2026-10-30
 
 ### Added

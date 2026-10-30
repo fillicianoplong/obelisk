@@ -25,7 +25,19 @@ test('the editor schema includes every text block node', async () => {
       'text',
     ].sort(),
   );
-  assert.deepEqual(Object.keys(editorSchema.marks), []);
+  assert.deepEqual(Object.keys(editorSchema.marks).sort(), [
+    'bold',
+    'code',
+    'fontFamily',
+    'fontSize',
+    'highlight',
+    'italic',
+    'strike',
+    'subscript',
+    'superscript',
+    'textColor',
+    'underline',
+  ].sort());
   assert.match(editorSchema.nodes.doc.spec.content.toString(), /paragraph/);
   assert.match(editorSchema.nodes.doc.spec.content.toString(), /page_break/);
 });
@@ -62,16 +74,16 @@ test('a document can hold one of each text block', async () => {
   assert.equal(doc.childCount, 9);
 });
 
-test('the schema still rejects character marks', async () => {
+test('the schema accepts character marks on inline text', async () => {
   const { editorSchema } = await loadRenderer(schemaUrl);
-  assert.throws(() => {
-    editorSchema.nodeFromJSON({
-      type: 'doc',
-      content: [{
-        type: 'paragraph',
-        attrs: { blockId: '00000000-0000-4000-8000-000000000001' },
-        content: [{ type: 'text', text: 'Hi', marks: [{ type: 'strong' }] }],
-      }],
-    }).check();
-  }, RangeError);
+  const doc = editorSchema.nodeFromJSON({
+    type: 'doc',
+    content: [{
+      type: 'paragraph',
+      attrs: { blockId: '00000000-0000-4000-8000-000000000001' },
+      content: [{ type: 'text', text: 'Hi', marks: [{ type: 'bold' }] }],
+    }],
+  });
+  doc.check();
+  assert.equal(doc.firstChild.firstChild.marks[0].type.name, 'bold');
 });

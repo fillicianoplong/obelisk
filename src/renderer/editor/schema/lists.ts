@@ -3,7 +3,7 @@ import { checklistItemAttrs, listAttrs, listItemAttrs } from './attrs.js';
 
 const listItemSpec: NodeSpec = {
   content: 'inline*',
-  marks: '',
+  marks: '_',
   attrs: listItemAttrs,
   parseDOM: [{ tag: 'li[data-list-item]', getAttrs(dom) {
     if (!(dom instanceof HTMLElement)) {
@@ -18,7 +18,7 @@ const listItemSpec: NodeSpec = {
 
 const checklistItemSpec: NodeSpec = {
   content: 'inline*',
-  marks: '',
+  marks: '_',
   attrs: checklistItemAttrs,
   parseDOM: [{ tag: 'li[data-checklist-item]', getAttrs(dom) {
     if (!(dom instanceof HTMLElement)) {
