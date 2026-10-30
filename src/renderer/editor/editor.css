@@ -1,1 +1,57 @@
 @import './layout/page.css';
+
+.page-sheet h1,
+.page-sheet h2,
+.page-sheet h3,
+.page-sheet h4,
+.page-sheet h5,
+.page-sheet h6 {
+  margin: 0.75em 0 0.25em;
+  font-family: inherit;
+}
+
+.page-sheet blockquote {
+  margin: 0.5em 0;
+  padding-left: 1em;
+  border-left: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+}
+
+.page-sheet pre[data-code-block] {
+  margin: 0.5em 0;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: Consolas, 'Courier New', monospace;
+  background: var(--color-surface-subtle);
+  white-space: pre-wrap;
+}
+
+.page-sheet hr[data-divider] {
+  margin: 1em 0;
+  border: none;
+  border-top: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+}
+
+.page-sheet .page-break {
+  margin: 1em 0;
+  border-top: calc(var(--space-2xs) / 2) dashed var(--color-border-subtle);
+  height: 0;
+}
+
+.page-sheet ul[data-list-style='checklist'] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.page-sheet li[data-checklist-item]::before {
+  content: '☐ ';
+}
+
+.page-sheet li[data-checklist-item][data-checked='true']::before {
+  content: '☑ ';
+}
+
+.page-sheet .foreign-block {
+  margin: 0.5em 0;
+  padding: var(--space-2xs) var(--space-xs);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}

@@ -1,24 +1,11 @@
 import type { EditorState } from 'prosemirror-state';
 import type { DocumentMessage, FileOpenResult, FileStat } from '../../../shared/ipc/types.js';
+import { editorDocFromDocument, blockIdsFromDocument } from '../../editor/schema/mapping.js';
 import { createTabEditorState } from '../../editor/state.js';
-import { editorSchema } from '../../editor/schema.js';
-import { paragraphIds, visibleParagraphTexts } from './document.js';
 import type { PageTab } from './model.js';
 
-// Paragraph text is what this editor can show. Other blocks wait for their own issues.
-
 export function editorFromDocument(document: DocumentMessage): EditorState {
-  const paragraphs = visibleParagraphTexts(document);
-  if (paragraphs.length === 0) {
-    paragraphs.push('');
-  }
-  const nodes = paragraphs.map((text) => {
-    if (text.length === 0) {
-      return editorSchema.nodes.paragraph.create();
-    }
-    return editorSchema.nodes.paragraph.create(null, editorSchema.text(text));
-  });
-  const doc = editorSchema.node('doc', null, nodes);
+  const doc = editorDocFromDocument(document);
   return createTabEditorState(doc);
 }
 
@@ -39,7 +26,7 @@ export function createOpenedTab(opened: {
     stat: opened.stat,
     savePhase: null,
     baseDocument: opened.document,
-    blockIds: paragraphIds(opened.document),
+    blockIds: blockIdsFromDocument(opened.document),
   };
 }
 
