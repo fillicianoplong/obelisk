@@ -1,0 +1,102 @@
+name: Spike S-01
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/s01/**'
+      - '.github/workflows/spike-s01.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/fuses.mjs'
+      - 'scripts/msix-plan.mjs'
+      - 'scripts/windows-kit.mjs'
+      - 'scripts/windows-shell.mjs'
+  pull_request:
+    paths:
+      - 'spikes/s01/**'
+      - '.github/workflows/spike-s01.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/fuses.mjs'
+      - 'scripts/msix-plan.mjs'
+      - 'scripts/windows-kit.mjs'
+      - 'scripts/windows-shell.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-s01-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  msix-save:
+    name: MSIX save and rename (windows-latest)
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+
+      - name: Install the app
+        run: npm ci
+
+      # Electron 45 has no postinstall. The unpackaged check and the packager both use this binary.
+      - name: Install Electron
+        run: node node_modules/electron/install.js
+
+      - name: Install the spike
+        working-directory: spikes/s01
+        run: npm ci
+
+      - name: Typecheck the spike
+        working-directory: spikes/s01
+        run: npm run typecheck
+
+      - name: Lint the spike
+        run: npx eslint spikes/s01 --max-warnings 0
+
+      # CI is set, so npm start is the unpackaged check. It does not install the MSIX.
+      # It runs the rename, read-only, and open cases in spikes/s01/output.
+      - name: Run the unpackaged check
+        timeout-minutes: 8
+        working-directory: spikes/s01
+        run: npm start
+
+      - name: Package the spike MSIX
+        timeout-minutes: 20
+        working-directory: spikes/s01
+        run: npm run package:msix
+
+      # Installs Obelisk.SpikeS01, launches it, and runs Get-Item in this job, which is not the package.
+      # It removes Obelisk.SpikeS01. It does not remove Obelisk.Dev.
+      # The second folder is the runner Desktop. A folder picked on a PC is not this job.
+      - name: Install, run, and remove the spike package
+        timeout-minutes: 15
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File spikes/s01/install-spike.ps1 -Action Ci -Msix spikes/s01/dist/msix/Obelisk-Spike-S01.msix -Certificate spikes/s01/dist/msix/obelisk-spike-s01.cer
+
+      - name: Upload the spike report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s01-report
+          path: spikes/s01/output/
+          if-no-files-found: warn
+
+      - name: Upload the spike MSIX and certificate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s01-msix
+          path: |
+            spikes/s01/dist/msix/Obelisk-Spike-S01.msix
+            spikes/s01/dist/msix/obelisk-spike-s01.cer
+          if-no-files-found: warn
