@@ -1,0 +1,65 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f4f1ea;
+  color: #1c1917;
+}
+
+html, body {
+  background: #f4f1ea;
+  color: #1c1917;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  /* Windows draws the caption overlay over the top 32px, the same as the Obelisk window. */
+  padding-top: 32px;
+}
+
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 2.5rem;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 0.25rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 1.1rem 0 0.4rem;
+}
+
+p, li {
+  line-height: 1.45;
+}
+
+.meta, .mono, pre {
+  font-family: Consolas, "Cascadia Mono", ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin: 0.75rem 0;
+}
+
+.path {
+  font-family: Consolas, "Cascadia Mono", ui-monospace, monospace;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+  margin: 0.2rem 0;
+}
+
+.error {
+  color: #7c2d12;
+  font-weight: 650;
+}
