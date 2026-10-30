@@ -1,3 +1,5 @@
+import { APP_NAME } from '../../../shared/app-info.js';
+
 export interface TabCloseTarget {
   id: string;
   unsaved: boolean;
@@ -13,6 +15,18 @@ export type CloseTabResult =
   | { action: 'missing' }
   | { action: 'prompt'; prompt: ClosePrompt; activeId: string | null }
   | { action: 'close'; activeId: string | null };
+
+export const CLOSE_TITLE = APP_NAME;
+
+export function closePromptMessage(tabTitle: string): string {
+  return `Save changes to ${tabTitle} before closing?`;
+}
+
+export const CLOSE_CHOICES = [
+  { choice: 'save', label: 'Save' },
+  { choice: 'discard', label: 'Discard' },
+  { choice: 'cancel', label: 'Cancel' },
+] as const;
 
 function nextActiveId(
   tabs: readonly TabCloseTarget[],
@@ -30,8 +44,8 @@ function nextActiveId(
  * The only close path for Ctrl+W, the close button, and File > Close tab.
  * An unchanged tab closes. The tab on its right becomes active, or the tab
  * on its left when the closed tab was the last one.
- * A changed tab does not close unless force is set. confirmClosePrompt is
- * where W-26 (#26) asks to save, discard, or cancel.
+ * A changed tab does not close unless force is set. The shell shows Save,
+ * Discard, or Cancel for that tab (FR-16).
  */
 export function closeTab(
   tabs: readonly TabCloseTarget[],
@@ -50,10 +64,14 @@ export function closeTab(
   return { action: 'close', activeId: nextActive };
 }
 
-/**
- * W-26 (#26) shows Save, Discard, or Cancel for this tab.
- * There is no prompt yet, so the close is cancelled and the tab stays open.
- */
-export function confirmClosePrompt(_prompt: ClosePrompt): ClosePromptChoice {
-  return 'cancel';
+export function firstUnsavedTabId(
+  tabs: readonly TabCloseTarget[],
+  activeId: string,
+): string | null {
+  const active = tabs.find((tab) => tab.id === activeId);
+  if (active?.unsaved) {
+    return active.id;
+  }
+  const found = tabs.find((tab) => tab.unsaved);
+  return found?.id ?? null;
 }

@@ -8,7 +8,7 @@
   <Identity
     Name="Obelisk.Dev"
     Publisher="CN=Obelisk Dev"
-    Version="0.1.24.1"
+    Version="0.1.25.0"
     ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>Obelisk</DisplayName>
