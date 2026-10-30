@@ -46,7 +46,7 @@ test('a valid file opens in a new tab and the tab has no path', async () => {
   assert.equal(tab.path, undefined);
   assert.equal(tabHasUnsavedChanges(tab), false);
   assert.equal(tabTooltip(tab), 'Lab notes.obk');
-  assert.equal(editorText(tab.editor), 'Lab notes here');
+  assert.equal(editorText(tab.editor), 'Lab notes here\nTitle');
   assert.equal(JSON.stringify(tab).includes('C:\\'), false);
 });
 

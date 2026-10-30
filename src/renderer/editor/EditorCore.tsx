@@ -24,6 +24,11 @@ import { newBlockId } from './block-id.js';
 import { pageFrameStyle, pageHeaderStyle } from './layout/page.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
+import {
+  applyCharacterMarksCommand,
+  formatMenuCommand,
+} from './format-commands.js';
+import { AllSelection } from 'prosemirror-state';
 
 interface EditorCoreProps {
   tabId: string;
@@ -161,6 +166,32 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
     },
     blockSnapshot() {
       return editorBlockSnapshot(view.state.doc);
+    },
+    runFormatMenu(menuId: string) {
+      runWithSynchronousEditorUpdate(() => {
+        const command = formatMenuCommand(menuId);
+        if (command !== null) {
+          command(view.state, view.dispatch.bind(view));
+        }
+      });
+    },
+    clearFormatting() {
+      runWithSynchronousEditorUpdate(() => {
+        const command = formatMenuCommand('format-clear');
+        if (command !== null) {
+          command(view.state, view.dispatch.bind(view));
+        }
+      });
+    },
+    applyCharacterMarks(marks: Record<string, unknown>) {
+      runWithSynchronousEditorUpdate(() => {
+        applyCharacterMarksCommand(marks)(view.state, view.dispatch.bind(view));
+      });
+    },
+    selectAllDocument() {
+      runWithSynchronousEditorUpdate(() => {
+        view.dispatch(view.state.tr.setSelection(new AllSelection(view.state.doc)));
+      });
     },
     focusBlock(blockIndex: number, offset = 0) {
       runWithSynchronousEditorUpdate(() => {
