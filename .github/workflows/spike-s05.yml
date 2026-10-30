@@ -1,0 +1,91 @@
+name: Spike S-05
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/s05/**'
+      - '.github/workflows/spike-s05.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'spikes/s05/**'
+      - '.github/workflows/spike-s05.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-s05-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  save-dialog:
+    name: Save dialog (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+
+      - name: Install the app
+        run: npm ci
+
+      # Electron 45 has no postinstall. The spike launches this binary.
+      - name: Install Electron
+        run: node node_modules/electron/install.js
+
+      - name: Install the spike
+        working-directory: spikes/s05
+        run: npm ci
+
+      - name: Typecheck the spike
+        working-directory: spikes/s05
+        run: npm run typecheck
+
+      - name: Lint the spike
+        run: npx eslint spikes/s05 --max-warnings 0
+
+      # The runner cannot click a native Save dialog. npm start still builds
+      # the walkthrough, starts Electron, and runs the checks that do not
+      # need a click. GitHub sets CI, and the spike treats that as the check
+      # run on both operating systems. Ubuntu needs a display. The setuid
+      # sandbox helper on that image is not configured, and the spike records
+      # the --no-sandbox retry when that happens. Windows starts Electron directly.
+      - name: Run the spike
+        if: runner.os == 'Windows'
+        timeout-minutes: 8
+        working-directory: spikes/s05
+        run: npm start
+
+      - name: Run the spike
+        if: runner.os == 'Linux'
+        timeout-minutes: 8
+        working-directory: spikes/s05
+        run: |
+          if ! command -v xvfb-run >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y xvfb
+          fi
+          xvfb-run --auto-servernum npm start
+
+      - name: Upload the spike report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s05-report-${{ matrix.os }}
+          path: spikes/s05/output/
+          if-no-files-found: warn
