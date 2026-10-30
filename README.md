@@ -4,16 +4,17 @@ Obelisk is a Windows document editor for one person on one PC. You write and lay
 
 Obelisk is being developed for CSC 481 (Software Engineering) at California State University, Dominguez Hills.
 
-**Status:** Milestone 1 is finished, and Milestone 2 (de-risking spikes) is in progress.
+**Status:** Milestones 1 to 3 are finished (runnable skeleton, de-risking spikes, and safe files), and Milestone 4 (editing core) is next.
 
 ## Working today
 
-This is what Milestone 1 shipped. The [Changelog](CHANGELOG.md) has the detail for each version.
+This is what Milestones 1 to 3 shipped. The [Changelog](CHANGELOG.md) has the detail for each version.
 
 - The window shell has a custom title bar, a menu bar, a tab strip, a page, and a status bar.
-- The menu bar has access keys. Alt or F10 focuses it, Alt plus a letter opens a menu, and the arrow keys, Home, and End move through it. File > New and Tools > Settings open a tab. File > Open and Ctrl+O open an .obk file in a new tab. The dialog lists only .obk files. A file that fails a check opens nothing, shows why, and stays unchanged. File > Save and Ctrl+S write a saved tab. The first Save, and File > Save as (Ctrl+Shift+S), ask for a folder and a name. Save as leaves the previous file unchanged. If the file changed on disk, Save asks to overwrite, save as, or cancel before it writes. A save that does not finish shows an error and the tab stays changed. File > Close tab closes an unchanged tab. Submenus open, and every other command is unavailable.
-- The tab strip shows an unsaved mark. Ctrl+W, the close button, or File > Close tab closes an unchanged tab, and a changed tab stays open. The keyboard moves between tabs, and extra tabs shrink and scroll.
-- The status bar shows word and character counts and the save state for the active tab. An unchanged tab says Saved, and a changed tab says Unsaved changes. The page, the view, and the zoom are placeholders.
+- The menu bar has access keys. Alt or F10 focuses it, Alt plus a letter opens a menu, and the arrow keys, Home, and End move through it. File > New and Tools > Settings open a tab. File > Open and Ctrl+O open an .obk file in a new tab. The dialog lists only .obk files. A file that fails a check opens nothing, shows why, and stays unchanged. File > Save and Ctrl+S write a saved tab. The first Save, and File > Save as (Ctrl+Shift+S), ask for a folder and a name. Save as leaves the previous file unchanged. If the file changed on disk, Save asks to overwrite, save as, or cancel before it writes. A save that does not finish shows an error and the tab stays changed. File > Close tab, Ctrl+W, or the close button asks to save, discard, or cancel when the tab has unsaved changes. File > Exit and closing the window ask the same for each changed tab, and Cancel keeps everything open. Submenus open, and every other command is unavailable.
+- The tab strip marks a changed tab with a dot and the name Unsaved changes, so it doesn't rely on color. The keyboard moves between tabs, and extra tabs shrink and scroll.
+- A saved tab saves itself within 30 seconds of the last edit, and a never-saved tab is never autosaved. If the file changed on disk, autosave asks before writing. Choosing Cancel pauses autosave for that tab until the next save.
+- The status bar shows word and character counts and the save state for the active tab. An unchanged tab says Saved, a changed tab says Unsaved changes, and a tab with autosave paused says Autosave paused. The page, the view, and the zoom are placeholders.
 - Themes are Light, Dark, and Match Windows, including contrast themes. The choice is `theme` in `settings.json`, read when Obelisk starts.
 - F6 and Shift+F6 move between the menu bar, the tabs, the page, and the status bar. The focus ring follows the keyboard.
 - Escape returns to the page and restores the caret. An open menu closes one level first.
