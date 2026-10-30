@@ -61,7 +61,7 @@ test('closing a tab activates the tab on the right, or the left at the end', asy
 });
 
 test('a changed tab goes through the close prompt and stays unless discarded', async () => {
-  const { closeTab, confirmClosePrompt } = await loadRenderer(closeUrl);
+  const { closeTab, closePromptMessage, CLOSE_CHOICES } = await loadRenderer(closeUrl);
   const tabs = [
     { id: 'notes', unsaved: true },
     { id: 'lab', unsaved: false },
@@ -72,7 +72,8 @@ test('a changed tab goes through the close prompt and stays unless discarded', a
     prompt: { tabId: 'notes' },
     activeId: 'lab',
   });
-  assert.equal(confirmClosePrompt(prompt.prompt), 'cancel');
+  assert.equal(closePromptMessage('Field notes'), 'Save changes to Field notes before closing?');
+  assert.deepEqual(CLOSE_CHOICES.map((item) => item.label), ['Save', 'Discard', 'Cancel']);
   assert.deepEqual(closeTab(tabs, 'notes', 'notes', { force: true }), {
     action: 'close',
     activeId: 'lab',
