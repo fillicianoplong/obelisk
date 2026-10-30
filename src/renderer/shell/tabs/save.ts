@@ -1,5 +1,6 @@
 import type { EditorState } from 'prosemirror-state';
 import type { DocumentMessage, FileSaveAsRequest, FileSaveRequest, FileStat } from '../../../shared/ipc/types.js';
+import { isAutosavePaused } from '../../autosave/model.js';
 import type { SaveState } from '../statusbar/model.js';
 import { saveStateFromChanged } from '../statusbar/model.js';
 import { documentFromEditor } from './document.js';
@@ -100,6 +101,7 @@ export function applySavedTab(tab: PageTab, saved: SavedTabInput): PageTab {
     title: saved.name ?? tab.title,
     stat: saved.stat,
     savePhase: null,
+    autosavePaused: caughtUp ? false : tab.autosavePaused,
     baseDocument: caughtUp ? saved.document : tab.baseDocument,
     blockIds: caughtUp ? saved.blockIds : tab.blockIds,
     savedDoc: caughtUp ? tab.editor.doc : tab.savedDoc,
@@ -115,6 +117,9 @@ export function tabSaveState(tab: PageTab): SaveState {
   }
   if (tab.savePhase === 'not-saved') {
     return 'not-saved';
+  }
+  if (isAutosavePaused(tab)) {
+    return 'autosave-paused';
   }
   return saveStateFromChanged(tabHasUnsavedChanges(tab));
 }

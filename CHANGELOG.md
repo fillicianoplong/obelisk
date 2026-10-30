@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.26.0] - 2026-10-30
+
+### Added
+
+- A saved document autosaves within 30 seconds of the last edit. A never-saved tab writes nothing until you save it. When another program changes the file, autosave skips the write and shows the same Overwrite, Save as…, or Cancel choice as Save. After Cancel, the status bar shows Autosave paused until the next successful save. ([#144](https://github.com/fillicianoplong/obelisk/pull/144))
+
 ## [0.1.25.0] - 2026-10-30
 
 ### Added

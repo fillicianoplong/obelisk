@@ -65,7 +65,7 @@ export function StatusBar({ text, saveState }: StatusBarProps) {
     if (bar === null) {
       return undefined;
     }
-    // Saving, Not saved, and Autosave paused have no flow yet.
+    // Saving, Not saved, Autosave paused, and autosave timing are wired in Shell.
     // show() displays them on this bar before that work lands.
     const commands: StatusCommands = {
       show(state: string) {
