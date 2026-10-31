@@ -9,6 +9,7 @@ import {
   fontFamilyFromMenuId,
   fontSizeFromMenuId,
 } from './format/reference.js';
+import { paragraphMenuCommand } from './paragraph-format-commands.js';
 import { editorSchema } from './schema/index.js';
 
 const CHARACTER_MARK_TYPES = [
@@ -125,6 +126,10 @@ export function stepFontSize(state: EditorState, larger: boolean): EditorState |
 }
 
 export function formatMenuCommand(menuId: string): Command | null {
+  const paragraph = paragraphMenuCommand(menuId);
+  if (paragraph !== null) {
+    return paragraph;
+  }
   if (menuId === 'format-clear') {
     return clearFormattingCommand();
   }

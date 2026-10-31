@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
 import { THEME_CHANGED_CHANNEL, themeLaunchArgument, type ThemeSetting } from '../shared/theme.js';
+import { openLaunchPaths, sendFileActivated } from './file/activation.js';
+import { launchPathsFromArgv } from './file/launchPaths.js';
+import type { FileService } from './file/service.js';
 import { SMOKE_MARKER_FILE } from './security/app-data.js';
 import { APP_START_URL } from './security/app-path.js';
 import { installAppProtocol, registerAppScheme } from './security/app-protocol.js';
@@ -27,6 +30,18 @@ function reportSecurity(line: string): void {
 }
 
 const WINDOW_ICON_FILE = 'obelisk.ico';
+
+let mainWindow: BrowserWindow | null = null;
+
+function deliverLaunchPaths(files: FileService, paths: readonly string[]): void {
+  const window = mainWindow;
+  if (window === null || window.isDestroyed()) {
+    return;
+  }
+  void openLaunchPaths(files, paths, (result) => {
+    sendFileActivated(window, result);
+  });
+}
 
 function windowIconPath(): string | null {
   if (process.platform !== 'win32') {
@@ -92,6 +107,12 @@ function createWindow(theme: ThemeSetting): void {
     webPreferences,
   });
   applyMinimumWindowSize(window);
+  mainWindow = window;
+  window.on('closed', () => {
+    if (mainWindow === window) {
+      mainWindow = null;
+    }
+  });
 
   window.webContents.on('console-message', (details) => {
     if (details.message.startsWith('OBELISK_PRELOAD ')) {
@@ -121,10 +142,28 @@ function createWindow(theme: ThemeSetting): void {
 }
 
 function startApp(): void {
+  const gotLock = app.requestSingleInstanceLock();
+  if (!gotLock) {
+    app.quit();
+    return;
+  }
+
   const theme = readThemeSetting(userData);
   installContentsGuards();
-  installIpc();
+  const files = installIpc();
   installThemeIpc(() => theme);
+  const coldLaunchPaths = launchPathsFromArgv(process.argv);
+
+  app.on('second-instance', (_event, argv) => {
+    const window = mainWindow;
+    if (window !== null && !window.isDestroyed()) {
+      if (window.isMinimized()) {
+        window.restore();
+      }
+      window.focus();
+    }
+    deliverLaunchPaths(files, launchPathsFromArgv(argv));
+  });
 
   void app.whenReady().then(() => {
     installSessionSecurity({
@@ -137,6 +176,12 @@ function startApp(): void {
     });
     installAppProtocol(path.join(__dirname, '../renderer'));
     createWindow(theme);
+    const window = mainWindow;
+    if (window !== null) {
+      window.webContents.once('did-finish-load', () => {
+        deliverLaunchPaths(files, coldLaunchPaths);
+      });
+    }
   }).catch((error: unknown) => {
     console.error(error);
     app.exit(1);

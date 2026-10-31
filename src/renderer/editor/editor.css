@@ -1,4 +1,9 @@
 @import './layout/page.css';
+@import './format/csp-format.css';
+
+.page-sheet p {
+  margin: 0;
+}
 
 .page-sheet h1,
 .page-sheet h2,

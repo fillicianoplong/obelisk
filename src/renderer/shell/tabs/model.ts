@@ -80,6 +80,19 @@ export function tabHasUnsavedChanges(tab: PageTab): boolean {
   return !tab.editor.doc.eq(tab.savedDoc);
 }
 
+export function isReplaceableUntitledTab(tab: PageTab): boolean {
+  if (tab.kind === 'settings' || tab.handle !== undefined) {
+    return false;
+  }
+  if (!tab.id.startsWith('untitled-')) {
+    return false;
+  }
+  if (tabHasUnsavedChanges(tab)) {
+    return false;
+  }
+  return tab.editor.doc.textContent.length === 0;
+}
+
 export function tabAccessibleName(tab: PageTab): string {
   if (tabHasUnsavedChanges(tab)) {
     return `${tab.title}, ${UNSAVED_CHANGES_NAME}`;

@@ -1,5 +1,14 @@
 import type { MarkSpec } from 'prosemirror-model';
 
+const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
+
+function hexColorAttr(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !HEX_COLOR.test(value)) {
+    return undefined;
+  }
+  return value.toLowerCase();
+}
+
 function booleanMark(tag: string): MarkSpec {
   return {
     parseDOM: [{ tag }],
@@ -15,7 +24,7 @@ export const markSpecs: { [name: string]: MarkSpec } = {
   underline: {
     parseDOM: [{ tag: 'span[data-underline="true"]' }],
     toDOM() {
-      return ['span', { 'data-underline': 'true', style: 'text-decoration: underline' }, 0];
+      return ['span', { 'data-underline': 'true' }, 0];
     },
   },
   strike: booleanMark('s'),
@@ -54,7 +63,6 @@ export const markSpecs: { [name: string]: MarkSpec } = {
     toDOM(mark) {
       return ['span', {
         'data-font-family': mark.attrs.family,
-        style: `font-family: ${mark.attrs.family}`,
       }, 0];
     },
   },
@@ -73,7 +81,6 @@ export const markSpecs: { [name: string]: MarkSpec } = {
     toDOM(mark) {
       return ['span', {
         'data-font-size': String(mark.attrs.pt),
-        style: `font-size: ${mark.attrs.pt}pt`,
       }, 0];
     },
   },
@@ -90,7 +97,8 @@ export const markSpecs: { [name: string]: MarkSpec } = {
       },
     }],
     toDOM(mark) {
-      return ['span', { 'data-text-color': mark.attrs.color, style: `color: ${mark.attrs.color}` }, 0];
+      const color = hexColorAttr(mark.attrs.color);
+      return ['span', { 'data-text-color': color ?? mark.attrs.color }, 0];
     },
   },
   highlight: {
@@ -106,9 +114,9 @@ export const markSpecs: { [name: string]: MarkSpec } = {
       },
     }],
     toDOM(mark) {
+      const color = hexColorAttr(mark.attrs.color);
       return ['span', {
-        'data-highlight': mark.attrs.color,
-        style: `background-color: ${mark.attrs.color}`,
+        'data-highlight': color ?? mark.attrs.color,
       }, 0];
     },
   },
