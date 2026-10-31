@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.30.0] - 2026-10-31
+
+### Added
+
+- A block handle appears beside the block under the pointer or the caret. I can select a block from its handle or with Esc, and Shift+click another handle to select the range between them. ([#152](https://github.com/fillicianoplong/obelisk/pull/152))
+
 ## [0.1.29.0] - 2026-10-30
 
 ### Added
