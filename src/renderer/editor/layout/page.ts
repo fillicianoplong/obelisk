@@ -1,16 +1,24 @@
+import {
+  DEFAULT_FONT_SIZE_PT,
+  DEFAULT_MARGIN_IN,
+  HEADER_OFFSET_IN,
+  LETTER_HEIGHT_IN,
+  LETTER_WIDTH_IN,
+} from '../../../shared/schema/limits.js';
+
 // Letter page geometry. The running sizes are the page tokens.
 // CSS treats 1 in as 96 px, so 8.5 in is 816 px at 100% zoom.
 
 export const CSS_PX_PER_INCH = 96;
 
-export const PAGE_WIDTH_IN = 8.5;
-export const PAGE_HEIGHT_IN = 11;
-export const PAGE_MARGIN_IN = 1;
-export const PAGE_HEADER_OFFSET_IN = 0.5;
+export const PAGE_WIDTH_IN = LETTER_WIDTH_IN;
+export const PAGE_HEIGHT_IN = LETTER_HEIGHT_IN;
+export const PAGE_MARGIN_IN = DEFAULT_MARGIN_IN;
+export const PAGE_HEADER_OFFSET_IN = HEADER_OFFSET_IN;
 export const PAGE_GAP_PX = 24;
 
 export const PAGE_FONT_FAMILY = 'Liberation Serif';
-export const PAGE_FONT_SIZE = '12pt';
+export const PAGE_FONT_SIZE = `${DEFAULT_FONT_SIZE_PT}pt`;
 
 export const PAGE_WIDTH_TOKEN = '--page-width';
 export const PAGE_HEIGHT_TOKEN = '--page-height';
