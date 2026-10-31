@@ -104,6 +104,19 @@ export function installDomGlobals(document, window) {
   if (typeof window.KeyboardEvent === 'function') {
     globalThis.KeyboardEvent = window.KeyboardEvent;
   }
+  if (typeof window.MouseEvent !== 'function' && typeof window.Event === 'function') {
+    class MouseEvent extends window.Event {
+      constructor(type, init = {}) {
+        super(type, init);
+        this.shiftKey = init.shiftKey ?? false;
+        this.button = init.button ?? 0;
+      }
+    }
+    window.MouseEvent = MouseEvent;
+  }
+  if (typeof window.MouseEvent === 'function') {
+    globalThis.MouseEvent = window.MouseEvent;
+  }
   if (typeof window.getComputedStyle === 'function') {
     globalThis.getComputedStyle = window.getComputedStyle.bind(window);
   } else {
@@ -142,7 +155,17 @@ export function syntheticKeyDown(key, extra = {}) {
   };
 }
 
-/** Run the same handleKeyDown chain as a keydown on the editor view. */
+/** Minimal MouseEvent shape for block-handle clicks in linkedom. */
+export function syntheticMouseDown(extra = {}) {
+  const Ctor = globalThis.MouseEvent ?? Event;
+  return new Ctor('mousedown', {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    shiftKey: false,
+    ...extra,
+  });
+}
 export function dispatchEditorKeyDown(view, key, extra = {}) {
   const event = syntheticKeyDown(key, extra);
   const handled = view.someProp('handleKeyDown', (handler) => handler(view, event));
