@@ -2,6 +2,19 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.29.0] - 2026-10-30
+
+### Added
+
+- Alignment, line spacing, space before and after, and left, first-line, and hanging indents apply to paragraphs, move in quarter-inch steps, and round-trip through save and reopen. Tab at the start of a paragraph's first line sets a half-inch first-line indent; Tab elsewhere and Format > Increase indent step the left indent. Enter keeps paragraph format and active character marks on the new line. ([#149](https://github.com/fillicianoplong/obelisk/pull/149))
+
+### Fixed
+
+- Text color and highlight display again under the app's content security policy: dynamic color rules match lowercase `data-*` values on marked spans.
+- Enter no longer drops formatting: the paragraph keymap runs before the default split block handler.
+- Double-clicking an `.obk` file or choosing Open with Obelisk opens that file in a tab, including when Obelisk is already running.
+- Font sizes and other non-color character formatting from 0.1.28.0 continue to use data attributes and generated CSS under the same policy.
+
 ## [0.1.28.0] - 2026-10-30
 
 ### Added

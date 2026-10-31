@@ -378,11 +378,12 @@ test('preload exposes only listed channels', async () => {
   assert.equal(subscriptions.length, 1);
   assert.equal(subscriptions[0].channel, 'file:activated');
   subscriptions[0].listener({ sender: 'raw-event' }, { status: 'cancelled' });
-  subscriptions[0].listener({ sender: 'raw-event' }, { status: 'ok', handle: 1 });
-  assert.deepEqual(seen, [{ status: 'cancelled' }]);
+  subscriptions[0].listener({ sender: 'raw-event' }, { status: 'cancelled' });
+  assert.deepEqual(seen, [{ status: 'cancelled' }, { status: 'cancelled' }]);
   api['file:activated'].unsubscribe(id);
-  assert.equal(subscriptions.at(-1).removed, true);
-  assert.equal(subscriptions.at(-1).channel, 'file:activated');
+  seen.length = 0;
+  subscriptions[0].listener({ sender: 'raw-event' }, { status: 'cancelled' });
+  assert.deepEqual(seen, []);
 
   const preloadSource = await readFile(path.join(root, 'src/preload/index.ts'), 'utf8');
   const bridgeSource = await readFile(path.join(root, 'src/preload/bridge.ts'), 'utf8');
