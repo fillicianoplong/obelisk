@@ -1,0 +1,89 @@
+/* Vertical offset for block handles: center the hit target on the block's first line box. */
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="single"][data-space-before="0"]::before {
+  top: calc((var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="single"][data-space-before="6"]::before {
+  top: calc(6pt + (var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="single"][data-space-before="12"]::before {
+  top: calc(12pt + (var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="single"][data-space-before="18"]::before {
+  top: calc(18pt + (var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="single"][data-space-before="24"]::before {
+  top: calc(24pt + (var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.15"][data-space-before="0"]::before {
+  top: calc((var(--font-size-page) * 1.15 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.15"][data-space-before="6"]::before {
+  top: calc(6pt + (var(--font-size-page) * 1.15 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.15"][data-space-before="12"]::before {
+  top: calc(12pt + (var(--font-size-page) * 1.15 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.15"][data-space-before="18"]::before {
+  top: calc(18pt + (var(--font-size-page) * 1.15 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.15"][data-space-before="24"]::before {
+  top: calc(24pt + (var(--font-size-page) * 1.15 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.5"][data-space-before="0"]::before {
+  top: calc((var(--font-size-page) * 1.5 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.5"][data-space-before="6"]::before {
+  top: calc(6pt + (var(--font-size-page) * 1.5 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.5"][data-space-before="12"]::before {
+  top: calc(12pt + (var(--font-size-page) * 1.5 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.5"][data-space-before="18"]::before {
+  top: calc(18pt + (var(--font-size-page) * 1.5 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="1.5"][data-space-before="24"]::before {
+  top: calc(24pt + (var(--font-size-page) * 1.5 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="double"][data-space-before="0"]::before {
+  top: calc((var(--font-size-page) * 2 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="double"][data-space-before="6"]::before {
+  top: calc(6pt + (var(--font-size-page) * 2 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="double"][data-space-before="12"]::before {
+  top: calc(12pt + (var(--font-size-page) * 2 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="double"][data-space-before="18"]::before {
+  top: calc(18pt + (var(--font-size-page) * 2 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="paragraph"][data-line-spacing="double"][data-space-before="24"]::before {
+  top: calc(24pt + (var(--font-size-page) * 2 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind="heading"]::before {
+  top: calc(0.75 * var(--font-size-page) + (var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
+
+.block-handle[data-block-kind]:not([data-block-kind="paragraph"]):not([data-block-kind="heading"])::before {
+  top: calc((var(--font-size-page) * 1 - var(--size-block-handle-hit)) / 2);
+}
