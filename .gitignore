@@ -8,5 +8,6 @@ spikes/*/dist/
 spikes/*/output/
 /coverage/
 tests/visual/output/
+tests/fixtures/hostile/
 *.log
 *.pfx
