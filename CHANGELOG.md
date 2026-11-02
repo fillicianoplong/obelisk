@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.31.0] - 2026-11-02
+
+### Added
+
+- I can move selected blocks with Alt+Shift+Up and Alt+Shift+Down or by dragging a block handle, and duplicate them with Ctrl+D. Copies get new block IDs and stay selected; each action is one undo step. ([#156](https://github.com/fillicianoplong/obelisk/pull/156))
+
 ## [0.1.30.0] - 2026-10-31
 
 ### Added
