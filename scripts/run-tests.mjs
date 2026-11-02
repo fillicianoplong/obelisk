@@ -16,6 +16,7 @@ const nodeIntegrationFiles = [
 ];
 
 const electronTestFiles = [
+  path.join('tests', 'integration', 'codec', 'archive-utility.test.mjs'),
   path.join('tests', 'integration', 'smoke', 'opens-window.test.mjs'),
   path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
   path.join('tests', 'integration', 'shell', 'window-shell.test.mjs'),

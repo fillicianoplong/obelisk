@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { archiveMessage, readArchive } from '../../dist/main/codec/archive/index.js';
 import {
   ARCHIVE_MAX_UNCOMPRESSED_BYTES,
   ANIMATION_FRAME_MAX,
@@ -23,6 +26,8 @@ import {
   checkPair,
 } from '../../dist/shared/schema/index.js';
 import {
+  HOSTILE_DOCUMENT,
+  HOSTILE_MANIFEST,
   generateHostileFixtures,
   hostileRows,
   pendingText,
@@ -76,13 +81,70 @@ function runCheck(check, bytes) {
 
 async function sha256File(file) {
   const hash = createHash('sha256');
-  hash.update(await readFile(file));
+  await pipeline(createReadStream(file), hash);
   return hash.digest('hex');
 }
 
+function assertArchive(item, result) {
+  assert.equal(result.message, archiveMessage(item.expectReason), item.key);
+  assert.equal(result.message.length > 0, true, item.key);
+  if (item.key === 'H-09-missing-document') {
+    assert.match(result.message, /document\.json/);
+  }
+  if (item.key === 'H-01-file-size') {
+    assert.equal(result.opened, false, item.key);
+  }
+  if (item.id === 'H-01') {
+    assert.equal(result.entriesRead, 0, item.key);
+    assert.equal(result.payloadsRead, 0, item.key);
+    assert.equal(result.bytesRead, 0, item.key);
+    return;
+  }
+  if (item.key === 'H-02-document-cap') {
+    assert.equal(result.payloadsRead, 2, item.key);
+    assert.equal(result.cappedEntryBytesRead, DOCUMENT_JSON_MAX_BYTES, item.key);
+    assert.equal(result.bytesRead, HOSTILE_MANIFEST.length + DOCUMENT_JSON_MAX_BYTES, item.key);
+    return;
+  }
+  if (item.key === 'H-02-image-cap') {
+    assert.equal(result.payloadsRead, 3, item.key);
+    assert.equal(result.cappedEntryBytesRead, IMAGE_MAX_BYTES, item.key);
+    assert.equal(
+      result.bytesRead,
+      HOSTILE_MANIFEST.length + HOSTILE_DOCUMENT.length + IMAGE_MAX_BYTES,
+      item.key,
+    );
+    return;
+  }
+  if (item.key === 'H-02-total-cap') {
+    assert.equal(result.bytesRead, ARCHIVE_MAX_UNCOMPRESSED_BYTES, item.key);
+    assert.equal(typeof result.cappedEntryBytesRead, 'number', item.key);
+    assert.ok(result.cappedEntryBytesRead < IMAGE_MAX_BYTES, item.key);
+    assert.ok(result.payloadsRead > 2, item.key);
+    return;
+  }
+  if (item.key === 'H-02-declared-lie') {
+    assert.equal(result.payloadsRead, 2, item.key);
+    assert.equal(result.bytesRead, HOSTILE_MANIFEST.length + 1000, item.key);
+    assert.equal(result.cappedEntryBytesRead, null, item.key);
+    return;
+  }
+  if (item.key === 'H-08-nested-bytes') {
+    assert.equal(result.payloadsRead, 1, item.key);
+    assert.ok(result.bytesRead >= 4, item.key);
+    assert.ok(result.bytesRead < IMAGE_MAX_BYTES, item.key);
+    return;
+  }
+  assert.equal(result.payloadsRead, 0, item.key);
+  assert.equal(result.bytesRead, 0, item.key);
+}
+
 async function assertAttempt(item) {
+  const beforeStat = await stat(item.filePath);
   const before = await sha256File(item.filePath);
-  const result = runCheck(item.check, await readFile(item.filePath));
+  const result = item.check === 'archive'
+    ? await readArchive(item.filePath)
+    : runCheck(item.check, await readFile(item.filePath));
   if (item.outcome === 'refused') {
     assert.equal(result.ok, false, `${item.key}: ${JSON.stringify(result)}`);
     assert.equal(result.reason, item.expectReason, item.key);
@@ -95,6 +157,12 @@ async function assertAttempt(item) {
   } else {
     throw new Error(`${item.key} is ${item.outcome} and has no active checker.`);
   }
+  if (item.check === 'archive') {
+    assertArchive(item, result);
+  }
+  const afterStat = await stat(item.filePath);
+  assert.equal(afterStat.size, beforeStat.size, item.key);
+  assert.equal(afterStat.mtimeMs, beforeStat.mtimeMs, item.key);
   assert.equal(await sha256File(item.filePath), before, item.key);
 }
 
@@ -199,7 +267,8 @@ for (const item of cases) {
   if (item.pending.length > 0) {
     test(`${item.id} ${item.title} — ${pendingText(item.pending)}`, { todo: true });
   } else {
-    test(`${item.id} ${item.title} is ${item.outcome} and the file is unchanged`, async () => {
+    const options = item.check === 'archive' ? { timeout: 120_000 } : {};
+    test(`${item.id} ${item.title} is ${item.outcome} and the file is unchanged`, options, async () => {
       await assertAttempt(item);
     });
   }
