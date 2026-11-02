@@ -4,18 +4,26 @@ import type { Node as ProseNode } from 'prosemirror-model';
 import { NodeSelection, TextSelection } from 'prosemirror-state';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
+import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
+
+export interface BlockDragState {
+  sourceFrom: number;
+  sourceTo: number;
+  dropIndex: number | null;
+}
 
 export interface BlockHandleState {
   /** Block index for Shift+click range anchor. */
   anchor: number | null;
   from: number | null;
   to: number | null;
+  drag: BlockDragState | null;
 }
 
 export const blockHandlePluginKey = new PluginKey<BlockHandleState>('blockHandle');
 
 export function emptyBlockHandleState(): BlockHandleState {
-  return { anchor: null, from: null, to: null };
+  return { anchor: null, from: null, to: null, drag: null };
 }
 
 export function blockHandleState(state: EditorState): BlockHandleState {
@@ -77,7 +85,7 @@ function selectBlocks(
   const nodePos = blockPosAtIndex(doc, start);
   return setBlockHandleState(
     tr.setSelection(NodeSelection.create(doc, nodePos)).setMeta('blockHandleKeep', true),
-    { anchor, from: start, to: end },
+    { anchor, from: start, to: end, drag: null },
   );
 }
 
@@ -190,6 +198,173 @@ function selectionFromEditorGeometry(
 
 const BLOCK_CONTENT_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, hr';
 
+const DRAG_START_PX = 4;
+
+function blockContentElement(view: EditorView, blockIndex: number): HTMLElement | null {
+  const pos = blockPosAtIndex(view.state.doc, blockIndex) + 1;
+  const dom = view.nodeDOM(pos);
+  if (dom instanceof HTMLElement) {
+    return dom;
+  }
+  let seen = 0;
+  for (const child of view.dom.children) {
+    if (!(child instanceof HTMLElement)) {
+      continue;
+    }
+    if (child.classList.contains('block-handle')) {
+      continue;
+    }
+    if (seen === blockIndex) {
+      return child;
+    }
+    seen += 1;
+  }
+  return null;
+}
+
+function gapCenterY(view: EditorView, dropIndex: number): number | null {
+  const { doc } = view.state;
+  try {
+    if (dropIndex <= 0) {
+      const coords = view.coordsAtPos(Math.min(1, doc.content.size));
+      return coords.top;
+    }
+    if (dropIndex >= doc.childCount) {
+      const coords = view.coordsAtPos(doc.content.size);
+      return coords.bottom;
+    }
+    const abovePos = blockPosAtIndex(doc, dropIndex - 1) + 1;
+    const belowPos = blockPosAtIndex(doc, dropIndex) + 1;
+    const above = view.coordsAtPos(abovePos);
+    const below = view.coordsAtPos(belowPos);
+    return (above.bottom + below.top) / 2;
+  } catch {
+    // Fall back to DOM measurements when coords are unavailable.
+  }
+  if (dropIndex <= 0) {
+    const first = blockContentElement(view, 0);
+    if (first === null) {
+      return null;
+    }
+    return first.getBoundingClientRect().top;
+  }
+  if (dropIndex >= doc.childCount) {
+    const last = blockContentElement(view, doc.childCount - 1);
+    if (last === null) {
+      return null;
+    }
+    return last.getBoundingClientRect().bottom;
+  }
+  const above = blockContentElement(view, dropIndex - 1);
+  const below = blockContentElement(view, dropIndex);
+  if (above === null || below === null) {
+    return null;
+  }
+  const aboveRect = above.getBoundingClientRect();
+  const belowRect = below.getBoundingClientRect();
+  return (aboveRect.bottom + belowRect.top) / 2;
+}
+
+export function dropIndexFromClientY(view: EditorView, clientY: number): number {
+  const { doc } = view.state;
+  let bestIndex = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (let index = 0; index <= doc.childCount; index += 1) {
+    const center = gapCenterY(view, index);
+    if (center === null) {
+      continue;
+    }
+    const distance = Math.abs(clientY - center);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  }
+  return bestIndex;
+}
+
+function setBlockDragState(
+  view: EditorView,
+  drag: BlockDragState | null,
+): void {
+  const current = blockHandleState(view.state);
+  view.dispatch(view.state.tr.setMeta(blockHandlePluginKey, { ...current, drag }));
+}
+
+function endBlockDrag(view: EditorView, drag: BlockDragState | null): void {
+  view.dom.removeAttribute('data-block-drag');
+  if (drag !== null) {
+    setBlockDragState(view, null);
+  }
+}
+
+function startBlockDragListeners(
+  view: EditorView,
+  sourceFrom: number,
+  sourceTo: number,
+  startX: number,
+  startY: number,
+): void {
+  const doc = view.dom.ownerDocument;
+  let pointerX = startX;
+  let pointerY = startY;
+  let dragging = false;
+  let dragState: BlockDragState | null = null;
+
+  function cleanup(): void {
+    doc.removeEventListener('mousemove', onMove);
+    doc.removeEventListener('mouseup', onUp);
+    doc.removeEventListener('keydown', onKey);
+  }
+
+  function onKey(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') {
+      return;
+    }
+    event.preventDefault();
+    cleanup();
+    endBlockDrag(view, dragState);
+  }
+
+  function onMove(event: MouseEvent): void {
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    if (!dragging) {
+      const dx = pointerX - startX;
+      const dy = pointerY - startY;
+      if (dx * dx + dy * dy < DRAG_START_PX * DRAG_START_PX) {
+        return;
+      }
+      dragging = true;
+      view.dom.setAttribute('data-block-drag', 'true');
+      dragState = { sourceFrom, sourceTo, dropIndex: null };
+    }
+    const dropIndex = dropIndexFromClientY(view, pointerY);
+    dragState = { sourceFrom, sourceTo, dropIndex };
+    setBlockDragState(view, dragState);
+  }
+
+  function onUp(event: MouseEvent): void {
+    cleanup();
+    if (!dragging || dragState === null || dragState.dropIndex === null) {
+      endBlockDrag(view, dragState);
+      return;
+    }
+    const command = moveBlockRangeToDropCommand(
+      dragState.sourceFrom,
+      dragState.sourceTo,
+      dragState.dropIndex,
+    );
+    endBlockDrag(view, dragState);
+    command(view.state, view.dispatch.bind(view));
+    event.preventDefault();
+  }
+
+  doc.addEventListener('mousemove', onMove);
+  doc.addEventListener('mouseup', onUp);
+  doc.addEventListener('keydown', onKey);
+}
+
 function pointerTargetsBlockContent(view: EditorView, event: MouseEvent): boolean {
   if (!(event.target instanceof HTMLElement)) {
     return false;
@@ -256,6 +431,10 @@ function blockHandleMouseDown(view: EditorView, event: MouseEvent, blockIndex: n
   }
   view.dispatch(tr.setMeta('pointer', true));
   view.focus();
+  const range = selectedBlockRange(view.state);
+  const from = range?.from ?? blockIndex;
+  const to = range?.to ?? blockIndex;
+  startBlockDragListeners(view, from, to, event.clientX, event.clientY);
 }
 
 function blockDecorations(state: EditorState): DecorationSet {
@@ -299,12 +478,31 @@ function blockDecorations(state: EditorState): DecorationSet {
     }
     pos += node.nodeSize;
   }
+  const drag = pluginState.drag;
+  if (drag !== null && drag.dropIndex !== null) {
+    const dropIndex = drag.dropIndex;
+    const dropPos = dropIndex >= state.doc.childCount
+      ? state.doc.content.size
+      : blockPosAtIndex(state.doc, dropIndex);
+    decorations.push(
+      Decoration.widget(dropPos, () => {
+        const indicator = document.createElement('div');
+        indicator.className = 'block-drop-indicator';
+        indicator.setAttribute('data-drop-index', String(dropIndex));
+        return indicator;
+      }, {
+        key: `block-drop-${dropIndex}`,
+        side: dropIndex >= state.doc.childCount ? 1 : -1,
+      }),
+    );
+  }
   return DecorationSet.create(state.doc, decorations);
 }
 
 export function blockHandleKeymap(): Record<string, Command> {
   return {
     Escape: selectCaretBlockCommand(),
+    ...blockMoveKeymap(),
   };
 }
 

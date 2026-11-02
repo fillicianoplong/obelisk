@@ -66,6 +66,7 @@
   --size-scrollbar-thin: 4px;
   --size-block-handle-column: 24px;
   --size-block-handle-hit: 24px;
+  --size-block-drop-indicator: 2px;
 
   /* Page geometry (Page setup reference: Letter, Normal margins) */
   --page-width: 8.5in;
