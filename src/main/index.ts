@@ -9,6 +9,7 @@ import { installAppProtocol, registerAppScheme } from './security/app-protocol.j
 import { installContentsGuards } from './security/navigation.js';
 import { installSessionSecurity } from './security/session.js';
 import { configureWritablePaths } from './security/writable-paths.js';
+import { removeStaleTempFiles } from './file/writeAtomic.js';
 import { installIpc } from './ipc/install.js';
 import { readThemeSetting } from './settings.js';
 import { secureWebPreferences } from './security/window-options.js';
@@ -149,6 +150,10 @@ app.setName(APP_NAME);
 Menu.setApplicationMenu(null);
 
 const userData = configureWritablePaths();
+// Leftover temp files in app data. A document folder is cleaned on the next save there.
+void removeStaleTempFiles(userData).catch((error: unknown) => {
+  console.error(error);
+});
 if (process.env.OBELISK_PACKAGED_SMOKE === '1') {
   const marker = [
     `userData=${app.getPath('userData')}`,

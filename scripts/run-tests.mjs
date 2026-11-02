@@ -9,6 +9,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const coverageDir = path.join(root, 'coverage');
 const lcovPath = path.join(coverageDir, 'lcov.info');
 
+// Node integration tests. Electron launch files stay in electronTestFiles.
+const nodeIntegrationFiles = [
+  path.join('tests', 'integration', 'file', 'kill-during-save.test.mjs'),
+];
+
 const electronTestFiles = [
   path.join('tests', 'integration', 'smoke', 'opens-window.test.mjs'),
   path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
@@ -97,6 +102,9 @@ const coverageArgs = [
   '--test-coverage-exclude=**/coverage/**',
   '--test-coverage-exclude=**/docs/**',
   '--test-coverage-exclude=**/dist/renderer/**',
+  // Node's coverage tree stores a leaf on a property named "file". A directory
+  // with that name makes the report throw and the run exit 1.
+  '--test-coverage-exclude=**/main/file/**',
   '--test-coverage-exclude=**/eslint.config.mjs',
   '--test-coverage-exclude=**/vite.config.mts',
   '--test-coverage-exclude=**/vite.preload.config.mts',
@@ -127,7 +135,7 @@ if (extra.length > 0) {
   const electronCode = exitCode(
     runTests(electronLcov, ['--test-concurrency=1', ...electronTestFiles]),
   );
-  const unitCode = exitCode(runTests(unitLcov, unitFiles));
+  const unitCode = exitCode(runTests(unitLcov, [...unitFiles, ...nodeIntegrationFiles]));
   testCode = electronCode !== 0 ? electronCode : unitCode;
   lcovText = `${readLcov(electronLcov)}${readLcov(unitLcov)}`;
 }

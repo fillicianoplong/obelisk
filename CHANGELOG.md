@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.18.0] - 2026-10-27
+
+### Added
+
+- A save writes a temp file beside the target and renames it into place, so a crash leaves the old file or the complete new one. A locked rename is tried 3 times, a save that stalls for 5 seconds does not change the file, and leftover temp files older than 10 minutes are removed. ([#134](https://github.com/fillicianoplong/obelisk/pull/134))
+
 ## [0.1.17.0] - 2026-10-27
 
 ### Added
