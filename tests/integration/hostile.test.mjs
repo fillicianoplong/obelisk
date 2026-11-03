@@ -8,6 +8,7 @@ import { pipeline } from 'node:stream/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { archiveMessage, readArchive } from '../../dist/main/codec/archive/index.js';
+import { decodeObk } from '../../dist/main/codec/decode.js';
 import {
   ARCHIVE_MAX_UNCOMPRESSED_BYTES,
   ANIMATION_FRAME_MAX,
@@ -144,7 +145,9 @@ async function assertAttempt(item) {
   const before = await sha256File(item.filePath);
   const result = item.check === 'archive'
     ? await readArchive(item.filePath)
-    : runCheck(item.check, await readFile(item.filePath));
+    : item.check === 'decode'
+      ? await decodeObk(item.filePath)
+      : runCheck(item.check, await readFile(item.filePath));
   if (item.outcome === 'refused') {
     assert.equal(result.ok, false, `${item.key}: ${JSON.stringify(result)}`);
     assert.equal(result.reason, item.expectReason, item.key);
@@ -267,7 +270,7 @@ for (const item of cases) {
   if (item.pending.length > 0) {
     test(`${item.id} ${item.title} — ${pendingText(item.pending)}`, { todo: true });
   } else {
-    const options = item.check === 'archive' ? { timeout: 120_000 } : {};
+    const options = item.check === 'archive' || item.check === 'decode' ? { timeout: 120_000 } : {};
     test(`${item.id} ${item.title} is ${item.outcome} and the file is unchanged`, options, async () => {
       await assertAttempt(item);
     });
