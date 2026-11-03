@@ -240,8 +240,22 @@ function imageArchive(writer, bytes, extension, type, width, height, frames) {
     entries: [
       storedEntry('manifest.json', Buffer.from(JSON.stringify(manifest))),
       storedEntry('document.json', Buffer.from(JSON.stringify(imageDocument(hash)))),
-      storedEntry(imageName(1, extension), bytes),
+      storedEntry(`images/${hash}.${extension}`, bytes),
     ],
+  });
+}
+
+function imageSpec(writer, key, title, imageBytes, extension, type, width, height, frames, reason) {
+  const hash = sha256(imageBytes);
+  return spec({
+    id: key.slice(0, 4),
+    key,
+    fileName: `${key}.obk`,
+    title,
+    check: 'decode',
+    expectReason: reason,
+    expectPath: `images/${hash}.${extension}`,
+    bytes: imageArchive(writer, imageBytes, extension, type, width, height, frames),
   });
 }
 
@@ -594,7 +608,7 @@ function buildSpecs(writer) {
     ['H-16-webp', 'webp', 'webp', gifFrames(1, 1, [{ x: 0, y: 0, width: 1, height: 1 }]), 'WebP name, GIF bytes'],
   ];
   for (const [key, extension, type, bytes, title] of mismatches) {
-    specs.push(archive(key, title, imageArchive(writer, bytes, extension, type, 1, 1, 1), 21));
+    specs.push(imageSpec(writer, key, title, bytes, extension, type, 1, 1, 1, 'type-mismatch'));
   }
 
   const wide = IMAGE_DIMENSION_MAX + 1;
@@ -605,17 +619,26 @@ function buildSpecs(writer) {
     ['H-17-webp', stillWebp(wide, 1), 'webp', 'webp', 'WebP canvas over 8000'],
   ];
   for (const [key, bytes, extension, type, title] of headers) {
-    specs.push(archive(key, title, imageArchive(writer, bytes, extension, type, 1, 1, 1), 21));
+    specs.push(imageSpec(writer, key, title, bytes, extension, type, 1, 1, 1, 'header-too-large'));
   }
 
   specs.push(
-    archive('H-18-entry', 'SVG entry', craftZip({
-      entries: [
-        storedEntry('manifest.json', MANIFEST),
-        storedEntry('document.json', DOCUMENT),
-        storedEntry('image.svg', Buffer.from(SVG_MARKUP)),
-      ],
-    }), 21),
+    spec({
+      id: 'H-18',
+      key: 'H-18-entry',
+      fileName: 'H-18-entry.obk',
+      title: 'SVG entry',
+      check: 'decode',
+      expectReason: 'name-not-allowed',
+      expectPath: 'image.svg',
+      bytes: craftZip({
+        entries: [
+          storedEntry('manifest.json', MANIFEST),
+          storedEntry('document.json', DOCUMENT),
+          storedEntry('image.svg', Buffer.from(SVG_MARKUP)),
+        ],
+      }),
+    }),
     spec({
       id: 'H-18',
       key: 'H-18-paste',
@@ -643,27 +666,45 @@ function buildSpecs(writer) {
         manifest: emptyManifest(writer),
       },
     }),
-    archive('H-19-unlisted', 'Image entry is not in the manifest', craftZip({
-      entries: [
-        storedEntry('manifest.json', Buffer.from(JSON.stringify(emptyManifest(writer)))),
-        storedEntry('document.json', Buffer.from(JSON.stringify(minimalDocument()))),
-        storedEntry(imageName(1), actual),
-      ],
-    }), 21),
-    archive('H-19-hash', 'Manifest hash does not match the entry bytes', craftZip({
-      entries: [
-        storedEntry('manifest.json', Buffer.from(JSON.stringify(imageManifest(writer, {
-          sha256: listed,
-          type: 'png',
-          bytes: actual.length,
-          width: 1,
-          height: 1,
-          frames: 1,
-        })))),
-        storedEntry('document.json', Buffer.from(JSON.stringify(imageDocument(listed)))),
-        storedEntry(`images/${listed}.png`, actual),
-      ],
-    }), 21),
+    spec({
+      id: 'H-19',
+      key: 'H-19-unlisted',
+      fileName: 'H-19-unlisted.obk',
+      title: 'Image entry is not in the manifest',
+      check: 'decode',
+      expectReason: 'not-in-manifest',
+      expectPath: imageName(1),
+      bytes: craftZip({
+        entries: [
+          storedEntry('manifest.json', Buffer.from(JSON.stringify(emptyManifest(writer)))),
+          storedEntry('document.json', Buffer.from(JSON.stringify(minimalDocument()))),
+          storedEntry(imageName(1), actual),
+        ],
+      }),
+    }),
+    spec({
+      id: 'H-19',
+      key: 'H-19-hash',
+      fileName: 'H-19-hash.obk',
+      title: 'Manifest hash does not match the entry bytes',
+      check: 'decode',
+      expectReason: 'hash-mismatch',
+      expectPath: `images/${listed}.png`,
+      bytes: craftZip({
+        entries: [
+          storedEntry('manifest.json', Buffer.from(JSON.stringify(imageManifest(writer, {
+            sha256: listed,
+            type: 'png',
+            bytes: actual.length,
+            width: 1,
+            height: 1,
+            frames: 1,
+          })))),
+          storedEntry('document.json', Buffer.from(JSON.stringify(imageDocument(listed)))),
+          storedEntry(`images/${listed}.png`, actual),
+        ],
+      }),
+    }),
   );
   if (listed === actualHash) {
     throw new Error('H-19 hash fixture accidentally matches.');
@@ -818,9 +859,9 @@ function buildSpecs(writer) {
   const webpOver = animatedWebp(4, 8000, 8000);
   const gifOutside = gifFrames(10, 10, [{ x: 8, y: 8, width: 4, height: 4 }]);
   specs.push(
-    archive('H-27-gif', 'Animated GIF with 1,001 frames', imageArchive(writer, gif1001, 'gif', 'gif', 1, 1, 1), 21),
-    archive('H-28-webp', 'Animated WebP over 250 million pixels', imageArchive(writer, webpOver, 'webp', 'webp', 1, 1, 1), 21),
-    archive('H-29-gif', 'GIF frame outside the image', imageArchive(writer, gifOutside, 'gif', 'gif', 10, 10, 1), 21),
+    imageSpec(writer, 'H-27-gif', 'Animated GIF with 1,001 frames', gif1001, 'gif', 'gif', 1, 1, 1, 'too-many-frames'),
+    imageSpec(writer, 'H-28-webp', 'Animated WebP over 250 million pixels', webpOver, 'webp', 'webp', 1, 1, 1, 'pixel-budget'),
+    imageSpec(writer, 'H-29-gif', 'GIF frame outside the image', gifOutside, 'gif', 'gif', 10, 10, 1, 'frame-outside'),
   );
 
   specs.push(

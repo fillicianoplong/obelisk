@@ -35,9 +35,15 @@ interface ReadStop {
   body: Buffer | null;
 }
 
+interface RetainedImage {
+  name: string;
+  bytes: Buffer;
+}
+
 interface ArchivePayload {
   manifest: Buffer;
   document: Buffer;
+  images: RetainedImage[];
 }
 
 type InspectedArchive = ArchiveResult & { payload?: ArchivePayload };
@@ -46,12 +52,13 @@ export async function readArchive(filePath: string): Promise<ArchiveResult> {
   return inspectArchive(filePath, false);
 }
 
-// Same checks as readArchive. On success the two JSON entries are kept so the
-// decode path can parse the bytes that already passed the caps and the CRC.
+// Same checks as readArchive. On success the JSON entries and the image
+// entries are kept, so later checks use the bytes that already passed the
+// caps and the CRC.
 export async function readArchivePayload(
   filePath: string,
 ): Promise<
-  | { ok: true; manifest: Buffer; document: Buffer; result: ArchiveResult }
+  | { ok: true; manifest: Buffer; document: Buffer; images: RetainedImage[]; result: ArchiveResult }
   | { ok: false; result: ArchiveResult }
 > {
   const inspected = await inspectArchive(filePath, true);
@@ -73,6 +80,7 @@ export async function readArchivePayload(
     ok: true,
     manifest: inspected.payload.manifest,
     document: inspected.payload.document,
+    images: inspected.payload.images,
     result: inspected,
   };
 }
@@ -163,6 +171,7 @@ async function decodeZip(zip: ZipFile, disks: readonly number[], retainJson: boo
   let payloadsRead = 0;
   let manifest: Buffer | null = null;
   let document: Buffer | null = null;
+  const images: RetainedImage[] = [];
   for (let index = 0; index < entries.length; index += 1) {
     const entry = entries[index];
     const name = names[index] ?? '';
@@ -181,7 +190,8 @@ async function decodeZip(zip: ZipFile, disks: readonly number[], retainJson: boo
     }
     const entryCap = capFor(name);
     const maxBytes = entryCap === null ? room : Math.min(entryCap, room);
-    const retain = retainJson && (name === 'manifest.json' || name === 'document.json');
+    const retain =
+      retainJson && (name === 'manifest.json' || name === 'document.json' || name.startsWith('images/'));
     const stream = await zip.openReadStreamPromise(entry);
     payloadsRead += 1;
     const read = await readCapped(stream, maxBytes, retain);
@@ -189,8 +199,10 @@ async function decodeZip(zip: ZipFile, disks: readonly number[], retainJson: boo
     if (retain && read.body && !read.hitCap && !read.zipMagic) {
       if (name === 'manifest.json') {
         manifest = read.body;
-      } else {
+      } else if (name === 'document.json') {
         document = read.body;
+      } else {
+        images.push({ name, bytes: read.body });
       }
     }
     if (read.zipMagic) {
@@ -252,7 +264,7 @@ async function decodeZip(zip: ZipFile, disks: readonly number[], retainJson: boo
       bytesRead,
     });
   }
-  success.payload = { manifest, document };
+  success.payload = { manifest, document, images };
   return success;
 }
 
