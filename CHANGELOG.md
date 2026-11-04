@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.22.0] - 2026-10-28
+
+### Added
+
+- An .obk file is written with yazl and a fixed modified time, so the same document encodes to the same bytes. A newer formatVersion is refused and the message says to update from the Microsoft Store. Format 1 has no older version to convert. ([#140](https://github.com/fillicianoplong/obelisk/pull/140))
+
 ## [0.1.21.0] - 2026-10-28
 
 ### Added

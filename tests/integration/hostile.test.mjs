@@ -9,6 +9,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { archiveMessage, readArchive } from '../../dist/main/codec/archive/index.js';
 import { decodeObk } from '../../dist/main/codec/decode.js';
+import { NEWER_VERSION_MESSAGE } from '../../dist/main/codec/migrate/index.js';
 import {
   ARCHIVE_MAX_UNCOMPRESSED_BYTES,
   ANIMATION_FRAME_MAX,
@@ -162,6 +163,10 @@ async function assertAttempt(item) {
   }
   if (item.check === 'archive') {
     assertArchive(item, result);
+  }
+  if (item.key === 'H-15-message') {
+    assert.equal(NEWER_VERSION_MESSAGE, 'Made by a newer Obelisk; update it from the Microsoft Store');
+    assert.equal(result.message, NEWER_VERSION_MESSAGE, item.key);
   }
   const afterStat = await stat(item.filePath);
   assert.equal(afterStat.size, beforeStat.size, item.key);

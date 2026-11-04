@@ -98,8 +98,10 @@ test('an unknown field is refused by the schema after JSON parses', async () => 
   assert.equal(result.entry, 'document.json');
 });
 
-test('a newer formatVersion is refused without the store message', async () => {
-  const result = await withFile(archive(minimalDocument(), {
+test('a newer formatVersion is refused with the store message', async () => {
+  const document = minimalDocument();
+  document.author = 'later';
+  const result = await withFile(archive(document, {
     format: 'obelisk',
     formatVersion: 2,
     writer: '9.0.0',
@@ -110,7 +112,7 @@ test('a newer formatVersion is refused without the store message', async () => {
   assert.equal(result.reason, 'out-of-range');
   assert.equal(result.path, '/formatVersion');
   assert.equal(result.entry, 'manifest.json');
-  assert.equal(result.message.includes('Microsoft Store'), false);
+  assert.equal(result.message, 'Made by a newer Obelisk; update it from the Microsoft Store');
 });
 
 test('columns inside columns are refused', async () => {
