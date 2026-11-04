@@ -175,7 +175,15 @@ export const APP_MENUS: readonly AppMenu[] = [
       submenu('file-template', 'New from template', 't', [
         item({ id: 'file-template-mla', label: 'MLA', accessKey: 'm' }),
       ]),
-      item({ id: 'file-open', label: 'Open', accessKey: 'o', shortcut: 'Ctrl+O', ellipsis: true }),
+      item({
+        id: 'file-open',
+        label: 'Open',
+        accessKey: 'o',
+        shortcut: 'Ctrl+O',
+        ellipsis: true,
+        enabled: true,
+        command: 'open',
+      }),
       separator('file-sep-1'),
       item({ id: 'file-save', label: 'Save', accessKey: 's', shortcut: 'Ctrl+S' }),
       item({

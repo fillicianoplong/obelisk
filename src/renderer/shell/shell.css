@@ -45,6 +45,39 @@
   white-space: nowrap;
 }
 
+.open-notice {
+  align-items: flex-start;
+  background: var(--color-error-surface);
+  border: calc(var(--space-2xs) / 2) solid var(--color-error);
+  border-radius: var(--radius-overlay);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  gap: var(--space-s);
+  left: 50%;
+  max-width: min(36rem, calc(100% - var(--space-l)));
+  padding: var(--space-s) var(--space-m);
+  position: fixed;
+  top: calc(var(--size-titlebar) + var(--size-menubar) + var(--space-s));
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.open-notice-text {
+  margin: 0;
+  min-width: 0;
+}
+
+.open-notice-close {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  flex: 0 0 auto;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+
 .menu-bar {
   -webkit-app-region: no-drag;
   align-items: stretch;
@@ -548,6 +581,12 @@
   .title-bar {
     background: ButtonFace;
     color: ButtonText;
+  }
+
+  .open-notice {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
   }
 
   .tab[aria-selected='true'] {

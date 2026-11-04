@@ -1,6 +1,7 @@
 import { baseKeymap } from 'prosemirror-commands';
 import { history, redo, undo } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
+import type { Node } from 'prosemirror-model';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import type { Command, Selection, Transaction } from 'prosemirror-state';
 import { editorSchema } from './schema.js';
@@ -16,9 +17,10 @@ function applyCommand(state: EditorState, command: Command): EditorState | null 
   return next;
 }
 
-export function createTabEditorState(): EditorState {
+export function createTabEditorState(doc?: Node): EditorState {
   return EditorState.create({
     schema: editorSchema,
+    ...(doc ? { doc } : {}),
     plugins: [
       history(),
       keymap({

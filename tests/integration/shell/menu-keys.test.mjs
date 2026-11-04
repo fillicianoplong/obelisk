@@ -250,9 +250,17 @@ test('the menu bar opens File and Settings from the keyboard', { timeout: 60_000
   assert.equal(file.focused.disabled, null);
   assert.equal(file.openItem.role, 'menuitem');
   assert.equal(file.openItem.label, 'Open… Ctrl+O');
-  assert.equal(file.openItem.disabled, 'true');
+  assert.equal(file.openItem.disabled, null);
 
   await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
+  await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
+  const openItem = await waitForMenu(
+    client,
+    (state) => state.focused?.id === 'menu-item-file-open',
+    'Down lands on Open',
+  );
+  assert.equal(openItem.openItem.disabled, null);
+
   await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
   const exportItem = await waitForMenu(
     client,

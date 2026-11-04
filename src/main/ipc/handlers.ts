@@ -1,6 +1,7 @@
 import type { InvokeChannel } from '../../shared/ipc/channels.js';
 import { ipcError, type IpcErrorResult } from '../../shared/ipc/errors.js';
 import type { RequestMap, ResultMap } from '../../shared/ipc/types.js';
+import type { FileService } from '../file/service.js';
 
 export type IpcHandler<C extends InvokeChannel> = (
   request: RequestMap[C],
@@ -31,5 +32,34 @@ export function createStubHandlers(): IpcHandlerMap {
     'recovery:restore': (_request) => notReady('recovery:restore'),
     'recovery:drop': (_request) => notReady('recovery:drop'),
     'link:open': (_request) => notReady('link:open'),
+  };
+}
+
+// file:open shows the dialog and decodes. A handle main did not issue is refused
+// before any later command can read or write. Saving itself is still #25.
+export function createAppHandlers(files: FileService): IpcHandlerMap {
+  return {
+    ...createStubHandlers(),
+    'file:open': () => files.openFromDialog(),
+    'file:save': (request) => files.guardHandle(request.handle) ?? notReady('file:save'),
+    'file:saveAs': (request) => {
+      if (request.handle !== null) {
+        const blocked = files.guardHandle(request.handle);
+        if (blocked) {
+          return blocked;
+        }
+      }
+      return notReady('file:saveAs');
+    },
+    'session:set': (request) => files.retainOpenHandles(request.handles),
+    'export:run': (request) => {
+      if (request.handle !== null) {
+        const blocked = files.guardHandle(request.handle);
+        if (blocked) {
+          return blocked;
+        }
+      }
+      return notReady('export:run');
+    },
   };
 }

@@ -9,8 +9,10 @@ export const SETTINGS_TAB_ID = 'settings';
 export interface PageTab {
   id: string;
   title: string;
-  /** Present once the document has a saved path. A never-saved tab omits it. */
+  /** Not set by Open. The renderer does not keep a real path. */
   path?: string;
+  /** Opaque id main issued for this file. A new tab omits it. */
+  handle?: string;
   /** A document tab omits this. Settings is the Tools > Settings tab. */
   kind?: 'document' | 'settings';
   editor: EditorState;
