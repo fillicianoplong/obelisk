@@ -9,7 +9,9 @@ import { installAppProtocol, registerAppScheme } from './security/app-protocol.j
 import { installContentsGuards } from './security/navigation.js';
 import { installSessionSecurity } from './security/session.js';
 import { configureWritablePaths } from './security/writable-paths.js';
+import { readPackageIoRequest, runPackagedIoCheck } from './file/packageIo.js';
 import { removeStaleTempFiles } from './file/writeAtomic.js';
+import { readInUtilityProcess } from './codec/utility-host.js';
 import { installIpc } from './ipc/install.js';
 import { readThemeSetting } from './settings.js';
 import { secureWebPreferences } from './security/window-options.js';
@@ -154,7 +156,28 @@ const userData = configureWritablePaths();
 void removeStaleTempFiles(userData).catch((error: unknown) => {
   console.error(error);
 });
-if (process.env.OBELISK_PACKAGED_SMOKE === '1') {
+if (process.env.OBELISK_PACKAGE_IO === '1') {
+  const request = readPackageIoRequest(process.env);
+  if (!request.ok) {
+    console.error(request.message);
+    app.exit(1);
+  } else {
+    const ioRequest = request.request;
+    void app.whenReady().then(async () => {
+      try {
+        await runPackagedIoCheck(ioRequest, readInUtilityProcess);
+        console.log(`OBELISK_PACKAGE_IO_OK open=${ioRequest.openText} save=${ioRequest.saveText}`);
+        app.exit(0);
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        app.exit(1);
+      }
+    }).catch((error: unknown) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      app.exit(1);
+    });
+  }
+} else if (process.env.OBELISK_PACKAGED_SMOKE === '1') {
   const marker = [
     `userData=${app.getPath('userData')}`,
     `exe=${app.getPath('exe')}`,

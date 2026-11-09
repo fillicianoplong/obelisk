@@ -35,22 +35,14 @@ export function createStubHandlers(): IpcHandlerMap {
   };
 }
 
-// file:open shows the dialog and decodes. A handle main did not issue is refused
-// before any later command can read or write. Saving itself is still #25.
+// file:open shows the dialog and decodes. file:save and file:saveAs write.
+// A handle main did not issue is refused before anything is read or written.
 export function createAppHandlers(files: FileService): IpcHandlerMap {
   return {
     ...createStubHandlers(),
     'file:open': () => files.openFromDialog(),
-    'file:save': (request) => files.guardHandle(request.handle) ?? notReady('file:save'),
-    'file:saveAs': (request) => {
-      if (request.handle !== null) {
-        const blocked = files.guardHandle(request.handle);
-        if (blocked) {
-          return blocked;
-        }
-      }
-      return notReady('file:saveAs');
-    },
+    'file:save': (request) => files.save(request),
+    'file:saveAs': (request) => files.saveAs(request),
     'session:set': (request) => files.retainOpenHandles(request.handles),
     'export:run': (request) => {
       if (request.handle !== null) {

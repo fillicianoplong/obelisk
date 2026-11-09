@@ -78,6 +78,54 @@
   text-decoration: underline;
 }
 
+.save-conflict-backdrop {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-surface-canvas) 35%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 4;
+}
+
+.save-conflict {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-overlay);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  max-width: min(28rem, calc(100% - var(--space-l)));
+  padding: var(--space-m);
+}
+
+.save-conflict-title,
+.save-conflict-text {
+  margin: 0;
+}
+
+.save-conflict-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.save-conflict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.save-conflict-button {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs) var(--space-s);
+}
+
 .menu-bar {
   -webkit-app-region: no-drag;
   align-items: stretch;
@@ -584,6 +632,17 @@
   }
 
   .open-notice {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+
+  .save-conflict-backdrop {
+    background: transparent;
+  }
+
+  .save-conflict,
+  .save-conflict-button {
     background: Canvas;
     border-color: CanvasText;
     color: CanvasText;

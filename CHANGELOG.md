@@ -2,6 +2,18 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.24.1] - 2026-10-28
+
+### Fixed
+
+- Saving in the installed app failed because the package did not include the zip libraries. The package now includes yauzl, yazl, and their dependencies. The installed app opens a valid file, saves, and reopens the same text. ([#142](https://github.com/fillicianoplong/obelisk/pull/142))
+
+## [0.1.24.0] - 2026-10-28
+
+### Added
+
+- File > Save writes the open document. The first Save, and File > Save as, ask for a folder and a name. Save as leaves the previous file unchanged. If the file changed on disk, Save asks before it writes. A save that does not finish within 5 seconds shows an error and the tab stays changed. ([#142](https://github.com/fillicianoplong/obelisk/pull/142))
+
 ## [0.1.23.0] - 2026-10-28
 
 ### Added

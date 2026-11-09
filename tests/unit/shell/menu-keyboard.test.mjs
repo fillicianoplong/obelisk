@@ -133,9 +133,9 @@ test('arrows, Home, and End skip disabled items and wrap', async () => {
     session = reduceMenuKey(APP_MENUS, session, keydown(key)).session;
     seen.push(session.panels[0]);
   }
-  assert.deepEqual(seen, ['file-new', 'file-template', 'file-open', 'file-export', 'file-close', 'file-new']);
+  assert.deepEqual(seen, ['file-new', 'file-template', 'file-open', 'file-save', 'file-save-as', 'file-export']);
   session = reduceMenuKey(APP_MENUS, session, keydown('ArrowUp')).session;
-  assert.equal(session.panels[0], 'file-close');
+  assert.equal(session.panels[0], 'file-save-as');
   session = reduceMenuKey(APP_MENUS, session, keydown('Home')).session;
   assert.equal(session.panels[0], 'file-new');
   session = reduceMenuKey(APP_MENUS, session, keydown('End')).session;
@@ -148,7 +148,7 @@ test('Right opens a submenu and Left closes it', async () => {
   let session = play(
     reduceMenuKey,
     APP_MENUS,
-    [keydown('Alt'), keydown('f', { altKey: true }), keydown('ArrowDown'), keydown('ArrowDown'), keydown('ArrowDown')],
+    [keydown('Alt'), keydown('f', { altKey: true }), ...Array.from({ length: 5 }, () => keydown('ArrowDown'))],
     initialMenuSession(),
   ).session;
   assert.equal(session.panels[0], 'file-export');
@@ -182,7 +182,13 @@ test('Enter runs an enabled item and does not run a disabled one', async () => {
   const open = reduceMenuKey(APP_MENUS, opened, keydown('o'));
   assert.equal(open.command, 'open');
 
-  const disabled = reduceMenuKey(APP_MENUS, opened, keydown('s'));
+  const save = reduceMenuKey(APP_MENUS, opened, keydown('s'));
+  assert.equal(save.command, 'save');
+
+  const saveAs = reduceMenuKey(APP_MENUS, opened, keydown('a'));
+  assert.equal(saveAs.command, 'save-as');
+
+  const disabled = reduceMenuKey(APP_MENUS, opened, keydown('p'));
   assert.equal(disabled.command, null);
   assert.equal(disabled.session.menuId, 'file');
   assert.deepEqual(disabled.session.panels, ['file-new']);
@@ -331,6 +337,15 @@ test('top menus use F E V I O T H, and each menu keeps its access keys unique', 
   assert.equal(open.enabled, true);
   assert.equal(open.command, 'open');
   assert.equal(open.ellipsis, true);
+  const save = APP_MENUS[0].entries.find((entry) => !isSeparator(entry) && entry.id === 'file-save');
+  assert.equal(accessibleName(save), 'Save Ctrl+S');
+  assert.equal(save.enabled, true);
+  assert.equal(save.command, 'save');
+  const saveAs = APP_MENUS[0].entries.find((entry) => !isSeparator(entry) && entry.id === 'file-save-as');
+  assert.equal(accessibleName(saveAs), 'Save as… Ctrl+Shift+S');
+  assert.equal(saveAs.enabled, true);
+  assert.equal(saveAs.command, 'save-as');
+  assert.equal(saveAs.ellipsis, true);
   const settings = APP_MENUS.find((menu) => menu.id === 'tools').entries.find(
     (entry) => !isSeparator(entry) && entry.id === 'tools-settings',
   );

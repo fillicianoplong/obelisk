@@ -43,7 +43,7 @@ npm run check:fuses -- dist/msix/Obelisk-Dev.msix
 
 ## Package version
 
-- The package version in `package.json` is what the MSIX identity uses (0.1.23.0).
+- The package version in `package.json` is what the MSIX identity uses (0.1.24.1).
 - Raise it when the icons change so Windows does not keep the previous install's cached icons.
 
 ## Certificate
@@ -59,6 +59,7 @@ npm run check:fuses -- dist/msix/Obelisk-Dev.msix
 ## Package contents
 
 - The package contains `package.json` and the built `dist` files.
+- Main and the utility process are the TypeScript build, so they load yauzl and yazl with `require`. The package copies those two libraries and their dependencies into `node_modules`. Dev dependencies stay out, and so do the libraries the renderer bundle already contains.
 - Liberation Serif ships in `assets/fonts` with its license, and the build copies those files to `dist/renderer/fonts` so the page can load them.
 - Source maps stay out of the package.
 

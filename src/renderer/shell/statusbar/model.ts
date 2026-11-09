@@ -58,9 +58,8 @@ export function saveStateTooltip(state: SaveState): string | null {
   return null;
 }
 
-// Saving is not built yet. A tab that matches its saved document shows Saved.
-// A tab that does not shows Unsaved changes. The other three states are in the
-// model so autosave and saving can pass them in later.
+// A tab that matches its saved document shows Saved. A tab that does not shows
+// Unsaved changes. Saving… and Not saved come from the save in flight.
 export function saveStateFromChanged(changed: boolean): SaveState {
   if (changed) {
     return 'unsaved';

@@ -60,6 +60,8 @@ const SNAPSHOT = `(() => {
     })),
     focused: item('.menu-item[data-focused="true"]'),
     openItem: item('[data-item="file-open"]'),
+    saveItem: item('[data-item="file-save"]'),
+    saveAsItem: item('[data-item="file-save-as"]'),
     exportItem: item('[data-item="file-export"]'),
     pdf: item('[data-item="file-export-pdf"]'),
     spelling: item('[data-item="tools-spelling"]'),
@@ -262,10 +264,28 @@ test('the menu bar opens File and Settings from the keyboard', { timeout: 60_000
   assert.equal(openItem.openItem.disabled, null);
 
   await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
+  const saveItem = await waitForMenu(
+    client,
+    (state) => state.focused?.id === 'menu-item-file-save',
+    'Down lands on Save',
+  );
+  assert.equal(saveItem.saveItem.disabled, null);
+  assert.equal(saveItem.saveItem.label, 'Save Ctrl+S');
+
+  await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
+  const saveAsItem = await waitForMenu(
+    client,
+    (state) => state.focused?.id === 'menu-item-file-save-as',
+    'Down lands on Save as',
+  );
+  assert.equal(saveAsItem.saveAsItem.disabled, null);
+  assert.equal(saveAsItem.saveAsItem.label, 'Save as… Ctrl+Shift+S');
+
+  await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
   const exportItem = await waitForMenu(
     client,
     (state) => state.focused?.id === 'menu-item-file-export',
-    'Down skips disabled items and lands on Export',
+    'Down skips Print and lands on Export',
   );
   assert.equal(exportItem.exportItem.expanded, 'false');
 
