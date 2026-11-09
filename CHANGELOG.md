@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.25.0] - 2026-10-30
+
+### Added
+
+- A changed tab shows an unsaved dot and an accessible name that ends with Unsaved changes. Ctrl+W, the close button, and File > Close tab ask to save, discard, or cancel before a changed tab closes. File > Exit and closing the window ask the same way. Cancel leaves every tab as it was. Save on a never-saved tab opens Save as; canceling that dialog leaves the tab open. ([#143](https://github.com/fillicianoplong/obelisk/pull/143))
+
 ## [0.1.24.1] - 2026-10-28
 
 ### Fixed

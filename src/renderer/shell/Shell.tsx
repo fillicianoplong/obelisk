@@ -1,5 +1,5 @@
 import type { EditorState } from 'prosemirror-state';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { editorText } from '../editor/state.js';
@@ -10,7 +10,9 @@ import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { shellShortcut } from './shortcuts.js';
 import { StatusBar } from './statusbar/StatusBar.js';
-import { closeTab, confirmClosePrompt } from './tabs/close.js';
+import { ClosePrompt } from './tabs/ClosePrompt.js';
+import { closeTab, firstUnsavedTabId } from './tabs/close.js';
+import type { ClosePromptChoice } from './tabs/close.js';
 import { SETTINGS_TAB_ID, createSettingsTab, createTab, tabHasUnsavedChanges } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
 import { applyOpenResult } from './tabs/opened.js';
@@ -34,6 +36,8 @@ import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
 import './shell.css';
 
+type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
+
 export function Shell() {
   const [tabs, setTabs] = useState<PageTab[]>(() => [createTab(1)]);
   const [activeId, setActiveId] = useState('untitled-1');
@@ -44,12 +48,15 @@ export function Shell() {
   const opening = useRef(false);
   const saving = useRef(false);
   const conflictRef = useRef<{ tabId: string; stat: FileStat } | null>(null);
+  const quittingRef = useRef(false);
+  const allowUnloadRef = useRef(false);
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
 
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
+  const closePromptTab = closePromptId === null ? undefined : tabs.find((tab) => tab.id === closePromptId);
 
   const addTab = useCallback(() => {
     const number = nextNumber.current;
@@ -63,124 +70,38 @@ export function Shell() {
     setActiveId(tabId);
   }, []);
 
-  const closeTabById = useCallback((tabId: string) => {
-    void (async () => {
-      const existing = tabsRef.current;
-      if (!existing.some((tab) => tab.id === tabId)) {
-        return;
-      }
-      const currentActive = activeIdRef.current;
-      const targets = existing.map((tab) => ({ id: tab.id, unsaved: tabHasUnsavedChanges(tab) }));
-      let result = closeTab(targets, tabId, currentActive);
-      if (result.action === 'missing') {
-        return;
-      }
-      if (result.action === 'prompt') {
-        const choice = confirmClosePrompt(result.prompt);
-        if (choice !== 'discard') {
-          // Save still needs the prompt from W-26 (#26). Cancel leaves the tab open.
-          setClosePromptId(result.prompt.tabId);
-          return;
-        }
-        result = closeTab(targets, tabId, currentActive, { force: true });
-        if (result.action !== 'close') {
-          return;
-        }
-      }
-      const closing = existing.find((tab) => tab.id === tabId);
-      const remaining = existing.filter((tab) => tab.id !== tabId);
-      if (closing?.handle) {
-        const handles = remaining.flatMap((tab) => (tab.handle ? [tab.handle] : []));
-        const nextActiveId = remaining.length === 0 ? null : (result.activeId ?? remaining[0].id);
-        const active = nextActiveId === null ? undefined : remaining.find((tab) => tab.id === nextActiveId);
-        let released = false;
-        try {
-          const response = await window.obelisk['session:set']({
-            handles,
-            activeHandle: active?.handle ?? null,
-          });
-          released = response.status === 'ok';
-          if (!released) {
-            setOpenMessage(response.status === 'error' ? response.message : 'The tab could not be closed.');
-          }
-        } catch {
-          setOpenMessage('The tab could not be closed.');
-        }
-        if (!released || !tabsRef.current.some((tab) => tab.id === tabId)) {
-          return;
-        }
-      }
-      setClosePromptId(null);
-      if (remaining.length === 0) {
-        const number = nextNumber.current;
-        nextNumber.current += 1;
-        const created = createTab(number);
-        tabsRef.current = [created];
-        activeIdRef.current = created.id;
-        setTabs([created]);
-        setActiveId(created.id);
-        return;
-      }
-      const nextActive = result.activeId ?? remaining[0].id;
-      tabsRef.current = remaining;
-      activeIdRef.current = nextActive;
-      setTabs(remaining);
-      setActiveId(nextActive);
-    })();
-  }, []);
-
-  const openDocument = useCallback(() => {
-    if (opening.current) {
-      return;
-    }
-    opening.current = true;
-    void (async () => {
-      let result: FileOpenResult;
-      try {
-        result = await window.obelisk['file:open']();
-      } catch {
-        setOpenMessage('This file could not be opened.');
-        return;
-      } finally {
-        opening.current = false;
-      }
-      const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
-      tabsRef.current = applied.tabs;
-      activeIdRef.current = applied.activeId;
-      setTabs(applied.tabs);
-      setActiveId(applied.activeId);
-      setOpenMessage(applied.message);
-    })();
-  }, []);
-
   const putTab = useCallback((next: PageTab) => {
     const current = tabsRef.current.map((tab) => (tab.id === next.id ? next : tab));
     tabsRef.current = current;
     setTabs(current);
   }, []);
 
-  const runSave = useCallback((kind: 'save' | 'save-as', overwriteStat: FileStat | null = null, tabId?: string) => {
-    if (saving.current || conflictRef.current !== null) {
-      return;
-    }
-    const id = tabId ?? activeIdRef.current;
-    const tab = tabsRef.current.find((item) => item.id === id);
-    if (!tab || tab.kind === 'settings') {
-      return;
-    }
-    saving.current = true;
-    const savingTab = markSaving(tab);
-    const built = documentForTab(savingTab);
-    putTab(savingTab);
-    void (async () => {
+  const saveTabNow = useCallback(
+    async (tabId: string, kind: 'save' | 'save-as', overwriteStat: FileStat | null = null): Promise<SaveWaitResult> => {
+      if (saving.current || conflictRef.current !== null) {
+        return 'failed';
+      }
+      const tab = tabsRef.current.find((item) => item.id === tabId);
+      if (!tab || tab.kind === 'settings') {
+        return 'failed';
+      }
+      saving.current = true;
+      const savingTab = markSaving(tab);
+      const built = documentForTab(savingTab);
+      putTab(savingTab);
       try {
         let result: FileSaveResult | FileSaveAsResult;
         if (kind === 'save' && savingTab.handle) {
-          const request = saveRequest(savingTab, built.document, overwriteStat ?? savingTab.stat, overwriteStat !== null);
+          const request = saveRequest(
+            savingTab,
+            built.document,
+            overwriteStat ?? savingTab.stat,
+            overwriteStat !== null,
+          );
           if (!request) {
             putTab(markSaveFailed(tabsRef.current.find((item) => item.id === savingTab.id) ?? savingTab));
             setOpenMessage('The save failed, so it was not saved.');
-            return;
+            return 'failed';
           }
           result = await window.obelisk['file:save'](request);
         } else {
@@ -208,46 +129,223 @@ export function Shell() {
               setOpenMessage('The tab could not be updated.');
             }
           }
-          return;
+          return 'saved';
         }
         if (result.status === 'cancelled') {
           putTab(markSaveIdle(current));
-          return;
+          return 'cancelled';
         }
         if (result.status === 'conflict') {
           putTab(markSaveIdle(current));
           const prompt = { tabId: current.id, stat: result.stat };
           conflictRef.current = prompt;
           setConflict(prompt);
-          return;
+          return 'conflict';
         }
         putTab(markSaveFailed(current));
         setOpenMessage(result.status === 'exists' ? EXISTS_MESSAGE : result.message);
+        return 'failed';
       } catch {
         const current = tabsRef.current.find((item) => item.id === savingTab.id);
         if (current) {
           putTab(markSaveFailed(current));
         }
         setOpenMessage('The save failed, so it was not saved.');
+        return 'failed';
       } finally {
         saving.current = false;
       }
-    })();
-  }, [putTab]);
+    },
+    [putTab],
+  );
 
-  const chooseConflict = useCallback((choice: ConflictChoice) => {
-    const prompt = conflictRef.current;
-    conflictRef.current = null;
-    setConflict(null);
-    if (!prompt || choice === 'cancel') {
+  const runSave = useCallback(
+    (kind: 'save' | 'save-as', overwriteStat: FileStat | null = null, tabId?: string) => {
+      const id = tabId ?? activeIdRef.current;
+      void saveTabNow(id, kind, overwriteStat);
+    },
+    [saveTabNow],
+  );
+
+  const finishQuit = useCallback(() => {
+    quittingRef.current = false;
+    allowUnloadRef.current = true;
+    window.close();
+  }, []);
+
+  const continueQuitIfNeeded = useCallback(() => {
+    if (!quittingRef.current) {
       return;
     }
-    if (choice === 'overwrite') {
-      runSave('save', prompt.stat, prompt.tabId);
+    const targets = tabsRef.current.map((tab) => ({ id: tab.id, unsaved: tabHasUnsavedChanges(tab) }));
+    const next = firstUnsavedTabId(targets, activeIdRef.current);
+    if (next !== null) {
+      setClosePromptId(next);
       return;
     }
-    runSave('save-as', null, prompt.tabId);
-  }, [runSave]);
+    finishQuit();
+  }, [finishQuit]);
+
+  const applyCloseTab = useCallback(
+    async (tabId: string) => {
+      const existing = tabsRef.current;
+      if (!existing.some((tab) => tab.id === tabId)) {
+        return;
+      }
+      const currentActive = activeIdRef.current;
+      const targets = existing.map((tab) => ({ id: tab.id, unsaved: tabHasUnsavedChanges(tab) }));
+      const result = closeTab(targets, tabId, currentActive, { force: true });
+      if (result.action !== 'close') {
+        return;
+      }
+      const closing = existing.find((tab) => tab.id === tabId);
+      const remaining = existing.filter((tab) => tab.id !== tabId);
+      if (closing?.handle) {
+        const handles = remaining.flatMap((tab) => (tab.handle ? [tab.handle] : []));
+        const nextActiveId = remaining.length === 0 ? null : (result.activeId ?? remaining[0].id);
+        const active = nextActiveId === null ? undefined : remaining.find((tab) => tab.id === nextActiveId);
+        let released = false;
+        try {
+          const response = await window.obelisk['session:set']({
+            handles,
+            activeHandle: active?.handle ?? null,
+          });
+          released = response.status === 'ok';
+          if (!released) {
+            setOpenMessage(response.status === 'error' ? response.message : 'The tab could not be closed.');
+          }
+        } catch {
+          setOpenMessage('The tab could not be closed.');
+        }
+        if (!released || !tabsRef.current.some((tab) => tab.id === tabId)) {
+          quittingRef.current = false;
+          return;
+        }
+      }
+      if (remaining.length === 0) {
+        if (quittingRef.current) {
+          finishQuit();
+          return;
+        }
+        const number = nextNumber.current;
+        nextNumber.current += 1;
+        const created = createTab(number);
+        tabsRef.current = [created];
+        activeIdRef.current = created.id;
+        setTabs([created]);
+        setActiveId(created.id);
+        continueQuitIfNeeded();
+        return;
+      }
+      const nextActive = result.activeId ?? remaining[0].id;
+      tabsRef.current = remaining;
+      activeIdRef.current = nextActive;
+      setTabs(remaining);
+      setActiveId(nextActive);
+      continueQuitIfNeeded();
+    },
+    [continueQuitIfNeeded, finishQuit],
+  );
+
+  const closeTabById = useCallback((tabId: string) => {
+    const existing = tabsRef.current;
+    if (!existing.some((tab) => tab.id === tabId)) {
+      return;
+    }
+    const currentActive = activeIdRef.current;
+    const targets = existing.map((tab) => ({ id: tab.id, unsaved: tabHasUnsavedChanges(tab) }));
+    const result = closeTab(targets, tabId, currentActive);
+    if (result.action === 'missing') {
+      return;
+    }
+    if (result.action === 'prompt') {
+      quittingRef.current = false;
+      setClosePromptId(result.prompt.tabId);
+      return;
+    }
+    void applyCloseTab(tabId);
+  }, [applyCloseTab]);
+
+  const chooseClosePrompt = useCallback(
+    (choice: ClosePromptChoice) => {
+      const tabId = closePromptId;
+      if (tabId === null) {
+        return;
+      }
+      if (choice === 'cancel') {
+        setClosePromptId(null);
+        quittingRef.current = false;
+        return;
+      }
+      void (async () => {
+        if (choice === 'save') {
+          const outcome = await saveTabNow(tabId, 'save');
+          if (outcome !== 'saved') {
+            if (outcome === 'conflict') {
+              setClosePromptId(null);
+              quittingRef.current = false;
+            }
+            return;
+          }
+        }
+        setClosePromptId(null);
+        await applyCloseTab(tabId);
+      })();
+    },
+    [applyCloseTab, closePromptId, saveTabNow],
+  );
+
+  const requestExit = useCallback(() => {
+    const targets = tabsRef.current.map((tab) => ({ id: tab.id, unsaved: tabHasUnsavedChanges(tab) }));
+    const next = firstUnsavedTabId(targets, activeIdRef.current);
+    if (next !== null) {
+      quittingRef.current = true;
+      setClosePromptId(next);
+      return;
+    }
+    finishQuit();
+  }, [finishQuit]);
+
+  const openDocument = useCallback(() => {
+    if (opening.current) {
+      return;
+    }
+    opening.current = true;
+    void (async () => {
+      let result: FileOpenResult;
+      try {
+        result = await window.obelisk['file:open']();
+      } catch {
+        setOpenMessage('This file could not be opened.');
+        return;
+      } finally {
+        opening.current = false;
+      }
+      const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
+      tabsRef.current = applied.tabs;
+      activeIdRef.current = applied.activeId;
+      setTabs(applied.tabs);
+      setActiveId(applied.activeId);
+      setOpenMessage(applied.message);
+    })();
+  }, []);
+
+  const chooseConflict = useCallback(
+    (choice: ConflictChoice) => {
+      const prompt = conflictRef.current;
+      conflictRef.current = null;
+      setConflict(null);
+      if (!prompt || choice === 'cancel') {
+        return;
+      }
+      if (choice === 'overwrite') {
+        runSave('save', prompt.stat, prompt.tabId);
+        return;
+      }
+      runSave('save-as', null, prompt.tabId);
+    },
+    [runSave],
+  );
 
   const openSettings = useCallback(() => {
     setTabs((current) => {
@@ -273,6 +371,10 @@ export function Shell() {
         closeTabById(activeIdRef.current);
         return;
       }
+      if (command === 'exit') {
+        requestExit();
+        return;
+      }
       if (command === 'settings') {
         openSettings();
         return;
@@ -285,7 +387,7 @@ export function Shell() {
         runSave('save-as');
       }
     },
-    [addTab, closeTabById, openDocument, openSettings, runSave],
+    [addTab, closeTabById, openDocument, openSettings, requestExit, runSave],
   );
 
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
@@ -302,6 +404,27 @@ export function Shell() {
       apply();
     }
   }, []);
+
+  useEffect(() => {
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+      if (allowUnloadRef.current) {
+        return;
+      }
+      const targets = tabsRef.current.map((tab) => ({ id: tab.id, unsaved: tabHasUnsavedChanges(tab) }));
+      if (firstUnsavedTabId(targets, activeIdRef.current) === null) {
+        return;
+      }
+      event.preventDefault();
+      event.returnValue = '';
+      if (!quittingRef.current) {
+        requestExit();
+      }
+    }
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [requestExit]);
 
   useLayoutEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -348,6 +471,9 @@ export function Shell() {
       <TitleBar />
       <MenuBar onCommand={onMenuCommand} />
       {conflict !== null ? <SaveConflict onChoose={chooseConflict} /> : null}
+      {closePromptTab !== undefined && conflict === null ? (
+        <ClosePrompt tabTitle={closePromptTab.title} onChoose={chooseClosePrompt} />
+      ) : null}
       {openMessage !== null ? (
         <div className="open-notice" role="alert" data-open-notice="">
           <p className="open-notice-text">{openMessage}</p>

@@ -219,7 +219,7 @@ export const APP_MENUS: readonly AppMenu[] = [
         enabled: true,
         command: 'close-tab',
       }),
-      item({ id: 'file-exit', label: 'Exit', accessKey: 'x' }),
+      item({ id: 'file-exit', label: 'Exit', accessKey: 'x', enabled: true, command: 'exit' }),
     ],
   },
   {

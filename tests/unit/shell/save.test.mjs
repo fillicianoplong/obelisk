@@ -117,6 +117,20 @@ test('the conflict prompt offers Overwrite, Save as, and Cancel', async () => {
   assert.match(html, /role="alertdialog"/);
 });
 
+test('the close prompt offers Save, Discard, and Cancel', async () => {
+  const closePromptUrl = new URL('../../../src/renderer/shell/tabs/ClosePrompt.tsx', import.meta.url);
+  const { ClosePrompt } = await loadRenderer(closePromptUrl);
+  const html = renderToStaticMarkup(createElement(ClosePrompt, { tabTitle: 'Field notes', onChoose() {} }));
+  assert.match(html, /Save changes to Field notes before closing\?/);
+  assert.match(html, /Save/);
+  assert.match(html, /Discard/);
+  assert.match(html, /Cancel/);
+  assert.match(html, /data-close-choice="save"/);
+  assert.match(html, /data-close-choice="discard"/);
+  assert.match(html, /data-close-choice="cancel"/);
+  assert.match(html, /role="alertdialog"/);
+});
+
 test('an opened document is saved unchanged until a paragraph is edited', async () => {
   const { documentFromEditor, visibleParagraphTexts } = await loadRenderer(documentUrl);
   const base = {

@@ -139,7 +139,7 @@ test('arrows, Home, and End skip disabled items and wrap', async () => {
   session = reduceMenuKey(APP_MENUS, session, keydown('Home')).session;
   assert.equal(session.panels[0], 'file-new');
   session = reduceMenuKey(APP_MENUS, session, keydown('End')).session;
-  assert.equal(session.panels[0], 'file-close');
+  assert.equal(session.panels[0], 'file-exit');
   assert.equal(seen.includes('file-open'), true);
 });
 
