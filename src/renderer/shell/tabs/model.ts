@@ -28,6 +28,8 @@ export interface PageTab {
   stat: FileStat | null;
   /** Saving… while a save is in flight. Not saved after a save that did not finish. */
   savePhase: SavePhase;
+  /** FR-15. Stays true until the next successful save after a conflict Cancel. */
+  autosavePaused?: boolean;
   /** The document last opened or written. Paragraph text is filled from the editor at save. */
   baseDocument: DocumentMessage;
   blockIds: string[];

@@ -34,6 +34,10 @@ import type { ConflictChoice } from './tabs/save.js';
 import { TabStrip } from './tabs/TabStrip.js';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
+import { createAutosaveClock } from '../autosave/clock.js';
+import { pauseAutosave } from '../autosave/model.js';
+import { createAutosaveScheduler } from '../autosave/scheduler.js';
+import { syncTabAutosave } from '../autosave/sync.js';
 import './shell.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
@@ -54,6 +58,26 @@ export function Shell() {
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
+  const autosaveScheduler = useRef(
+    createAutosaveScheduler({
+      clock: createAutosaveClock(),
+      onFire: (tabId, revision) => {
+        const tab = tabsRef.current.find((item) => item.id === tabId);
+        if (!tab || tab.revision !== revision || tab.kind === 'settings' || !tab.handle) {
+          return;
+        }
+        void saveTabNowRef.current(tabId, 'save').finally(() => {
+          const latest = tabsRef.current.find((item) => item.id === tabId);
+          if (latest) {
+            syncTabAutosave(autosaveScheduler.current, latest);
+          }
+        });
+      },
+    }),
+  );
+  const saveTabNowRef = useRef<
+    (tabId: string, kind: 'save' | 'save-as', overwriteStat?: FileStat | null) => Promise<SaveWaitResult>
+  >(async () => 'failed');
 
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
   const closePromptTab = closePromptId === null ? undefined : tabs.find((tab) => tab.id === closePromptId);
@@ -118,6 +142,7 @@ export function Shell() {
             name: 'name' in result ? result.name : undefined,
           });
           putTab(next);
+          syncTabAutosave(autosaveScheduler.current, next);
           if (next.handle !== savingTab.handle) {
             const session = sessionHandles(tabsRef.current, activeIdRef.current);
             try {
@@ -132,7 +157,9 @@ export function Shell() {
           return 'saved';
         }
         if (result.status === 'cancelled') {
-          putTab(markSaveIdle(current));
+          const idle = markSaveIdle(current);
+          putTab(idle);
+          syncTabAutosave(autosaveScheduler.current, idle);
           return 'cancelled';
         }
         if (result.status === 'conflict') {
@@ -140,15 +167,20 @@ export function Shell() {
           const prompt = { tabId: current.id, stat: result.stat };
           conflictRef.current = prompt;
           setConflict(prompt);
+          autosaveScheduler.current.cancel(current.id);
           return 'conflict';
         }
-        putTab(markSaveFailed(current));
+        const failed = markSaveFailed(current);
+        putTab(failed);
+        syncTabAutosave(autosaveScheduler.current, failed);
         setOpenMessage(result.status === 'exists' ? EXISTS_MESSAGE : result.message);
         return 'failed';
       } catch {
         const current = tabsRef.current.find((item) => item.id === savingTab.id);
         if (current) {
-          putTab(markSaveFailed(current));
+          const failed = markSaveFailed(current);
+          putTab(failed);
+          syncTabAutosave(autosaveScheduler.current, failed);
         }
         setOpenMessage('The save failed, so it was not saved.');
         return 'failed';
@@ -158,6 +190,7 @@ export function Shell() {
     },
     [putTab],
   );
+  saveTabNowRef.current = saveTabNow;
 
   const runSave = useCallback(
     (kind: 'save' | 'save-as', overwriteStat: FileStat | null = null, tabId?: string) => {
@@ -200,6 +233,7 @@ export function Shell() {
       }
       const closing = existing.find((tab) => tab.id === tabId);
       const remaining = existing.filter((tab) => tab.id !== tabId);
+      autosaveScheduler.current.cancel(tabId);
       if (closing?.handle) {
         const handles = remaining.flatMap((tab) => (tab.handle ? [tab.handle] : []));
         const nextActiveId = remaining.length === 0 ? null : (result.activeId ?? remaining[0].id);
@@ -335,7 +369,16 @@ export function Shell() {
       const prompt = conflictRef.current;
       conflictRef.current = null;
       setConflict(null);
-      if (!prompt || choice === 'cancel') {
+      if (!prompt) {
+        return;
+      }
+      if (choice === 'cancel') {
+        const tab = tabsRef.current.find((item) => item.id === prompt.tabId);
+        if (tab) {
+          const paused = pauseAutosave(tab);
+          putTab(paused);
+          autosaveScheduler.current.cancel(paused.id);
+        }
         return;
       }
       if (choice === 'overwrite') {
@@ -344,7 +387,7 @@ export function Shell() {
       }
       runSave('save-as', null, prompt.tabId);
     },
-    [runSave],
+    [putTab, runSave],
   );
 
   const openSettings = useCallback(() => {
@@ -393,7 +436,14 @@ export function Shell() {
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
       setTabs((current) => {
-        const next = current.map((tab) => (tab.id === tabId ? noteEditorChange(tab, editor) : tab));
+        const next = current.map((tab) => {
+          if (tab.id !== tabId) {
+            return tab;
+          }
+          const updated = noteEditorChange(tab, editor);
+          syncTabAutosave(autosaveScheduler.current, updated);
+          return updated;
+        });
         tabsRef.current = next;
         return next;
       });
@@ -403,6 +453,12 @@ export function Shell() {
     } else {
       apply();
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      autosaveScheduler.current.cancelAll();
+    };
   }, []);
 
   useEffect(() => {
