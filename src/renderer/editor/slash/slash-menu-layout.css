@@ -1,0 +1,55 @@
+/* Caret-relative placement comes from adoptedStyleSheets (see slash-menu-plugin). */
+
+.slash-menu-host {
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 3;
+}
+
+.slash-menu-host[data-open='true'] {
+  pointer-events: auto;
+}
+
+.slash-menu-panel {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-menu);
+  color: var(--color-text-primary);
+  max-height: min(var(--size-slash-menu-max-height), calc(100vh - var(--space-m) * 2));
+  max-width: min(var(--size-slash-menu-max-width), calc(100vw - var(--space-m) * 2));
+  overflow: auto;
+  padding: var(--space-xs) 0;
+  pointer-events: auto;
+  position: fixed;
+}
+
+.slash-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.slash-menu-separator {
+  border-top: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  height: 0;
+  margin: var(--space-xs) 0;
+}
+
+.slash-menu-option {
+  align-items: center;
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  font: inherit;
+  min-height: var(--size-control);
+  padding: var(--space-xs) var(--space-m);
+}
+
+.slash-menu-option[aria-selected='true'] {
+  background: var(--color-surface-subtle);
+}
+
+.slash-menu-option[aria-disabled='true'] {
+  color: var(--color-text-disabled);
+}
