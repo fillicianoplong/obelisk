@@ -1,64 +1,16 @@
-import type { DocumentMessage, JsonObject, JsonValue } from '../../../shared/ipc/types.js';
+import type { Node as ProseNode } from 'prosemirror-model';
+import type { DocumentMessage, JsonObject } from '../../../shared/ipc/types.js';
+import {
+  documentFromEditorDoc,
+  visibleParagraphTexts,
+} from '../../editor/schema/mapping.js';
+import { isBlockId, newBlockId } from '../../editor/block-id.js';
 
-// Paragraph text is what this editor can show. Other blocks stay in the file
-// until a paragraph changes, and then the paragraph text is what gets saved.
-
-const BLOCK_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-
-export function newBlockId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-function inlineText(content: JsonValue | undefined): string {
-  if (!Array.isArray(content)) {
-    return '';
-  }
-  let text = '';
-  for (const part of content) {
-    if (typeof part !== 'object' || part === null || Array.isArray(part)) {
-      continue;
-    }
-    const record = part as { type?: JsonValue; text?: JsonValue };
-    if ((record.type === 'text' || record.type === 'link') && typeof record.text === 'string') {
-      text += record.text;
-    }
-  }
-  return text;
-}
-
-export function visibleParagraphTexts(document: DocumentMessage): string[] {
-  const texts: string[] = [];
-  for (const block of document.blocks) {
-    if (block.type !== 'paragraph') {
-      continue;
-    }
-    texts.push(inlineText(block.content));
-  }
-  return texts;
-}
-
-function paragraphId(block: JsonObject): string | null {
-  return typeof block.id === 'string' && BLOCK_ID.test(block.id) ? block.id : null;
-}
-
-export function paragraphIds(document: DocumentMessage): string[] {
-  const ids: string[] = [];
-  for (const block of document.blocks) {
-    if (block.type !== 'paragraph') {
-      continue;
-    }
-    const id = paragraphId(block);
-    if (id !== null) {
-      ids.push(id);
-    }
-  }
-  return ids;
-}
+export {
+  blockIdsFromDocument,
+  visibleParagraphTexts,
+} from '../../editor/schema/mapping.js';
+export { newBlockId } from '../../editor/block-id.js';
 
 function headerFields(id: string): JsonObject {
   return {
@@ -101,32 +53,42 @@ export function createBaseDocument(mint: () => string = newBlockId): {
   };
 }
 
-function sameTexts(left: readonly string[], right: readonly string[]): boolean {
-  if (left.length === right.length && left.every((text, index) => text === right[index])) {
-    return true;
+export function paragraphIds(document: DocumentMessage): string[] {
+  const ids: string[] = [];
+  for (const block of document.blocks) {
+    if (block.type !== 'paragraph') {
+      continue;
+    }
+    const id = typeof block.id === 'string' && isBlockId(block.id) ? block.id : null;
+    if (id !== null) {
+      ids.push(id);
+    }
   }
-  // The editor shows one empty paragraph when the file has none.
-  return left.length === 0 && right.length === 1 && right[0] === '';
+  return ids;
 }
 
-function withText(block: JsonObject, text: string): JsonObject {
-  if (inlineText(block.content) === text) {
-    return block;
-  }
-  return {
-    ...block,
-    content: text.length === 0 ? [] : [{ type: 'text', text }],
-  };
-}
-
-// An unedited tab keeps the document that was opened. An edit updates paragraph
-// text and leaves every other block in place.
 export function documentFromEditor(
+  base: DocumentMessage,
+  doc: ProseNode,
+  mint: () => string = newBlockId,
+): { document: DocumentMessage; blockIds: string[] } {
+  const built = documentFromEditorDoc(base, doc, mint);
+  return { document: built.document, blockIds: built.blockIds };
+}
+
+// Kept for tests that pass paragraph strings until they migrate to full editor docs.
+export function documentFromParagraphTexts(
   base: DocumentMessage,
   paragraphs: readonly string[],
   mint: () => string = newBlockId,
 ): { document: DocumentMessage; blockIds: string[] } {
-  if (sameTexts(visibleParagraphTexts(base), paragraphs)) {
+  if (paragraphs.length === 0 && base.blocks.length === 0) {
+    return { document: base, blockIds: [] };
+  }
+  const current = visibleParagraphTexts(base);
+  const sameLength = current.length === paragraphs.length
+    || (current.length === 0 && paragraphs.length === 1 && paragraphs[0] === '');
+  if (sameLength && current.every((text: string, index: number) => text === paragraphs[index])) {
     return { document: base, blockIds: paragraphIds(base) };
   }
   const blocks: JsonObject[] = [];
@@ -134,16 +96,19 @@ export function documentFromEditor(
   let index = 0;
   for (const block of base.blocks) {
     if (block.type !== 'paragraph') {
-      blocks.push(block);
+      blocks.push(block as JsonObject);
       continue;
     }
     if (index >= paragraphs.length) {
       continue;
     }
     const text = paragraphs[index] ?? '';
-    const id = paragraphId(block) ?? mint();
-    const next = withText({ ...block, id }, text);
-    blocks.push(next);
+    const id = typeof block.id === 'string' ? block.id : mint();
+    blocks.push({
+      ...(block as JsonObject),
+      id,
+      content: text.length === 0 ? [] : [{ type: 'text', text }],
+    });
     ids.push(id);
     index += 1;
   }

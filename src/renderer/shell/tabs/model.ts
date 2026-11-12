@@ -2,6 +2,7 @@ import type { Node } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
 import type { DocumentMessage, FileStat } from '../../../shared/ipc/types.js';
 import { createTabEditorState } from '../../editor/state.js';
+import { editorDocFromDocument } from '../../editor/schema/mapping.js';
 import { createBaseDocument } from './document.js';
 
 export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
@@ -40,8 +41,8 @@ export function untitledTitle(number: number): string {
 }
 
 export function createTab(number: number): PageTab {
-  const editor = createTabEditorState();
   const base = createBaseDocument();
+  const editor = createTabEditorState(editorDocFromDocument(base.document));
   return {
     id: `untitled-${number}`,
     title: untitledTitle(number),
@@ -56,8 +57,8 @@ export function createTab(number: number): PageTab {
 }
 
 export function createSettingsTab(): PageTab {
-  const editor = createTabEditorState();
   const base = createBaseDocument();
+  const editor = createTabEditorState(editorDocFromDocument(base.document));
   return {
     id: SETTINGS_TAB_ID,
     title: 'Settings',

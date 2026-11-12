@@ -34,7 +34,13 @@ export function createTabEditorState(doc?: Node): EditorState {
 }
 
 export function editorText(state: EditorState): string {
-  return state.doc.textBetween(0, state.doc.content.size, '\n');
+  const paragraphs: string[] = [];
+  state.doc.forEach((node) => {
+    if (node.type.name === 'paragraph') {
+      paragraphs.push(node.textContent);
+    }
+  });
+  return paragraphs.join('\n');
 }
 
 export interface EditorCaret {

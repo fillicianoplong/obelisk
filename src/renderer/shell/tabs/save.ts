@@ -32,18 +32,8 @@ export function noteEditorChange(tab: PageTab, editor: EditorState): PageTab {
   return { ...replaced, revision: tab.revision + 1 };
 }
 
-export function editorParagraphs(state: EditorState): string[] {
-  const paragraphs: string[] = [];
-  state.doc.forEach((node) => {
-    if (node.type.name === 'paragraph') {
-      paragraphs.push(node.textContent);
-    }
-  });
-  return paragraphs;
-}
-
 export function documentForTab(tab: PageTab): { document: DocumentMessage; blockIds: string[] } {
-  return documentFromEditor(tab.baseDocument, editorParagraphs(tab.editor));
+  return documentFromEditor(tab.baseDocument, tab.editor.doc);
 }
 
 export function saveRequest(tab: PageTab, document: DocumentMessage, expectedStat: FileStat | null, replaceConfirmed: boolean): FileSaveRequest | null {

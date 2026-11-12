@@ -132,7 +132,7 @@ test('the close prompt offers Save, Discard, and Cancel', async () => {
 });
 
 test('an opened document is saved unchanged until a paragraph is edited', async () => {
-  const { documentFromEditor, visibleParagraphTexts } = await loadRenderer(documentUrl);
+  const { documentFromParagraphTexts, visibleParagraphTexts } = await loadRenderer(documentUrl);
   const base = {
     view: 'pageless',
     page: { paper: 'letter', orientation: 'portrait', margins: { top: 1, right: 1, bottom: 1, left: 1 } },
@@ -157,9 +157,9 @@ test('an opened document is saved unchanged until a paragraph is edited', async 
       },
     ],
   };
-  const same = documentFromEditor(base, visibleParagraphTexts(base));
+  const same = documentFromParagraphTexts(base, visibleParagraphTexts(base));
   assert.equal(same.document, base);
-  const edited = documentFromEditor(base, ['Lab notes changed']);
+  const edited = documentFromParagraphTexts(base, ['Lab notes changed']);
   assert.equal(edited.document.blocks[0].type, 'heading');
   assert.equal(edited.document.blocks[1].content[0].text, 'Lab notes changed');
   assert.equal(edited.document.blocks[1].id, '00000000-0000-4000-8000-000000000004');

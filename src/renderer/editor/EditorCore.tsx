@@ -1,3 +1,4 @@
+import type { JsonObject } from '../../shared/ipc/types.js';
 import { splitBlock } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import type { EditorState, Selection, Transaction } from 'prosemirror-state';
@@ -10,6 +11,16 @@ import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
 import { bindPageFocus, pageFocusIsKeyboard } from '../shell/page-focus.js';
 import { editorSchema } from './schema.js';
 import { runWithSynchronousEditorUpdate } from './flush.js';
+import {
+  caretInsideBlock,
+  duplicateBlockAt,
+  insertTextBlock,
+  pasteBlockJson,
+  setChecklistItemChecked,
+} from './block-commands.js';
+import type { TextBlockKind } from './schema.js';
+import { editorBlockSnapshot } from './schema/mapping.js';
+import { newBlockId } from './block-id.js';
 import { pageFrameStyle, pageHeaderStyle } from './layout/page.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
@@ -109,11 +120,53 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
       runWithSynchronousEditorUpdate(() => {
         const lines = text.split('\n');
         const nodes = lines.map((line) => editorSchema.nodes.paragraph.create(
-          null,
+          {
+            blockId: newBlockId(),
+            align: 'left',
+            lineSpacing: 'single',
+            spaceBefore: 0,
+            spaceAfter: 0,
+            indentLeft: 0,
+            indentFirst: 0,
+            indentHanging: 0,
+          },
           line.length > 0 ? editorSchema.text(line) : null,
         ));
         view.dispatch(view.state.tr.replaceWith(0, view.state.doc.content.size, nodes));
       });
+    },
+    insertBlock(kind: TextBlockKind, options: { level?: number; text?: string; after?: number } = {}) {
+      runWithSynchronousEditorUpdate(() => {
+        const tr = insertTextBlock(view.state.tr, kind, newBlockId, options);
+        view.dispatch(tr);
+      });
+    },
+    duplicateBlock(blockIndex: number) {
+      runWithSynchronousEditorUpdate(() => {
+        const tr = duplicateBlockAt(view.state.tr, blockIndex, newBlockId);
+        view.dispatch(tr);
+      });
+    },
+    pasteBlock(block: JsonObject, after?: number) {
+      runWithSynchronousEditorUpdate(() => {
+        const tr = pasteBlockJson(view.state.tr, block, newBlockId, after);
+        view.dispatch(tr);
+      });
+    },
+    setChecklistChecked(blockIndex: number, itemIndex: number, checked: boolean) {
+      runWithSynchronousEditorUpdate(() => {
+        const tr = setChecklistItemChecked(view.state.tr, blockIndex, itemIndex, checked);
+        view.dispatch(tr);
+      });
+    },
+    blockSnapshot() {
+      return editorBlockSnapshot(view.state.doc);
+    },
+    focusBlock(blockIndex: number, offset = 0) {
+      runWithSynchronousEditorUpdate(() => {
+        view.dispatch(view.state.tr.setSelection(caretInsideBlock(view.state.doc, blockIndex, offset)));
+      });
+      placeSelection(view);
     },
   };
   Object.defineProperty(view.dom, 'editorCommands', {

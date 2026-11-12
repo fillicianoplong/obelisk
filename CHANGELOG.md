@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.27.0] - 2026-10-30
+
+### Added
+
+- Every text block in the Block types reference can be inserted in a tab, edited, saved, and reopened with block order and IDs preserved. Paragraph, heading, bulleted list, numbered list, checklist, quote, code block, horizontal line, and page break are included. ([#147](https://github.com/fillicianoplong/obelisk/pull/147))
+
 ## [0.1.26.0] - 2026-10-30
 
 ### Added
