@@ -209,6 +209,21 @@ export function dispatchEditorKeyDown(view, key, extra = {}) {
   assert.equal(handled, true, `the editor did not handle keydown ${key}`);
 }
 
+/** Run keydown handlers without requiring one to return true (e.g. Backspace via baseKeymap). */
+export function runEditorKeyDown(view, key, extra = {}) {
+  const event = syntheticKeyDown(key, extra);
+  view.someProp('handleKeyDown', (handler) => handler(view, event));
+}
+
+/** Dispatch typed text through the editor's handleTextInput handlers. */
+export function dispatchEditorTextInput(view, text) {
+  const { from, to } = view.state.selection;
+  const handled = view.someProp('handleTextInput', (handler) => handler(view, from, to, text));
+  if (!handled) {
+    view.dispatch(view.state.tr.insertText(text, from, to));
+  }
+}
+
 /** Dispatch a keydown on the editor root the way the app does. */
 export function dispatchEditorKeyDownOnDom(view, key, extra = {}) {
   const Ctor = globalThis.KeyboardEvent ?? Event;
