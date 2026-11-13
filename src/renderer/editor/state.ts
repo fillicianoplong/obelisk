@@ -5,6 +5,7 @@ import type { Node } from 'prosemirror-model';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import type { Command, Selection, Transaction } from 'prosemirror-state';
 import { editorSchema } from './schema.js';
+import { blockHandleKeymap, blockHandlePlugin } from './block-handle-plugin.js';
 import { editorColorStylesPlugin } from './color-styles-plugin.js';
 import { editorFormatKeymap } from './format-commands.js';
 import { paragraphFormatKeymap } from './paragraph-format-commands.js';
@@ -31,11 +32,13 @@ export function createTabEditorState(doc?: Node): EditorState {
         'Mod-y': redo,
         'Shift-Mod-z': redo,
       }),
+      keymap(blockHandleKeymap()),
       keymap({
         ...editorFormatKeymap(),
         ...paragraphFormatKeymap(),
       }),
       keymap(baseKeymap),
+      blockHandlePlugin(),
       editorColorStylesPlugin(),
     ],
   });

@@ -1,5 +1,67 @@
 @import './layout/page.css';
 @import './format/csp-format.css';
+@import './block-handle-layout.css';
+
+.page-region .page-sheet > .block-handle {
+  display: block;
+  height: 0;
+  width: var(--size-block-handle-column);
+  margin: 0;
+  margin-inline-start: calc(-1 * var(--size-block-handle-column));
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.block-handle {
+  opacity: 0;
+  width: var(--size-block-handle-column);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: grab;
+  font-size: var(--font-size-body-small);
+  line-height: 1;
+  pointer-events: auto;
+}
+
+.block-handle::before {
+  content: '⋮⋮';
+  letter-spacing: calc(var(--space-2xs) * -1);
+  position: absolute;
+  left: 0;
+  box-sizing: border-box;
+  width: var(--size-block-handle-column);
+  height: var(--size-block-handle-hit);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.block-handle[data-caret-block='true'],
+.block-handle:hover,
+.block-handle:has(+ :is(p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, hr, div):hover) {
+  opacity: 1;
+}
+
+.block-handle:focus-visible {
+  opacity: 1;
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: var(--space-2xs);
+}
+
+.page-sheet .ProseMirror-selectednode {
+  outline: none;
+}
+
+.block-is-selected {
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-control);
+  box-shadow: inset 0 0 0 calc(var(--space-2xs) / 2) var(--color-selection);
+}
 
 .page-sheet p {
   margin: 0;

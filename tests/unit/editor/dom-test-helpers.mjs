@@ -104,6 +104,36 @@ export function installDomGlobals(document, window) {
   if (typeof window.KeyboardEvent === 'function') {
     globalThis.KeyboardEvent = window.KeyboardEvent;
   }
+  if (typeof window.MouseEvent !== 'function' && typeof window.Event === 'function') {
+    class MouseEvent extends window.Event {
+      constructor(type, init = {}) {
+        super(type, init);
+        this.shiftKey = init.shiftKey ?? false;
+        this.button = init.button ?? 0;
+      }
+    }
+    window.MouseEvent = MouseEvent;
+  }
+  if (typeof window.MouseEvent === 'function') {
+    globalThis.MouseEvent = window.MouseEvent;
+  }
+  if (typeof window.KeyboardEvent !== 'function' && typeof window.Event === 'function') {
+    class KeyboardEvent extends window.Event {
+      constructor(type, init = {}) {
+        super(type, init);
+        this.key = init.key ?? '';
+        this.code = init.code ?? init.key ?? '';
+        this.shiftKey = init.shiftKey ?? false;
+        this.altKey = init.altKey ?? false;
+        this.ctrlKey = init.ctrlKey ?? false;
+        this.metaKey = init.metaKey ?? false;
+      }
+    }
+    window.KeyboardEvent = KeyboardEvent;
+  }
+  if (typeof window.KeyboardEvent === 'function') {
+    globalThis.KeyboardEvent = window.KeyboardEvent;
+  }
   if (typeof window.getComputedStyle === 'function') {
     globalThis.getComputedStyle = window.getComputedStyle.bind(window);
   } else {
@@ -142,11 +172,34 @@ export function syntheticKeyDown(key, extra = {}) {
   };
 }
 
-/** Run the same handleKeyDown chain as a keydown on the editor view. */
+/** Minimal MouseEvent shape for block-handle clicks in linkedom. */
+export function syntheticMouseDown(extra = {}) {
+  const Ctor = globalThis.MouseEvent ?? Event;
+  return new Ctor('mousedown', {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    shiftKey: false,
+    ...extra,
+  });
+}
 export function dispatchEditorKeyDown(view, key, extra = {}) {
   const event = syntheticKeyDown(key, extra);
   const handled = view.someProp('handleKeyDown', (handler) => handler(view, event));
   assert.equal(handled, true, `the editor did not handle keydown ${key}`);
+}
+
+/** Dispatch a keydown on the editor root the way the app does. */
+export function dispatchEditorKeyDownOnDom(view, key, extra = {}) {
+  const Ctor = globalThis.KeyboardEvent ?? Event;
+  const event = new Ctor('keydown', {
+    bubbles: true,
+    cancelable: true,
+    key,
+    code: key,
+    ...extra,
+  });
+  view.dom.dispatchEvent(event);
 }
 
 export function prepareEditorDom(document, window) {
