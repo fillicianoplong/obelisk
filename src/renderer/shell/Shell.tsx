@@ -17,6 +17,7 @@ import type { ClosePromptChoice } from './tabs/close.js';
 import { SETTINGS_TAB_ID, createSettingsTab, createTab, tabHasUnsavedChanges } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
 import { applyOpenResult } from './tabs/opened.js';
+import { startupTabsAfterLaunch } from './tabs/launch.js';
 import { SaveConflict } from './tabs/SaveConflict.js';
 import {
   EXISTS_MESSAGE,
@@ -44,12 +45,13 @@ import './shell.css';
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
 export function Shell() {
-  const [tabs, setTabs] = useState<PageTab[]>(() => [createTab(1)]);
-  const [activeId, setActiveId] = useState('untitled-1');
+  const [tabs, setTabs] = useState<PageTab[]>([]);
+  const [activeId, setActiveId] = useState('');
+  const [shellReady, setShellReady] = useState(false);
   const [closePromptId, setClosePromptId] = useState<string | null>(null);
   const [openMessage, setOpenMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
-  const nextNumber = useRef(2);
+  const nextNumber = useRef(1);
   const opening = useRef(false);
   const saving = useRef(false);
   const conflictRef = useRef<{ tabId: string; stat: FileStat } | null>(null);
@@ -341,6 +343,38 @@ export function Shell() {
     finishQuit();
   }, [finishQuit]);
 
+  useLayoutEffect(() => {
+    const launchResults: FileOpenResult[] = [];
+    let launchFinished = false;
+
+    const subscriptionId = window.obelisk['file:activated'].subscribe((result) => {
+      if (!launchFinished) {
+        launchResults.push(result);
+        return;
+      }
+      const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
+      tabsRef.current = applied.tabs;
+      activeIdRef.current = applied.activeId;
+      setTabs(applied.tabs);
+      setActiveId(applied.activeId);
+      setOpenMessage(applied.message);
+    });
+
+    const startup = startupTabsAfterLaunch(launchResults);
+    tabsRef.current = startup.tabs;
+    activeIdRef.current = startup.activeId;
+    nextNumber.current = startup.nextUntitledNumber;
+    setTabs(startup.tabs);
+    setActiveId(startup.activeId);
+    setOpenMessage(startup.message);
+    launchFinished = true;
+    setShellReady(true);
+
+    return () => {
+      window.obelisk['file:activated'].unsubscribe(subscriptionId);
+    };
+  }, []);
+
   const openDocument = useCallback(() => {
     if (opening.current) {
       return;
@@ -521,7 +555,7 @@ export function Shell() {
     };
   }, [addTab, openDocument, openSettings, runSave]);
 
-  if (activeTab === undefined) {
+  if (!shellReady || activeTab === undefined) {
     return null;
   }
 

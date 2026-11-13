@@ -52,6 +52,7 @@ export const ENABLERS = {
   21: 'Codec: image entry checks',
   22: 'Codec: encode and versions',
   24: 'Open file and handles',
+  30: 'EditorCore: paragraph format',
   41: 'Paste sanitizer',
   44: 'Text-as-markup test',
   54: 'Equation blocks',

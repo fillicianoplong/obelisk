@@ -50,7 +50,7 @@ async function confirmReplace(options: ReplacePromptOptions): Promise<boolean> {
   return result.response === 0;
 }
 
-export function installIpc(ipc: IpcMainLike = wrapIpcMain()): void {
+export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof createFileService> {
   const files = createFileService({
     showOpenDialog,
     showSaveDialog,
@@ -61,6 +61,7 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): void {
     privateAppData: [app.getPath('userData')],
   });
   bindIpcHandlers(ipc, createIpcRegistry(createAppHandlers(files)));
+  return files;
 }
 
 function wrapIpcMain(): IpcMainLike {

@@ -37,9 +37,9 @@ test('a valid file opens in a new tab and the tab has no path', async () => {
   ]);
   const applied = applyOpenResult(current, current[0].id, result);
   assert.equal(applied.message, null);
-  assert.equal(applied.tabs.length, 2);
+  assert.equal(applied.tabs.length, 1);
   assert.equal(applied.activeId, 'abc123');
-  const tab = applied.tabs[1];
+  const tab = applied.tabs[0];
   assert.equal(tab.title, 'Lab notes.obk');
   assert.equal(tab.handle, 'abc123');
   assert.equal(tab.id, 'abc123');
@@ -84,8 +84,9 @@ test('cancel leaves the tabs alone, and a file already open switches to its tab'
   const opened = applyOpenResult(current, current[0].id, openedFile([
     { type: 'image', id: 'i', sha256: 'abc' },
   ], 'figure.obk'));
-  assert.equal(opened.tabs.length, 2);
-  const again = applyOpenResult(opened.tabs, opened.tabs[0].id, {
+  assert.equal(opened.tabs.length, 1);
+  assert.equal(opened.activeId, 'abc123');
+  const again = applyOpenResult(opened.tabs, opened.activeId, {
     status: 'alreadyOpen',
     tabId: 'abc123',
   });

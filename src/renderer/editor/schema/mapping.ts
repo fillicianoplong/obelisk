@@ -8,6 +8,7 @@ import {
   inlineRunsFromFragment,
   mergeAdjacentRuns,
 } from './inline-json.js';
+import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
 
 const TEXT_TYPES = new Set([
   'paragraph',
@@ -163,14 +164,22 @@ export function editorDocFromDocument(document: DocumentMessage, schema: Schema 
   return schema.node('doc', null, blocks);
 }
 
+function paragraphFieldsEqual(left: Record<string, JsonValue>, right: Record<string, JsonValue>): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function paragraphBlockJson(node: ProseNode, base: JsonObject | null, mint: () => string): JsonObject {
   const blockId = node.attrs.blockId || mint();
   const content = textRunsFromNode(node);
-  const fields = base && base.type === 'paragraph' ? paragraphFieldsFrom(base) : paragraphFieldsFrom({});
+  const fields = paragraphFieldsFromNode(node) as Record<string, JsonValue>;
+  const baseFields = base && base.type === 'paragraph'
+    ? paragraphFieldsFrom(base)
+    : paragraphFieldsFrom({});
   const unchanged = base
     && base.type === 'paragraph'
     && base.id === blockId
-    && inlineJsonEqual(base.content, content);
+    && inlineJsonEqual(base.content, content)
+    && paragraphFieldsEqual(baseFields, fields);
   if (unchanged) {
     return base;
   }

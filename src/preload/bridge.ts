@@ -33,40 +33,61 @@ export interface ContextBridgeLike {
   exposeInMainWorld(apiKey: string, api: unknown): void;
 }
 
-type ActivatedListener = (event: unknown, payload: unknown) => void;
+type ActivatedListener = (result: FileOpenResult) => void;
 
 function createFileActivatedApi(ipc: PreloadIpc): ObeliskApi['file:activated'] {
   let nextId = 1;
-  const wrappedById = new Map<number, ActivatedListener>();
+  const listenersById = new Map<number, ActivatedListener>();
+  const pending: FileOpenResult[] = [];
+  let hubInstalled = false;
+
+  function dispatchPayload(payload: unknown): void {
+    const parsed = parseFileOpenResult(payload);
+    if (parsed === null) {
+      return;
+    }
+    if (listenersById.size === 0) {
+      pending.push(parsed);
+      return;
+    }
+    for (const listener of listenersById.values()) {
+      listener(parsed);
+    }
+  }
+
+  function ensureHub(): void {
+    if (hubInstalled) {
+      return;
+    }
+    hubInstalled = true;
+    ipc.on(IPC_EVENT_CHANNEL, (_event, payload) => {
+      dispatchPayload(payload);
+    });
+  }
 
   return {
     subscribe(listener) {
       if (typeof listener !== 'function') {
         throw new TypeError('The file:activated listener must be a function.');
       }
+      ensureHub();
       const id = nextId;
       nextId += 1;
-      const wrapped: ActivatedListener = (_event, payload) => {
-        const parsed = parseFileOpenResult(payload);
-        if (parsed === null) {
-          return;
+      listenersById.set(id, listener);
+      if (pending.length > 0) {
+        const queued = pending.slice();
+        pending.length = 0;
+        for (const result of queued) {
+          listener(result);
         }
-        listener(parsed);
-      };
-      wrappedById.set(id, wrapped);
-      ipc.on(IPC_EVENT_CHANNEL, wrapped);
+      }
       return id;
     },
     unsubscribe(id) {
       if (typeof id !== 'number' || !Number.isSafeInteger(id)) {
         return;
       }
-      const wrapped = wrappedById.get(id);
-      if (wrapped === undefined) {
-        return;
-      }
-      wrappedById.delete(id);
-      ipc.removeListener(IPC_EVENT_CHANNEL, wrapped);
+      listenersById.delete(id);
     },
   };
 }

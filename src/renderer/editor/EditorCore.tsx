@@ -1,5 +1,4 @@
 import type { JsonObject } from '../../shared/ipc/types.js';
-import { splitBlock } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import type { EditorState, Selection, Transaction } from 'prosemirror-state';
 import { TextSelection } from 'prosemirror-state';
@@ -28,6 +27,7 @@ import {
   applyCharacterMarksCommand,
   formatMenuCommand,
 } from './format-commands.js';
+import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { AllSelection } from 'prosemirror-state';
 
 interface EditorCoreProps {
@@ -75,7 +75,7 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
     splitParagraph() {
       let applied = false;
       runWithSynchronousEditorUpdate(() => {
-        applied = splitBlock(view.state, dispatch);
+        applied = splitParagraphKeepingFormat()(view.state, dispatch);
       });
       if (!applied) {
         throw new Error('The paragraph could not be split.');
