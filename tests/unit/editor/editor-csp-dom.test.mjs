@@ -49,7 +49,7 @@ function paragraphBlock(format) {
     }, {
       type: 'text',
       text: 'X',
-      marks: { strike: true, code: true },
+      marks: { code: true },
     }, {
       type: 'text',
       text: '2',

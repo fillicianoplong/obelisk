@@ -18,12 +18,20 @@ export interface BlockHandleState {
   from: number | null;
   to: number | null;
   drag: BlockDragState | null;
+  /** Top-level block index showing the hover handle, if any. */
+  hoverBlock: number | null;
+  /** Keep the hover handle visible while the pointer is on the handle grip. */
+  hoverPinned: boolean;
 }
 
 export const blockHandlePluginKey = new PluginKey<BlockHandleState>('blockHandle');
 
 export function emptyBlockHandleState(): BlockHandleState {
-  return { anchor: null, from: null, to: null, drag: null };
+  return { anchor: null, from: null, to: null, drag: null, hoverBlock: null, hoverPinned: false };
+}
+
+export function blockHoverIndex(state: EditorState): number | null {
+  return blockHandleState(state).hoverBlock;
 }
 
 export function blockHandleState(state: EditorState): BlockHandleState {
@@ -73,11 +81,64 @@ function setBlockHandleState(
   return tr.setMeta(blockHandlePluginKey, next);
 }
 
+function clampHoverBlock(doc: ProseNode, hoverBlock: number | null): number | null {
+  if (hoverBlock === null) {
+    return null;
+  }
+  if (hoverBlock < 0 || hoverBlock >= doc.childCount) {
+    return null;
+  }
+  return hoverBlock;
+}
+
+function dispatchHover(
+  view: EditorView,
+  hoverBlock: number | null,
+  hoverPinned: boolean,
+): void {
+  const current = blockHandleState(view.state);
+  const nextHover = hoverBlock === null ? null : clampHoverBlock(view.state.doc, hoverBlock);
+  if (current.hoverBlock === nextHover && current.hoverPinned === hoverPinned) {
+    return;
+  }
+  view.dispatch(setBlockHandleState(view.state.tr, {
+    ...current,
+    hoverBlock: nextHover,
+    hoverPinned,
+  }));
+}
+
+export function setBlockHandleHover(view: EditorView, blockIndex: number | null): void {
+  dispatchHover(view, blockIndex, blockIndex !== null);
+}
+
+function blockIndexFromPointer(view: EditorView, event: MouseEvent): number | null {
+  if (!(event.target instanceof HTMLElement)) {
+    return null;
+  }
+  if (event.target.closest('.block-handle') !== null) {
+    return null;
+  }
+  if (!view.dom.contains(event.target)) {
+    return null;
+  }
+  try {
+    const hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
+    if (hit === null) {
+      return null;
+    }
+    return blockIndexAtPos(view.state.doc, hit.pos);
+  } catch {
+    return null;
+  }
+}
+
 function selectBlocks(
   tr: Transaction,
   from: number,
   to: number,
   anchor: number,
+  prior: BlockHandleState,
 ): Transaction {
   const doc = tr.doc;
   const start = Math.max(0, Math.min(from, to));
@@ -85,7 +146,7 @@ function selectBlocks(
   const nodePos = blockPosAtIndex(doc, start);
   return setBlockHandleState(
     tr.setSelection(NodeSelection.create(doc, nodePos)).setMeta('blockHandleKeep', true),
-    { anchor, from: start, to: end, drag: null },
+    { ...prior, anchor, from: start, to: end, drag: null },
   );
 }
 
@@ -99,9 +160,9 @@ export function selectBlockByIndex(
   }
   const current = blockHandleState(state);
   if (extend && current.anchor !== null) {
-    return selectBlocks(state.tr, current.anchor, blockIndex, current.anchor);
+    return selectBlocks(state.tr, current.anchor, blockIndex, current.anchor, current);
   }
-  return selectBlocks(state.tr, blockIndex, blockIndex, blockIndex);
+  return selectBlocks(state.tr, blockIndex, blockIndex, blockIndex, current);
 }
 
 function editorContentHasFocus(view: EditorView): boolean {
@@ -160,8 +221,22 @@ function blockIsSelected(state: BlockHandleState, index: number): boolean {
   return index >= from && index <= to;
 }
 
+export function blockHandleKindForNode(node: ProseNode): string {
+  if (node.type.name === 'heading') {
+    return 'heading';
+  }
+  if (node.type.name === 'paragraph') {
+    return 'paragraph';
+  }
+  return node.type.name;
+}
+
 function applyHandleBlockAttrs(button: HTMLButtonElement, node: ProseNode): void {
-  button.setAttribute('data-block-kind', node.type.name);
+  const kind = blockHandleKindForNode(node);
+  button.setAttribute('data-block-kind', kind);
+  if (typeof node.attrs.blockId === 'string' && node.attrs.blockId.length > 0) {
+    button.setAttribute('data-block-id', node.attrs.blockId);
+  }
   if (node.type.name === 'paragraph') {
     button.setAttribute('data-line-spacing', String(node.attrs.lineSpacing ?? 'single'));
     button.setAttribute('data-space-before', String(node.attrs.spaceBefore ?? 0));
@@ -338,6 +413,7 @@ function startBlockDragListeners(
       dragging = true;
       view.dom.setAttribute('data-block-drag', 'true');
       dragState = { sourceFrom, sourceTo, dropIndex: null };
+      dispatchHover(view, null, false);
     }
     const dropIndex = dropIndexFromClientY(view, pointerY);
     dragState = { sourceFrom, sourceTo, dropIndex };
@@ -425,6 +501,7 @@ export function clearBlockSelectionForPointerClick(view: EditorView, event: Mous
 function blockHandleMouseDown(view: EditorView, event: MouseEvent, blockIndex: number): void {
   event.preventDefault();
   event.stopPropagation();
+  dispatchHover(view, blockIndex, true);
   const tr = selectBlockByIndex(view.state, blockIndex, event.shiftKey);
   if (tr === null) {
     return;
@@ -437,37 +514,29 @@ function blockHandleMouseDown(view: EditorView, event: MouseEvent, blockIndex: n
   startBlockDragListeners(view, from, to, event.clientX, event.clientY);
 }
 
+export function activeBlockHandleIndex(state: EditorState): number | null {
+  const pluginState = blockHandleState(state);
+  if (pluginState.drag !== null) {
+    return null;
+  }
+  return pluginState.hoverBlock;
+}
+
 function blockDecorations(state: EditorState): DecorationSet {
   const pluginState = blockHandleState(state);
-  const caretBlock = caretBlockIndex(state);
   const decorations: Decoration[] = [];
   let pos = 0;
   for (let index = 0; index < state.doc.childCount; index += 1) {
     const node = state.doc.child(index);
     const blockStart = pos;
-    decorations.push(
-      Decoration.widget(blockStart, (view, getPos) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'block-handle';
-        button.tabIndex = -1;
-        button.setAttribute('data-block-index', String(index));
-        button.setAttribute('aria-label', 'Select block');
-        applyHandleBlockAttrs(button, node);
-        if (index === caretBlock) {
-          button.setAttribute('data-caret-block', 'true');
-        }
-        button.addEventListener('mousedown', (event) => {
-          const widgetPos = getPos();
-          if (widgetPos === undefined) {
-            return;
-          }
-          const blockIndex = blockIndexAtPos(view.state.doc, widgetPos);
-          blockHandleMouseDown(view, event, blockIndex);
-        });
-        return button;
-      }, { side: -1, key: `block-handle-${index}-caret-${caretBlock}` }),
-    );
+    if (pluginState.hoverBlock === index) {
+      decorations.push(
+        Decoration.node(blockStart, blockStart + node.nodeSize, {
+          class: 'block-is-hovered',
+          'data-block-hovered': 'true',
+        }),
+      );
+    }
     if (blockIsSelected(pluginState, index)) {
       decorations.push(
         Decoration.node(blockStart, blockStart + node.nodeSize, {
@@ -499,6 +568,220 @@ function blockDecorations(state: EditorState): DecorationSet {
   return DecorationSet.create(state.doc, decorations);
 }
 
+interface BlockHandleOverlay {
+  sync(view: EditorView): void;
+  destroy(): void;
+}
+
+function blockHandleLayerHost(view: EditorView): HTMLElement {
+  const region = view.dom.closest('.page-region');
+  if (region instanceof HTMLElement) {
+    return region;
+  }
+  return view.dom.parentElement ?? view.dom;
+}
+
+export function blockHandleLayoutForBlock(
+  view: EditorView,
+  blockIndex: number,
+  layerEl?: HTMLElement,
+): { top: number; left: number; height: number } | null {
+  const blockEl = blockContentElement(view, blockIndex);
+  if (blockEl === null) {
+    return null;
+  }
+  const layer = layerEl ?? view.dom.ownerDocument.querySelector('.block-handle-layer');
+  if (!(layer instanceof HTMLElement)) {
+    return null;
+  }
+  const blockRect = blockEl.getBoundingClientRect();
+  const layerRect = layer.getBoundingClientRect();
+  if (blockRect.height <= 0) {
+    return null;
+  }
+  const rootStyle = getComputedStyle(view.dom.ownerDocument.documentElement);
+  const hitWidth = parseFloat(rootStyle.getPropertyValue('--size-block-handle-hit')) || 12;
+  return {
+    top: blockRect.top - layerRect.top,
+    left: blockRect.left - layerRect.left - hitWidth,
+    height: blockRect.height,
+  };
+}
+
+function applyBlockHandleLayout(
+  button: HTMLButtonElement,
+  layout: { top: number; left: number; height: number },
+): void {
+  button.style.setProperty('--block-handle-top', `${layout.top}px`);
+  button.style.setProperty('--block-handle-left', `${layout.left}px`);
+  button.style.setProperty('--block-handle-height', `${layout.height}px`);
+}
+
+function scrollableAncestors(element: HTMLElement): HTMLElement[] {
+  const seen = new Set<HTMLElement>();
+  const stack: HTMLElement[] = [element];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node === undefined) {
+      continue;
+    }
+    const style = node.ownerDocument.defaultView?.getComputedStyle(node);
+    if (style !== undefined) {
+      const overflow = `${style.overflow} ${style.overflowX} ${style.overflowY}`;
+      if (/auto|scroll|overlay/.test(overflow)) {
+        seen.add(node);
+      }
+    }
+    if (node.parentElement !== null) {
+      stack.push(node.parentElement);
+    }
+  }
+  return [...seen];
+}
+
+function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
+  const layer = document.createElement('div');
+  layer.className = 'block-handle-layer';
+  layer.setAttribute('data-region', 'block-handle-layer');
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'block-handle';
+  button.tabIndex = -1;
+  button.setAttribute('aria-label', 'Select block');
+  button.hidden = true;
+  const host = blockHandleLayerHost(view);
+  host.append(layer);
+  layer.append(button);
+
+  let layoutFrame: number | null = null;
+  let destroyed = false;
+  const relayout = (): void => {
+    if (destroyed || button.hidden) {
+      return;
+    }
+    const blockIndex = Number(button.getAttribute('data-block-index'));
+    if (!Number.isInteger(blockIndex)) {
+      return;
+    }
+    const layout = blockHandleLayoutForBlock(view, blockIndex, layer);
+    if (layout === null || layout.height <= 0) {
+      button.hidden = true;
+      button.style.removeProperty('--block-handle-top');
+      button.style.removeProperty('--block-handle-left');
+      button.style.removeProperty('--block-handle-height');
+      return;
+    }
+    button.hidden = false;
+    applyBlockHandleLayout(button, layout);
+  };
+  const scheduleLayout = (): void => {
+    if (destroyed) {
+      return;
+    }
+    const win = view.dom.ownerDocument.defaultView;
+    const useFrame = win !== null && typeof win.requestAnimationFrame === 'function';
+    if (!useFrame) {
+      queueMicrotask(relayout);
+      return;
+    }
+    if (layoutFrame !== null) {
+      win.cancelAnimationFrame(layoutFrame);
+    }
+    layoutFrame = win.requestAnimationFrame(() => {
+      layoutFrame = null;
+      relayout();
+    });
+  };
+
+  const scrollTargets = new Set<HTMLElement>([
+    ...scrollableAncestors(view.dom),
+    ...scrollableAncestors(host),
+  ]);
+  const onScrollOrResize = (): void => {
+    scheduleLayout();
+  };
+  const win = view.dom.ownerDocument.defaultView;
+  for (const target of scrollTargets) {
+    target.addEventListener('scroll', onScrollOrResize, { passive: true });
+  }
+  win?.addEventListener('resize', onScrollOrResize, { passive: true });
+
+  button.addEventListener('mouseenter', () => {
+    const index = activeBlockHandleIndex(view.state);
+    if (index !== null) {
+      dispatchHover(view, index, true);
+    }
+  });
+  button.addEventListener('mouseleave', (event) => {
+    const index = activeBlockHandleIndex(view.state);
+    const blockEl = index === null ? null : blockContentElement(view, index);
+    if (event.relatedTarget instanceof Node && blockEl !== null) {
+      if (blockEl === event.relatedTarget || blockEl.contains(event.relatedTarget)) {
+        return;
+      }
+    }
+    if (blockHandleState(view.state).drag === null) {
+      dispatchHover(view, null, false);
+    }
+  });
+  button.addEventListener('mousedown', (event) => {
+    const blockIndex = Number(button.getAttribute('data-block-index'));
+    if (!Number.isInteger(blockIndex)) {
+      return;
+    }
+    blockHandleMouseDown(view, event, blockIndex);
+  });
+
+  const sync = (editorView: EditorView): void => {
+    const pluginState = blockHandleState(editorView.state);
+    const dragActive = pluginState.drag !== null || editorView.dom.hasAttribute('data-block-drag');
+    if (dragActive) {
+      layer.hidden = true;
+      layer.setAttribute('data-block-drag', 'true');
+      button.hidden = true;
+      button.removeAttribute('data-block-index');
+      button.removeAttribute('data-hover-active');
+      button.style.removeProperty('--block-handle-top');
+      button.style.removeProperty('--block-handle-left');
+      button.style.removeProperty('--block-handle-height');
+      return;
+    }
+    layer.hidden = false;
+    layer.removeAttribute('data-block-drag');
+    const index = activeBlockHandleIndex(editorView.state);
+    if (index === null || index < 0 || index >= editorView.state.doc.childCount) {
+      button.hidden = true;
+      button.removeAttribute('data-block-index');
+      button.removeAttribute('data-hover-active');
+      button.style.removeProperty('--block-handle-top');
+      button.style.removeProperty('--block-handle-left');
+      button.style.removeProperty('--block-handle-height');
+      return;
+    }
+    const node = editorView.state.doc.child(index);
+    button.hidden = false;
+    button.setAttribute('data-block-index', String(index));
+    button.setAttribute('data-hover-active', 'true');
+    applyHandleBlockAttrs(button, node);
+    scheduleLayout();
+  };
+
+  return {
+    sync,
+    destroy(): void {
+      destroyed = true;
+      if (layoutFrame !== null) {
+        win?.cancelAnimationFrame(layoutFrame);
+      }
+      for (const target of scrollTargets) {
+        target.removeEventListener('scroll', onScrollOrResize);
+      }
+      win?.removeEventListener('resize', onScrollOrResize);
+      layer.remove();
+    },
+  };
+}
+
 export function blockHandleKeymap(): Record<string, Command> {
   return {
     Escape: selectCaretBlockCommand(),
@@ -507,6 +790,7 @@ export function blockHandleKeymap(): Record<string, Command> {
 }
 
 export function blockHandlePlugin(): Plugin {
+  let overlay: BlockHandleOverlay | null = null;
   return new Plugin({
     key: blockHandlePluginKey,
     state: {
@@ -519,10 +803,20 @@ export function blockHandlePlugin(): Plugin {
           return meta as BlockHandleState;
         }
         if (tr.docChanged) {
-          return emptyBlockHandleState();
+          const drag = value.drag;
+          return {
+            ...emptyBlockHandleState(),
+            drag,
+          };
         }
         if (tr.selectionSet && !tr.getMeta('blockHandleKeep')) {
-          return emptyBlockHandleState();
+          return {
+            ...value,
+            anchor: null,
+            from: null,
+            to: null,
+            drag: null,
+          };
         }
         return value;
       },
@@ -532,6 +826,36 @@ export function blockHandlePlugin(): Plugin {
         return blockDecorations(state);
       },
       handleDOMEvents: {
+        mousemove(view, event) {
+          if (!(event.target instanceof HTMLElement)) {
+            return false;
+          }
+          if (event.target.closest('.block-handle') !== null) {
+            return false;
+          }
+          const index = blockIndexFromPointer(view, event);
+          if (index !== null) {
+            dispatchHover(view, index, false);
+          }
+          return false;
+        },
+        mouseleave(view, event) {
+          const current = blockHandleState(view.state);
+          if (current.drag !== null || current.hoverPinned) {
+            return false;
+          }
+          const related = event.relatedTarget;
+          if (related instanceof Node) {
+            if (view.dom.contains(related)) {
+              return false;
+            }
+            if (related instanceof HTMLElement && related.closest('.block-handle-layer') !== null) {
+              return false;
+            }
+          }
+          dispatchHover(view, null, false);
+          return false;
+        },
         mousedown(view, event) {
           if (!(event.target instanceof HTMLElement)) {
             return false;
@@ -544,7 +868,33 @@ export function blockHandlePlugin(): Plugin {
           }
           return false;
         },
+        keydown(view, event) {
+          if (blockHandleState(view.state).drag !== null) {
+            return false;
+          }
+          if (!(event.target instanceof HTMLElement)) {
+            return false;
+          }
+          if (event.target.closest('.block-handle') !== null) {
+            return false;
+          }
+          dispatchHover(view, null, false);
+          return false;
+        },
       },
+    },
+    view(editorView) {
+      overlay = mountBlockHandleOverlay(editorView);
+      overlay.sync(editorView);
+      return {
+        update(view) {
+          overlay?.sync(view);
+        },
+        destroy() {
+          overlay?.destroy();
+          overlay = null;
+        },
+      };
     },
   });
 }

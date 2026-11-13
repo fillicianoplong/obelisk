@@ -114,6 +114,10 @@ function runFromTextNode(node: ProseNode): JsonObject {
 export function inlineRunsFromFragment(fragment: ProseNode['content']): JsonObject[] {
   const runs: JsonObject[] = [];
   fragment.forEach((child) => {
+    if (child.type.name === 'hard_break') {
+      runs.push({ type: 'text', text: '\n' });
+      return;
+    }
     if (!child.isText) {
       return;
     }

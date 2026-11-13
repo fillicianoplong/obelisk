@@ -18,6 +18,7 @@ import {
   INDENT_STEP_IN,
 } from './format/reference.js';
 import { newBlockId } from './block-id.js';
+import { markCloseHistoryGroup } from './keymap/history-groups.js';
 
 type Align = (typeof ALIGNMENTS)[number];
 type LineSpacing = (typeof LINE_SPACINGS)[number];
@@ -200,19 +201,16 @@ export function splitParagraphKeepingFormat(): Command {
     };
   });
   return (state, dispatch) => {
-    const marks = state.storedMarks ?? state.selection.$from.marks();
     return split(state, (tr) => {
-      if (marks.length > 0) {
-        tr.setStoredMarks(marks);
-      }
-      dispatch?.(tr);
+      tr.setStoredMarks([]);
+      tr.setMeta('splitBlock', true);
+      dispatch?.(markCloseHistoryGroup(tr));
     });
   };
 }
 
 export function paragraphFormatKeymap(): Record<string, Command> {
   return {
-    Enter: splitParagraphKeepingFormat(),
     Tab: tabIndentCommand(),
     'Shift-Tab': shiftTabIndentCommand(),
     'Mod-l': setAlignCommand('left'),
