@@ -5,6 +5,7 @@ import type { Node } from 'prosemirror-model';
 import { EditorState, TextSelection } from 'prosemirror-state';
 import type { Command, Selection, Transaction } from 'prosemirror-state';
 import { editorSchema } from './schema.js';
+import { editorFormatKeymap } from './format-commands.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -29,18 +30,38 @@ export function createTabEditorState(doc?: Node): EditorState {
         'Shift-Mod-z': redo,
       }),
       keymap(baseKeymap),
+      keymap(editorFormatKeymap()),
     ],
   });
 }
 
 export function editorText(state: EditorState): string {
-  const paragraphs: string[] = [];
+  const parts: string[] = [];
   state.doc.forEach((node) => {
-    if (node.type.name === 'paragraph') {
-      paragraphs.push(node.textContent);
+    switch (node.type.name) {
+      case 'paragraph':
+      case 'heading':
+      case 'blockquote':
+        parts.push(node.textContent);
+        break;
+      case 'bullet_list':
+      case 'ordered_list':
+      case 'checklist': {
+        const itemTexts: string[] = [];
+        node.forEach((item) => {
+          itemTexts.push(item.textContent);
+        });
+        parts.push(itemTexts.join('\n'));
+        break;
+      }
+      case 'code_block':
+        parts.push(node.textContent);
+        break;
+      default:
+        break;
     }
   });
-  return paragraphs.join('\n');
+  return parts.join('\n');
 }
 
 export interface EditorCaret {

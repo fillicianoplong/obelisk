@@ -4,7 +4,7 @@ import { paragraphLayoutAttrs } from './attrs.js';
 export const paragraphSpec: NodeSpec = {
   content: 'inline*',
   group: 'block',
-  marks: '',
+  marks: '_',
   attrs: paragraphLayoutAttrs,
   parseDOM: [{ tag: 'p', getAttrs(dom) {
     if (!(dom instanceof HTMLElement)) {

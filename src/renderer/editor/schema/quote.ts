@@ -4,7 +4,7 @@ import { blockIdAttr } from './attrs.js';
 export const quoteSpec: NodeSpec = {
   content: 'inline*',
   group: 'block',
-  marks: '',
+  marks: '_',
   attrs: { blockId: blockIdAttr },
   parseDOM: [{ tag: 'blockquote', getAttrs(dom) {
     if (!(dom instanceof HTMLElement)) {

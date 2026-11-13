@@ -2,6 +2,12 @@ import type { Node as ProseNode, Schema } from 'prosemirror-model';
 import type { JsonObject, JsonValue } from '../../../shared/ipc/types.js';
 import type { DocumentMessage } from '../../../shared/ipc/types.js';
 import { editorSchema } from './index.js';
+import {
+  inlineContentFromJson,
+  inlineJsonEqual,
+  inlineRunsFromFragment,
+  mergeAdjacentRuns,
+} from './inline-json.js';
 
 const TEXT_TYPES = new Set([
   'paragraph',
@@ -34,11 +40,13 @@ function inlineText(content: JsonValue | undefined): string {
   return text;
 }
 
-function textRuns(text: string): JsonObject[] {
-  if (text.length === 0) {
-    return [];
-  }
-  return [{ type: 'text', text }];
+function inlineContent(content: JsonValue | undefined, schema: Schema = editorSchema) {
+  const nodes = inlineContentFromJson(content, schema);
+  return nodes.length > 0 ? nodes : null;
+}
+
+function textRunsFromNode(node: ProseNode): JsonObject[] {
+  return mergeAdjacentRuns(inlineRunsFromFragment(node.content));
 }
 
 function paragraphFieldsFrom(block: JsonObject): Record<string, JsonValue> {
@@ -65,10 +73,10 @@ function paragraphAttrsFrom(block: JsonObject, blockId: string): Record<string, 
   };
 }
 
-function createParagraphNode(schema: Schema, block: JsonObject, blockId: string, text: string): ProseNode {
+function createParagraphNode(schema: Schema, block: JsonObject, blockId: string, content: JsonValue | undefined): ProseNode {
   const attrs = paragraphAttrsFrom(block, blockId);
-  const content = text.length > 0 ? schema.text(text) : null;
-  return schema.nodes.paragraph.create(attrs, content);
+  const inline = inlineContent(content, schema);
+  return schema.nodes.paragraph.create(attrs, inline);
 }
 
 function listItemsFromBlock(block: JsonObject, schema: Schema, checklist: boolean): ProseNode[] {
@@ -77,12 +85,11 @@ function listItemsFromBlock(block: JsonObject, schema: Schema, checklist: boolea
   return items.map((raw) => {
     const item = raw as JsonObject;
     const level = typeof item.level === 'number' ? item.level : 0;
-    const text = inlineText(item.content);
     const attrs = checklist
       ? { level, checked: item.checked === true }
       : { level };
-    const content = text.length > 0 ? schema.text(text) : null;
-    return itemType.create(attrs, content);
+    const inline = inlineContent(item.content, schema);
+    return itemType.create(attrs, inline);
   });
 }
 
@@ -90,13 +97,12 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
   const type = block.type;
   const blockId = typeof block.id === 'string' ? block.id : '';
   if (type === 'paragraph') {
-    return createParagraphNode(schema, block, blockId, inlineText(block.content));
+    return createParagraphNode(schema, block, blockId, block.content);
   }
   if (type === 'heading') {
     const level = typeof block.level === 'number' ? block.level : 1;
-    const text = inlineText(block.content);
-    const content = text.length > 0 ? schema.text(text) : null;
-    return schema.nodes.heading.create({ blockId, level }, content);
+    const inline = inlineContent(block.content, schema);
+    return schema.nodes.heading.create({ blockId, level }, inline);
   }
   if (type === 'list') {
     const style = block.style;
@@ -124,9 +130,8 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
     return null;
   }
   if (type === 'quote') {
-    const text = inlineText(block.content);
-    const content = text.length > 0 ? schema.text(text) : null;
-    return schema.nodes.blockquote.create({ blockId }, content);
+    const inline = inlineContent(block.content, schema);
+    return schema.nodes.blockquote.create({ blockId }, inline);
   }
   if (type === 'code') {
     const text = typeof block.text === 'string' ? block.text : '';
@@ -160,12 +165,12 @@ export function editorDocFromDocument(document: DocumentMessage, schema: Schema 
 
 function paragraphBlockJson(node: ProseNode, base: JsonObject | null, mint: () => string): JsonObject {
   const blockId = node.attrs.blockId || mint();
-  const text = node.textContent;
+  const content = textRunsFromNode(node);
   const fields = base && base.type === 'paragraph' ? paragraphFieldsFrom(base) : paragraphFieldsFrom({});
   const unchanged = base
     && base.type === 'paragraph'
     && base.id === blockId
-    && inlineText(base.content) === text;
+    && inlineJsonEqual(base.content, content);
   if (unchanged) {
     return base;
   }
@@ -173,19 +178,19 @@ function paragraphBlockJson(node: ProseNode, base: JsonObject | null, mint: () =
     type: 'paragraph',
     id: blockId,
     ...fields,
-    content: textRuns(text),
+    content,
   };
 }
 
 function headingBlockJson(node: ProseNode, base: JsonObject | null, mint: () => string): JsonObject {
   const blockId = node.attrs.blockId || mint();
   const level = Number(node.attrs.level) || 1;
-  const text = node.textContent;
+  const content = textRunsFromNode(node);
   const unchanged = base
     && base.type === 'heading'
     && base.id === blockId
     && base.level === level
-    && inlineText(base.content) === text;
+    && inlineJsonEqual(base.content, content);
   if (unchanged) {
     return base;
   }
@@ -193,7 +198,7 @@ function headingBlockJson(node: ProseNode, base: JsonObject | null, mint: () => 
     type: 'heading',
     id: blockId,
     level,
-    content: textRuns(text),
+    content,
   };
 }
 
@@ -206,7 +211,7 @@ function listItemsToJson(node: ProseNode, checklist: boolean): JsonObject[] {
     }
     const entry: JsonObject = {
       level: child.attrs.level ?? 0,
-      content: textRuns(child.textContent),
+      content: textRunsFromNode(child),
     };
     if (checklist) {
       entry.checked = child.attrs.checked === true;
@@ -264,18 +269,18 @@ function listBlockJson(
 
 function quoteBlockJson(node: ProseNode, base: JsonObject | null, mint: () => string): JsonObject {
   const blockId = node.attrs.blockId || mint();
-  const text = node.textContent;
+  const content = textRunsFromNode(node);
   const unchanged = base
     && base.type === 'quote'
     && base.id === blockId
-    && inlineText(base.content) === text;
+    && inlineJsonEqual(base.content, content);
   if (unchanged) {
     return base;
   }
   return {
     type: 'quote',
     id: blockId,
-    content: textRuns(text),
+    content,
   };
 }
 
@@ -338,7 +343,7 @@ function blockJsonFromNode(
       }
       return { type: node.attrs.blockType ?? 'unknown', id: node.attrs.blockId || mint() };
     default:
-      return { type: 'paragraph', id: mint(), ...paragraphFieldsFrom({}), content: textRuns(node.textContent) };
+      return { type: 'paragraph', id: mint(), ...paragraphFieldsFrom({}), content: textRunsFromNode(node) };
   }
 }
 
@@ -468,6 +473,28 @@ export function cloneBlockWithNewId(block: JsonObject, mint: () => string): Json
   const copy = structuredClone(block) as JsonObject;
   copy.id = mint();
   return copy;
+}
+
+export function visibleEditorText(document: DocumentMessage): string {
+  const parts: string[] = [];
+  for (const block of document.blocks) {
+    if (block.type === 'paragraph' || block.type === 'heading' || block.type === 'quote') {
+      parts.push(inlineText(block.content));
+      continue;
+    }
+    if (block.type === 'list' && Array.isArray(block.items)) {
+      for (const item of block.items) {
+        if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+          parts.push(inlineText((item as JsonObject).content));
+        }
+      }
+      continue;
+    }
+    if (block.type === 'code' && typeof block.text === 'string') {
+      parts.push(block.text.replace(/\r\n/g, '\n'));
+    }
+  }
+  return parts.join('\n');
 }
 
 export function visibleParagraphTexts(document: DocumentMessage): string[] {

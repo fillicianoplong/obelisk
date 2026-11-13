@@ -8,6 +8,7 @@ import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
+import { runActiveEditorFormatCommand } from './run-editor-format.js';
 import { shellShortcut } from './shortcuts.js';
 import { StatusBar } from './statusbar/StatusBar.js';
 import { ClosePrompt } from './tabs/ClosePrompt.js';
@@ -428,6 +429,10 @@ export function Shell() {
       }
       if (command === 'save-as') {
         runSave('save-as');
+        return;
+      }
+      if (runActiveEditorFormatCommand(command)) {
+        return;
       }
     },
     [addTab, closeTabById, openDocument, openSettings, requestExit, runSave],

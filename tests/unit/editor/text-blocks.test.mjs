@@ -15,7 +15,7 @@ const saveUrl = new URL('../../../src/renderer/shell/tabs/save.ts', import.meta.
 const blockIdUrl = new URL('../../../src/renderer/editor/block-id.ts', import.meta.url);
 const kindsUrl = new URL('../../../src/renderer/editor/schema/index.ts', import.meta.url);
 
-const WRITER = '0.1.27.0';
+const WRITER = '0.1.28.0';
 
 function id(n) {
   return `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
