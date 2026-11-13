@@ -29,6 +29,7 @@ export const markSpecs: { [name: string]: MarkSpec } = {
   },
   strike: booleanMark('s'),
   code: {
+    excludes: '_',
     parseDOM: [{ tag: 'code' }],
     toDOM() {
       return ['code', { class: 'inline-code' }, 0];

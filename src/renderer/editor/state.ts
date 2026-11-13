@@ -1,5 +1,6 @@
-import { baseKeymap } from 'prosemirror-commands';
+import { baseKeymap, chainCommands } from 'prosemirror-commands';
 import { history, redo, undo } from 'prosemirror-history';
+import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
 import type { Node } from 'prosemirror-model';
 import { EditorState, TextSelection } from 'prosemirror-state';
@@ -10,6 +11,12 @@ import { editorColorStylesPlugin } from './color-styles-plugin.js';
 import { slashMenuKeymap, slashMenuPlugin } from './slash/slash-menu-plugin.js';
 import { editorFormatKeymap } from './format-commands.js';
 import { paragraphFormatKeymap } from './paragraph-format-commands.js';
+import { editorKeysKeymap } from './keymap/editor-keys.js';
+import { historyGroupingPlugin } from './keymap/history-groups.js';
+import { typedShortcutInputRulesPlugin } from './keymap/input-rules.js';
+import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-editing.js';
+import { softBreakKeymap } from './keymap/soft-break.js';
+import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -27,21 +34,27 @@ export function createTabEditorState(doc?: Node): EditorState {
     schema: editorSchema,
     ...(doc ? { doc } : {}),
     plugins: [
-      history(),
+      history({ newGroupDelay: 500 }),
+      historyGroupingPlugin(),
       keymap({
-        'Mod-z': undo,
+        'Mod-z': chainCommands(undoInputRule, undo),
         'Mod-y': redo,
         'Shift-Mod-z': redo,
       }),
       keymap(slashMenuKeymap()),
       keymap(blockHandleKeymap()),
       keymap({
+        ...softBreakKeymap(),
+        Enter: chainCommands(listEnterCommand(), splitParagraphKeepingFormat()),
+        Backspace: listBackspaceAtStartCommand(),
         ...editorFormatKeymap(),
         ...paragraphFormatKeymap(),
+        ...editorKeysKeymap(),
       }),
       keymap(baseKeymap),
       blockHandlePlugin(),
       slashMenuPlugin(),
+      typedShortcutInputRulesPlugin(),
       editorColorStylesPlugin(),
     ],
   });

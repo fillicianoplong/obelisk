@@ -22,6 +22,13 @@ const mappingUrl = new URL('../../../src/renderer/editor/schema/mapping.ts', imp
 const blockHandleUrl = new URL('../../../src/renderer/editor/block-handle-plugin.ts', import.meta.url);
 const blockIdUrl = new URL('../../../src/renderer/editor/block-id.ts', import.meta.url);
 
+/** @type {Awaited<ReturnType<typeof loadRenderer>>} */
+let blockHandleModule;
+
+test.before(async () => {
+  blockHandleModule = await loadRenderer(blockHandleUrl);
+});
+
 function id(n) {
   return `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 }
@@ -73,8 +80,20 @@ async function editorViewFromBlocks(blocks) {
   return { view, restore, document, window };
 }
 
+function handleRoot(view) {
+  return view.dom.closest('.page-region') ?? view.dom.parentElement ?? view.dom;
+}
+
+function visibleHandleCount(view) {
+  const handles = handleRoot(view).querySelectorAll('.block-handle-layer .block-handle');
+  return [...handles].filter((handle) => !handle.hidden).length;
+}
+
 function handleElement(view, blockIndex) {
-  const handle = view.dom.querySelector(`.block-handle[data-block-index="${blockIndex}"]`);
+  blockHandleModule.setBlockHandleHover(view, blockIndex);
+  const handle = handleRoot(view).querySelector(
+    `.block-handle-layer .block-handle[data-block-index="${blockIndex}"]`,
+  );
   assert.ok(handle instanceof view.dom.ownerDocument.defaultView.HTMLElement, `block handle ${blockIndex} is missing`);
   return handle;
 }
@@ -278,6 +297,10 @@ test('dragging a handle moves blocks to the drop point through handle handlers',
     assert.ok(view.state.selection instanceof NodeSelection);
     document.dispatchEvent(syntheticMouseMove({ clientX: 10, clientY: 90 }));
     assert.ok(view.dom.hasAttribute('data-block-drag'));
+    const layer = handleRoot(view).querySelector('.block-handle-layer');
+    assert.ok(layer instanceof view.dom.ownerDocument.defaultView.HTMLElement);
+    assert.equal(layer.hidden, true);
+    assert.equal(visibleHandleCount(view), 0);
     assert.ok(view.dom.querySelector('.block-drop-indicator'));
     assert.equal(view.dom.querySelector('.block-drop-indicator')?.hasAttribute('style'), false);
     layoutParagraphs(view, [100, 140, 180]);

@@ -462,6 +462,7 @@
   overflow: auto;
   overflow-anchor: none;
   padding: var(--page-gap);
+  position: relative;
 }
 
 .page-sheet {
