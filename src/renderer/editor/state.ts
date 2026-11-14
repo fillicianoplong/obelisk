@@ -1,6 +1,5 @@
 import { baseKeymap, chainCommands } from 'prosemirror-commands';
-import { history, redo, undo } from 'prosemirror-history';
-import { undoInputRule } from 'prosemirror-inputrules';
+import { redo, undo } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
 import type { Node } from 'prosemirror-model';
 import { EditorState, TextSelection } from 'prosemirror-state';
@@ -12,7 +11,7 @@ import { slashMenuKeymap, slashMenuPlugin } from './slash/slash-menu-plugin.js';
 import { editorFormatKeymap } from './format-commands.js';
 import { paragraphFormatKeymap } from './paragraph-format-commands.js';
 import { editorKeysKeymap } from './keymap/editor-keys.js';
-import { historyGroupingPlugin } from './keymap/history-groups.js';
+import { editorHistoryKeymap, editorHistoryPlugins } from './history/index.js';
 import { typedShortcutInputRulesPlugin } from './keymap/input-rules.js';
 import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-editing.js';
 import { softBreakKeymap } from './keymap/soft-break.js';
@@ -34,13 +33,8 @@ export function createTabEditorState(doc?: Node): EditorState {
     schema: editorSchema,
     ...(doc ? { doc } : {}),
     plugins: [
-      history({ newGroupDelay: 500 }),
-      historyGroupingPlugin(),
-      keymap({
-        'Mod-z': chainCommands(undoInputRule, undo),
-        'Mod-y': redo,
-        'Shift-Mod-z': redo,
-      }),
+      ...editorHistoryPlugins(),
+      keymap(editorHistoryKeymap()),
       keymap(slashMenuKeymap()),
       keymap(blockHandleKeymap()),
       keymap({
