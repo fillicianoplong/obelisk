@@ -183,6 +183,26 @@ export function syntheticMouseDown(extra = {}) {
     ...extra,
   });
 }
+
+export function syntheticMouseMove(extra = {}) {
+  const Ctor = globalThis.MouseEvent ?? Event;
+  return new Ctor('mousemove', {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    ...extra,
+  });
+}
+
+export function syntheticMouseUp(extra = {}) {
+  const Ctor = globalThis.MouseEvent ?? Event;
+  return new Ctor('mouseup', {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    ...extra,
+  });
+}
 export function dispatchEditorKeyDown(view, key, extra = {}) {
   const event = syntheticKeyDown(key, extra);
   const handled = view.someProp('handleKeyDown', (handler) => handler(view, event));

@@ -53,6 +53,18 @@
   outline-offset: var(--space-2xs);
 }
 
+.page-sheet[data-block-drag='true'] .block-handle {
+  cursor: grabbing;
+}
+
+.block-drop-indicator {
+  height: var(--size-block-drop-indicator);
+  margin: calc(var(--space-2xs) * -1) 0;
+  border-radius: var(--radius-control);
+  background: var(--color-accent);
+  pointer-events: none;
+}
+
 .page-sheet .ProseMirror-selectednode {
   outline: none;
 }
