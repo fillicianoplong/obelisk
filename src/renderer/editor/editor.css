@@ -1,6 +1,7 @@
 @import './layout/page.css';
 @import './format/csp-format.css';
 @import './block-handle-layout.css';
+@import './slash/slash-menu-layout.css';
 
 .page-region .page-sheet > .block-handle {
   display: block;

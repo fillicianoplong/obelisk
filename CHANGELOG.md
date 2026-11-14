@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.32.0] - 2026-11-12
+
+### Added
+
+- I can open the slash menu by typing `/` on an empty line. It lists the Slash menu reference items in order, and I can move through them with the arrow keys or close it with Esc, Backspace, or a click outside while the editor keeps focus. ([#157](https://github.com/fillicianoplong/obelisk/pull/157))
+
 ## [0.1.31.0] - 2026-11-02
 
 ### Added
