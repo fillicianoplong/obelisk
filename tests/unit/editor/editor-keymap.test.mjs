@@ -87,7 +87,7 @@ test('Shift+Tab at the start of a paragraph clears first-line indent', async () 
   }
 });
 
-test('Enter through the editor keymap keeps paragraph format and stored marks', async () => {
+test('Enter through the editor keymap keeps paragraph format and clears stored marks', async () => {
   const { applyCharacterMarksCommand } = await loadRenderer(formatUrl);
   const { view, restore } = await editorViewFromDocument(baseDocument([
     paragraph([{ type: 'text', text: 'Line one' }], {
@@ -110,7 +110,7 @@ test('Enter through the editor keymap keeps paragraph format and stored marks', 
     assert.equal(second.attrs.spaceBefore, 6);
     assert.equal(second.attrs.spaceAfter, 12);
     assert.equal(second.attrs.indentLeft, 0.5);
-    assert.ok(view.state.schema.marks.bold.isInSet(view.state.storedMarks ?? []));
+    assert.equal(view.state.storedMarks?.length ?? 0, 0);
   } finally {
     view.destroy();
     restore();

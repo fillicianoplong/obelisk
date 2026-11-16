@@ -16,6 +16,7 @@ test('the editor schema includes every text block node', async () => {
       'code_block',
       'doc',
       'foreign_block',
+      'hard_break',
       'heading',
       'horizontal_rule',
       'list_item',

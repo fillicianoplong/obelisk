@@ -6,6 +6,7 @@ import {
   blockHandlePluginKey,
   blockPosAtIndex,
   caretBlockIndex,
+  emptyBlockHandleState,
   selectedBlockRange,
 } from './block-handle-plugin.js';
 import type { BlockHandleState } from './block-handle-plugin.js';
@@ -109,7 +110,13 @@ export function finishBlockRangeTransaction(
   const start = Math.min(from, to);
   const end = Math.max(from, to);
   const nodePos = blockPosAtIndex(tr.doc, start);
-  const handleState: BlockHandleState = { anchor: start, from: start, to: end, drag: null };
+  const handleState: BlockHandleState = {
+    ...emptyBlockHandleState(),
+    anchor: start,
+    from: start,
+    to: end,
+    drag: null,
+  };
   return tr
     .setSelection(NodeSelection.create(tr.doc, nodePos))
     .setMeta('blockHandleKeep', true)

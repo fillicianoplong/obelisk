@@ -157,7 +157,7 @@ test('Format > Increase indent and Decrease indent move the left indent one step
   assert.equal(decreased.doc.child(0).attrs.indentLeft, 0);
 });
 
-test('Enter keeps paragraph format and active character marks on the new paragraph', async () => {
+test('Enter keeps paragraph format and clears stored marks on the new paragraph', async () => {
   const { createTabEditorState, insertText } = await loadRenderer(stateUrl);
   const { applyParagraphFormatForTest, splitParagraphKeepingFormat } = await loadRenderer(paragraphUrl);
   const { applyCharacterMarksForTest } = await loadRenderer(formatUrl);
@@ -195,5 +195,5 @@ test('Enter keeps paragraph format and active character marks on the new paragra
   assert.equal(second.attrs.spaceAfter, 12);
   assert.equal(second.attrs.indentLeft, 0.5);
   assert.notEqual(second.attrs.blockId, state.doc.child(0).attrs.blockId);
-  assert.ok(state.schema.marks.bold.isInSet(state.storedMarks ?? []));
+  assert.equal(state.storedMarks?.length ?? 0, 0);
 });

@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.33.0] - 2026-11-12
+
+### Added
+
+- Typed shortcuts from the Keyboard reference turn into the listed blocks and inline marks as I type, and Ctrl+Z right after a shortcut brings the typed characters back. Editor keys from the reference run from the keymap, including Ctrl+Enter for a page break. List Enter and Backspace exit empty items, Shift+Enter adds a soft line break inside text blocks, the hover block handle is a gutter bar with layout-neutral highlights, and neighboring list blocks sit closer together. ([#158](https://github.com/fillicianoplong/obelisk/pull/158))
+
 ## [0.1.32.0] - 2026-11-12
 
 ### Added
