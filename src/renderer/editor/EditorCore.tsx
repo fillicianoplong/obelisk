@@ -27,6 +27,7 @@ import {
   applyCharacterMarksCommand,
   formatMenuCommand,
 } from './format-commands.js';
+import { editorMenuCommand } from './menu-commands.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { AllSelection } from 'prosemirror-state';
 
@@ -170,6 +171,14 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
     runFormatMenu(menuId: string) {
       runWithSynchronousEditorUpdate(() => {
         const command = formatMenuCommand(menuId);
+        if (command !== null) {
+          command(view.state, view.dispatch.bind(view));
+        }
+      });
+    },
+    runMenuCommand(menuId: string) {
+      runWithSynchronousEditorUpdate(() => {
+        const command = editorMenuCommand(menuId);
         if (command !== null) {
           command(view.state, view.dispatch.bind(view));
         }

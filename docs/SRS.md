@@ -963,7 +963,7 @@ An item that needs more input before it acts ends with an ellipsis (…).
 | View | Pages; Pageless; Zoom in; Zoom out; Zoom to 100% (50% to 200%, 10% steps) |
 | Insert | Every block in the [*Slash menu reference*](#slash-menu-reference), in its order and groups; Date and time… replaces Date; Link… (Ctrl+K) follows it in group 5. |
 | Format | Text; Font; Font size; Paragraph…; Increase indent; Decrease indent; Clear formatting; Page setup…; Header and footer |
-| Tools | Spelling on or off; Settings |
+| Tools | Spell check; Settings |
 | Help | Keyboard shortcuts; About Obelisk |
 
 ### Keyboard reference

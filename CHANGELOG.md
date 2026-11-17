@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.35.0] - 2026-11-14
+
+### Added
+
+- The menu bar lists every item from the Menus reference. Items wire to existing commands where those exist; the rest stay visible but disabled until their handlers land. Enabled state follows selection, undo history, and the active tab. ([#160](https://github.com/fillicianoplong/obelisk/pull/160))
+
 ## [0.1.34.0] - 2026-11-14
 
 ### Added

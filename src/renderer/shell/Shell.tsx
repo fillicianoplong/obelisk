@@ -1,14 +1,15 @@
 import type { EditorState } from 'prosemirror-state';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { editorText } from '../editor/state.js';
 import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from '../../shared/ipc/types.js';
 import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
+import { liveMenus } from './menus/apply.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
-import { runActiveEditorFormatCommand } from './run-editor-format.js';
+import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { shellShortcut } from './shortcuts.js';
 import { StatusBar } from './statusbar/StatusBar.js';
 import { ClosePrompt } from './tabs/ClosePrompt.js';
@@ -465,12 +466,25 @@ export function Shell() {
         runSave('save-as');
         return;
       }
-      if (runActiveEditorFormatCommand(command)) {
+      if (runActiveEditorMenuCommand(command)) {
         return;
       }
     },
     [addTab, closeTabById, openDocument, openSettings, requestExit, runSave],
   );
+
+  const menuContext = useMemo(() => {
+    const documentTab = activeTab !== undefined && activeTab.kind !== 'settings';
+    const editorState = documentTab ? activeTab.editor : null;
+    const selectionEmpty = editorState?.selection.empty ?? true;
+    return {
+      documentTab,
+      selectionEmpty,
+      editorState: editorState ?? null,
+    };
+  }, [activeTab]);
+
+  const menus = useMemo(() => liveMenus(menuContext), [menuContext]);
 
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
@@ -564,7 +578,7 @@ export function Shell() {
       <ThemeSync />
       <FocusCycle />
       <TitleBar />
-      <MenuBar onCommand={onMenuCommand} />
+      <MenuBar menus={menus} onCommand={onMenuCommand} />
       {conflict !== null ? <SaveConflict onChoose={chooseConflict} /> : null}
       {closePromptTab !== undefined && conflict === null ? (
         <ClosePrompt tabTitle={closePromptTab.title} onChoose={chooseClosePrompt} />

@@ -142,13 +142,16 @@ test('hanging indent 0.5 in round-trips for Works Cited style', async () => {
   assert.deepEqual(built.document.blocks[0].indents, { left: 0, first: 0, hanging: 0.5 });
 });
 
-test('Format > Increase indent and Decrease indent move the left indent one step', async () => {
-  const { createTabEditorState } = await loadRenderer(stateUrl);
+test('Format > Increase indent and Decrease indent match Tab and Shift+Tab', async () => {
+  const { createTabEditorState, insertText } = await loadRenderer(stateUrl);
   const { runFormatMenuCommand } = await loadRenderer(formatUrl);
-  const { editorDocFromDocument } = await loadRenderer(mappingUrl);
-  const base = documentWithParagraph({});
-  let state = createTabEditorState(editorDocFromDocument(base));
+  let state = createTabEditorState();
+  state = insertText(state, 'Line');
   state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 1, 1)));
+  const firstLine = runFormatMenuCommand(state, 'format-indent-increase');
+  assert.ok(firstLine);
+  assert.equal(firstLine.doc.child(0).attrs.indentFirst, INDENT_STEP_IN * 2);
+  state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 3, 3)));
   const increased = runFormatMenuCommand(state, 'format-indent-increase');
   assert.ok(increased);
   assert.equal(increased.doc.child(0).attrs.indentLeft, INDENT_STEP_IN);

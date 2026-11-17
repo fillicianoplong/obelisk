@@ -287,6 +287,16 @@ test('keyboard code follows the menu data, including a menu added later', async 
   assert.equal(alpha.log[2].command, 'do-run');
 });
 
+test('the menu model matches the Menus reference labels', async () => {
+  const model = await loadRenderer(modelUrl);
+  const reference = await loadRenderer(new URL('../../../src/renderer/shell/menus/reference.ts', import.meta.url));
+  for (const menu of model.APP_MENUS) {
+    const expected = reference.MENU_REFERENCE_BY_MENU[menu.label];
+    assert.ok(expected, menu.label);
+    assert.deepEqual(reference.menuItemLabelsForReference(menu), [...expected], menu.label);
+  }
+});
+
 test('top menus use F E V I O T H, and each menu keeps its access keys unique', async () => {
   const { APP_MENUS, accessKeyIndex, accessibleName, isSeparator } = await menuModule();
   assert.deepEqual(

@@ -16,10 +16,11 @@ import {
   reduceMenuKey,
 } from './keyboard.js';
 import type { MenuResult, MenuSession } from './keyboard.js';
-import { APP_MENUS, accessParts, accessibleName, isSeparator, itemLabel, menuHasCheck } from './model.js';
-import type { MenuEntry, MenuItem } from './model.js';
+import { accessParts, accessibleName, isSeparator, itemLabel, menuHasCheck } from './model.js';
+import type { AppMenu, MenuEntry, MenuItem } from './model.js';
 
 interface MenuBarProps {
+  menus: readonly AppMenu[];
   onCommand: (command: string) => void;
 }
 
@@ -214,7 +215,7 @@ function MenuTrailing({ item, hasSubmenu }: { item: MenuItem; hasSubmenu: boolea
   );
 }
 
-export function MenuBar({ onCommand }: MenuBarProps) {
+export function MenuBar({ menus, onCommand }: MenuBarProps) {
   const [session, setSession] = useState<MenuSession>(initialMenuSession);
   const sessionRef = useRef(session);
   sessionRef.current = session;
@@ -246,7 +247,7 @@ export function MenuBar({ onCommand }: MenuBarProps) {
         return;
       }
       noteOutsideFocus(barRef.current, outsideFocus);
-      const result = reduceMenuKey(APP_MENUS, sessionRef.current, {
+      const result = reduceMenuKey(menus, sessionRef.current, {
         type: event.type === 'keyup' ? 'keyup' : 'keydown',
         key: event.key,
         altKey: event.altKey,
@@ -266,7 +267,7 @@ export function MenuBar({ onCommand }: MenuBarProps) {
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keyup', onKey, true);
     };
-  }, []);
+  }, [menus]);
 
   useLayoutEffect(() => {
     // Focus after the key event. Doing it in the key listener runs before the
@@ -359,7 +360,7 @@ export function MenuBar({ onCommand }: MenuBarProps) {
       ref={barRef}
       onPointerDown={onBarPointerDown}
     >
-      {APP_MENUS.map((menu, index) => {
+      {menus.map((menu, index) => {
         const open = session.menuId === menu.id && session.panels.length > 0;
         return (
           <div
@@ -393,10 +394,10 @@ export function MenuBar({ onCommand }: MenuBarProps) {
                 depth={0}
                 panels={session.panels}
                 onActivate={(itemId) => {
-                  applyResult(pointerActivate(APP_MENUS, sessionRef.current, itemId));
+                  applyResult(pointerActivate(menus, sessionRef.current, itemId));
                 }}
                 onHoverItem={(itemId) => {
-                  applyResult(pointerHoverItem(APP_MENUS, sessionRef.current, itemId));
+                  applyResult(pointerHoverItem(menus, sessionRef.current, itemId));
                 }}
               />
             ) : null}

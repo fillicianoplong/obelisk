@@ -250,10 +250,10 @@ export function paragraphMenuCommand(menuId: string): Command | null {
     return setHangingIndentCommand(hanging);
   }
   if (menuId === 'format-indent-increase') {
-    return stepLeftIndentCommand(1);
+    return tabIndentCommand();
   }
   if (menuId === 'format-indent-decrease') {
-    return stepLeftIndentCommand(-1);
+    return shiftTabIndentCommand();
   }
   return null;
 }
