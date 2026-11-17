@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.34.0] - 2026-11-14
+
+### Added
+
+- Each document tab keeps up to 100 undo and redo steps through Save until I close the tab; a reopened tab starts with an empty history stack. ([#159](https://github.com/fillicianoplong/obelisk/pull/159))
+
 ## [0.1.33.0] - 2026-11-12
 
 ### Added

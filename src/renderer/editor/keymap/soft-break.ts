@@ -1,6 +1,6 @@
 import type { Command } from 'prosemirror-state';
 import { editorSchema } from '../schema/index.js';
-import { markCloseHistoryGroup } from './history-groups.js';
+import { markCloseHistoryGroup } from '../history/groups.js';
 
 const SOFT_BREAK_PARENTS = new Set([
   'paragraph',

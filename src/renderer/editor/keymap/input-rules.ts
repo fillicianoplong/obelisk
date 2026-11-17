@@ -8,7 +8,7 @@ import { TextSelection } from 'prosemirror-state';
 import { newBlockId } from '../block-id.js';
 import { editorSchema } from '../schema/index.js';
 import { typedShortcutsAllowed } from './guards.js';
-import { markCloseHistoryGroup } from './history-groups.js';
+import { markCloseHistoryGroup } from '../history/groups.js';
 
 function blockIdAtTextblock(state: EditorState, pos: number): string {
   const blockId = state.doc.resolve(pos).parent.attrs.blockId;

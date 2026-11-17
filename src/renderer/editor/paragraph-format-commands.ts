@@ -18,7 +18,7 @@ import {
   INDENT_STEP_IN,
 } from './format/reference.js';
 import { newBlockId } from './block-id.js';
-import { markCloseHistoryGroup } from './keymap/history-groups.js';
+import { markCloseHistoryGroup } from './history/groups.js';
 
 type Align = (typeof ALIGNMENTS)[number];
 type LineSpacing = (typeof LINE_SPACINGS)[number];

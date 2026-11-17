@@ -5,7 +5,7 @@ import { canSplit } from 'prosemirror-transform';
 import { createTextBlockNode } from '../block-commands.js';
 import { newBlockId } from '../block-id.js';
 import { editorSchema } from '../schema/index.js';
-import { markCloseHistoryGroup } from './history-groups.js';
+import { markCloseHistoryGroup } from '../history/groups.js';
 
 interface ListItemContext {
   itemDepth: number;
