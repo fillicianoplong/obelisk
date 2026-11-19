@@ -47,6 +47,12 @@ export function pageFocusIsKeyboard(): boolean {
   return modality === 'keyboard';
 }
 
+/** After closing a transient overlay, return focus without the keyboard page ring. */
+export function resetPageFocusToPointer(page: HTMLElement): void {
+  modality = 'pointer';
+  page.removeAttribute('data-focus-source');
+}
+
 export function applyPageFocusSource(page: HTMLElement): void {
   const focused = page.ownerDocument.activeElement === page || page.matches(':focus');
   if (modality === 'keyboard' && focused) {

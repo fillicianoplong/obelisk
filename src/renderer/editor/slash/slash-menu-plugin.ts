@@ -2,6 +2,15 @@ import { NodeSelection, Plugin, PluginKey, TextSelection } from 'prosemirror-sta
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { blockHandleState } from '../block-handle-plugin.js';
+import {
+  applySlashMenuItem,
+  exactSlashCommandItem,
+  filteredSlashMenuRows,
+  firstFilteredIndex,
+  slashMenuContextActive,
+  slashTypedQuery,
+  slashTypedQueryFromSelection,
+} from './slash-commands.js';
 import { SLASH_MENU_ENTRIES, type SlashMenuRow } from './reference.js';
 
 export interface SlashMenuState {
@@ -26,10 +35,8 @@ function selectableEntries(): SlashMenuRow[] {
   return SLASH_MENU_ENTRIES.filter((entry): entry is SlashMenuRow => entry.type === 'item');
 }
 
-function firstEnabledIndex(): number {
-  const items = selectableEntries();
-  const found = items.findIndex((entry) => entry.enabled);
-  return found >= 0 ? found : 0;
+function rowByFlatIndex(index: number): SlashMenuRow | undefined {
+  return selectableEntries()[index];
 }
 
 function blockSelectionIsActive(state: EditorState): boolean {
@@ -66,24 +73,11 @@ export function shouldOpenSlashMenu(state: EditorState): boolean {
   return lineIsEmptyForSlash(state);
 }
 
-function slashContextValid(doc: EditorState['doc'], selection: EditorState['selection'], slashPos: number): boolean {
-  if (!(selection instanceof TextSelection) || !selection.empty) {
-    return false;
-  }
-  if (selection.head !== slashPos + 1) {
-    return false;
-  }
-  if (doc.textBetween(slashPos, slashPos + 1, '\0', '\0') !== '/') {
-    return false;
-  }
-  return true;
-}
-
 function openSlashMenuAt(tr: Transaction, slashPos: number): Transaction {
   return tr.setMeta(slashMenuPluginKey, {
     open: true,
     slashPos,
-    activeIndex: firstEnabledIndex(),
+    activeIndex: firstFilteredIndex(''),
   });
 }
 
@@ -103,22 +97,42 @@ export function closeSlashMenuCommand(): Command {
   };
 }
 
+function filteredActiveIndex(state: EditorState, menu: SlashMenuState): number {
+  const query = slashTypedQuery(state, menu.slashPos);
+  const visible = filteredSlashMenuRows(query);
+  const current = rowByFlatIndex(menu.activeIndex);
+  if (current !== undefined && visible.some((row) => row.item.id === current.item.id)) {
+    return menu.activeIndex;
+  }
+  return firstFilteredIndex(query);
+}
+
 function moveSlashMenu(delta: number): Command {
   return (state, dispatch) => {
     const menu = slashMenuState(state);
     if (!menu.open) {
       return false;
     }
-    const items = selectableEntries();
-    if (items.length === 0) {
+    const query = slashTypedQuery(state, menu.slashPos);
+    const visible = filteredSlashMenuRows(query);
+    if (visible.length === 0) {
       return false;
     }
-    let index = menu.activeIndex;
-    for (let step = 0; step < items.length; step += 1) {
-      index = (index + delta + items.length) % items.length;
-      if (items[index]?.enabled) {
-        if (dispatch !== undefined) {
-          dispatch(state.tr.setMeta(slashMenuPluginKey, { ...menu, activeIndex: index }));
+    const flat = selectableEntries();
+    const currentRow = rowByFlatIndex(menu.activeIndex);
+    let visibleIndex = currentRow === undefined
+      ? 0
+      : Math.max(0, visible.findIndex((row) => row.item.id === currentRow.item.id));
+    if (visibleIndex < 0) {
+      visibleIndex = 0;
+    }
+    for (let step = 0; step < visible.length; step += 1) {
+      visibleIndex = (visibleIndex + delta + visible.length) % visible.length;
+      const target = visible[visibleIndex];
+      if (target?.enabled) {
+        const flatIndex = flat.findIndex((row) => row.item.id === target.item.id);
+        if (flatIndex >= 0 && dispatch !== undefined) {
+          dispatch(state.tr.setMeta(slashMenuPluginKey, { ...menu, activeIndex: flatIndex }));
         }
         return true;
       }
@@ -128,15 +142,76 @@ function moveSlashMenu(delta: number): Command {
 }
 
 function confirmSlashMenuItem(): Command {
-  return (state, dispatch) => {
+  return (state, dispatch, view) => {
     const menu = slashMenuState(state);
     if (!menu.open) {
       return false;
     }
+    const row = rowByFlatIndex(filteredActiveIndex(state, menu));
+    if (row === undefined || !row.enabled || row.item.block === null) {
+      if (dispatch !== undefined) {
+        dispatch(closeSlashMenu(state.tr));
+      }
+      return true;
+    }
     if (dispatch !== undefined) {
-      dispatch(closeSlashMenu(state.tr));
+      const applied = applySlashMenuItem(state, menu.slashPos, row.item);
+      if (applied === null) {
+        dispatch(closeSlashMenu(state.tr));
+      } else {
+        dispatch(closeSlashMenu(applied));
+        view?.focus();
+      }
     }
     return true;
+  };
+}
+
+function applyExactSlashCommand(state: EditorState, slashPos: number): Transaction | null {
+  const item = exactSlashCommandItem(state, slashPos);
+  if (item === null || item.block === null) {
+    return null;
+  }
+  return applySlashMenuItem(state, slashPos, item);
+}
+
+function tryExactSlashOnBoundary(eventKey: string): Command {
+  return (state, dispatch, view) => {
+    if (slashMenuState(state).open) {
+      return false;
+    }
+  if (eventKey !== ' ' && eventKey !== 'Enter') {
+      return false;
+    }
+    if (!(state.selection instanceof TextSelection) || !state.selection.empty) {
+      return false;
+    }
+    const { $from } = state.selection;
+    if (!$from.parent.isTextblock || $from.parentOffset < 1) {
+      return false;
+    }
+    const lineStart = $from.start();
+    const slashPos = state.doc.textBetween(lineStart, $from.pos, '\0', '\0').lastIndexOf('/');
+    if (slashPos < 0) {
+      return false;
+    }
+    const absoluteSlash = lineStart + slashPos;
+    if (state.doc.textBetween(absoluteSlash, absoluteSlash + 1, '\0', '\0') !== '/') {
+      return false;
+    }
+    const item = exactSlashCommandItem(state, absoluteSlash);
+    if (item === null) {
+      return false;
+    }
+    if (dispatch !== undefined) {
+      const applied = applySlashMenuItem(state, absoluteSlash, item);
+      if (applied !== null) {
+        dispatch(applied);
+        view?.focus();
+        return true;
+      }
+    }
+    return false;
   };
 }
 
@@ -144,6 +219,10 @@ function backspaceOnSlashTrigger(): Command {
   return (state, dispatch) => {
     const menu = slashMenuState(state);
     if (!menu.open) {
+      return false;
+    }
+    const query = slashTypedQuery(state, menu.slashPos);
+    if (query.length > 0) {
       return false;
     }
     if (!(state.selection instanceof TextSelection) || !state.selection.empty) {
@@ -165,7 +244,9 @@ export function slashMenuKeymap(): Record<string, Command> {
     ArrowDown: moveSlashMenu(1),
     ArrowUp: moveSlashMenu(-1),
     Enter: confirmSlashMenuItem(),
+    Tab: confirmSlashMenuItem(),
     Backspace: backspaceOnSlashTrigger(),
+    'Shift-Enter': tryExactSlashOnBoundary('Enter'),
   };
 }
 
@@ -246,11 +327,9 @@ function renderSlashMenu(
     return;
   }
   panel.hidden = false;
-  const items = selectableEntries();
-  const active = items[menu.activeIndex] ?? items[firstEnabledIndex()];
-  const activeOptionId = active !== undefined
-    ? optionId(menu.activeIndex, active.item.id)
-    : undefined;
+  const query = slashTypedQuery(view.state, menu.slashPos);
+  const activeRow = rowByFlatIndex(filteredActiveIndex(view.state, menu));
+  const activeOptionId = activeRow !== undefined ? optionId(menu.activeIndex, activeRow.item.id) : undefined;
   list.setAttribute('role', 'listbox');
   list.setAttribute('aria-label', 'Insert block');
   if (activeOptionId !== undefined) {
@@ -258,21 +337,37 @@ function renderSlashMenu(
   } else {
     list.removeAttribute('aria-activedescendant');
   }
+  const visible = new Set(
+    query.length === 0
+      ? selectableEntries().map((row) => row.item.id)
+      : filteredSlashMenuRows(query).map((row) => row.item.id),
+  );
   const fragment = document.createDocumentFragment();
   let itemIndex = -1;
+  let pendingSeparator: HTMLLIElement | null = null;
   for (const entry of SLASH_MENU_ENTRIES) {
     if (entry.type === 'separator') {
-      const separator = document.createElement('li');
-      separator.className = 'slash-menu-separator';
-      separator.setAttribute('role', 'separator');
-      fragment.append(separator);
+      if (query.length === 0) {
+        pendingSeparator = document.createElement('li');
+        pendingSeparator.className = 'slash-menu-separator';
+        pendingSeparator.setAttribute('role', 'separator');
+      }
       continue;
     }
     itemIndex += 1;
+    if (!visible.has(entry.item.id)) {
+      continue;
+    }
+    if (pendingSeparator !== null) {
+      fragment.append(pendingSeparator);
+      pendingSeparator = null;
+    }
     const option = document.createElement('li');
     option.className = 'slash-menu-option';
     option.id = optionId(itemIndex, entry.item.id);
     option.setAttribute('role', 'option');
+    option.dataset.itemId = entry.item.id;
+    option.dataset.flatIndex = String(itemIndex);
     option.textContent = entry.item.label;
     const selected = itemIndex === menu.activeIndex;
     option.setAttribute('aria-selected', selected ? 'true' : 'false');
@@ -282,9 +377,7 @@ function renderSlashMenu(
     fragment.append(option);
   }
   list.replaceChildren(fragment);
-  if (menu.open) {
-    positionSlashMenu(view, panel, menu, positionSheet);
-  }
+  positionSlashMenu(view, panel, menu, positionSheet);
 }
 
 function positionSlashMenu(
@@ -306,7 +399,7 @@ function positionSlashMenu(
   const gap = 4;
   const rect = panel.getBoundingClientRect();
   const width = rect.width > 0 ? rect.width : 240;
-  const height = rect.height > 0 ? rect.height : 320;
+  const height = rect.height > 0 ? rect.height : 240;
   const placed = clampMenuPosition(coords.left, coords.bottom + gap, width, height, win);
   syncPositionRule(sheet, placed.left, placed.top);
 }
@@ -319,6 +412,20 @@ function outsideSlashMenu(target: EventTarget | null, root: HTMLElement, editor:
     return false;
   }
   return true;
+}
+
+function syncSlashMenuStateOnEdit(tr: Transaction, value: SlashMenuState): SlashMenuState {
+  if (!value.open) {
+    return value;
+  }
+  if (!slashMenuContextActive(tr.doc, tr.selection, value.slashPos)) {
+    return CLOSED;
+  }
+  const query = slashTypedQueryFromSelection(tr.doc, tr.selection, value.slashPos);
+  return {
+    ...value,
+    activeIndex: firstFilteredIndex(query),
+  };
 }
 
 export function slashMenuPlugin(): Plugin {
@@ -336,14 +443,26 @@ export function slashMenuPlugin(): Plugin {
         if (!value.open) {
           return value;
         }
-        if (!slashContextValid(tr.doc, tr.selection, value.slashPos) && (tr.selectionSet || tr.docChanged)) {
-          return CLOSED;
+        if (tr.selectionSet || tr.docChanged) {
+          return syncSlashMenuStateOnEdit(tr, value);
         }
         return value;
       },
     },
     props: {
       handleTextInput(view, from, to, text) {
+        const menu = slashMenuState(view.state);
+        if (menu.open) {
+          if (text === ' ') {
+            const applied = applyExactSlashCommand(view.state, menu.slashPos);
+            if (applied !== null) {
+              view.dispatch(closeSlashMenu(applied));
+              view.focus();
+              return true;
+            }
+          }
+          return false;
+        }
         if (text !== '/') {
           return false;
         }
@@ -353,6 +472,21 @@ export function slashMenuPlugin(): Plugin {
         const tr = openSlashMenuAt(view.state.tr.insertText('/', from, to), from);
         view.dispatch(tr);
         return true;
+      },
+      handleKeyDown(view, event) {
+        if (slashMenuState(view.state).open && (event.key === 'Enter' || event.key === 'Tab')) {
+          if (confirmSlashMenuItem()(view.state, view.dispatch, view)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+        if (!slashMenuState(view.state).open && (event.key === ' ' || event.key === 'Enter')) {
+          if (tryExactSlashOnBoundary(event.key)(view.state, view.dispatch, view)) {
+            event.preventDefault();
+            return true;
+          }
+        }
+        return false;
       },
     },
     view(editorView) {
@@ -380,15 +514,72 @@ export function slashMenuPlugin(): Plugin {
       const installed = tryInstallPositionSheet(doc, win);
       const positionSheet = installed?.sheet ?? null;
 
+      list.addEventListener('mousedown', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const option = target.closest('.slash-menu-option');
+        if (!(option instanceof HTMLElement)) {
+          return;
+        }
+        event.preventDefault();
+        const flatIndex = Number(option.dataset.flatIndex);
+        const row = rowByFlatIndex(flatIndex);
+        if (row === undefined || !row.enabled || row.item.block === null) {
+          return;
+        }
+        const menu = slashMenuState(editorView.state);
+        if (!menu.open) {
+          return;
+        }
+        const applied = applySlashMenuItem(editorView.state, menu.slashPos, row.item);
+        if (applied !== null) {
+          editorView.dispatch(closeSlashMenu(applied));
+          editorView.focus();
+        }
+      });
+
+      list.addEventListener('mouseover', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const option = target.closest('.slash-menu-option');
+        if (!(option instanceof HTMLElement)) {
+          return;
+        }
+        const flatIndex = Number(option.dataset.flatIndex);
+        if (!Number.isInteger(flatIndex)) {
+          return;
+        }
+        const menu = slashMenuState(editorView.state);
+        if (!menu.open || menu.activeIndex === flatIndex) {
+          return;
+        }
+        editorView.dispatch(editorView.state.tr.setMeta(slashMenuPluginKey, { ...menu, activeIndex: flatIndex }));
+      });
+
       const onDocumentMouseDown = (event: MouseEvent) => {
         if (!slashMenuState(editorView.state).open) {
           return;
         }
         if (outsideSlashMenu(event.target, root, editorView.dom)) {
           editorView.dispatch(closeSlashMenu(editorView.state.tr));
+          editorView.focus();
         }
       };
       doc.addEventListener('mousedown', onDocumentMouseDown, true);
+
+      const onKey = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && slashMenuState(editorView.state).open) {
+          editorView.dispatch(closeSlashMenu(editorView.state.tr));
+          editorView.focus();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      };
+      doc.addEventListener('keydown', onKey, true);
 
       const update = () => {
         const menu = slashMenuState(editorView.state);
@@ -400,7 +591,12 @@ export function slashMenuPlugin(): Plugin {
         update(view, prevState) {
           const was = slashMenuState(prevState);
           const now = slashMenuState(view.state);
-          if (was.open !== now.open || was.activeIndex !== now.activeIndex || was.slashPos !== now.slashPos) {
+          if (
+            was.open !== now.open
+            || was.activeIndex !== now.activeIndex
+            || was.slashPos !== now.slashPos
+            || view.state.doc !== prevState.doc
+          ) {
             update();
           } else if (now.open && view.state.selection !== prevState.selection) {
             positionSlashMenu(view, panel, now, positionSheet);
@@ -408,6 +604,7 @@ export function slashMenuPlugin(): Plugin {
         },
         destroy() {
           doc.removeEventListener('mousedown', onDocumentMouseDown, true);
+          doc.removeEventListener('keydown', onKey, true);
           root.remove();
           installed?.release();
         },

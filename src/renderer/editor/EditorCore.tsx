@@ -30,6 +30,7 @@ import {
 import { editorMenuCommand } from './menu-commands.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { AllSelection } from 'prosemirror-state';
+import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
 
 interface EditorCoreProps {
   tabId: string;
@@ -277,8 +278,11 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
       publish(editorView, next);
     };
 
+    const viewState = state.reconfigure({
+      plugins: [...state.plugins, contextMenuEditorPlugin(ownedTabId)],
+    });
     const view = new EditorView(host, {
-      state,
+      state: viewState,
       attributes: {
         'aria-label': DOCUMENT_LABEL,
         class: 'page-sheet',

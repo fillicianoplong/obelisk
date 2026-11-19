@@ -19,6 +19,60 @@ const NEEDS_RANGE = new Set([
 ]);
 
 /** Present in the menu bar but not wired to a handler yet. */
+export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
+  'ctx-spelling',
+  'block-insert-above',
+  'block-insert-below',
+  'block-turn-into-text',
+  'block-turn-into-heading-1',
+  'block-turn-into-heading-2',
+  'block-turn-into-heading-3',
+  'block-turn-into-bulleted',
+  'block-turn-into-numbered',
+  'block-turn-into-checklist',
+  'block-turn-into-quote',
+  'block-turn-into-code',
+  'table-insert-row-above',
+  'table-insert-row-below',
+  'table-insert-column-left',
+  'table-insert-column-right',
+  'table-delete-row',
+  'table-delete-column',
+  'table-sort-ascending',
+  'table-sort-descending',
+  'table-header-row',
+  'image-alt-text',
+  'image-rotate-left',
+  'image-rotate-right',
+  'image-flip-horizontal',
+  'image-flip-vertical',
+  'image-draw',
+  'image-reset-size',
+  'image-replace',
+  'equation-edit-latex',
+  'equation-copy-latex',
+  'column-add',
+  'column-remove',
+  'column-even-widths',
+  'drawing-clear',
+  'drawing-reset-size',
+  'diagram-edit-source',
+  'diagram-copy-source',
+  'signature-change',
+  'signature-edit-labels',
+  'signature-blank-mode',
+  'signature-reset-size',
+  'link-open',
+  'link-edit',
+  'link-remove',
+  'inline-equation-edit',
+  'inline-equation-copy',
+  'date-time-edit',
+  'date-time-format',
+  'date-time-convert',
+  'date-time-remove',
+]);
+
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'edit-cut',
   'edit-copy',
@@ -74,7 +128,7 @@ function hasSubmenu(item: MenuItem): boolean {
 }
 
 function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
-  if (UNWIRED_MENU_IDS.has(item.id)) {
+  if (UNWIRED_MENU_IDS.has(item.id) || CONTEXT_ONLY_UNWIRED.has(item.id)) {
     return false;
   }
   if (SHELL_ALWAYS.has(item.id)) {
@@ -95,12 +149,19 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
   ) {
     return false;
   }
-  return editorMenuCommandEnabled(context.editorState, item.id);
+  try {
+    return editorMenuCommandEnabled(context.editorState, item.id);
+  } catch {
+    return false;
+  }
 }
 
 function submenuParentEnabled(item: MenuItem, context: LiveMenuContext): boolean {
   if (item.id === 'file-export' || item.id === 'file-template') {
     return true;
+  }
+  if (item.id === 'block-turn-into') {
+    return context.documentTab && context.editorState !== null;
   }
   if (item.id.startsWith('format-') && hasSubmenu(item)) {
     return context.documentTab && context.editorState !== null;
@@ -129,4 +190,11 @@ export function liveMenus(context: LiveMenuContext): readonly AppMenu[] {
     ...menu,
     entries: applyEntries(menu.entries, context),
   }));
+}
+
+export function liveMenuEntries(
+  entries: readonly MenuEntry[],
+  context: LiveMenuContext,
+): readonly MenuEntry[] {
+  return applyEntries(entries, context);
 }

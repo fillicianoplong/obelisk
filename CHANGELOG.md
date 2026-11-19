@@ -2,6 +2,44 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.36.4] - 2026-11-18
+
+### Fixed
+
+- Right-clicking empty sheet space no longer whites out the renderer: gutter opens the block menu only after the context-menu selection is marked as pointer input (so EditorCore does not drop it), menu enabled checks no longer build delete/move transactions during a dry run, and the shell shows a logged error boundary if React still throws while composing the menu.
+- Block hover and the handle appear only over a block’s content box (not the sheet margin, gap above a block, or trailing empty space), while the handle stays reachable from the block.
+
+## [0.1.36.3] - 2026-11-18
+
+### Fixed
+
+- Right-click on sheet gutters, padding, and empty page space no longer crashes the renderer when ProseMirror returns a non-text caret position.
+- The block context menu closes on an outside pointer or mouse press anywhere in the window.
+- After any context menu closes, including outside click then Escape, the caret returns to the block without a keyboard focus ring on the page.
+
+## [0.1.36.2] - 2026-11-17
+
+### Fixed
+
+- Right-clicking empty space below the last block no longer crashes the renderer; the menu targets the nearest block and trailing sheet space highlights that block on hover.
+- The slash menu panel shrinks when filtering instead of leaving empty rows.
+- The block context menu closes on an outside click, like the slash menu.
+- Escape on the block context menu returns the caret to the block without a keyboard focus ring on the page.
+
+## [0.1.36.1] - 2026-11-17
+
+### Fixed
+
+- Context-menu flyouts sit beside the parent menu with a gap and flip left when there is not enough room.
+- Block-target vs text-target context menus follow the Context menus reference on every block type, including the block handle, the gutter, and Esc-then-Shift+F10 for block selection.
+- The slash menu filters as I type, accepts Enter, Tab, and click, closes on Escape or an outside click, and turns the current line into the chosen block in place (including exact `/command` plus Space or Enter).
+
+## [0.1.36.0] - 2026-11-15
+
+### Added
+
+- Right-click, Shift+F10, and the Menu key open the same context menu on the block or text I point at. Each menu follows the Context menus reference and reuses the menu bar’s command wiring; items without handlers stay visible but disabled. ([#PR](https://github.com/fillicianoplong/obelisk/pull/PR))
+
 ## [0.1.35.0] - 2026-11-14
 
 ### Added

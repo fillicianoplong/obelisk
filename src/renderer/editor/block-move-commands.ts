@@ -1,5 +1,5 @@
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection, TextSelection } from 'prosemirror-state';
 import { Node as ProseNode } from 'prosemirror-model';
 import { newBlockId } from './block-id.js';
 import {
@@ -158,12 +158,12 @@ function runBlockMove(
   if (moved === null) {
     return false;
   }
-  const dropIndex = direction === 'up' ? from - 1 : to + 2;
-  const nextRange = selectionAfterMove(from, to, dropIndex);
-  const tr = finishBlockRangeTransaction(moved, nextRange.from, nextRange.to);
   if (dispatch === undefined) {
     return true;
   }
+  const dropIndex = direction === 'up' ? from - 1 : to + 2;
+  const nextRange = selectionAfterMove(from, to, dropIndex);
+  const tr = finishBlockRangeTransaction(moved, nextRange.from, nextRange.to);
   dispatch(tr);
   return true;
 }
@@ -176,13 +176,45 @@ export function moveBlocksDownCommand(): Command {
   return (state, dispatch) => runBlockMove(state, 'down', dispatch);
 }
 
-export function duplicateBlocksCommand(): Command {
+export function deleteSelectedBlocksCommand(): Command {
   return (state, dispatch) => {
     const { from, to } = activeBlockRange(state);
-    const tr = duplicateBlocksInRange(state.tr, from, to, newBlockId);
+    if (from < 0 || to >= state.doc.childCount) {
+      return false;
+    }
+    if (state.doc.childCount === 1 && from === 0 && to === 0) {
+      return false;
+    }
     if (dispatch === undefined) {
       return true;
     }
+    let tr = deleteBlockRange(state.tr, from, to);
+    if (tr.doc.childCount === 0) {
+      return false;
+    }
+    const nextIndex = Math.min(from, tr.doc.childCount - 1);
+    const inner = blockPosAtIndex(tr.doc, nextIndex) + 1;
+    try {
+      tr = tr.setSelection(TextSelection.create(tr.doc, inner));
+    } catch {
+      const pos = Math.max(0, Math.min(inner, tr.doc.content.size));
+      tr = tr.setSelection(TextSelection.near(tr.doc.resolve(pos), -1));
+    }
+    dispatch(tr);
+    return true;
+  };
+}
+
+export function duplicateBlocksCommand(): Command {
+  return (state, dispatch) => {
+    const { from, to } = activeBlockRange(state);
+    if (from < 0 || to >= state.doc.childCount) {
+      return false;
+    }
+    if (dispatch === undefined) {
+      return true;
+    }
+    const tr = duplicateBlocksInRange(state.tr, from, to, newBlockId);
     dispatch(tr);
     return true;
   };

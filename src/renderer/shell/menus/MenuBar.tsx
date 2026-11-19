@@ -4,7 +4,6 @@ import { announceFocusRegion } from '../focus/bind.js';
 import { onMenuRegionLeave } from '../focus/menu-leave.js';
 import { MENU_BAR_LABEL, PAGE_REGION } from '../focus/regions.js';
 import { commitPageKeyboardFocus } from '../page-focus.js';
-import { MenuCheck, MenuChevron } from './icons.js';
 import {
   accessKeysVisible,
   initialMenuSession,
@@ -16,8 +15,8 @@ import {
   reduceMenuKey,
 } from './keyboard.js';
 import type { MenuResult, MenuSession } from './keyboard.js';
-import { accessParts, accessibleName, isSeparator, itemLabel, menuHasCheck } from './model.js';
-import type { AppMenu, MenuEntry, MenuItem } from './model.js';
+import { focusMenuItemId, MenuItems, MenuText } from './MenuTree.js';
+import type { AppMenu } from './model.js';
 
 interface MenuBarProps {
   menus: readonly AppMenu[];
@@ -57,162 +56,11 @@ function focusWorkSurface(): void {
   }
 }
 
-function focusTargetId(session: MenuSession): string | null {
-  if (!session.keyboard) {
-    return null;
-  }
-  if (session.panels.length === 0) {
-    return session.menuId === null ? null : `menu-top-${session.menuId}`;
-  }
-  const focused = session.panels[session.panels.length - 1];
-  if (focused !== null && focused !== undefined) {
-    return `menu-item-${focused}`;
-  }
-  const depth = session.panels.length - 1;
-  const owner = depth === 0 ? session.menuId : session.panels[depth - 1];
-  if (owner === null || owner === undefined) {
-    return null;
-  }
-  return `menu-panel-${owner}`;
-}
-
 function topTabIndex(menuId: string, session: MenuSession, index: number): 0 | -1 {
   if (session.menuId !== null) {
     return session.menuId === menuId ? 0 : -1;
   }
   return index === 0 ? 0 : -1;
-}
-
-function MenuText({
-  label,
-  accessKey,
-  occurrence,
-  ellipsis,
-}: {
-  label: string;
-  accessKey: string;
-  occurrence?: number;
-  ellipsis?: boolean;
-}) {
-  const mark = ellipsis === true ? '…' : '';
-  const parts = accessParts(label, accessKey, occurrence ?? 0);
-  if (parts === null) {
-    return (
-      <>
-        {label}
-        {mark}
-      </>
-    );
-  }
-  return (
-    <>
-      {parts.before}
-      <span className="menu-key">{parts.key}</span>
-      {parts.after}
-      {mark}
-    </>
-  );
-}
-
-function MenuItems({
-  ownerId,
-  label,
-  entries,
-  depth,
-  panels,
-  onActivate,
-  onHoverItem,
-}: {
-  ownerId: string;
-  label: string;
-  entries: readonly MenuEntry[];
-  depth: number;
-  panels: readonly (string | null)[];
-  onActivate: (itemId: string) => void;
-  onHoverItem: (itemId: string) => void;
-}) {
-  const focusedId = panels[depth] ?? null;
-  const submenuOwner = panels.length > depth + 1 ? panels[depth] : null;
-  const reserveCheck = menuHasCheck(entries);
-  return (
-    <div className="menu-panel" id={`menu-panel-${ownerId}`} role="menu" aria-label={label} tabIndex={-1}>
-      {entries.map((entry) => {
-        if (isSeparator(entry)) {
-          return <div key={entry.id} className="menu-separator" role="separator" />;
-        }
-        const open = submenuOwner === entry.id && entry.submenu !== undefined;
-        const hasSubmenu = entry.submenu !== undefined && entry.submenu.length > 0;
-        return (
-          <div key={entry.id} className="menu-item-slot">
-            <button
-              type="button"
-              className="menu-item"
-              id={`menu-item-${entry.id}`}
-              role="menuitem"
-              tabIndex={-1}
-              aria-label={accessibleName(entry)}
-              aria-disabled={entry.enabled ? undefined : true}
-              aria-haspopup={hasSubmenu ? 'menu' : undefined}
-              aria-expanded={hasSubmenu ? open : undefined}
-              aria-controls={open ? `menu-panel-${entry.id}` : undefined}
-              data-item={entry.id}
-              data-command={entry.command}
-              data-focused={focusedId === entry.id ? 'true' : undefined}
-              data-open={open ? 'true' : undefined}
-              onMouseDown={(event) => {
-                // A press would focus the button and the focus ring would follow the pointer.
-                event.preventDefault();
-              }}
-              onMouseEnter={() => {
-                onHoverItem(entry.id);
-              }}
-              onClick={() => {
-                onActivate(entry.id);
-              }}
-            >
-              {reserveCheck ? (
-                <span className="menu-check" aria-hidden="true">
-                  {entry.checked === true ? <MenuCheck /> : null}
-                </span>
-              ) : null}
-              <span className="menu-label">
-                <MenuText
-                  label={entry.label}
-                  accessKey={entry.accessKey}
-                  occurrence={entry.accessOccurrence}
-                  ellipsis={entry.ellipsis}
-                />
-              </span>
-              <MenuTrailing item={entry} hasSubmenu={hasSubmenu} />
-            </button>
-            {open && entry.submenu !== undefined ? (
-              <MenuItems
-                ownerId={entry.id}
-                label={itemLabel(entry)}
-                entries={entry.submenu}
-                depth={depth + 1}
-                panels={panels}
-                onActivate={onActivate}
-                onHoverItem={onHoverItem}
-              />
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function MenuTrailing({ item, hasSubmenu }: { item: MenuItem; hasSubmenu: boolean }) {
-  if (item.shortcut === undefined && !hasSubmenu) {
-    return null;
-  }
-  return (
-    <span className="menu-trailing">
-      {item.shortcut !== undefined ? <span className="menu-shortcut">{item.shortcut}</span> : null}
-      {hasSubmenu ? <MenuChevron /> : null}
-    </span>
-  );
 }
 
 export function MenuBar({ menus, onCommand }: MenuBarProps) {
@@ -306,7 +154,7 @@ export function MenuBar({ menus, onCommand }: MenuBarProps) {
         focusWorkSurface();
         return;
       }
-      const id = focusTargetId(session);
+      const id = focusMenuItemId(session);
       if (id === null) {
         return;
       }

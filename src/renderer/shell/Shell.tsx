@@ -7,6 +7,7 @@ import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from 
 import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
 import { liveMenus } from './menus/apply.js';
+import { ContextMenu } from './contextmenu/ContextMenu.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
@@ -579,6 +580,9 @@ export function Shell() {
       <FocusCycle />
       <TitleBar />
       <MenuBar menus={menus} onCommand={onMenuCommand} />
+      {activeTab.kind !== 'settings' ? (
+        <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
+      ) : null}
       {conflict !== null ? <SaveConflict onChoose={chooseConflict} /> : null}
       {closePromptTab !== undefined && conflict === null ? (
         <ClosePrompt tabTitle={closePromptTab.title} onChoose={chooseClosePrompt} />

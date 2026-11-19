@@ -113,22 +113,6 @@ test('typing / mid-text inserts a slash and does not open the menu', async () =>
   }
 });
 
-test('Escape closes the slash menu and leaves the slash in place', async () => {
-  const { slashMenuState } = await loadRenderer(slashUrl);
-  const { view, restore } = await editorViewFromBlocks([paragraph()]);
-  try {
-    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
-    dispatchEditorTextInput(view, '/');
-    assert.equal(slashMenuState(view.state).open, true);
-    dispatchEditorKeyDown(view, 'Escape');
-    assert.equal(slashMenuState(view.state).open, false);
-    assert.equal(view.dom.textContent, '/');
-  } finally {
-    view.destroy();
-    restore();
-  }
-});
-
 test('Backspace on the slash closes the menu', async () => {
   const { slashMenuState } = await loadRenderer(slashUrl);
   const { view, restore } = await editorViewFromBlocks([paragraph()]);
@@ -206,16 +190,91 @@ test('ArrowDown moves the highlighted slash menu option', async () => {
   }
 });
 
-test('Enter on a slash menu item closes the menu without changing the document', async () => {
+test('Enter converts the current line into the selected slash item', async () => {
   const { slashMenuState } = await loadRenderer(slashUrl);
   const { view, restore } = await editorViewFromBlocks([paragraph()]);
   try {
     view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
     dispatchEditorTextInput(view, '/');
-    const blocksBefore = view.state.doc.childCount;
     dispatchEditorKeyDown(view, 'Enter');
     assert.equal(slashMenuState(view.state).open, false);
-    assert.equal(view.state.doc.childCount, blocksBefore);
+    assert.equal(view.state.doc.child(0).type.name, 'paragraph');
+    assert.equal(view.dom.textContent, '');
+    assert.equal(view.state.selection.head, 1);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('typing after / filters the slash menu', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    view.dispatch(view.state.tr.insertText('li', 2));
+    assert.equal(slashMenuState(view.state).open, true);
+    const labels = menuLabels(view);
+    assert.ok(labels.includes('Bulleted list'));
+    assert.equal(labels.includes('Table'), false);
+    const panel = view.dom.parentElement.querySelector('.slash-menu-panel');
+    const options = view.dom.parentElement.querySelectorAll('.slash-menu-option');
+    assert.ok(panel);
+    const optionHeight = 40;
+    assert.ok(
+      panel.getBoundingClientRect().height <= options.length * optionHeight + 24,
+      `panel height ${panel.getBoundingClientRect().height} for ${options.length} options`,
+    );
+    assert.equal(panel.querySelectorAll('.slash-menu-separator').length, 0);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('clicking a slash item converts the current block', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    const list = view.dom.parentElement.querySelector('.slash-menu-option[data-item-id="quote"]');
+    assert.ok(list);
+    list.dispatchEvent(syntheticMouseDown());
+    assert.equal(slashMenuState(view.state).open, false);
+    assert.equal(view.state.doc.child(0).type.name, 'blockquote');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('/list and Space convert in place', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    view.dispatch(view.state.tr.insertText('list', 2));
+    dispatchEditorTextInput(view, ' ');
+    assert.equal(slashMenuState(view.state).open, false);
+    assert.equal(view.state.doc.child(0).type.name, 'bullet_list');
+    assert.equal(view.dom.textContent, '');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Escape closes the slash menu and leaves the typed slash', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    dispatchEditorKeyDown(view, 'Escape');
+    assert.equal(slashMenuState(view.state).open, false);
     assert.equal(view.dom.textContent, '/');
   } finally {
     view.destroy();

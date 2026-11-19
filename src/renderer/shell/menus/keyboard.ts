@@ -135,6 +135,35 @@ export function pointerDismiss(session: MenuSession): MenuResult {
   return dismiss(session, false);
 }
 
+/** Dismiss a pointer-open context menu and return focus to the editor. */
+export function pointerDismissContextMenu(session: MenuSession): MenuResult {
+  if (!session.keyboard && session.menuId === null && session.panels.length === 0) {
+    return ignore(session);
+  }
+  return dismiss(session, true);
+}
+
+/** Open a root context menu at the pointer. */
+export function pointerOpenContextMenu(menuId: string): MenuResult {
+  return accept({
+    ...initialMenuSession(),
+    escToBar: false,
+    menuId,
+    panels: [null],
+  });
+}
+
+/** Open a root context menu from Shift+F10 or the Menu key. */
+export function keyboardOpenContextMenu(menuId: string): MenuResult {
+  return accept({
+    ...initialMenuSession(),
+    keyboard: true,
+    escToBar: false,
+    menuId,
+    panels: [null],
+  });
+}
+
 function onKeyUp(menus: readonly AppMenu[], session: MenuSession, event: MenuKeyEvent): MenuResult {
   if (event.key !== 'Alt' || !session.altDown) {
     return ignore(session);

@@ -124,6 +124,20 @@ function createWindow(theme: ThemeSetting): void {
     console.error(`Renderer failed to load (${errorCode}): ${errorDescription} ${validatedURL}`);
   });
 
+  window.webContents.on('render-process-gone', (_event, details) => {
+    console.error(
+      `Renderer process gone: reason=${details.reason} exitCode=${details.exitCode}`,
+    );
+  });
+
+  window.webContents.on('unresponsive', () => {
+    console.error('Renderer became unresponsive');
+  });
+
+  window.webContents.on('responsive', () => {
+    console.error('Renderer became responsive again');
+  });
+
   watchThemeFrame({
     nativeTheme,
     window,

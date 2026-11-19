@@ -1,7 +1,7 @@
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
 import type { Node as ProseNode } from 'prosemirror-model';
-import { NodeSelection, TextSelection } from 'prosemirror-state';
+import { NodeSelection, TextSelection, type Selection } from 'prosemirror-state';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
@@ -112,6 +112,56 @@ export function setBlockHandleHover(view: EditorView, blockIndex: number | null)
   dispatchHover(view, blockIndex, blockIndex !== null);
 }
 
+function pointerOverBlockContentBox(
+  view: EditorView,
+  blockIndex: number,
+  clientX: number,
+  clientY: number,
+): boolean {
+  const blockEl = blockContentElement(view, blockIndex);
+  if (blockEl === null) {
+    return false;
+  }
+  const rect = blockEl.getBoundingClientRect();
+  return clientX >= rect.left
+    && clientX <= rect.right
+    && clientY >= rect.top
+    && clientY <= rect.bottom;
+}
+
+function pointerInBlockHandleHit(
+  view: EditorView,
+  blockIndex: number,
+  clientX: number,
+  clientY: number,
+): boolean {
+  const layer = view.dom.ownerDocument.querySelector('.block-handle-layer');
+  if (!(layer instanceof HTMLElement)) {
+    return false;
+  }
+  const handle = layer.querySelector(`.block-handle[data-block-index="${blockIndex}"]`);
+  if (!(handle instanceof HTMLElement) || handle.hidden) {
+    return false;
+  }
+  const rect = handle.getBoundingClientRect();
+  return clientX >= rect.left
+    && clientX <= rect.right
+    && clientY >= rect.top
+    && clientY <= rect.bottom;
+}
+
+function hoverBlockIndexFromPointer(view: EditorView, event: MouseEvent): number | null {
+  const index = blockIndexFromPointer(view, event);
+  if (index !== null && pointerOverBlockContentBox(view, index, event.clientX, event.clientY)) {
+    return index;
+  }
+  const current = blockHandleState(view.state).hoverBlock;
+  if (current !== null && pointerInBlockHandleHit(view, current, event.clientX, event.clientY)) {
+    return current;
+  }
+  return null;
+}
+
 function blockIndexFromPointer(view: EditorView, event: MouseEvent): number | null {
   if (!(event.target instanceof HTMLElement)) {
     return null;
@@ -122,15 +172,24 @@ function blockIndexFromPointer(view: EditorView, event: MouseEvent): number | nu
   if (!view.dom.contains(event.target)) {
     return null;
   }
-  try {
-    const hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
-    if (hit === null) {
-      return null;
-    }
-    return blockIndexAtPos(view.state.doc, hit.pos);
-  } catch {
+  const { doc } = view.state;
+  if (doc.childCount === 0) {
     return null;
   }
+  try {
+    const hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
+    if (hit !== null) {
+      const index = blockIndexAtPos(doc, hit.pos);
+      if (index >= doc.childCount) {
+        return doc.childCount - 1;
+      }
+      return index;
+    }
+  } catch {
+    // Fall through to geometry.
+  }
+  const drop = dropIndexFromClientY(view, event.clientY);
+  return drop >= doc.childCount ? doc.childCount - 1 : drop;
 }
 
 function selectBlocks(
@@ -462,6 +521,19 @@ function textSelectionForBlockSelectionClear(
   return selectionFromEditorGeometry(base, view, event, base.doc);
 }
 
+function textSelectionAtResolved(tr: Transaction, doc: ProseNode, pos: number): Transaction {
+  try {
+    const $pos = doc.resolve(Math.max(0, Math.min(pos, doc.content.size)));
+    return tr.setSelection(TextSelection.near($pos, 1));
+  } catch {
+    return tr;
+  }
+}
+
+function markPointerSelection(tr: Transaction): Transaction {
+  return tr.setMeta('pointer', true).setMeta('uiEvent', 'contextmenu');
+}
+
 export function textSelectionForEditorPointer(
   view: EditorView,
   event: MouseEvent,
@@ -477,9 +549,26 @@ export function textSelectionForEditorPointer(
     }
   })();
   if (hit) {
-    return tr.setSelection(TextSelection.create(doc, hit.pos));
+    try {
+      return markPointerSelection(tr.setSelection(TextSelection.create(doc, hit.pos)));
+    } catch {
+      return markPointerSelection(textSelectionAtResolved(tr, doc, hit.pos));
+    }
   }
-  return selectionFromEditorGeometry(tr, view, event, doc);
+  return markPointerSelection(selectionFromEditorGeometry(tr, view, event, doc));
+}
+
+export function textSelectionFromDocumentCoords(doc: ProseNode, anchor: number, head: number): Selection {
+  try {
+    return TextSelection.create(doc, anchor, head);
+  } catch {
+    const pos = Math.max(0, Math.min(head, doc.content.size));
+    const near = TextSelection.near(doc.resolve(pos), -1);
+    if (near instanceof TextSelection) {
+      return near;
+    }
+    return TextSelection.atEnd(doc);
+  }
 }
 
 export function clearBlockSelectionForPointerClick(view: EditorView, event: MouseEvent): boolean {
@@ -833,9 +922,12 @@ export function blockHandlePlugin(): Plugin {
           if (event.target.closest('.block-handle') !== null) {
             return false;
           }
-          const index = blockIndexFromPointer(view, event);
+          const index = hoverBlockIndexFromPointer(view, event);
+          const handleState = blockHandleState(view.state);
           if (index !== null) {
             dispatchHover(view, index, false);
+          } else if (!handleState.hoverPinned && handleState.drag === null) {
+            dispatchHover(view, null, false);
           }
           return false;
         },

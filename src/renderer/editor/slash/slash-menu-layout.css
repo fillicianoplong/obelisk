@@ -16,12 +16,14 @@
   border-radius: var(--radius-overlay);
   box-shadow: var(--shadow-menu);
   color: var(--color-text-primary);
+  height: fit-content;
   max-height: min(var(--size-slash-menu-max-height), calc(100vh - var(--space-m) * 2));
   max-width: min(var(--size-slash-menu-max-width), calc(100vw - var(--space-m) * 2));
   overflow: auto;
   padding: var(--space-xs) 0;
   pointer-events: auto;
   position: fixed;
+  width: fit-content;
 }
 
 .slash-menu-list {

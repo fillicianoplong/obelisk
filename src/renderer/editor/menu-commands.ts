@@ -5,7 +5,12 @@ import { insertTextBlock } from './block-commands.js';
 import type { TextBlockKind } from './schema/index.js';
 import { newBlockId } from './block-id.js';
 import { caretBlockIndex } from './block-handle-plugin.js';
-import { duplicateBlocksCommand } from './block-move-commands.js';
+import {
+  deleteSelectedBlocksCommand,
+  duplicateBlocksCommand,
+  moveBlocksDownCommand,
+  moveBlocksUpCommand,
+} from './block-move-commands.js';
 import { formatMenuCommand } from './format-commands.js';
 import { insertPageBreakCommand } from './keymap/editor-keys.js';
 
@@ -50,6 +55,15 @@ export function editorMenuCommand(menuId: string): Command | null {
   }
   if (menuId === 'edit-duplicate') {
     return duplicateBlocksCommand();
+  }
+  if (menuId === 'block-delete') {
+    return deleteSelectedBlocksCommand();
+  }
+  if (menuId === 'block-move-up') {
+    return moveBlocksUpCommand();
+  }
+  if (menuId === 'block-move-down') {
+    return moveBlocksDownCommand();
   }
   if (menuId === 'insert-page-break') {
     return insertPageBreakCommand();

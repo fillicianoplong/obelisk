@@ -1,5 +1,10 @@
+import { ErrorBoundary } from './shell/ErrorBoundary.js';
 import { Shell } from './shell/Shell.js';
 
 export function App() {
-  return <Shell />;
+  return (
+    <ErrorBoundary region="shell">
+      <Shell />
+    </ErrorBoundary>
+  );
 }

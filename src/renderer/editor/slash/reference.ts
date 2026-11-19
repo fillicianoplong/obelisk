@@ -75,3 +75,26 @@ export const SLASH_MENU_ENTRIES: readonly SlashMenuEntry[] = [
 ];
 
 export const SLASH_MENU_ITEM_LABELS: readonly string[] = EXISTING.map((item) => item.label);
+
+/** Lowercase search aliases from the Slash menu reference. */
+export const SLASH_ITEM_SEARCH_WORDS: Readonly<Record<string, readonly string[]>> = {
+  text: ['paragraph', 'p'],
+  'heading-1': ['h1', 'title'],
+  'heading-2': ['h2'],
+  'heading-3': ['h3'],
+  'bulleted-list': ['ul', 'list'],
+  'numbered-list': ['ol'],
+  checklist: ['todo'],
+  quote: ['blockquote'],
+  'code-block': ['code'],
+  columns: ['column', 'side by side'],
+  table: ['grid', 'tab'],
+  image: ['picture', 'photo', 'img'],
+  equation: ['equation', 'math', 'latex', 'formula'],
+  diagram: ['mermaid', 'flowchart', 'chart'],
+  drawing: ['draw', 'sketch', 'pad'],
+  signature: ['sign', 'signature'],
+  date: ['date', 'time', 'today', 'now'],
+  'horizontal-line': ['hr', 'line', 'divider'],
+  'page-break': ['break', 'new page'],
+};

@@ -125,6 +125,10 @@ test('a selection that jumps to either edge without input is not user input', as
     true,
   );
   assert.equal(isUnpromptedEdgeSelection(jumpToEnd().setMeta('pointer', true), current), false);
+  assert.equal(
+    isUnpromptedEdgeSelection(jumpToEnd().setMeta('uiEvent', 'contextmenu'), current),
+    false,
+  );
   assert.equal(isUnpromptedEdgeSelection(jumpToEnd().scrollIntoView(), current), false);
   assert.equal(isUnpromptedEdgeSelection(jumpToEnd().setMeta('composition', 1), current), false);
   assert.equal(isUnpromptedEdgeSelection(state.tr.insertText('!'), current), false);

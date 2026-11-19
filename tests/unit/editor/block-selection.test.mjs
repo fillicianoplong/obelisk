@@ -12,6 +12,7 @@ import {
   dispatchEditorKeyDownOnDom,
   prepareEditorDom,
   syntheticMouseDown,
+  syntheticMouseMove,
 } from './dom-test-helpers.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -534,6 +535,81 @@ test('hover handle and highlight styles live in the editor stylesheet', async ()
   assert.match(css, /\.page-sheet ul\[data-list-style\] \+ ul\[data-list-style\]/);
   assert.doesNotMatch(css, /data-caret-block/);
   assert.doesNotMatch(css, /⋮/);
+});
+
+function dispatchEditorMouseMove(view, extra) {
+  const event = syntheticMouseMove(extra);
+  if (extra.target instanceof view.dom.ownerDocument.defaultView.HTMLElement) {
+    Object.defineProperty(event, 'target', { value: extra.target });
+  }
+  view.someProp('handleDOMEvents', (handlers) => handlers.mousemove?.(view, event));
+}
+
+test('block hover stays on the content box, not sheet margins', async () => {
+  const { blockHandleState, emptyBlockHandleState, blockHandlePluginKey } = blockHandleModule;
+  const { view, restore } = await editorViewFromBlocks([paragraph('One')]);
+  try {
+    const blockHeight = 24;
+    const blockTop = 120;
+    const layoutRect = {
+      top: blockTop,
+      left: 200,
+      right: 500,
+      bottom: blockTop + blockHeight,
+      width: 300,
+      height: blockHeight,
+      x: 200,
+      y: blockTop,
+    };
+    const paragraphEl = view.dom.querySelector('p');
+    assert.ok(paragraphEl instanceof view.dom.ownerDocument.defaultView.HTMLElement);
+    paragraphEl.getBoundingClientRect = () => layoutRect;
+    const nodeDom = view.nodeDOM.bind(view);
+    view.nodeDOM = (pos) => (pos === 1 ? paragraphEl : nodeDom(pos));
+    view.dispatch(
+      view.state.tr.setMeta(blockHandlePluginKey, {
+        ...emptyBlockHandleState(),
+        hoverBlock: 0,
+        hoverPinned: false,
+      }),
+    );
+    view.posAtCoords = () => null;
+    dispatchEditorMouseMove(view, {
+      target: view.dom,
+      clientX: Math.round(layoutRect.left - 24),
+      clientY: Math.round(layoutRect.top + layoutRect.height / 2),
+    });
+    assert.equal(blockHandleState(view.state).hoverBlock, null);
+
+    view.dispatch(
+      view.state.tr.setMeta(blockHandlePluginKey, {
+        ...emptyBlockHandleState(),
+        hoverBlock: 0,
+        hoverPinned: false,
+      }),
+    );
+    const handle = handleElement(view, 0);
+    const handleRect = {
+      top: blockTop,
+      left: layoutRect.left - 12,
+      right: layoutRect.left,
+      bottom: blockTop + blockHeight,
+      width: 12,
+      height: blockHeight,
+      x: layoutRect.left - 12,
+      y: blockTop,
+    };
+    handle.getBoundingClientRect = () => handleRect;
+    dispatchEditorMouseMove(view, {
+      target: view.dom,
+      clientX: Math.round(handleRect.left + 2),
+      clientY: Math.round(handleRect.top + handleRect.height / 2),
+    });
+    assert.equal(blockHandleState(view.state).hoverBlock, 0);
+  } finally {
+    view.destroy();
+    restore();
+  }
 });
 
 test('clicking empty page space clears block selection to a text caret', async () => {
