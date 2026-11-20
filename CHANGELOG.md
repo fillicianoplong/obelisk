@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.8] - 2026-11-20
+
+### Fixed
+
+- The smallest-window check reads the document region, which is the part that scrolls. The page area around it stays still. At 640 by 400 the page still scrolls sideways, and scrolling reaches its edges.
+
 ## [0.1.37.7] - 2026-11-20
 
 ### Fixed

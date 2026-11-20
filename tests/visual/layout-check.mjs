@@ -1,6 +1,7 @@
 // Decides whether a captured window clips or overlaps.
-// The page region and the tab list are allowed to scroll. A tab title may
-// ellipsize once the tab has shrunk. Everything else has to fit.
+// The page area stays in the window. The document region inside it scrolls,
+// and the tab list scrolls. A tab title may ellipsize once the tab has shrunk.
+// Everything else has to fit.
 
 export const LAYOUT_TOLERANCE = 1;
 
@@ -256,6 +257,9 @@ export const collectLayoutSource = `async () => {
   const status = document.querySelector('[data-region="status-bar"]');
   const list = tabs ? tabs.querySelector('.tab-list') : null;
   const frame = document.querySelector('.page-frame');
+  // The page area does not scroll, so the find bubble can stay put.
+  // The document region inside it is the scroll container.
+  const scroller = (page && page.querySelector(':scope > .page-region')) || page;
   if (root.dataset.shellCommands !== 'ready' || !shown(title) || !shown(menu) || !shown(tabs) || !shown(page) || !shown(status) || !list) {
     return { ready: false };
   }
@@ -489,12 +493,12 @@ export const collectLayoutSource = `async () => {
     boxes,
     controls,
     page: {
-      scrollLeft: page.scrollLeft,
-      scrollTop: page.scrollTop,
-      scrollWidth: page.scrollWidth,
-      clientWidth: page.clientWidth,
-      frame: frame ? boxOf(frame) : boxOf(page),
-      region: boxOf(page),
+      scrollLeft: scroller.scrollLeft,
+      scrollTop: scroller.scrollTop,
+      scrollWidth: scroller.scrollWidth,
+      clientWidth: scroller.clientWidth,
+      frame: frame ? boxOf(frame) : boxOf(scroller),
+      region: boxOf(scroller),
     },
     tabs: {
       scrollWidth: list.scrollWidth,
