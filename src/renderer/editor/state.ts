@@ -10,6 +10,7 @@ import { editorColorStylesPlugin } from './color-styles-plugin.js';
 import { slashMenuKeymap, slashMenuPlugin } from './slash/slash-menu-plugin.js';
 import { editorFormatKeymap } from './format-commands.js';
 import { paragraphFormatKeymap } from './paragraph-format-commands.js';
+import { codeBlockKeymap } from './keymap/code-tab.js';
 import { editorKeysKeymap } from './keymap/editor-keys.js';
 import { editorHistoryKeymap, editorHistoryPlugins } from './history/index.js';
 import { typedShortcutInputRulesPlugin } from './keymap/input-rules.js';
@@ -39,6 +40,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       keymap(editorHistoryKeymap()),
       keymap(slashMenuKeymap()),
       keymap(blockHandleKeymap()),
+      keymap(codeBlockKeymap()),
       keymap({
         ...softBreakKeymap(),
         Enter: chainCommands(listEnterCommand(), splitParagraphKeepingFormat()),

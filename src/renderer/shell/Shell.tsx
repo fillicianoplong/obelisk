@@ -11,6 +11,7 @@ import { ContextMenu } from './contextmenu/ContextMenu.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
+import { suppressPageFocusRing } from './page-focus.js';
 import { editShellShortcut, shellShortcut } from './shortcuts.js';
 import { FindBar } from './find/FindBar.js';
 import { StatusBar } from './statusbar/StatusBar.js';
@@ -118,6 +119,7 @@ export function Shell() {
         return 'failed';
       }
       saving.current = true;
+      suppressPageFocusRing();
       const savingTab = markSaving(tab);
       const built = documentForTab(savingTab);
       putTab(savingTab);
@@ -194,6 +196,7 @@ export function Shell() {
         return 'failed';
       } finally {
         saving.current = false;
+        suppressPageFocusRing();
       }
     },
     [putTab],
@@ -385,6 +388,7 @@ export function Shell() {
       return;
     }
     opening.current = true;
+    suppressPageFocusRing();
     void (async () => {
       let result: FileOpenResult;
       try {
@@ -394,6 +398,7 @@ export function Shell() {
         return;
       } finally {
         opening.current = false;
+        suppressPageFocusRing();
       }
       const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
       tabsRef.current = applied.tabs;

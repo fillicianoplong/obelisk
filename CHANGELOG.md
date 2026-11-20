@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.7] - 2026-11-20
+
+### Fixed
+
+- Highlighted text stays readable in the dark theme. The highlight color is the same in either theme. Text that uses the theme color is drawn dark on a light highlight such as yellow, and an explicit text color stays as it is. The light theme looks the same.
+- The page focus ring no longer appears after Open or Save, from the keyboard or the menu, whether or not a dialog was shown. It still appears for F6, Shift+F6, Tab, and Escape when those keys move focus back to the page. Save leaves the caret and selection where they were.
+- Tab and Shift+Tab, and Increase indent and Decrease indent, move a paragraph by half an inch each step. A file that already uses a quarter-inch indent still opens the same way. In a code block, Tab inserts a tab at the caret, or at the start of each selected line, and Shift+Tab removes one leading tab or up to four leading spaces. Tabs display four spaces wide, and copy and paste keep the tab characters.
+
 ## [0.1.37.6] - 2026-11-20
 
 ### Fixed

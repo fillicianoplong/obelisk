@@ -7,7 +7,7 @@ import { useLayoutEffect, useRef } from 'react';
 import 'prosemirror-view/style/prosemirror.css';
 import './editor.css';
 import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
-import { bindPageFocus, pageFocusIsKeyboard } from '../shell/page-focus.js';
+import { bindPageFocus, pageFocusRestoresCaret } from '../shell/page-focus.js';
 import { editorSchema } from './schema.js';
 import { runWithSynchronousEditorUpdate } from './flush.js';
 import {
@@ -362,12 +362,12 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
         },
         focus() {
           // Chromium can park the caret at an edge when the page is focused again.
-          // Put the stored caret and selection back when the keyboard moved focus here.
-          if (!pageFocusIsKeyboard()) {
+          // Put the stored caret back for a keyboard move and for Open or Save.
+          if (!pageFocusRestoresCaret()) {
             return false;
           }
           const restore = () => {
-            if (view.isDestroyed || !pageFocusIsKeyboard()) {
+            if (view.isDestroyed || !pageFocusRestoresCaret()) {
               return;
             }
             if (view.dom.ownerDocument.activeElement !== view.dom) {

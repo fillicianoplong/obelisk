@@ -1,6 +1,7 @@
 import { splitBlockAs } from 'prosemirror-commands';
 import type { Node as ProseNode } from 'prosemirror-model';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
+import { INDENT_FIRST_MAX_IN } from '../../shared/schema/limits.js';
 import {
   ALIGNMENTS,
   INDENT_LEFT_MAX_IN,
@@ -163,7 +164,7 @@ function tabIndentCommand(): Command {
       const node = state.selection.$from.node(depth);
       const currentFirst = Number(node.attrs.indentFirst ?? 0);
       if (currentFirst === 0) {
-        return setFirstLineIndentCommand(INDENT_STEP_IN * 2)(state, dispatch);
+        return setFirstLineIndentCommand(INDENT_STEP_IN)(state, dispatch);
       }
     }
     return stepLeftIndentCommand(1)(state, dispatch);
@@ -180,7 +181,10 @@ function shiftTabIndentCommand(): Command {
       const node = state.selection.$from.node(depth);
       const currentFirst = Number(node.attrs.indentFirst ?? 0);
       if (currentFirst > 0) {
-        return setFirstLineIndentCommand(0)(state, dispatch);
+        const next = stepIndentInches(currentFirst, -1, INDENT_LEFT_MIN_IN, INDENT_FIRST_MAX_IN);
+        if (next !== currentFirst) {
+          return setFirstLineIndentCommand(next)(state, dispatch);
+        }
       }
     }
     return stepLeftIndentCommand(-1)(state, dispatch);

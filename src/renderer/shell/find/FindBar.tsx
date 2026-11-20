@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { FIND_BAR_REGION } from '../focus/regions.js';
-import { resetPageFocusToPointer } from '../page-focus.js';
+import { commitPageKeyboardFocus, pageFocusIsKeyboard, resetPageFocusToPointer } from '../page-focus.js';
 import { editShellShortcut } from '../shortcuts.js';
 import { escapeWouldCloseSomethingElse } from '../../editor/find/find-plugin.js';
 import { activeEditorFindCommands } from './find-bridge.js';
@@ -193,7 +193,11 @@ export function FindBar({ visible, onVisibilityChange }: FindBarProps) {
     const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
     if (page instanceof HTMLElement) {
       page.focus({ preventScroll: true });
-      resetPageFocusToPointer(page);
+      if (pageFocusIsKeyboard()) {
+        commitPageKeyboardFocus(page);
+      } else {
+        resetPageFocusToPointer(page);
+      }
     }
     refresh();
   }, [onVisibilityChange, refresh]);

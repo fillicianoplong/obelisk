@@ -114,7 +114,8 @@ test('each limit matches the File format reference and the schema', async () => 
   assert.equal(limits.INDENT_LEFT_MAX_IN, 3);
   assert.equal(limits.INDENT_FIRST_MAX_IN, 1);
   assert.equal(limits.INDENT_HANGING_MAX_IN, 1);
-  assert.equal(limits.INDENT_STEP_IN, 0.25);
+  assert.equal(limits.INDENT_GRID_IN, 0.25);
+  assert.equal(limits.INDENT_STEP_IN, 0.5);
   assert.deepEqual(limits.SPACE_BEFORE_AFTER_PT, [0, 6, 12, 18, 24]);
   assert.equal(limits.HEADING_LEVEL_MIN, 1);
   assert.equal(limits.HEADING_LEVEL_MAX, 6);
@@ -136,7 +137,9 @@ test('each limit matches the File format reference and the schema', async () => 
   assert.equal(defs.marginInches.maximum, limits.MARGIN_MAX_IN);
   assert.equal(defs.indents.properties.left.minimum, limits.INDENT_LEFT_MIN_IN);
   assert.equal(defs.indents.properties.left.maximum, limits.INDENT_LEFT_MAX_IN);
-  assert.equal(defs.indents.properties.left.multipleOf, limits.INDENT_STEP_IN);
+  assert.equal(defs.indents.properties.left.multipleOf, limits.INDENT_GRID_IN);
+  assert.equal(defs.indents.properties.first.multipleOf, limits.INDENT_GRID_IN);
+  assert.equal(defs.indents.properties.hanging.multipleOf, limits.INDENT_GRID_IN);
   assert.equal(defs.indents.properties.first.maximum, limits.INDENT_FIRST_MAX_IN);
   assert.equal(defs.indents.properties.hanging.maximum, limits.INDENT_HANGING_MAX_IN);
   assert.deepEqual(defs.headerParagraph.properties.spaceBefore.enum, [...limits.SPACE_BEFORE_AFTER_PT]);

@@ -5,6 +5,29 @@ import type { EditorView } from 'prosemirror-view';
 
 const COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
+// Same dark text the light theme already uses, so a light highlight reads the
+// same there and stays readable when the theme text is light.
+const HIGHLIGHT_INK = '#1f2630';
+const LIGHT_HIGHLIGHT_LUMINANCE = 0.4;
+
+function linearChannel(hex: string, offset: number): number {
+  const value = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
+  if (value <= 0.03928) {
+    return value / 12.92;
+  }
+  return ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function relativeLuminance(hex: string): number {
+  return (0.2126 * linearChannel(hex, 1))
+    + (0.7152 * linearChannel(hex, 3))
+    + (0.0722 * linearChannel(hex, 5));
+}
+
+function highlightIsLight(hex: string): boolean {
+  return relativeLuminance(hex) >= LIGHT_HIGHLIGHT_LUMINANCE;
+}
+
 function colorsFromDoc(doc: ProseNode): { text: Set<string>; highlight: Set<string> } {
   const text = new Set<string>();
   const highlight = new Set<string>();
@@ -38,9 +61,20 @@ function syncColorSheet(
       sheet.cssRules.length,
     );
   }
+  let lightHighlight = false;
   for (const color of highlightColors) {
+    const ink = highlightIsLight(color) ? `; color: ${HIGHLIGHT_INK}` : '';
+    if (ink !== '') {
+      lightHighlight = true;
+    }
     sheet.insertRule(
-      `.page-sheet span[data-highlight="${color}"] { background-color: ${color}; }`,
+      `.page-sheet span[data-highlight="${color}"] { background-color: ${color}${ink}; }`,
+      sheet.cssRules.length,
+    );
+  }
+  if (lightHighlight) {
+    sheet.insertRule(
+      '.page-sheet span[data-text-color] span[data-highlight] { color: inherit; }',
       sheet.cssRules.length,
     );
   }

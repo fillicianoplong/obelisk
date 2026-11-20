@@ -56,7 +56,10 @@ export const INDENT_LEFT_MIN_IN = 0;
 export const INDENT_LEFT_MAX_IN = 3;
 export const INDENT_FIRST_MAX_IN = 1;
 export const INDENT_HANGING_MAX_IN = 1;
-export const INDENT_STEP_IN = 0.25;
+// Stored indents stay on a quarter-inch grid so an older file still opens
+// with the same indent. Tab and the indent commands move by half an inch.
+export const INDENT_GRID_IN = 0.25;
+export const INDENT_STEP_IN = 0.5;
 
 export const SPACE_BEFORE_AFTER_PT = [0, 6, 12, 18, 24] as const;
 

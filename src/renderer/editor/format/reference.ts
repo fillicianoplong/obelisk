@@ -3,6 +3,7 @@ import {
   DEFAULT_FONT_SIZE_PT,
   FONT_SIZES_PT,
   INDENT_FIRST_MAX_IN,
+  INDENT_GRID_IN,
   INDENT_HANGING_MAX_IN,
   INDENT_LEFT_MAX_IN,
   INDENT_LEFT_MIN_IN,
@@ -74,9 +75,14 @@ export function stepIndentInches(
   min = INDENT_LEFT_MIN_IN,
   max = INDENT_LEFT_MAX_IN,
 ): number {
-  const steps = Math.round(current / INDENT_STEP_IN);
-  const nextSteps = Math.max(Math.round(min / INDENT_STEP_IN), Math.min(Math.round(max / INDENT_STEP_IN), steps + deltaSteps));
-  return nextSteps * INDENT_STEP_IN;
+  // Add the command step to the stored value. A quarter-inch indent from an
+  // older file stays on the storage grid instead of snapping to a half inch.
+  const raw = current + deltaSteps * INDENT_STEP_IN;
+  const clamped = Math.min(max, Math.max(min, raw));
+  const units = Math.round(clamped / INDENT_GRID_IN);
+  const minUnits = Math.ceil(min / INDENT_GRID_IN - 1e-9);
+  const maxUnits = Math.floor(max / INDENT_GRID_IN + 1e-9);
+  return Math.min(maxUnits, Math.max(minUnits, units)) * INDENT_GRID_IN;
 }
 
 function indentFromMenuId(
@@ -93,7 +99,7 @@ function indentFromMenuId(
   if (!Number.isFinite(inches) || inches < min || inches > max) {
     return null;
   }
-  const steps = inches / INDENT_STEP_IN;
+  const steps = inches / INDENT_GRID_IN;
   if (Math.abs(steps - Math.round(steps)) > 1e-6) {
     return null;
   }

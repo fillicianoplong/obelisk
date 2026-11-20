@@ -89,6 +89,7 @@
   font-family: Consolas, 'Courier New', monospace;
   background: var(--color-surface-subtle);
   white-space: pre-wrap;
+  tab-size: 4;
 }
 
 .page-sheet hr[data-divider] {

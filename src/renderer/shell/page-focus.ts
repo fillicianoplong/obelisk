@@ -1,7 +1,7 @@
 // Chromium matches :focus-visible when a contenteditable is clicked.
 // The page ring follows the input that moved focus, so a click leaves the caret as the indicator.
 
-type InputModality = 'keyboard' | 'pointer';
+type InputModality = 'keyboard' | 'pointer' | 'command';
 
 const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 
@@ -19,10 +19,13 @@ function elementFromTarget(target: EventTarget | null): Element | null {
 }
 
 function onKeyDown(event: KeyboardEvent): void {
-  if (MODIFIER_KEYS.has(event.key)) {
+  if (MODIFIER_KEYS.has(event.key) || event.altKey || event.ctrlKey || event.metaKey || event.isComposing) {
     return;
   }
-  modality = 'keyboard';
+  // The ring is for a focus move, not for a shortcut or for typing.
+  if (event.key === 'Tab' || event.key === 'F6' || event.key === 'Escape') {
+    modality = 'keyboard';
+  }
 }
 
 function onPointing(event: Event): void {
@@ -45,6 +48,19 @@ function installPageFocusModality(view: Window): void {
 
 export function pageFocusIsKeyboard(): boolean {
   return modality === 'keyboard';
+}
+
+export function pageFocusRestoresCaret(): boolean {
+  return modality === 'keyboard' || modality === 'command';
+}
+
+/** Open and Save return focus to the page without the keyboard ring. */
+export function suppressPageFocusRing(): void {
+  modality = 'command';
+  const pages = document.querySelectorAll<HTMLElement>('.page-sheet');
+  for (const page of pages) {
+    page.removeAttribute('data-focus-source');
+  }
 }
 
 /** After closing a transient overlay, return focus without the keyboard page ring. */

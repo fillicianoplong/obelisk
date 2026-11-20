@@ -271,3 +271,177 @@ test('the page focus ring follows keyboard focus and stays off for a click', { t
     await finish();
   }
 });
+
+async function dispatchShortcut(client, key, extra = {}) {
+  await evaluate(
+    client,
+    `window.dispatchEvent(new KeyboardEvent('keydown', ${JSON.stringify({
+      key,
+      bubbles: true,
+      cancelable: true,
+      ...extra,
+    })}))`,
+  );
+}
+
+async function readSelection(client) {
+  return evaluate(
+    client,
+    `(() => {
+      const selection = document.querySelector('.page-sheet').editorCommands.selection();
+      return { anchor: selection.anchor, head: selection.head, text: selection.text };
+    })()`,
+  );
+}
+
+async function restoreDialogFocus(client) {
+  await sleep(80);
+  await evaluate(
+    client,
+    `(() => {
+      const page = document.querySelector('.page-sheet');
+      if (document.activeElement === page) {
+        page.blur();
+      }
+      page.focus();
+      return true;
+    })()`,
+  );
+}
+
+async function clickSelector(client, selector) {
+  const point = await evaluate(
+    client,
+    `(() => {
+      const node = document.querySelector(${JSON.stringify(selector)});
+      if (!node) {
+        return null;
+      }
+      const rect = node.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) {
+        return null;
+      }
+      return { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) };
+    })()`,
+  );
+  assert.ok(point, `${selector} is not visible`);
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mousePressed',
+    x: point.x,
+    y: point.y,
+    button: 'left',
+    clickCount: 1,
+  });
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mouseReleased',
+    x: point.x,
+    y: point.y,
+    button: 'left',
+    clickCount: 1,
+  });
+}
+
+test('Open and Save do not leave the page focus ring, and F6 and Escape still do', { timeout: 60_000 }, async (t) => {
+  const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-page-focus-dialog-'));
+  const session = { child: undefined, client: undefined, userDataDir };
+  const finish = bindLaunchedApp(t, session);
+
+  try {
+    const binary = electronBinary();
+    const port = await freePort();
+    session.child = await launchWithSandboxFallback({
+      binary,
+      args: ['.', `--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`],
+      env: { OBELISK_CANCEL_FILE_DIALOGS: '1' },
+      ready(running) {
+        return waitFor(
+          running,
+          async () => {
+            const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
+            if (pages.length !== 1 || pages[0].title !== 'Obelisk') {
+              return null;
+            }
+            const client = await openPage(port, session);
+            return evaluate(client, READY);
+          },
+          20_000,
+        );
+      },
+    });
+    const client = await openPage(port, session);
+    await evaluate(
+      client,
+      `(() => {
+        window.addEventListener('keydown', (event) => {
+          if (event.key !== 'F6' && event.key !== 'Escape') {
+            return;
+          }
+          const page = document.querySelector('.page-sheet');
+          if (document.activeElement === page) {
+            page.blur();
+          }
+          page.focus();
+        });
+      })()`,
+    );
+
+    await clickPage(client);
+    await settleRing(client, assertNoPageRing, 'click');
+    await dispatchShortcut(client, 'a');
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'typing');
+
+    await evaluate(
+      client,
+      `(() => {
+        const editor = document.querySelector('.page-sheet');
+        editor.editorCommands.replaceText('Keep this sentence.');
+        editor.editorCommands.setSelection(5, 9);
+        return true;
+      })()`,
+    );
+    const placed = await readSelection(client);
+
+    await pressKey(client, 'F6', 'F6', 117);
+    await settleRing(client, assertKeyboardRing, 'F6');
+
+    await dispatchShortcut(client, 'o', { ctrlKey: true });
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'Ctrl+O');
+    assert.deepEqual(await readSelection(client), placed);
+
+    await dispatchShortcut(client, 's', { ctrlKey: true });
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'Ctrl+S');
+    assert.deepEqual(await readSelection(client), placed);
+
+    await dispatchShortcut(client, 's', { ctrlKey: true, shiftKey: true });
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'Ctrl+Shift+S');
+    assert.deepEqual(await readSelection(client), placed);
+
+    await clickMenu(client);
+    await clickSelector(client, '[data-item="file-open"]');
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'File > Open');
+    assert.deepEqual(await readSelection(client), placed);
+
+    await clickMenu(client);
+    await clickSelector(client, '[data-item="file-save"]');
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'File > Save');
+    assert.deepEqual(await readSelection(client), placed);
+
+    await clickMenu(client);
+    await clickSelector(client, '[data-item="file-save-as"]');
+    await restoreDialogFocus(client);
+    await settleRing(client, assertNoPageRing, 'File > Save as');
+    assert.deepEqual(await readSelection(client), placed);
+
+    await clickMenu(client);
+    await pressKey(client, 'Escape', 'Escape', 27);
+    await settleRing(client, assertKeyboardRing, 'Escape');
+  } finally {
+    await finish();
+  }
+});

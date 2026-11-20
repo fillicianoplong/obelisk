@@ -17,7 +17,14 @@ function dialogOwner(): { window: BrowserWindow } | null {
   );
 }
 
+function fileDialogsCancelled(): boolean {
+  return process.env.OBELISK_CANCEL_FILE_DIALOGS === '1';
+}
+
 async function showOpenDialog(options: OpenDialogOptions): Promise<{ canceled: boolean; filePaths: string[] }> {
+  if (fileDialogsCancelled()) {
+    return { canceled: true, filePaths: [] };
+  }
   const owner = dialogOwner();
   const result = owner
     ? await dialog.showOpenDialog(owner.window, options)
@@ -26,6 +33,9 @@ async function showOpenDialog(options: OpenDialogOptions): Promise<{ canceled: b
 }
 
 async function showSaveDialog(options: SaveDialogOptions): Promise<SaveDialogResult> {
+  if (fileDialogsCancelled()) {
+    return { canceled: true, filePath: '' };
+  }
   const owner = dialogOwner();
   const result = owner
     ? await dialog.showSaveDialog(owner.window, options)

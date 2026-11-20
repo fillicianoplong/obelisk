@@ -51,10 +51,12 @@ function documentWithParagraph(format) {
   };
 }
 
-test('stepIndentInches moves in quarter-inch steps within the formatting reference', async () => {
+test('stepIndentInches moves in half-inch steps and keeps a quarter-inch indent', async () => {
   const { stepIndentInches } = await loadRenderer(referenceUrl);
   assert.equal(stepIndentInches(0, 1), INDENT_STEP_IN);
-  assert.equal(stepIndentInches(0.5, 1), 0.75);
+  assert.equal(stepIndentInches(0.25, 1), 0.75);
+  assert.equal(stepIndentInches(0.5, 1), 1);
+  assert.equal(stepIndentInches(0.75, -1), 0.25);
   assert.equal(stepIndentInches(3, 1), 3);
   assert.equal(stepIndentInches(0, -1), 0);
 });
@@ -150,7 +152,7 @@ test('Format > Increase indent and Decrease indent match Tab and Shift+Tab', asy
   state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 1, 1)));
   const firstLine = runFormatMenuCommand(state, 'format-indent-increase');
   assert.ok(firstLine);
-  assert.equal(firstLine.doc.child(0).attrs.indentFirst, INDENT_STEP_IN * 2);
+  assert.equal(firstLine.doc.child(0).attrs.indentFirst, INDENT_STEP_IN);
   state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 3, 3)));
   const increased = runFormatMenuCommand(state, 'format-indent-increase');
   assert.ok(increased);
