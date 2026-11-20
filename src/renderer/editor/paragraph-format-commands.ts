@@ -171,6 +171,49 @@ function tabIndentCommand(): Command {
   };
 }
 
+function backspaceRemovesIndent(state: EditorState): boolean {
+  const { empty, $from } = state.selection;
+  if (!empty || $from.parentOffset !== 0) {
+    return false;
+  }
+  const depth = paragraphDepth($from);
+  if (depth === null) {
+    return false;
+  }
+  const node = $from.node(depth);
+  return Number(node.attrs.indentFirst ?? 0) > 0 || Number(node.attrs.indentLeft ?? 0) > 0;
+}
+
+function dispatchAsOwnUndo(dispatch: ((tr: Transaction) => void) | undefined) {
+  if (dispatch === undefined) {
+    return undefined;
+  }
+  return (tr: Transaction) => {
+    dispatch(markCloseHistoryGroup(tr));
+  };
+}
+
+// At the start of an indented paragraph, Backspace removes one indent step
+// and stays put. First-line indent goes first, then each left-indent step.
+// Joining with the previous block waits until no indent is left.
+export function backspaceUnindentAtStartCommand(): Command {
+  return (state, dispatch) => {
+    if (!backspaceRemovesIndent(state)) {
+      return false;
+    }
+    const node = state.selection.$from.node(paragraphDepth(state.selection.$from) as number);
+    const currentFirst = Number(node.attrs.indentFirst ?? 0);
+    const apply = dispatchAsOwnUndo(dispatch);
+    if (currentFirst > 0) {
+      const next = stepIndentInches(currentFirst, -1, INDENT_LEFT_MIN_IN, INDENT_FIRST_MAX_IN);
+      if (next !== currentFirst) {
+        return setFirstLineIndentCommand(next)(state, apply);
+      }
+    }
+    return stepLeftIndentCommand(-1)(state, apply);
+  };
+}
+
 function shiftTabIndentCommand(): Command {
   return (state, dispatch) => {
     const depth = paragraphDepth(state.selection.$from);

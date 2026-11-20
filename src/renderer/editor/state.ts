@@ -16,7 +16,7 @@ import { editorHistoryKeymap, editorHistoryPlugins } from './history/index.js';
 import { typedShortcutInputRulesPlugin } from './keymap/input-rules.js';
 import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-editing.js';
 import { softBreakKeymap } from './keymap/soft-break.js';
-import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
+import { backspaceUnindentAtStartCommand, splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { closeFindOnEscape, findPlugin } from './find/find-plugin.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
@@ -44,7 +44,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       keymap({
         ...softBreakKeymap(),
         Enter: chainCommands(listEnterCommand(), splitParagraphKeepingFormat()),
-        Backspace: listBackspaceAtStartCommand(),
+        Backspace: chainCommands(backspaceUnindentAtStartCommand(), listBackspaceAtStartCommand()),
         ...editorFormatKeymap(),
         ...paragraphFormatKeymap(),
         ...editorKeysKeymap(),

@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.10] - 2026-11-20
+
+### Fixed
+
+- Backspace at the start of an indented paragraph removes one indent step and leaves the caret there. A first-line indent goes first, then each left indent step. The paragraph joins with the one above only after the indent is gone. Backspace in the middle of a paragraph, or with a selection, is unchanged. Undo puts the indent back in one step.
+
 ## [0.1.37.9] - 2026-11-20
 
 ### Fixed

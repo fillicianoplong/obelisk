@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { undo } from 'prosemirror-history';
 import { TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { parseHTML } from 'linkedom';
 import { INDENT_STEP_IN } from '../../../dist/shared/schema/index.js';
 import { loadRenderer } from './load-renderer.mjs';
-import { dispatchEditorKeyDown, prepareEditorDom } from './dom-test-helpers.mjs';
+import { dispatchEditorKeyDown, prepareEditorDom, runEditorKeyDown } from './dom-test-helpers.mjs';
 
 const mappingUrl = new URL('../../../src/renderer/editor/schema/mapping.ts', import.meta.url);
 const formatUrl = new URL('../../../src/renderer/editor/format-commands.ts', import.meta.url);
@@ -155,6 +156,103 @@ test('Enter carries a Tab first-line indent as a first-line indent', async () =>
       assert.equal(block.attrs.indentFirst, 0.5);
       assert.equal(block.attrs.indentLeft, 0);
     }
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Backspace at the start of a first-line indent clears it before joining', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Above' }]),
+  ]));
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 1)));
+    dispatchEditorKeyDown(view, 'Tab');
+    const end = view.state.doc.content.size - 1;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, end, end)));
+    dispatchEditorKeyDown(view, 'Enter');
+    assert.equal(view.state.doc.childCount, 2);
+    assert.equal(view.state.doc.child(1).attrs.indentFirst, 0.5);
+    const head = view.state.selection.head;
+    dispatchEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.childCount, 2);
+    assert.equal(view.state.doc.child(0).textContent, 'Above');
+    assert.equal(view.state.doc.child(1).textContent, '');
+    assert.equal(view.state.doc.child(1).attrs.indentFirst, 0);
+    assert.equal(view.state.doc.child(1).attrs.indentLeft, 0);
+    assert.equal(view.state.selection.head, head);
+    assert.equal(view.state.selection.$from.parentOffset, 0);
+    undo(view.state, view.dispatch.bind(view));
+    assert.equal(view.state.doc.childCount, 2);
+    assert.equal(view.state.doc.child(1).attrs.indentFirst, 0.5);
+    assert.equal(view.state.doc.child(1).textContent, '');
+    dispatchEditorKeyDown(view, 'Backspace');
+    dispatchEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.childCount, 1);
+    assert.equal(view.state.doc.child(0).textContent, 'Above');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Backspace at the start of an unindented paragraph joins it', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Above' }]),
+  ]));
+  try {
+    const end = view.state.doc.content.size - 1;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, end, end)));
+    dispatchEditorKeyDown(view, 'Enter');
+    assert.equal(view.state.doc.childCount, 2);
+    dispatchEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.childCount, 1);
+    assert.equal(view.state.doc.child(0).textContent, 'Above');
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0);
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Backspace removes a first-line indent before each left-indent step', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Hello' }], { indents: { left: 0.5, first: 0.5, hanging: 0 } }),
+    paragraph([{ type: 'text', text: 'Next' }]),
+  ]));
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 1)));
+    dispatchEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.childCount, 2);
+    assert.equal(view.state.doc.child(0).textContent, 'Hello');
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0);
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.5);
+    dispatchEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.childCount, 2);
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0);
+    assert.equal(view.state.doc.child(1).textContent, 'Next');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Backspace away from the start, or with a selection, does not change indent', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Hello' }], { indents: { left: 0, first: 0.5, hanging: 0 } }),
+  ]));
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 2, 2)));
+    runEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.child(0).textContent, 'Hello');
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.5);
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 3)));
+    dispatchEditorKeyDown(view, 'Backspace');
+    assert.equal(view.state.doc.child(0).textContent, 'llo');
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.5);
   } finally {
     view.destroy();
     restore();

@@ -111,6 +111,49 @@ test('a first Tab indents only the first line, and Enter keeps that indent', { t
       place(referenceBefore + 1 + view.state.doc.child(2).content.size);
       press('Enter');
       const blank = editor.querySelectorAll('p')[3];
+      editor.editorCommands.replaceText('Above');
+      place(1);
+      press('Tab');
+      place(view.state.doc.child(0).nodeSize - 1);
+      press('Enter');
+      const entered = {
+        count: view.state.doc.childCount,
+        first: view.state.doc.child(1).attrs.indentFirst,
+        left: view.state.doc.child(1).attrs.indentLeft,
+        head: view.state.selection.head,
+      };
+      press('Backspace');
+      const cleared = {
+        count: view.state.doc.childCount,
+        above: view.state.doc.child(0).textContent,
+        empty: view.state.doc.child(1).textContent,
+        first: view.state.doc.child(1).attrs.indentFirst,
+        left: view.state.doc.child(1).attrs.indentLeft,
+        head: view.state.selection.head,
+        offset: view.state.selection.$from.parentOffset,
+      };
+      editor.editorCommands.undo();
+      const undone = {
+        count: view.state.doc.childCount,
+        first: view.state.doc.child(1).attrs.indentFirst,
+        empty: view.state.doc.child(1).textContent,
+      };
+      press('Backspace');
+      press('Backspace');
+      const joined = {
+        count: view.state.doc.childCount,
+        text: view.state.doc.child(0).textContent,
+      };
+      editor.editorCommands.replaceText('Plain');
+      place(view.state.doc.child(0).nodeSize - 1);
+      press('Enter');
+      press('Backspace');
+      const plainJoined = {
+        count: view.state.doc.childCount,
+        text: view.state.doc.child(0).textContent,
+        first: view.state.doc.child(0).attrs.indentFirst,
+        left: view.state.doc.child(0).attrs.indentLeft,
+      };
       return {
         firstTab,
         plain,
@@ -121,6 +164,11 @@ test('a first Tab indents only the first line, and Enter keeps that indent', { t
           left: blank.getAttribute('data-indent-left'),
           first: blank.getAttribute('data-indent-first'),
         },
+        entered,
+        cleared,
+        undone,
+        joined,
+        plainJoined,
       };
     })()`);
 
@@ -158,6 +206,26 @@ test('a first Tab indents only the first line, and Enter keeps that indent', { t
 
     assert.equal(measured.blank.left, '0');
     assert.equal(measured.blank.first, '0');
+
+    assert.equal(measured.entered.count, 2);
+    assert.equal(measured.entered.first, 0.5);
+    assert.equal(measured.entered.left, 0);
+    assert.equal(measured.cleared.count, 2);
+    assert.equal(measured.cleared.above, 'Above');
+    assert.equal(measured.cleared.empty, '');
+    assert.equal(measured.cleared.first, 0);
+    assert.equal(measured.cleared.left, 0);
+    assert.equal(measured.cleared.head, measured.entered.head);
+    assert.equal(measured.cleared.offset, 0);
+    assert.equal(measured.undone.count, 2);
+    assert.equal(measured.undone.first, 0.5);
+    assert.equal(measured.undone.empty, '');
+    assert.equal(measured.joined.count, 1);
+    assert.equal(measured.joined.text, 'Above');
+    assert.equal(measured.plainJoined.count, 1);
+    assert.equal(measured.plainJoined.text, 'Plain');
+    assert.equal(measured.plainJoined.first, 0);
+    assert.equal(measured.plainJoined.left, 0);
   } finally {
     await finish();
   }
