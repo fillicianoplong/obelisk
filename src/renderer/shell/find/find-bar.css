@@ -14,7 +14,7 @@
   padding-right: var(--size-find-padding);
   padding-top: var(--size-find-padding);
   position: absolute;
-  right: calc(var(--space-l) + var(--size-scrollbar));
+  right: calc(var(--space-s) + var(--size-scrollbar));
   top: var(--space-s);
   width: max-content;
   z-index: var(--z-index-find);

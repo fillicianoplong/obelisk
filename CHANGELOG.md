@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.5] - 2026-11-20
+
+### Fixed
+
+- A find highlight fills its own line's text. Single spacing touches the next line, wider spacing leaves the extra leading blank, and tighter spacing does not overlap. Underlines and descenders stay covered.
+- The find bubble sits the same distance from the scrollbar as it does from the top of the page.
+
 ## [0.1.37.4] - 2026-11-20
 
 ### Fixed

@@ -142,18 +142,14 @@
   padding: 0 var(--space-2xs);
 }
 
+/* One em is single spacing, so neighbors touch. A taller line leaves the
+   extra leading blank. A shorter line clamps the paint to that line. */
 .page-sheet .find-match {
   background-color: transparent;
-  background-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent var(--space-2xs),
-    var(--color-find-match) var(--space-2xs),
-    var(--color-find-match) calc(100% - var(--space-2xs)),
-    transparent calc(100% - var(--space-2xs)),
-    transparent 100%
-  );
+  background-image: linear-gradient(var(--color-find-match), var(--color-find-match));
+  background-position: center;
   background-repeat: no-repeat;
+  background-size: 100% min(1em, 1lh);
   border: 0;
   box-decoration-break: clone;
   box-shadow: none;
@@ -163,26 +159,16 @@
 }
 
 .page-sheet .find-match-current {
-  background-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent var(--space-2xs),
-    var(--color-find-current) var(--space-2xs),
-    var(--color-find-current) calc(100% - var(--space-2xs)),
-    transparent calc(100% - var(--space-2xs)),
-    transparent 100%
-  );
+  background-image: linear-gradient(var(--color-find-current), var(--color-find-current));
   color: var(--color-find-current-text);
 }
 
 @media (forced-colors: active) {
   .page-sheet .find-match {
-    background-color: var(--color-find-match);
-    background-image: none;
+    background-image: linear-gradient(var(--color-find-match), var(--color-find-match));
   }
 
   .page-sheet .find-match-current {
-    background-color: var(--color-find-current);
-    background-image: none;
+    background-image: linear-gradient(var(--color-find-current), var(--color-find-current));
   }
 }

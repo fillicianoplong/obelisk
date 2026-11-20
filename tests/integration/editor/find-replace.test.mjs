@@ -129,7 +129,7 @@ test('find and replace through the real shell handlers (AC-18)', { timeout: 45_0
     assert.equal(findLayout.shellClass, 'shell');
     assert.equal(findLayout.inPage, true);
     assert.equal(findLayout.top, '8px');
-    assert.equal(findLayout.right, '28px');
+    assert.equal(findLayout.right, '20px');
     const scrolled = await evaluate(session.client, `(() => {
       const region = document.querySelector('.page-region');
       const area = document.querySelector('.page-area');

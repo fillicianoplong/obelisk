@@ -193,7 +193,7 @@ test('opening the find bubble does not change the document canvas offset', async
   assert.equal(grid[1].includes('find'), false);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*position:\s*absolute/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*top:\s*var\(--space-s\)/);
-  assert.match(findCss, /\.find-bubble\s*\{[^}]*right:\s*calc\(var\(--space-l\) \+ var\(--size-scrollbar\)\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*right:\s*calc\(var\(--space-s\) \+ var\(--size-scrollbar\)\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-top:\s*var\(--size-find-padding\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-right:\s*var\(--size-find-padding\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-bottom:\s*var\(--size-find-padding\)/);
@@ -418,8 +418,8 @@ test('find highlight tokens stay distinct in light, dark, and high contrast', as
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*box-decoration-break:\s*clone/);
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*box-shadow:\s*none/);
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*padding:\s*0/);
-  assert.match(editorCss, /transparent var\(--space-2xs\)/);
-  assert.match(editorCss, /calc\(100% - var\(--space-2xs\)\)/);
+  assert.match(editorCss, /background-size:\s*100% min\(1em, 1lh\)/);
+  assert.equal(/\.find-match[\s\S]*transparent var\(--space-2xs\)/.test(editorCss), false);
   assert.equal(editorCss.includes('text-underline-offset'), false);
   const findCss = await readFile(path.join(root, 'src/renderer/shell/find/find-bar.css'), 'utf8');
   const findBar = await readFile(path.join(root, 'src/renderer/shell/find/FindBar.tsx'), 'utf8');
