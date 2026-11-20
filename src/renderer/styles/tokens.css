@@ -46,15 +46,18 @@
   /* Radii */
   --radius-control: 4px;   /* buttons, inputs, checkboxes, tooltips */
   --radius-tab: 6px;       /* top corners of tabs */
-  --radius-overlay: 8px;   /* menus, dialogs, find bar */
+  --radius-overlay: 8px;   /* menus, dialogs, find bubble */
   --radius-round: 999px;   /* toggles, radio dots, scrollbar thumbs */
 
   /* Shell region sizes */
   --size-titlebar: 32px;
   --size-menubar: 32px;
   --size-tabstrip: 40px;
-  --size-find-bar: 40px;
   --size-statusbar: 28px;
+  --size-find-field: 28px;
+  --size-find-field-width: 240px;
+  --size-find-icon: 26px;
+  --size-find-padding: 6px;
   --size-control: 32px;
   --size-control-small: 24px;
   --size-caption-button: 46px;
@@ -71,6 +74,7 @@
   --size-block-hover-inset-spread: 9999px;
   --size-block-drop-indicator: 2px;
   --z-index-block-handle-layer: 2;
+  --z-index-find: 3;
   --size-slash-menu-max-width: 280px;
   --size-slash-menu-max-height: 360px;
 
@@ -101,7 +105,7 @@
   --color-surface-chrome-pressed: #C9D0DA;
   --color-surface-canvas: #EDF0F4;          /* behind pages; also the active tab */
   --color-surface-page: #FFFFFF;
-  --color-surface-raised: #FFFFFF;          /* menus, dialogs, find bar, tooltips */
+  --color-surface-raised: #FFFFFF;          /* menus, dialogs, find bubble, tooltips */
   --color-surface-raised-hover: #E6EAF0;    /* menu item hover */
   --color-surface-raised-pressed: #D3D9E2;
   --color-surface-input: #FFFFFF;

@@ -2,6 +2,18 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.1] - 2026-11-20
+
+### Changed
+
+- Find and replace floats in a bubble at the top right of the page, just under the tabs. Opening it leaves the page where it is.
+
+### Fixed
+
+- Enter in the Replace field replaces the current match and moves to the next one.
+- A focused Find or Replace field shows a thin accent border. Buttons I reach from the keyboard still show the focus ring.
+- The buttons sit next to the fields, and the bubble no longer covers the tab strip.
+
 ## [0.1.37.0] - 2026-11-20
 
 ### Added

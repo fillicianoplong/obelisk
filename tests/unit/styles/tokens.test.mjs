@@ -106,6 +106,7 @@ function sameProperties(left, right, label) {
 
 const SHELL_STYLE_FILES = [
   'src/renderer/shell/shell.css',
+  'src/renderer/shell/find/find-bar.css',
   'src/renderer/styles.css',
   'src/renderer/styles/focus.css',
   'src/renderer/editor/editor.css',
@@ -158,6 +159,11 @@ test('every theme token is defined for light and both dark blocks, and the dark 
   assert.equal(shared.get('--size-menubar'), '32px');
   assert.equal(shared.get('--size-tabstrip'), '40px');
   assert.equal(shared.get('--size-statusbar'), '28px');
+  assert.equal(shared.get('--size-find-field'), '28px');
+  assert.equal(shared.get('--size-find-field-width'), '240px');
+  assert.equal(shared.get('--size-find-icon'), '26px');
+  assert.equal(shared.get('--size-find-padding'), '6px');
+  assert.equal(shared.get('--z-index-find'), '3');
   assert.equal(shared.get('--size-control'), '32px');
   assert.equal(shared.get('--font-size-body'), '14px');
   assert.equal(shared.get('--font-size-body-small'), '13px');

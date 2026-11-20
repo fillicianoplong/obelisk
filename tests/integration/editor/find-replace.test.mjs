@@ -86,18 +86,72 @@ test('find and replace through the real shell handlers (AC-18)', { timeout: 45_0
       editor.editorCommands.replaceText(${JSON.stringify(SAMPLE)});
     })()`);
 
+    const layoutOf = `(() => {
+      const page = document.querySelector('[data-region="page"]');
+      const canvas = document.querySelector('.page-canvas');
+      const tabs = document.querySelector('.tab-strip');
+      const bubble = document.querySelector('.find-bubble');
+      const shell = document.querySelector('.shell');
+      const style = bubble ? getComputedStyle(bubble) : null;
+      return {
+        canvasTop: canvas ? Math.round(canvas.getBoundingClientRect().top) : null,
+        regionTop: page ? Math.round(page.getBoundingClientRect().top) : null,
+        tabBottom: tabs ? Math.round(tabs.getBoundingClientRect().bottom) : null,
+        bubbleTop: bubble ? Math.round(bubble.getBoundingClientRect().top) : null,
+        shellClass: shell ? shell.className : '',
+        inPage: bubble !== null && page !== null && bubble.parentElement === page,
+        position: style ? style.position : null,
+        top: style ? style.top : null,
+        right: style ? style.right : null,
+        replaceOpen: document.querySelector('[data-region="find-bar"] input[type="text"]') !== null,
+        labels: bubble ? [...bubble.querySelectorAll('button')].map((button) => button.getAttribute('aria-label')) : [],
+      };
+    })()`;
+
+    const before = await evaluate(session.client, layoutOf);
+    assert.equal(before.shellClass, 'shell');
+    assert.ok(before.canvasTop > before.tabBottom);
+
+    await evaluate(session.client, `(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', ${JSON.stringify(keyEvent('f', { ctrlKey: true }))}));
+    })()`);
+
+    const findLayout = await waitFor(
+      session.child,
+      async () => {
+        const layout = await evaluate(session.client, layoutOf);
+        return layout?.position === 'absolute' && layout.replaceOpen === false ? layout : null;
+      },
+      STEP_TIMEOUT_MS,
+    );
+    assert.equal(findLayout.canvasTop, before.canvasTop);
+    assert.equal(findLayout.regionTop, before.regionTop);
+    assert.equal(findLayout.shellClass, 'shell');
+    assert.equal(findLayout.inPage, true);
+    assert.equal(findLayout.top, '8px');
+    assert.equal(findLayout.right, '16px');
+    assert.ok(findLayout.bubbleTop >= findLayout.tabBottom);
+    assert.ok(findLayout.labels.length > 0);
+    assert.ok(findLayout.labels.every((label) => typeof label === 'string' && label.length > 0));
+    assert.equal(findLayout.labels.includes('Replace'), false);
+
     await evaluate(session.client, `(() => {
       window.dispatchEvent(new KeyboardEvent('keydown', ${JSON.stringify(keyEvent('h', { ctrlKey: true }))}));
     })()`);
 
-    await waitFor(
+    const replaceLayout = await waitFor(
       session.child,
       async () => {
-        const snap = await evaluate(session.client, SNAPSHOT);
-        return snap?.barOpen === true ? snap : null;
+        const layout = await evaluate(session.client, layoutOf);
+        return layout?.replaceOpen === true ? layout : null;
       },
       STEP_TIMEOUT_MS,
     );
+    assert.equal(replaceLayout.canvasTop, before.canvasTop);
+    assert.equal(replaceLayout.regionTop, before.regionTop);
+    assert.ok(replaceLayout.labels.includes('Replace'));
+    assert.ok(replaceLayout.labels.includes('Replace all'));
+    assert.ok(replaceLayout.labels.every((label) => typeof label === 'string' && label.length > 0));
 
     await evaluate(session.client, `(() => {
       const setValue = (input, value) => {
@@ -109,8 +163,8 @@ test('find and replace through the real shell handlers (AC-18)', { timeout: 45_0
       const replace = document.querySelector('[data-region="find-bar"] input[type="text"]');
       setValue(find, 'cat');
       setValue(replace, 'dog');
-      const whole = [...document.querySelectorAll('[data-region="find-bar"] input[type="checkbox"]')][1];
-      if (whole && !whole.checked) {
+      const whole = document.querySelector('[data-region="find-bar"] [aria-label="Whole word"]');
+      if (whole && whole.getAttribute('aria-pressed') !== 'true') {
         whole.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       }
       const editor = document.querySelector('[data-region="page-editor"]');
@@ -129,8 +183,7 @@ test('find and replace through the real shell handlers (AC-18)', { timeout: 45_0
 
     await evaluate(session.client, `(() => {
       const editor = document.querySelector('[data-region="page-editor"]');
-      const clicked = [...document.querySelectorAll('[data-region="find-bar"] .find-bar-button')]
-        .find((button) => (button.textContent || '').trim() === 'Replace all');
+      const clicked = document.querySelector('[data-region="find-bar"] [aria-label="Replace all"]');
       if (clicked && !clicked.disabled) {
         clicked.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       } else {

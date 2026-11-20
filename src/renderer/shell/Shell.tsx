@@ -626,7 +626,7 @@ export function Shell() {
   }
 
   return (
-    <div className={findBarOpen ? 'shell shell-with-find' : 'shell'}>
+    <div className="shell">
       <ThemeSync />
       <FocusCycle />
       <TitleBar />
@@ -654,14 +654,14 @@ export function Shell() {
         onClose={closeTabById}
         onNew={addTab}
       />
-      {activeTab.kind !== 'settings' ? (
-        <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
-      ) : null}
       <PageArea
         tabId={activeTab.id}
         kind={activeTab.kind}
         state={activeTab.editor}
         onChange={updateEditor}
+        find={activeTab.kind === 'settings' ? null : (
+          <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
+        )}
       />
       {activeTab.kind === 'settings' ? (
         <footer

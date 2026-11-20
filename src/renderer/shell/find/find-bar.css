@@ -1,90 +1,180 @@
-.find-bar {
-  align-items: center;
+.find-bubble {
   background: var(--color-surface-raised);
-  border-bottom: var(--size-border) solid var(--color-border-subtle);
-  box-sizing: border-box;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-s);
-  min-height: var(--size-find-bar);
-  padding: var(--space-2xs) var(--space-s);
-}
-
-.find-bar-field {
-  align-items: center;
-  display: flex;
-  gap: var(--space-2xs);
-}
-
-.find-bar-label {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body-small);
-  white-space: nowrap;
-}
-
-.find-bar-input {
-  background: var(--color-surface-canvas);
-  border: var(--size-border) solid var(--color-border-subtle);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-menu);
   box-sizing: border-box;
   color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
   font: inherit;
-  min-width: 10rem;
-  padding: var(--space-2xs) var(--space-xs);
+  gap: var(--space-xs);
+  padding: var(--size-find-padding);
+  position: absolute;
+  right: var(--space-l);
+  top: var(--space-s);
+  z-index: var(--z-index-find);
 }
 
-.find-bar-input:focus-visible {
+.find-bubble-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-xs);
+}
+
+.find-bubble-spacer {
+  flex: 0 0 var(--size-find-icon);
+  width: var(--size-find-icon);
+}
+
+.find-bubble-field {
+  align-items: center;
+  background: var(--color-surface-input);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 var(--size-find-field-width);
+  gap: var(--space-2xs);
+  height: var(--size-find-field);
+  padding: 0 var(--space-2xs) 0 var(--space-xs);
+  width: var(--size-find-field-width);
+}
+
+.find-bubble-field:has(.find-bubble-input:focus) {
   border-color: var(--color-accent);
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: var(--space-2xs);
 }
 
-.find-bar-check {
-  align-items: center;
-  cursor: pointer;
-  display: flex;
-  font-size: var(--font-size-body-small);
-  gap: var(--space-2xs);
-  user-select: none;
-  white-space: nowrap;
-}
-
-.find-bar-count {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-body-small);
-  min-width: 5rem;
-  white-space: nowrap;
-}
-
-.find-bar-actions {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2xs);
-  margin-inline-start: auto;
-}
-
-.find-bar-button {
-  background: var(--color-surface-canvas);
-  border: var(--size-border) solid var(--color-border-subtle);
-  border-radius: var(--radius-control);
+.find-bubble-input {
+  appearance: none;
+  background: transparent;
+  border: 0;
   color: var(--color-text-primary);
-  cursor: pointer;
+  flex: 1 1 auto;
   font: inherit;
   font-size: var(--font-size-body-small);
-  padding: var(--space-2xs) var(--space-xs);
+  height: 100%;
+  min-width: 0;
+  outline: none;
+  padding: 0;
 }
 
-.find-bar-button:disabled {
+.find-bubble-input::-webkit-search-decoration,
+.find-bubble-input::-webkit-search-cancel-button {
+  appearance: none;
+  display: none;
+}
+
+.find-bubble-count {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  white-space: nowrap;
+}
+
+.find-bubble-count[data-empty='true'] {
+  display: none;
+}
+
+.find-bubble-divider {
+  align-self: center;
+  background: var(--color-border-subtle);
+  flex: 0 0 auto;
+  height: var(--space-l);
+  width: calc(var(--space-2xs) / 2);
+}
+
+.find-bubble-icon,
+.find-bubble-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font: inherit;
+  justify-content: center;
+  padding: 0;
+}
+
+.find-bubble-icon {
+  height: var(--size-find-icon);
+  width: var(--size-find-icon);
+}
+
+.find-bubble-toggle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  height: calc(var(--size-find-field) - var(--space-s));
+  line-height: var(--line-height-caption);
+  padding: 0 var(--space-2xs);
+}
+
+.find-bubble-toggle-word {
+  text-decoration-line: underline;
+  text-underline-offset: var(--space-2xs);
+}
+
+.find-bubble-glyph {
+  display: block;
+  flex: 0 0 auto;
+  height: var(--space-l);
+  width: var(--space-l);
+}
+
+.find-bubble-glyph[data-chevron='down'] {
+  transform: rotate(90deg);
+}
+
+.find-bubble-icon:disabled,
+.find-bubble-toggle:disabled {
   color: var(--color-text-disabled);
   cursor: default;
 }
 
-.find-bar-button:not(:disabled):hover {
-  background: var(--color-surface-subtle);
+.find-bubble-icon:not(:disabled):hover,
+.find-bubble-toggle:not([aria-pressed='true']):hover {
+  background: var(--color-surface-raised-hover);
 }
 
-.find-bar-button:focus-visible {
+.find-bubble-toggle[aria-pressed='true'] {
+  background: var(--color-accent-subtle);
+  color: var(--color-text-primary);
+}
+
+.find-bubble-icon:focus-visible,
+.find-bubble-toggle:focus-visible {
   outline: var(--size-focus-ring) solid var(--color-focus-outer);
   outline-offset: var(--space-2xs);
+}
+
+@media (forced-colors: active) {
+  .find-bubble {
+    border: calc(var(--space-2xs) / 2) solid CanvasText;
+  }
+
+  .find-bubble-field:has(.find-bubble-input:focus) {
+    outline: var(--size-focus-ring) solid Highlight;
+  }
+
+  .find-bubble-icon:focus-visible,
+  .find-bubble-toggle:focus-visible {
+    outline: var(--size-focus-ring) solid Highlight;
+    outline-offset: var(--space-2xs);
+  }
+
+  .find-bubble-icon:not(:disabled):hover,
+  .find-bubble-toggle:not(:disabled):hover {
+    color: HighlightText;
+  }
+
+  .find-bubble-toggle[aria-pressed='true'] {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
 }
