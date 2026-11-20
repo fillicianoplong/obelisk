@@ -73,9 +73,21 @@ function ensureWindowTimers(window) {
   }
 }
 
+const activeElementByDocument = new WeakMap();
+
 function ensureDomFocus(window) {
+  const document = window.document;
+  if (!Object.prototype.hasOwnProperty.call(document, 'activeElement')) {
+    Object.defineProperty(document, 'activeElement', {
+      configurable: true,
+      get() {
+        return activeElementByDocument.get(document) ?? null;
+      },
+    });
+  }
   const focus = window.HTMLElement.prototype.focus;
   window.HTMLElement.prototype.focus = function patchedFocus() {
+    activeElementByDocument.set(this.ownerDocument, this);
     if (typeof focus !== 'function') {
       return;
     }
@@ -86,9 +98,11 @@ function ensureDomFocus(window) {
     }
   };
   const proto = window.HTMLInputElement.prototype;
-  if (typeof proto.select !== 'function') {
-    proto.select = function select() {};
-  }
+  proto.select = function select() {
+    const value = typeof this.value === 'string' ? this.value : '';
+    this.selectionStart = 0;
+    this.selectionEnd = value.length;
+  };
 }
 
 function dispatchKey(target, key, extra = {}) {
@@ -137,13 +151,19 @@ async function mountedBubble(text) {
   view.dom.editorView = view;
   view.dispatch(markCloseHistoryGroup(insertTextBlock(view.state.tr, 'paragraph', newBlockId, { text })));
   const root = createRoot(page);
+  let onVisibility = () => {};
   const render = async (visible) => {
     await act(async () => {
       root.render(createElement(FindBar, {
         visible,
-        onVisibilityChange() {},
+        onVisibilityChange(next) {
+          onVisibility(next);
+        },
       }));
     });
+  };
+  onVisibility = (next) => {
+    void render(next);
   };
   return {
     act,
@@ -173,8 +193,14 @@ test('opening the find bubble does not change the document canvas offset', async
   assert.equal(grid[1].includes('find'), false);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*position:\s*absolute/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*top:\s*var\(--space-s\)/);
-  assert.match(findCss, /\.find-bubble\s*\{[^}]*right:\s*var\(--space-l\)/);
-  assert.match(findCss, /\.find-bubble\s*\{[^}]*padding:\s*var\(--size-find-padding\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*right:\s*calc\(var\(--space-l\) \+ var\(--size-scrollbar\)\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-top:\s*var\(--size-find-padding\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-right:\s*var\(--size-find-padding\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-bottom:\s*var\(--size-find-padding\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-left:\s*var\(--size-find-padding\)/);
+  assert.match(shellCss, /\.page-area\s*\{[^}]*overflow:\s*hidden/);
+  assert.match(shellCss, /\.page-area\s*\{[^}]*position:\s*relative/);
+  assert.match(shellCss, /\.page-region\s*\{[^}]*overflow:\s*auto/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*border-radius:\s*var\(--radius-overlay\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*background:\s*var\(--color-surface-raised\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*box-shadow:\s*var\(--shadow-menu\)/);
@@ -308,4 +334,83 @@ test('Ctrl+F hides the replace row and Ctrl+H shows it', async () => {
   } finally {
     await mounted.close();
   }
+});
+
+test('Ctrl+F from the document focuses and selects the Find field', async () => {
+  const mounted = await mountedBubble('cat one cat two');
+  try {
+    mounted.findCommands.open(mounted.view, { showReplace: false, query: 'cat' });
+    await mounted.render(true);
+    mounted.view.dom.focus();
+    await mounted.act(async () => {
+      dispatchKey(mounted.window, 'f', { ctrlKey: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const find = mounted.document.querySelector('input[type="search"]');
+    assert.equal(mounted.document.activeElement === find, true);
+    assert.equal(find.value, 'cat');
+    assert.equal(find.selectionStart, 0);
+    assert.equal(find.selectionEnd, 'cat'.length);
+
+    mounted.view.dom.focus();
+    await mounted.act(async () => {
+      dispatchKey(mounted.window, 'h', { ctrlKey: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    assert.equal(mounted.document.activeElement === find, true);
+    assert.equal(find.selectionStart, 0);
+    assert.equal(find.selectionEnd, find.value.length);
+    assert.ok(mounted.document.querySelector('input[type="text"]'));
+  } finally {
+    await mounted.close();
+  }
+});
+
+test('Escape in the document closes find and leaves the cursor, unless a menu is open', async () => {
+  const mounted = await mountedBubble('cat one cat two');
+  try {
+    mounted.findCommands.open(mounted.view, { showReplace: false, query: 'cat' });
+    await mounted.render(true);
+    assert.ok(mounted.document.querySelector('.find-match'));
+    const before = {
+      anchor: mounted.view.state.selection.anchor,
+      head: mounted.view.state.selection.head,
+    };
+    mounted.view.dom.focus();
+    const menu = mounted.document.createElement('div');
+    menu.setAttribute('role', 'menu');
+    mounted.document.body.append(menu);
+    await mounted.act(async () => {
+      dispatchKey(mounted.window, 'Escape');
+    });
+    assert.equal(mounted.findCommands.snapshot(mounted.view.state).open, true);
+    assert.equal(mounted.document.querySelector('.find-bubble') !== null, true);
+    menu.remove();
+
+    await mounted.act(async () => {
+      dispatchKey(mounted.view.dom, 'Escape');
+    });
+    assert.equal(mounted.findCommands.snapshot(mounted.view.state).open, false);
+    assert.equal(mounted.document.querySelector('.find-match'), null);
+    assert.equal(mounted.view.state.selection.anchor, before.anchor);
+    assert.equal(mounted.view.state.selection.head, before.head);
+  } finally {
+    await mounted.close();
+  }
+});
+
+test('find highlight tokens stay distinct in light, dark, and high contrast', async () => {
+  const tokens = await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8');
+  const editorCss = await readFile(path.join(root, 'src/renderer/editor/editor.css'), 'utf8');
+  assert.match(tokens, /--color-find-match:\s*rgba\(234, 179, 8, 0\.35\)/);
+  assert.match(tokens, /--color-find-match:\s*rgba\(234, 179, 8, 0\.30\)/);
+  assert.match(tokens, /--color-find-current:\s*#EAB308/);
+  assert.match(tokens, /--color-find-current:\s*#FACC15/);
+  assert.match(tokens, /--color-find-current-text:\s*#1A1A1A/);
+  assert.match(tokens, /--color-find-match:\s*Mark;/);
+  assert.match(tokens, /--color-find-match-text:\s*MarkText;/);
+  assert.match(tokens, /--color-find-current:\s*Highlight;/);
+  assert.match(tokens, /--color-find-current-text:\s*HighlightText;/);
+  assert.match(editorCss, /\.page-sheet \.find-match-current\s*\{[^}]*color:\s*var\(--color-find-current-text\)/);
+  assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*color:\s*var\(--color-find-match-text\)/);
 });

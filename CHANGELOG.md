@@ -2,6 +2,16 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.2] - 2026-11-20
+
+### Fixed
+
+- The find bubble stays at the top right of the page while I scroll the document, and it stays clear of the scrollbar.
+- Ctrl+F and Ctrl+H move into the Find field and select its text when the bubble is already open. Ctrl+H also shows Replace.
+- Escape in the document closes find and clears the highlights without moving the cursor. An open menu, slash menu, context menu, or dialog takes that Escape instead.
+- Matches are easier to see, and the current match is dark text on a stronger yellow.
+- The bubble padding is 6px on every side.
+
 ## [0.1.37.1] - 2026-11-20
 
 ### Changed

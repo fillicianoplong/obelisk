@@ -137,8 +137,10 @@
   --color-focus-inner: #FFFFFF;
   --color-selection: #D3DCEA;               /* text selection on the page */
   --color-selection-text: #1F2630;
-  --color-find-match: #F3E3A1;              /* every match, also outlined */
-  --color-find-current: #E0B83A;            /* current match, also underlined */
+  --color-find-match: rgba(234, 179, 8, 0.35);
+  --color-find-match-text: #1F2630;
+  --color-find-current: #EAB308;
+  --color-find-current-text: #1A1A1A;
 
   --color-success: #0E6B0E;
   --color-warning: #8A5100;
@@ -206,8 +208,10 @@
     --color-focus-inner: #000000;
     --color-selection: #3C4A5E;
     --color-selection-text: #F2F4F7;
-    --color-find-match: #5A4A1A;
-    --color-find-current: #7A5E0E;
+    --color-find-match: rgba(234, 179, 8, 0.30);
+    --color-find-match-text: #E6EAF0;
+    --color-find-current: #FACC15;
+    --color-find-current-text: #1A1A1A;
     --color-success: #6CCB5F;
     --color-warning: #F2C661;
     --color-error: #FF99A4;
@@ -269,8 +273,10 @@
   --color-focus-inner: #000000;
   --color-selection: #3C4A5E;
   --color-selection-text: #F2F4F7;
-  --color-find-match: #5A4A1A;
-  --color-find-current: #7A5E0E;
+  --color-find-match: rgba(234, 179, 8, 0.30);
+  --color-find-match-text: #E6EAF0;
+  --color-find-current: #FACC15;
+  --color-find-current-text: #1A1A1A;
   --color-success: #6CCB5F;
   --color-warning: #F2C661;
   --color-error: #FF99A4;
@@ -345,8 +351,10 @@
     --color-focus-inner: Canvas;
     --color-selection: Highlight;
     --color-selection-text: HighlightText;
-    --color-find-match: Canvas;
+    --color-find-match: Mark;
+    --color-find-match-text: MarkText;
     --color-find-current: Highlight;
+    --color-find-current-text: HighlightText;
     --color-success: CanvasText;
     --color-warning: CanvasText;
     --color-error: CanvasText;

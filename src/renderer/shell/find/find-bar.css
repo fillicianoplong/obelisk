@@ -4,14 +4,19 @@
   box-shadow: var(--shadow-menu);
   box-sizing: border-box;
   color: var(--color-text-primary);
+  align-items: flex-start;
   display: flex;
   flex-direction: column;
   font: inherit;
   gap: var(--space-xs);
-  padding: var(--size-find-padding);
+  padding-bottom: var(--size-find-padding);
+  padding-left: var(--size-find-padding);
+  padding-right: var(--size-find-padding);
+  padding-top: var(--size-find-padding);
   position: absolute;
-  right: var(--space-l);
+  right: calc(var(--space-l) + var(--size-scrollbar));
   top: var(--space-s);
+  width: max-content;
   z-index: var(--z-index-find);
 }
 
@@ -20,6 +25,7 @@
   display: flex;
   flex-wrap: nowrap;
   gap: var(--space-xs);
+  width: max-content;
 }
 
 .find-bubble-spacer {

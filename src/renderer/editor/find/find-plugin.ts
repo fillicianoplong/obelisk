@@ -201,6 +201,32 @@ export function findPlugin(): Plugin {
   });
 }
 
+export function closeFindOnEscape(
+  state: EditorState,
+  dispatch?: (tr: Transaction) => void,
+  view?: EditorView,
+): boolean {
+  if (!findBarState(state).open) {
+    return false;
+  }
+  const doc = view?.dom.ownerDocument;
+  if (doc !== undefined && doc !== null && escapeWouldCloseSomethingElse(doc)) {
+    return false;
+  }
+  if (dispatch !== undefined && view !== undefined) {
+    findCommands.close(view, { restoreSelection: false });
+  }
+  return true;
+}
+
+export function escapeWouldCloseSomethingElse(doc: Document): boolean {
+  if (doc.querySelector('[role="menu"], [role="dialog"], [role="alertdialog"], [data-region="context-menu"]') !== null) {
+    return true;
+  }
+  const slash = doc.querySelector('.slash-menu-host');
+  return slash instanceof HTMLElement && slash.dataset.open === 'true';
+}
+
 export const findCommands = {
   open(view: EditorView, options: { showReplace?: boolean; query?: string } = {}): void {
     const { anchor, head } = view.state.selection;
@@ -220,7 +246,7 @@ export const findCommands = {
       scrollToMatch(view, matches[0]!);
     }
   },
-  close(view: EditorView): void {
+  close(view: EditorView, options?: { restoreSelection?: boolean }): void {
     const bar = findBarState(view.state);
     let tr = patchFindBar(view.state.tr, {
       open: false,
@@ -228,7 +254,8 @@ export const findCommands = {
       currentIndex: 0,
       savedSelection: null,
     });
-    if (bar.savedSelection !== null) {
+    const restoreSelection = options?.restoreSelection !== false;
+    if (restoreSelection && bar.savedSelection !== null) {
       const { anchor, head } = bar.savedSelection;
       const max = view.state.doc.content.size;
       const safeAnchor = Math.max(0, Math.min(anchor, max));

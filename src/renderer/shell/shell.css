@@ -517,11 +517,23 @@
   color: var(--color-text-chrome);
 }
 
+/* The page area does not scroll. The region inside it does, so a bubble
+   pinned to the area stays put while the document moves. */
+.page-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
 /* Anchoring would hold the middle of the page when the window shrinks.
    The scroll stays at the left edge unless the reader moved it. */
 .page-region {
   background: var(--color-surface-canvas);
   box-sizing: border-box;
+  flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
   overflow: auto;

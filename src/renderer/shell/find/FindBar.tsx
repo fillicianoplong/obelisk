@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { FIND_BAR_REGION } from '../focus/regions.js';
 import { resetPageFocusToPointer } from '../page-focus.js';
 import { editShellShortcut } from '../shortcuts.js';
+import { escapeWouldCloseSomethingElse } from '../../editor/find/find-plugin.js';
 import { activeEditorFindCommands } from './find-bridge.js';
 import type { FindSnapshot } from './find-bridge.js';
 
@@ -146,14 +148,41 @@ export function FindBar({ visible, onVisibilityChange }: FindBarProps) {
         if (commands.snapshot().showReplace !== showReplace) {
           commands.patch({ showReplace });
         }
-        refresh();
+        const next = activeEditorFindCommands()?.snapshot();
+        if (next !== undefined) {
+          flushSync(() => {
+            setSnap(next);
+          });
+        }
+        findRef.current?.focus({ preventScroll: true });
+        findRef.current?.select();
       });
     };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.isComposing) {
+        return;
+      }
+      if (escapeWouldCloseSomethingElse(document)) {
+        return;
+      }
+      const editor = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+      const active = document.activeElement;
+      const inDocument = editor !== null && (active === editor || (active instanceof Node && editor.contains(active)));
+      if (!inDocument) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      activeEditorFindCommands()?.close({ restoreSelection: false });
+      onVisibilityChange(false);
+    };
     window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onEscape, true);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', onEscape, true);
     };
-  }, [visible, refresh]);
+  }, [visible, refresh, onVisibilityChange]);
 
   const closeBar = useCallback(() => {
     const commands = activeEditorFindCommands();

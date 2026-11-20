@@ -129,7 +129,32 @@ test('find and replace through the real shell handlers (AC-18)', { timeout: 45_0
     assert.equal(findLayout.shellClass, 'shell');
     assert.equal(findLayout.inPage, true);
     assert.equal(findLayout.top, '8px');
-    assert.equal(findLayout.right, '16px');
+    assert.equal(findLayout.right, '28px');
+    const scrolled = await evaluate(session.client, `(() => {
+      const region = document.querySelector('.page-region');
+      const area = document.querySelector('.page-area');
+      const bubble = document.querySelector('.find-bubble');
+      const before = bubble.getBoundingClientRect();
+      region.scrollTop = 400;
+      const scrolledTop = region.scrollTop;
+      const after = bubble.getBoundingClientRect();
+      region.scrollTop = 0;
+      const scrollbar = region.offsetWidth - region.clientWidth;
+      return {
+        moved: scrolledTop > 0,
+        top: Math.round(after.top),
+        beforeTop: Math.round(before.top),
+        right: Math.round(after.right),
+        beforeRight: Math.round(before.right),
+        belowTabs: after.top >= document.querySelector('.tab-strip').getBoundingClientRect().bottom,
+        clearOfScrollbar: after.right <= area.getBoundingClientRect().right - scrollbar + 1,
+      };
+    })()`);
+    assert.equal(scrolled.moved, true);
+    assert.equal(scrolled.top, scrolled.beforeTop);
+    assert.equal(scrolled.right, scrolled.beforeRight);
+    assert.equal(scrolled.belowTabs, true);
+    assert.equal(scrolled.clearOfScrollbar, true);
     assert.ok(findLayout.bubbleTop >= findLayout.tabBottom);
     assert.ok(findLayout.labels.length > 0);
     assert.ok(findLayout.labels.every((label) => typeof label === 'string' && label.length > 0));

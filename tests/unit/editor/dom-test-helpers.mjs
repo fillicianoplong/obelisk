@@ -43,6 +43,8 @@ function emptyDomSelection() {
     anchorOffset: 0,
     focusOffset: 0,
     isCollapsed: true,
+    collapse() {},
+    extend() {},
     getRangeAt() {
       throw new Error('There is no selection range.');
     },

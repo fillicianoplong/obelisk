@@ -14,7 +14,7 @@ export interface FindSnapshot {
 
 export interface FindCommandBridge {
   open: (options?: { showReplace?: boolean; query?: string }) => void;
-  close: () => void;
+  close: (options?: { restoreSelection?: boolean }) => void;
   patch: (patch: Partial<FindBarState>) => void;
   next: () => void;
   previous: () => void;
@@ -38,8 +38,8 @@ export function activeEditorFindCommands(): FindCommandBridge | null {
     open(options) {
       findCommands.open(view, options);
     },
-    close() {
-      findCommands.close(view);
+    close(options) {
+      findCommands.close(view, options);
     },
     patch(patch) {
       findCommands.patch(view, patch);

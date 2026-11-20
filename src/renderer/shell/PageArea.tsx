@@ -29,14 +29,16 @@ export function PageArea({ tabId, kind = 'document', state, onChange, find = nul
   }
   return (
     <section
-      className="page-region"
+      className="page-area"
       data-region="page"
       role="tabpanel"
       id={`panel-${tabId}`}
       aria-labelledby={`tab-${tabId}`}
     >
       {find}
-      <EditorCore key={tabId} tabId={tabId} state={state} onChange={onChange} />
+      <div className="page-region">
+        <EditorCore key={tabId} tabId={tabId} state={state} onChange={onChange} />
+      </div>
     </section>
   );
 }

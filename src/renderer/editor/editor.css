@@ -146,12 +146,13 @@
   background: var(--color-find-match);
   border-radius: var(--radius-xs);
   box-shadow: 0 0 0 calc(var(--space-2xs) / 2) var(--color-find-match);
-  color: var(--color-text-primary);
+  color: var(--color-find-match-text);
 }
 
 .page-sheet .find-match-current {
   background: var(--color-find-current);
   box-shadow: 0 0 0 calc(var(--space-2xs) / 2) var(--color-find-current);
+  color: var(--color-find-current-text);
   text-decoration: underline;
   text-decoration-thickness: calc(var(--space-2xs) / 2);
   text-underline-offset: calc(var(--space-2xs) / 2);
