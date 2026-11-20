@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.4] - 2026-11-20
+
+### Fixed
+
+- Find highlights sit inside the line, so the same word on the next line no longer touches the highlight above it.
+- In the light theme, other matches are a light yellow and the current match is a slightly stronger yellow. Both keep dark text. The dark theme is unchanged.
+- The space to the left of the find bubble matches the space to the right of it.
+
 ## [0.1.37.3] - 2026-11-20
 
 ### Fixed

@@ -137,10 +137,10 @@
   --color-focus-inner: #FFFFFF;
   --color-selection: #D3DCEA;               /* text selection on the page */
   --color-selection-text: #1F2630;
-  --color-find-match: rgba(234, 179, 8, 0.35);
+  --color-find-match: #FEF08A;
   --color-find-match-text: #1F2630;
-  --color-find-current: #EAB308;
-  --color-find-current-text: #1A1A1A;
+  --color-find-current: #FDE047;
+  --color-find-current-text: #1F2630;
 
   --color-success: #0E6B0E;
   --color-warning: #8A5100;

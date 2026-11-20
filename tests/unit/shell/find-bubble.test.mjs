@@ -402,9 +402,11 @@ test('Escape in the document closes find and leaves the cursor, unless a menu is
 test('find highlight tokens stay distinct in light, dark, and high contrast', async () => {
   const tokens = await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8');
   const editorCss = await readFile(path.join(root, 'src/renderer/editor/editor.css'), 'utf8');
-  assert.match(tokens, /--color-find-match:\s*rgba\(234, 179, 8, 0\.35\)/);
+  assert.match(tokens, /--color-find-match:\s*#FEF08A/);
+  assert.match(tokens, /--color-find-match-text:\s*#1F2630/);
+  assert.match(tokens, /--color-find-current:\s*#FDE047/);
+  assert.match(tokens, /--color-find-current-text:\s*#1F2630/);
   assert.match(tokens, /--color-find-match:\s*rgba\(234, 179, 8, 0\.30\)/);
-  assert.match(tokens, /--color-find-current:\s*#EAB308/);
   assert.match(tokens, /--color-find-current:\s*#FACC15/);
   assert.match(tokens, /--color-find-current-text:\s*#1A1A1A/);
   assert.match(tokens, /--color-find-match:\s*Mark;/);
@@ -416,11 +418,15 @@ test('find highlight tokens stay distinct in light, dark, and high contrast', as
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*box-decoration-break:\s*clone/);
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*box-shadow:\s*none/);
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*padding:\s*0/);
+  assert.match(editorCss, /transparent var\(--space-2xs\)/);
+  assert.match(editorCss, /calc\(100% - var\(--space-2xs\)\)/);
   assert.equal(editorCss.includes('text-underline-offset'), false);
   const findCss = await readFile(path.join(root, 'src/renderer/shell/find/find-bar.css'), 'utf8');
   const findBar = await readFile(path.join(root, 'src/renderer/shell/find/FindBar.tsx'), 'utf8');
-  assert.match(findCss, /\.find-bubble-row:first-child > \.find-bubble-icon:first-child\s*\{[^}]*justify-content:\s*flex-start/);
-  assert.match(findCss, /\.find-bubble-row:first-child > \.find-bubble-icon:last-child\s*\{[^}]*justify-content:\s*flex-end/);
-  assert.match(findBar, /M0\.75 4 L6 8 L0\.75 12/);
-  assert.match(findBar, /M7\.25 4 L15\.25 12 M15\.25 4 L7\.25 12/);
+  assert.match(findCss, /padding-left:\s*var\(--size-find-padding\)/);
+  assert.match(findCss, /padding-right:\s*var\(--size-find-padding\)/);
+  assert.equal(findCss.includes('justify-content: flex-start'), false);
+  assert.equal(findCss.includes('justify-content: flex-end'), false);
+  assert.match(findBar, /M3\.75 4 L9 8 L3\.75 12/);
+  assert.match(findBar, /M3\.75 3\.75 L12\.25 12\.25 M12\.25 3\.75 L3\.75 12\.25/);
 });
