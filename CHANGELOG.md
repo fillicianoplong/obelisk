@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.3] - 2026-11-20
+
+### Fixed
+
+- Find highlights stay inside their own line, so matches on the lines above and below no longer overlap.
+- The space around the find bubble is the same on every side, including beside the chevron and the Close button.
+
 ## [0.1.37.2] - 2026-11-20
 
 ### Fixed

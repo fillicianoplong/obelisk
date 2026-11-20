@@ -413,4 +413,14 @@ test('find highlight tokens stay distinct in light, dark, and high contrast', as
   assert.match(tokens, /--color-find-current-text:\s*HighlightText;/);
   assert.match(editorCss, /\.page-sheet \.find-match-current\s*\{[^}]*color:\s*var\(--color-find-current-text\)/);
   assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*color:\s*var\(--color-find-match-text\)/);
+  assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*box-decoration-break:\s*clone/);
+  assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*box-shadow:\s*none/);
+  assert.match(editorCss, /\.page-sheet \.find-match\s*\{[^}]*padding:\s*0/);
+  assert.equal(editorCss.includes('text-underline-offset'), false);
+  const findCss = await readFile(path.join(root, 'src/renderer/shell/find/find-bar.css'), 'utf8');
+  const findBar = await readFile(path.join(root, 'src/renderer/shell/find/FindBar.tsx'), 'utf8');
+  assert.match(findCss, /\.find-bubble-row:first-child > \.find-bubble-icon:first-child\s*\{[^}]*justify-content:\s*flex-start/);
+  assert.match(findCss, /\.find-bubble-row:first-child > \.find-bubble-icon:last-child\s*\{[^}]*justify-content:\s*flex-end/);
+  assert.match(findBar, /M0\.75 4 L6 8 L0\.75 12/);
+  assert.match(findBar, /M7\.25 4 L15\.25 12 M15\.25 4 L7\.25 12/);
 });

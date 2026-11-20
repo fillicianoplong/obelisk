@@ -144,16 +144,15 @@
 
 .page-sheet .find-match {
   background: var(--color-find-match);
-  border-radius: var(--radius-xs);
-  box-shadow: 0 0 0 calc(var(--space-2xs) / 2) var(--color-find-match);
+  border: 0;
+  box-decoration-break: clone;
+  box-shadow: none;
   color: var(--color-find-match-text);
+  padding: 0;
+  -webkit-box-decoration-break: clone;
 }
 
 .page-sheet .find-match-current {
   background: var(--color-find-current);
-  box-shadow: 0 0 0 calc(var(--space-2xs) / 2) var(--color-find-current);
   color: var(--color-find-current-text);
-  text-decoration: underline;
-  text-decoration-thickness: calc(var(--space-2xs) / 2);
-  text-underline-offset: calc(var(--space-2xs) / 2);
 }

@@ -111,6 +111,16 @@
   width: var(--size-find-icon);
 }
 
+/* The glyph is smaller than the hit box. Pin the outer icons to the
+   outer edge of that box so the mark lines up with the field. */
+.find-bubble-row:first-child > .find-bubble-icon:first-child {
+  justify-content: flex-start;
+}
+
+.find-bubble-row:first-child > .find-bubble-icon:last-child {
+  justify-content: flex-end;
+}
+
 .find-bubble-toggle {
   color: var(--color-text-secondary);
   font-size: var(--font-size-caption);
@@ -130,10 +140,6 @@
   flex: 0 0 auto;
   height: var(--space-l);
   width: var(--space-l);
-}
-
-.find-bubble-glyph[data-chevron='down'] {
-  transform: rotate(90deg);
 }
 
 .find-bubble-icon:disabled,

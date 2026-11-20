@@ -302,7 +302,7 @@ export function FindBar({ visible, onVisibilityChange }: FindBarProps) {
           expanded={snap.showReplace}
           onClick={() => patch({ showReplace: !snap.showReplace })}
         >
-          <Glyph d="M6 4 L10 8 L6 12" chevron={snap.showReplace ? 'down' : 'right'} />
+          <Glyph d={snap.showReplace ? 'M0.75 4.5 L4.5 8.25 L8.25 4.5' : 'M0.75 4 L6 8 L0.75 12'} />
         </IconButton>
         <label className="find-bubble-field">
           <input
@@ -354,7 +354,7 @@ export function FindBar({ visible, onVisibilityChange }: FindBarProps) {
           <Glyph d="M3.5 6 L8 10.5 L12.5 6" />
         </IconButton>
         <IconButton label="Close" shortcut="Escape" onClick={closeBar}>
-          <Glyph d="M4 4 L12 12 M12 4 L4 12" />
+          <Glyph d="M7.25 4 L15.25 12 M15.25 4 L7.25 12" />
         </IconButton>
       </div>
       {snap.showReplace ? (
