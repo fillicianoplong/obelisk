@@ -73,19 +73,20 @@ test('Tab at the start of a paragraph sets first-line indent; elsewhere it steps
   }
 });
 
-test('Shift+Tab steps a first-line indent down by half an inch', async () => {
+test('Shift+Tab removes a left indent step before the first-line indent', async () => {
   const { view, restore } = await editorViewFromDocument(baseDocument([
     paragraph([{ type: 'text', text: 'Hello' }], { indents: { left: 0.5, first: 1, hanging: 0 } }),
   ]));
   try {
     view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 1)));
     dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 1);
+    dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
     assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.5);
-    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.5);
     dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
     assert.equal(view.state.doc.child(0).attrs.indentFirst, 0);
-    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.5);
-    dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
     assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
   } finally {
     view.destroy();
@@ -106,8 +107,8 @@ test('Tab and Shift+Tab move one half-inch step at a time', async () => {
     assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.5);
     assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.5);
     dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
-    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0);
-    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.5);
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.5);
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
     dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
     assert.equal(view.state.doc.child(0).attrs.indentFirst, 0);
     assert.equal(view.state.doc.child(0).attrs.indentLeft, 0);
@@ -133,6 +134,68 @@ test('a quarter-inch indent still opens unchanged, and the next step is half an 
     assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.25);
     dispatchEditorKeyDown(view, 'Tab', { shiftKey: true });
     assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.25);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Enter carries a Tab first-line indent as a first-line indent', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Hello world' }]),
+  ]));
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 1)));
+    dispatchEditorKeyDown(view, 'Tab');
+    const end = view.state.doc.content.size - 1;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, end, end)));
+    dispatchEditorKeyDown(view, 'Enter');
+    assert.equal(view.state.doc.childCount, 2);
+    for (const block of [view.state.doc.child(0), view.state.doc.child(1)]) {
+      assert.equal(block.attrs.indentFirst, 0.5);
+      assert.equal(block.attrs.indentLeft, 0);
+    }
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Enter on a paragraph with no indent does not add one', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Plain' }]),
+  ]));
+  try {
+    const end = view.state.doc.content.size - 1;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, end, end)));
+    dispatchEditorKeyDown(view, 'Enter');
+    assert.equal(view.state.doc.childCount, 2);
+    for (const block of [view.state.doc.child(0), view.state.doc.child(1)]) {
+      assert.equal(block.attrs.indentFirst, 0);
+      assert.equal(block.attrs.indentLeft, 0);
+    }
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Enter keeps a left indent that was set on purpose', async () => {
+  const { view, restore } = await editorViewFromDocument(baseDocument([
+    paragraph([{ type: 'text', text: 'Hello world' }]),
+  ]));
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 1)));
+    dispatchEditorKeyDown(view, 'Tab');
+    dispatchEditorKeyDown(view, 'Tab');
+    assert.equal(view.state.doc.child(0).attrs.indentFirst, 0.5);
+    assert.equal(view.state.doc.child(0).attrs.indentLeft, 0.5);
+    const end = view.state.doc.content.size - 1;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, end, end)));
+    dispatchEditorKeyDown(view, 'Enter');
+    const second = view.state.doc.child(1);
+    assert.equal(second.attrs.indentFirst, 0.5);
+    assert.equal(second.attrs.indentLeft, 0.5);
   } finally {
     view.destroy();
     restore();

@@ -144,22 +144,23 @@ test('hanging indent 0.5 in round-trips for Works Cited style', async () => {
   assert.deepEqual(built.document.blocks[0].indents, { left: 0, first: 0, hanging: 0.5 });
 });
 
-test('Format > Increase indent and Decrease indent match Tab and Shift+Tab', async () => {
+test('Format > Increase indent and Decrease indent step the left indent', async () => {
   const { createTabEditorState, insertText } = await loadRenderer(stateUrl);
   const { runFormatMenuCommand } = await loadRenderer(formatUrl);
   let state = createTabEditorState();
   state = insertText(state, 'Line');
   state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 1, 1)));
-  const firstLine = runFormatMenuCommand(state, 'format-indent-increase');
-  assert.ok(firstLine);
-  assert.equal(firstLine.doc.child(0).attrs.indentFirst, INDENT_STEP_IN);
-  state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, 3, 3)));
   const increased = runFormatMenuCommand(state, 'format-indent-increase');
   assert.ok(increased);
   assert.equal(increased.doc.child(0).attrs.indentLeft, INDENT_STEP_IN);
-  const decreased = runFormatMenuCommand(increased, 'format-indent-decrease');
+  assert.equal(increased.doc.child(0).attrs.indentFirst, 0);
+  const again = runFormatMenuCommand(increased, 'format-indent-increase');
+  assert.ok(again);
+  assert.equal(again.doc.child(0).attrs.indentLeft, INDENT_STEP_IN * 2);
+  const decreased = runFormatMenuCommand(again, 'format-indent-decrease');
   assert.ok(decreased);
-  assert.equal(decreased.doc.child(0).attrs.indentLeft, 0);
+  assert.equal(decreased.doc.child(0).attrs.indentLeft, INDENT_STEP_IN);
+  assert.equal(decreased.doc.child(0).attrs.indentFirst, 0);
 });
 
 test('Enter keeps paragraph format and clears stored marks on the new paragraph', async () => {

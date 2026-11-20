@@ -173,21 +173,37 @@ function tabIndentCommand(): Command {
 
 function shiftTabIndentCommand(): Command {
   return (state, dispatch) => {
-    if (isAtParagraphFirstLineStart(state)) {
-      const depth = paragraphDepth(state.selection.$from);
-      if (depth === null) {
-        return false;
-      }
-      const node = state.selection.$from.node(depth);
-      const currentFirst = Number(node.attrs.indentFirst ?? 0);
-      if (currentFirst > 0) {
-        const next = stepIndentInches(currentFirst, -1, INDENT_LEFT_MIN_IN, INDENT_FIRST_MAX_IN);
-        if (next !== currentFirst) {
-          return setFirstLineIndentCommand(next)(state, dispatch);
-        }
+    const depth = paragraphDepth(state.selection.$from);
+    if (depth === null) {
+      return false;
+    }
+    const node = state.selection.$from.node(depth);
+    const currentLeft = Number(node.attrs.indentLeft ?? 0);
+    // Undo a whole-paragraph step before the first-line step.
+    if (currentLeft > 0) {
+      return stepLeftIndentCommand(-1)(state, dispatch);
+    }
+    const currentFirst = Number(node.attrs.indentFirst ?? 0);
+    if (currentFirst > 0) {
+      const next = stepIndentInches(currentFirst, -1, INDENT_LEFT_MIN_IN, INDENT_FIRST_MAX_IN);
+      if (next !== currentFirst) {
+        return setFirstLineIndentCommand(next)(state, dispatch);
       }
     }
-    return stepLeftIndentCommand(-1)(state, dispatch);
+    return false;
+  };
+}
+
+function paragraphAttrsAfterEnter(node: ProseNode): Record<string, unknown> {
+  // A Tab first-line indent stays a first-line indent. It is not copied
+  // into the left indent. A paragraph with neither indent stays that way.
+  // A left indent that was set on purpose is kept.
+  return {
+    ...node.attrs,
+    blockId: newBlockId(),
+    indentLeft: Number(node.attrs.indentLeft ?? 0),
+    indentFirst: Number(node.attrs.indentFirst ?? 0),
+    indentHanging: Number(node.attrs.indentHanging ?? 0),
   };
 }
 
@@ -198,10 +214,7 @@ export function splitParagraphKeepingFormat(): Command {
     }
     return {
       type: node.type,
-      attrs: {
-        ...node.attrs,
-        blockId: newBlockId(),
-      },
+      attrs: paragraphAttrsAfterEnter(node),
     };
   });
   return (state, dispatch) => {
@@ -254,10 +267,10 @@ export function paragraphMenuCommand(menuId: string): Command | null {
     return setHangingIndentCommand(hanging);
   }
   if (menuId === 'format-indent-increase') {
-    return tabIndentCommand();
+    return stepLeftIndentCommand(1);
   }
   if (menuId === 'format-indent-decrease') {
-    return shiftTabIndentCommand();
+    return stepLeftIndentCommand(-1);
   }
   return null;
 }

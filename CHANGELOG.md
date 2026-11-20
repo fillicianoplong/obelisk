@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.9] - 2026-11-20
+
+### Fixed
+
+- Enter keeps a first-line indent from Tab as a first-line indent on the next paragraph. It does not turn that indent into a left indent, and a paragraph with no indent does not gain one. A left indent set on purpose is kept.
+- The first Tab at the start of a paragraph indents only the first line, by half an inch, and wrapped lines stay at the left margin. Another Tab at the start, and Increase indent or Decrease indent, move the whole paragraph by half an inch. Shift+Tab removes a left indent step before it removes the first-line indent.
+
 ## [0.1.37.8] - 2026-11-20
 
 ### Fixed
