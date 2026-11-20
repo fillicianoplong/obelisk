@@ -247,8 +247,8 @@ export const APP_MENUS: readonly AppMenu[] = [
       item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+D', command: 'edit-duplicate' }),
       item({ id: 'edit-select-all', label: 'Select all', accessKey: 's', shortcut: 'Ctrl+A', command: 'edit-select-all' }),
       separator('edit-sep-2'),
-      item({ id: 'edit-find', label: 'Find', accessKey: 'f', shortcut: 'Ctrl+F' }),
-      item({ id: 'edit-replace', label: 'Replace', accessKey: 'e', shortcut: 'Ctrl+H' }),
+      item({ id: 'edit-find', label: 'Find', accessKey: 'f', shortcut: 'Ctrl+F', command: 'edit-find' }),
+      item({ id: 'edit-replace', label: 'Replace', accessKey: 'e', shortcut: 'Ctrl+H', command: 'edit-replace' }),
     ],
   },
   {

@@ -11,7 +11,8 @@ import { ContextMenu } from './contextmenu/ContextMenu.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
-import { shellShortcut } from './shortcuts.js';
+import { editShellShortcut, shellShortcut } from './shortcuts.js';
+import { FindBar } from './find/FindBar.js';
 import { StatusBar } from './statusbar/StatusBar.js';
 import { ClosePrompt } from './tabs/ClosePrompt.js';
 import { closeTab, firstUnsavedTabId } from './tabs/close.js';
@@ -43,6 +44,7 @@ import { pauseAutosave } from '../autosave/model.js';
 import { createAutosaveScheduler } from '../autosave/scheduler.js';
 import { syncTabAutosave } from '../autosave/sync.js';
 import './shell.css';
+import './find/find-bar.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -53,6 +55,7 @@ export function Shell() {
   const [closePromptId, setClosePromptId] = useState<string | null>(null);
   const [openMessage, setOpenMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
+  const [findBarOpen, setFindBarOpen] = useState(false);
   const nextNumber = useRef(1);
   const opening = useRef(false);
   const saving = useRef(false);
@@ -427,6 +430,24 @@ export function Shell() {
     [putTab, runSave],
   );
 
+  const openFindBar = useCallback((replace: boolean) => {
+    if (activeTab === undefined || activeTab.kind === 'settings') {
+      return;
+    }
+    const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+    const commands = (page as HTMLElement & {
+      editorCommands?: {
+        findOpen?: (options: { showReplace?: boolean }) => void;
+        findSnapshot?: () => { open: boolean };
+      };
+    } | null)?.editorCommands;
+    if (commands?.findOpen === undefined) {
+      return;
+    }
+    commands.findOpen({ showReplace: replace });
+    setFindBarOpen(true);
+  }, [activeTab]);
+
   const openSettings = useCallback(() => {
     setTabs((current) => {
       if (current.some((tab) => tab.id === SETTINGS_TAB_ID)) {
@@ -467,11 +488,19 @@ export function Shell() {
         runSave('save-as');
         return;
       }
+      if (command === 'edit-find') {
+        openFindBar(false);
+        return;
+      }
+      if (command === 'edit-replace') {
+        openFindBar(true);
+        return;
+      }
       if (runActiveEditorMenuCommand(command)) {
         return;
       }
     },
-    [addTab, closeTabById, openDocument, openSettings, requestExit, runSave],
+    [addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave],
   );
 
   const menuContext = useMemo(() => {
@@ -509,6 +538,22 @@ export function Shell() {
     }
   }, []);
 
+  useLayoutEffect(() => {
+    if (activeTab === undefined || activeTab.kind === 'settings') {
+      setFindBarOpen(false);
+      return;
+    }
+    queueMicrotask(() => {
+      const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+      const snap = (page as HTMLElement & {
+        editorCommands?: { findSnapshot?: () => { open: boolean } };
+      } | null)?.editorCommands?.findSnapshot?.();
+      if (snap !== undefined) {
+        setFindBarOpen(snap.open);
+      }
+    });
+  }, [activeTab?.id, activeTab?.kind]);
+
   useEffect(() => {
     return () => {
       autosaveScheduler.current.cancelAll();
@@ -538,6 +583,12 @@ export function Shell() {
 
   useLayoutEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      const editCommand = editShellShortcut(event);
+      if (editCommand !== null) {
+        event.preventDefault();
+        onMenuCommand(editCommand);
+        return;
+      }
       const command = shellShortcut(event);
       if (command === null) {
         return;
@@ -568,14 +619,14 @@ export function Shell() {
       window.removeEventListener('keydown', onKeyDown);
       delete document.documentElement.dataset.shellCommands;
     };
-  }, [addTab, openDocument, openSettings, runSave]);
+  }, [addTab, onMenuCommand, openDocument, openSettings, runSave]);
 
   if (!shellReady || activeTab === undefined) {
     return null;
   }
 
   return (
-    <div className="shell">
+    <div className={findBarOpen ? 'shell shell-with-find' : 'shell'}>
       <ThemeSync />
       <FocusCycle />
       <TitleBar />
@@ -603,6 +654,9 @@ export function Shell() {
         onClose={closeTabById}
         onNew={addTab}
       />
+      {activeTab.kind !== 'settings' ? (
+        <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
+      ) : null}
       <PageArea
         tabId={activeTab.id}
         kind={activeTab.kind}

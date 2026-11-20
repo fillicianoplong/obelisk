@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.0] - 2026-11-20
+
+### Added
+
+- I can find and replace text in one bar with Match case and Whole word. Every match is highlighted with a count like “2 of 5”, and Replace all is one undo step. ([#208](https://github.com/fillicianoplong/obelisk/pull/208))
+
 ## [0.1.36.4] - 2026-11-18
 
 ### Fixed

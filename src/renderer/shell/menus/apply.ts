@@ -78,8 +78,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'edit-copy',
   'edit-paste',
   'edit-paste-plain',
-  'edit-find',
-  'edit-replace',
   'file-template-mla',
   'file-print',
   'file-export-pdf',
@@ -117,6 +115,11 @@ const SHELL_ALWAYS = new Set([
   'tools-settings',
 ]);
 
+const SHELL_DOCUMENT = new Set([
+  'edit-find',
+  'edit-replace',
+]);
+
 export interface LiveMenuContext {
   documentTab: boolean;
   selectionEmpty: boolean;
@@ -133,6 +136,9 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
   }
   if (SHELL_ALWAYS.has(item.id)) {
     return true;
+  }
+  if (SHELL_DOCUMENT.has(item.id)) {
+    return context.documentTab && context.editorState !== null;
   }
   if (!context.documentTab || context.editorState === null) {
     return false;

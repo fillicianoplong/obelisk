@@ -93,6 +93,9 @@ function defaultTarget(doc: Document, regionId: string): HTMLElement | null {
   if (regionId === 'status-bar') {
     return doc.querySelector<HTMLElement>('[data-region="status-bar"]');
   }
+  if (regionId === 'find-bar') {
+    return doc.querySelector<HTMLElement>('[data-region="find-bar"] .find-bar-input');
+  }
   return doc.querySelector<HTMLElement>(`[data-region="${CSS.escape(regionId)}"]`);
 }
 
@@ -209,7 +212,8 @@ export function bindRegionCycle(view: Window): () => void {
     }
     const direction: RegionDirection = event.shiftKey ? -1 : 1;
     // The find bar is not open. regionCycle(['find-bar']) adds it after the tabs.
-    const order = regionCycle();
+    const afterTabs = doc.querySelector('[data-region="find-bar"]') === null ? [] : ['find-bar'];
+    const order = regionCycle(afterTabs);
     const next = regionAfter(order, current, direction);
     if (current === MENU_BAR_REGION && next !== MENU_BAR_REGION) {
       leaveMenuRegion();

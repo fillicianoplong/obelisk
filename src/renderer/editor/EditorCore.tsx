@@ -31,6 +31,8 @@ import { editorMenuCommand } from './menu-commands.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { AllSelection } from 'prosemirror-state';
 import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
+import { findCommands } from './find/find-plugin.js';
+import { markCloseHistoryGroup } from './history/groups.js';
 
 interface EditorCoreProps {
   tabId: string;
@@ -139,7 +141,7 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
           },
           line.length > 0 ? editorSchema.text(line) : null,
         ));
-        view.dispatch(view.state.tr.replaceWith(0, view.state.doc.content.size, nodes));
+        view.dispatch(markCloseHistoryGroup(view.state.tr.replaceWith(0, view.state.doc.content.size, nodes)));
       });
     },
     insertBlock(kind: TextBlockKind, options: { level?: number; text?: string; after?: number } = {}) {
@@ -209,10 +211,52 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
       });
       placeSelection(view);
     },
+    findOpen(options: { showReplace?: boolean; query?: string } = {}) {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.open(view, options);
+      });
+    },
+    findClose() {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.close(view);
+      });
+    },
+    findPatch(patch: Record<string, unknown>) {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.patch(view, patch);
+      });
+    },
+    findNext() {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.next(view);
+      });
+    },
+    findPrevious() {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.previous(view);
+      });
+    },
+    findReplaceCurrent() {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.replaceCurrent(view);
+      });
+    },
+    findReplaceAll() {
+      runWithSynchronousEditorUpdate(() => {
+        findCommands.replaceAll(view);
+      });
+    },
+    findSnapshot() {
+      return findCommands.snapshot(view.state);
+    },
   };
   Object.defineProperty(view.dom, 'editorCommands', {
     configurable: true,
     value: commands,
+  });
+  Object.defineProperty(view.dom, 'editorView', {
+    configurable: true,
+    value: view,
   });
 }
 
@@ -376,6 +420,7 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
       adoptDomSelection(view);
       onChangeRef.current(ownedTabId, view.state);
       delete (view.dom as HTMLElement & { editorCommands?: unknown }).editorCommands;
+      delete (view.dom as HTMLElement & { editorView?: unknown }).editorView;
       view.destroy();
     };
     // `state` is the tab snapshot at mount. Later edits stay in the view.

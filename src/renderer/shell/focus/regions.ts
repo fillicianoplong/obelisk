@@ -11,12 +11,14 @@ export const MENU_BAR_LABEL = 'Menu bar';
 export const TABS_LABEL = 'Tabs';
 export const DOCUMENT_LABEL = 'Document';
 export const STATUS_BAR_LABEL = 'Status bar';
+export const FIND_BAR_LABEL = 'Find and replace';
 
 export const REGION_LABEL: Readonly<Record<string, string>> = {
   [MENU_BAR_REGION]: MENU_BAR_LABEL,
   [TABS_REGION]: TABS_LABEL,
   [PAGE_REGION]: DOCUMENT_LABEL,
   [STATUS_BAR_REGION]: STATUS_BAR_LABEL,
+  [FIND_BAR_REGION]: FIND_BAR_LABEL,
 };
 
 export type RegionDirection = 1 | -1;

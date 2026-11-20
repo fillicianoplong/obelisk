@@ -1,0 +1,90 @@
+.find-bar {
+  align-items: center;
+  background: var(--color-surface-raised);
+  border-bottom: var(--size-border) solid var(--color-border-subtle);
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  min-height: var(--size-find-bar);
+  padding: var(--space-2xs) var(--space-s);
+}
+
+.find-bar-field {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2xs);
+}
+
+.find-bar-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-small);
+  white-space: nowrap;
+}
+
+.find-bar-input {
+  background: var(--color-surface-canvas);
+  border: var(--size-border) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font: inherit;
+  min-width: 10rem;
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.find-bar-input:focus-visible {
+  border-color: var(--color-accent);
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: var(--space-2xs);
+}
+
+.find-bar-check {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: var(--font-size-body-small);
+  gap: var(--space-2xs);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.find-bar-count {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-small);
+  min-width: 5rem;
+  white-space: nowrap;
+}
+
+.find-bar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-inline-start: auto;
+}
+
+.find-bar-button {
+  background: var(--color-surface-canvas);
+  border: var(--size-border) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-body-small);
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.find-bar-button:disabled {
+  color: var(--color-text-disabled);
+  cursor: default;
+}
+
+.find-bar-button:not(:disabled):hover {
+  background: var(--color-surface-subtle);
+}
+
+.find-bar-button:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: var(--space-2xs);
+}

@@ -12,6 +12,10 @@
   min-width: 0;
 }
 
+.shell.shell-with-find {
+  grid-template-rows: var(--size-titlebar) var(--size-menubar) var(--size-tabstrip) var(--size-find-bar) minmax(0, 1fr) var(--size-statusbar);
+}
+
 .title-bar {
   -webkit-app-region: drag;
   align-items: center;

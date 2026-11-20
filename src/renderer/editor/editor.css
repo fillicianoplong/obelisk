@@ -141,3 +141,18 @@
   border-radius: var(--radius-xs);
   padding: 0 var(--space-2xs);
 }
+
+.page-sheet .find-match {
+  background: var(--color-find-match);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 0 calc(var(--space-2xs) / 2) var(--color-find-match);
+  color: var(--color-text-primary);
+}
+
+.page-sheet .find-match-current {
+  background: var(--color-find-current);
+  box-shadow: 0 0 0 calc(var(--space-2xs) / 2) var(--color-find-current);
+  text-decoration: underline;
+  text-decoration-thickness: calc(var(--space-2xs) / 2);
+  text-underline-offset: calc(var(--space-2xs) / 2);
+}

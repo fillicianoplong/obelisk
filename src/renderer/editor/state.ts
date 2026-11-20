@@ -16,6 +16,7 @@ import { typedShortcutInputRulesPlugin } from './keymap/input-rules.js';
 import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-editing.js';
 import { softBreakKeymap } from './keymap/soft-break.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
+import { findPlugin } from './find/find-plugin.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -48,6 +49,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       keymap(baseKeymap),
       blockHandlePlugin(),
       slashMenuPlugin(),
+      findPlugin(),
       typedShortcutInputRulesPlugin(),
       editorColorStylesPlugin(),
     ],

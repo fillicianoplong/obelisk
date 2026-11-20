@@ -1,5 +1,7 @@
 export type ShellShortcut = 'new' | 'open' | 'settings' | 'save' | 'save-as';
 
+export type EditShellShortcut = 'edit-find' | 'edit-replace';
+
 export interface ShortcutKey {
   key: string;
   altKey: boolean;
@@ -32,6 +34,20 @@ export function shellShortcut(event: ShortcutKey): ShellShortcut | null {
   }
   if (key === ',') {
     return 'settings';
+  }
+  return null;
+}
+
+export function editShellShortcut(event: ShortcutKey): EditShellShortcut | null {
+  if (event.altKey || event.repeat || !(event.ctrlKey || event.metaKey) || event.shiftKey) {
+    return null;
+  }
+  const key = event.key.toLowerCase();
+  if (key === 'f') {
+    return 'edit-find';
+  }
+  if (key === 'h') {
+    return 'edit-replace';
   }
   return null;
 }
