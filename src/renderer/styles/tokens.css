@@ -66,7 +66,10 @@
   --size-focus-ring: 2px;
   --size-focus-inner: 1px;
   --size-menu-accent: 3px;   /* menu item hover and keyboard bar */
-  --size-scrollbar: 12px;
+  /* Fluent track is 15px. The painted track starts 1px inside that, so the
+     visible edge sits 14px from the window edge. */
+  --size-scrollbar: 15px;
+  --size-scrollbar-inset: 1px;
   --size-scrollbar-thin: 4px;
   --size-block-handle-column: 24px;
   --size-block-handle-hit: 12px;

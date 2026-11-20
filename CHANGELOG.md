@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.37.6] - 2026-11-20
+
+### Fixed
+
+- The find bubble sits the same distance from the visible scrollbar as it does from the top of the page.
+
 ## [0.1.37.5] - 2026-11-20
 
 ### Fixed

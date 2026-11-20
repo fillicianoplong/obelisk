@@ -193,7 +193,7 @@ test('opening the find bubble does not change the document canvas offset', async
   assert.equal(grid[1].includes('find'), false);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*position:\s*absolute/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*top:\s*var\(--space-s\)/);
-  assert.match(findCss, /\.find-bubble\s*\{[^}]*right:\s*calc\(var\(--space-s\) \+ var\(--size-scrollbar\)\)/);
+  assert.match(findCss, /\.find-bubble\s*\{[^}]*right:\s*calc\(var\(--space-s\) \+ var\(--size-scrollbar\) - var\(--size-scrollbar-inset\)\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-top:\s*var\(--size-find-padding\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-right:\s*var\(--size-find-padding\)/);
   assert.match(findCss, /\.find-bubble\s*\{[^}]*padding-bottom:\s*var\(--size-find-padding\)/);
