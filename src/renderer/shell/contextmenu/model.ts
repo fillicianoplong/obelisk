@@ -181,7 +181,7 @@ export interface SpellingMenuInfo {
 }
 
 function spellingSuggestionEntries(info: SpellingMenuInfo): MenuEntry[] {
-  const rows: MenuEntry[] = info.suggestions.slice(0, 8).map((suggestion, index) => item({
+  const rows: MenuEntry[] = info.suggestions.slice(0, 5).map((suggestion, index) => item({
     id: `ctx-spelling-${index}`,
     label: suggestion,
     accessKey: '',

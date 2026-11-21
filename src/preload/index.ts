@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webFrame } from 'electron';
 import { exposeObeliskApi } from './bridge.js';
 import { installThemeBridge } from './theme.js';
 
@@ -18,7 +18,7 @@ function nodeFileSystemAvailable(): boolean {
   }
 }
 
-exposeObeliskApi(contextBridge, ipcRenderer);
+exposeObeliskApi(contextBridge, ipcRenderer, webFrame);
 
 const themeRoot = (globalThis as { document?: { documentElement?: { dataset: { theme?: string } } | null } }).document
   ?.documentElement;

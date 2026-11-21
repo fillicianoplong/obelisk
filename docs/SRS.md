@@ -277,7 +277,7 @@ Formatting applies to text in any block that holds text, including table cells.
 | FR-30 | The system shall set left, first-line, and hanging indents per paragraph, per the [*Formatting reference*](#formatting-reference). | Must | Test: a hanging indent of 0.5 in on a Works Cited entry. |
 | FR-31 | The system shall underline misspelled words and offer suggestions from the Windows spell checker. | Must | Test: misspell a word, pick a suggestion from the text menu; Ctrl+Z restores the word. |
 
-FR-31 is implemented. Electron uses the Windows spell checker and the languages the operating system already has. A right-click on a misspelled word lists that word's suggestions at the top of the text menu, and Add to dictionary stores the word with the spell checker. Choosing a suggestion replaces the word in one undo step. The app does not download a dictionary. Tools > Spell check turns the underlines on or off and remembers the choice. Code blocks and inline code are not checked.
+FR-31 is implemented. Electron uses the Windows spell checker and the languages the operating system already has. A right-click on a misspelled word lists up to five suggestions for that word at the top of the text menu, then Add to dictionary, which stores the word with the spell checker. Choosing a suggestion replaces the word in one undo step. The app does not download a dictionary. Tools > Spell check turns the underlines on or off and remembers the choice. Turning it back on rechecks the text already on the page. Code blocks and inline code are not checked.
 
 ### 6.6 Blocks and typing
 

@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.38.1] - 2026-11-20
+
+### Fixed
+
+- Right-clicking a misspelled word lists up to five suggestions and Add to dictionary at the top of the text menu. If the spell checker has no suggestion, the menu shows No suggestions and Add to dictionary.
+- Turning Tools > Spell check back on underlines the words already on the page.
+
 ## [0.1.38.0] - 2026-11-20
 
 ### Added

@@ -10,17 +10,40 @@ import { resetPageFocusToPointer } from '../page-focus.js';
 import {
   CONTEXT_MENU_RESTORE_FOCUS,
   dispatchContextMenuRequest,
+  dispatchContextMenuSpelling,
   type ContextMenuRestoreDetail,
 } from './events.js';
 import { proseBlockType, resolveContextTarget } from './target.js';
-import { spellContextForMenu } from '../spellcheck/context.js';
+import { spellContextForMenu, spellingForEditor, type SpellingTarget } from '../spellcheck/context.js';
 
 function publishContextMenu(
+  view: EditorView,
   started: number,
   detail: Omit<Parameters<typeof dispatchContextMenuRequest>[0], 'spelling'>,
 ): void {
-  void spellContextForMenu(started).then((spelling) => {
-    dispatchContextMenuRequest({ ...detail, spelling });
+  let spelling: SpellingTarget | null = null;
+  try {
+    spelling = spellingForEditor(view.state);
+  } catch {
+    spelling = null;
+  }
+  dispatchContextMenuRequest({ ...detail, spelling });
+  void spellContextForMenu(started).then((fromMain) => {
+    if (fromMain === null || fromMain.word.length === 0) {
+      return;
+    }
+    const suggestions = fromMain.suggestions.slice(0, 5);
+    const current = spelling !== null && spelling.word === fromMain.word ? spelling.suggestions : [];
+    if (current.length > 0 && suggestions.length <= current.length) {
+      return;
+    }
+    dispatchContextMenuSpelling({
+      tabId: detail.tabId,
+      spelling: {
+        word: fromMain.word,
+        suggestions: suggestions.length > 0 ? suggestions : current,
+      },
+    });
   });
 }
 
@@ -91,7 +114,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         const node = view.state.doc.child(blockIndex);
         const rect = handle.getBoundingClientRect();
         const selection = { selectionAnchor: view.state.selection.anchor, selectionHead: view.state.selection.head };
-        publishContextMenu(started, {
+        publishContextMenu(view, started, {
           tabId,
           kind: 'block',
           blockType: proseBlockType(node),
@@ -111,7 +134,7 @@ export function contextMenuEditorPlugin(tabId: string) {
       ): void {
         try {
           const target = resolveContextTarget(view, clientX, clientY, domTarget, false);
-          publishContextMenu(started, { tabId, ...target });
+          publishContextMenu(view, started, { tabId, ...target });
         } catch {
           // Keep the editor alive if targeting fails for an odd hit target.
         }
@@ -150,7 +173,6 @@ export function contextMenuEditorPlugin(tabId: string) {
       handleDOMEvents: {
         contextmenu(view, event) {
           const started = Date.now();
-          event.preventDefault();
           if (selectedBlockRange(view.state) === null) {
             try {
               view.dispatch(textSelectionForEditorPointer(view, event));
@@ -160,7 +182,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           }
           try {
             const target = resolveContextTarget(view, event.clientX, event.clientY, event.target, false);
-            publishContextMenu(started, { tabId, ...target });
+            publishContextMenu(view, started, { tabId, ...target });
           } catch {
             // Ignore bad hit targets so the renderer does not crash.
           }
@@ -177,7 +199,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         event.preventDefault();
         const anchor = anchorFromKeyboard(view);
         const target = resolveContextTarget(view, anchor.x, anchor.y, null, true);
-        publishContextMenu(started, { tabId, ...target });
+        publishContextMenu(view, started, { tabId, ...target });
         return true;
       },
     },

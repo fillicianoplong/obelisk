@@ -483,14 +483,21 @@ export function Shell() {
     };
   }, []);
 
+  const spellingOnRef = useRef(spellingOn);
+  spellingOnRef.current = spellingOn;
+
   const toggleSpelling = useCallback(() => {
-    setSpellingOn((current) => {
-      const next = !current;
+    const next = !spellingOnRef.current;
+    setSpellingOn(next);
+    if (!next) {
+      setSpellcheckEnabled(false);
+    }
+    void window.obelisk['prefs:set']({ key: 'spelling', value: next }).then(() => {
+      if (next) {
+        setSpellcheckEnabled(true);
+      }
+    }).catch(() => {
       setSpellcheckEnabled(next);
-      void window.obelisk['prefs:set']({ key: 'spelling', value: next }).catch(() => {
-        // The page already follows the toggle. The file write can fail quietly.
-      });
-      return next;
     });
   }, []);
 

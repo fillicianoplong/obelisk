@@ -17,7 +17,7 @@ import { readPackageIoRequest, runPackagedIoCheck } from './file/packageIo.js';
 import { removeStaleTempFiles } from './file/writeAtomic.js';
 import { readInUtilityProcess } from './codec/utility-host.js';
 import { installIpc } from './ipc/install.js';
-import { readThemeSetting } from './settings.js';
+import { readSpellingSetting, readThemeSetting } from './settings.js';
 import { secureWebPreferences } from './security/window-options.js';
 import { readSystemCaptionColors } from './window/caption.js';
 import { installThemeIpc } from './window/install-theme-ipc.js';
@@ -197,7 +197,7 @@ function startApp(): void {
         reportSecurity(`OBELISK_PERMISSION_DENIED ${kind}`);
       },
     });
-    installSpellChecker(session.defaultSession);
+    installSpellChecker(session.defaultSession, readSpellingSetting(userData));
     installAppProtocol(path.join(__dirname, '../renderer'));
     createWindow(theme);
     const window = mainWindow;

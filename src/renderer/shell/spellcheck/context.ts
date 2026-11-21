@@ -1,3 +1,6 @@
+import type { EditorState } from 'prosemirror-state';
+import { wordAroundCaret } from '../../editor/spell-replace.js';
+import { spellcheckEnabled } from '../../editor/spellcheck-mode.js';
 import type { SpellContextEvent } from '../../../shared/ipc/types.js';
 
 export interface SpellingTarget {
@@ -29,7 +32,33 @@ export function startSpellContextListener(): void {
   });
 }
 
-export function spellContextForMenu(since: number, waitMs = 120): Promise<SpellingTarget | null> {
+const SUGGESTION_LIMIT = 5;
+
+export function spellingForEditor(state: EditorState): SpellingTarget | null {
+  if (!spellcheckEnabled() || typeof window === 'undefined') {
+    return null;
+  }
+  const word = wordAroundCaret(state);
+  const lookup = window.obelisk?.['spell:lookup'];
+  if (word === null || typeof lookup !== 'function') {
+    return null;
+  }
+  let result: { misspelled?: boolean; suggestions?: unknown };
+  try {
+    result = lookup(word);
+  } catch {
+    return null;
+  }
+  if (result == null || result.misspelled !== true) {
+    return null;
+  }
+  const suggestions = Array.isArray(result.suggestions)
+    ? result.suggestions.filter((item): item is string => typeof item === 'string' && item.length > 0).slice(0, SUGGESTION_LIMIT)
+    : [];
+  return { word, suggestions };
+}
+
+export function spellContextForMenu(since: number, waitMs = 400): Promise<SpellingTarget | null> {
   startSpellContextListener();
   const ready = (): SpellingTarget | null => {
     if (latest === null || latestAt < since) {

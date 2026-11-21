@@ -4,7 +4,7 @@
 export const SPELLCHECK_DICTIONARY_DOWNLOAD_URL = 'file:///obelisk-spellchecker-offline/';
 
 const WORD_MAX = 64;
-const SUGGESTION_MAX = 8;
+const SUGGESTION_MAX = 5;
 
 export function spellCheckerLanguages(
   available: readonly string[],

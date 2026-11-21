@@ -95,14 +95,35 @@ test('a misspelled word replaces the spelling placeholder with suggestions', asy
   const model = await loadRenderer(modelUrl);
   const entries = model.withSpellingSuggestions(model.composeContextMenu('text'), {
     word: 'helo',
-    suggestions: ['hello', 'help'],
+    suggestions: ['hello', 'help', 'one', 'two', 'three', 'four'],
   });
   const labels = model.menuEntryLabels(entries);
-  assert.equal(labels[0], 'hello');
-  assert.equal(labels[1], 'help');
-  assert.equal(labels[2], 'Add to dictionary');
+  assert.deepEqual(labels.slice(0, 6), ['hello', 'help', 'one', 'two', 'three', 'Add to dictionary']);
+  assert.equal(labels.includes('four'), false);
   assert.equal(labels.includes('Spelling suggestions'), false);
-  assert.equal(labels.includes('Cut'), true);
+  assert.equal(labels[labels.indexOf('Add to dictionary') + 1], 'Cut');
+  const none = model.menuEntryLabels(model.withSpellingSuggestions(model.composeContextMenu('text'), {
+    word: 'helo',
+    suggestions: [],
+  }));
+  assert.equal(none[0], 'No suggestions');
+  assert.equal(none[1], 'Add to dictionary');
   const plain = model.menuEntryLabels(model.withSpellingSuggestions(model.composeContextMenu('text'), null));
   assert.equal(plain[0], 'Spelling suggestions');
+});
+
+test('the spelling word is the one under the caret, not code', async () => {
+  const { wordAroundCaret } = await loadRenderer(replaceUrl);
+  const { createTabEditorState, insertText, setCaret } = await loadRenderer(stateUrl);
+  let state = insertText(createTabEditorState(), 'Say hllo there');
+  const start = state.doc.textContent.indexOf('hllo');
+  state = setCaret(state, 1 + start + 2);
+  assert.equal(wordAroundCaret(state), 'hllo');
+  const code = state.schema.nodes.code_block.create(
+    { blockId: '00000000-0000-4000-8000-000000000010' },
+    state.schema.text('hllo'),
+  );
+  const coded = state.apply(state.tr.replaceWith(0, state.doc.content.size, code));
+  const inCode = coded.apply(coded.tr.setSelection(TextSelection.create(coded.doc, 3, 3)));
+  assert.equal(wordAroundCaret(inCode), null);
 });

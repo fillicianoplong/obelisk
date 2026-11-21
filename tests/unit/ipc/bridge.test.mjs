@@ -346,7 +346,7 @@ test('preload exposes only listed channels', async () => {
     ipc,
   );
   assert.equal(exposed.apiKey, OBELISK_BRIDGE_KEY);
-  assert.deepEqual(Object.keys(exposed.api).sort(), [...IPC_CHANNELS].sort());
+  assert.deepEqual(Object.keys(exposed.api).sort(), [...IPC_CHANNELS, 'spell:lookup'].sort());
   for (const key of ['invoke', 'send', 'sendSync', 'on', 'postMessage', 'ipcRenderer']) {
     assert.equal(Object.hasOwn(exposed.api, key), false, key);
   }
@@ -393,6 +393,22 @@ test('preload exposes only listed channels', async () => {
   assert.equal(bridgeSource.includes('.send('), false);
   assert.equal(bridgeSource.includes('sendSync'), false);
   assert.equal(bridgeSource.includes('exposeInMainWorld'), true);
+});
+
+test('spell lookup reports a misspelled word and at most five suggestions', () => {
+  const api = createObeliskApi(
+    { invoke() { return Promise.resolve(null); }, on() {}, removeListener() {} },
+    {
+      isWordMisspelled(word) { return word === 'hllo'; },
+      getWordSuggestions() { return ['hello', 'halo', '', 'hill', 'hallo', 'hullo', 'extra']; },
+    },
+  );
+  assert.deepEqual(api['spell:lookup']('hllo'), {
+    misspelled: true,
+    suggestions: ['hello', 'halo', 'hill', 'hallo', 'hullo'],
+  });
+  assert.deepEqual(api['spell:lookup']('hello'), { misspelled: false, suggestions: [] });
+  assert.deepEqual(api['spell:lookup'](''), { misspelled: false, suggestions: [] });
 });
 
 test('main IPC modules other than the installer do not reference Electron', async () => {
