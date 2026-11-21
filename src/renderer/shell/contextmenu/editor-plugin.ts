@@ -6,45 +6,30 @@ import {
   textSelectionForEditorPointer,
   textSelectionFromDocumentCoords,
 } from '../../editor/block-handle-plugin.js';
+import { spellcheckEnabled } from '../../editor/spellcheck-mode.js';
 import { resetPageFocusToPointer } from '../page-focus.js';
+import { spellContextForMenu, type SpellingTarget } from '../spellcheck/context.js';
 import {
   CONTEXT_MENU_RESTORE_FOCUS,
   dispatchContextMenuRequest,
-  dispatchContextMenuSpelling,
   type ContextMenuRestoreDetail,
 } from './events.js';
 import { proseBlockType, resolveContextTarget } from './target.js';
-import { spellContextForMenu, spellingForEditor, type SpellingTarget } from '../spellcheck/context.js';
 
-function publishContextMenu(
-  view: EditorView,
+const SPELL_MENU_WAIT_MS = 300;
+
+// The menu stays closed until the main-process context-menu result arrives.
+// Opening it on the click covers the word, and Chromium then reports no misspelling.
+export async function publishContextMenu(
   started: number,
   detail: Omit<Parameters<typeof dispatchContextMenuRequest>[0], 'spelling'>,
-): void {
+): Promise<void> {
+  const fromMain = await spellContextForMenu(started, SPELL_MENU_WAIT_MS);
   let spelling: SpellingTarget | null = null;
-  try {
-    spelling = spellingForEditor(view.state);
-  } catch {
-    spelling = null;
+  if (spellcheckEnabled() && fromMain !== null && fromMain.word.length > 0) {
+    spelling = { word: fromMain.word, suggestions: fromMain.suggestions.slice(0, 5) };
   }
   dispatchContextMenuRequest({ ...detail, spelling });
-  void spellContextForMenu(started).then((fromMain) => {
-    if (fromMain === null || fromMain.word.length === 0) {
-      return;
-    }
-    const suggestions = fromMain.suggestions.slice(0, 5);
-    const current = spelling !== null && spelling.word === fromMain.word ? spelling.suggestions : [];
-    if (current.length > 0 && suggestions.length <= current.length) {
-      return;
-    }
-    dispatchContextMenuSpelling({
-      tabId: detail.tabId,
-      spelling: {
-        word: fromMain.word,
-        suggestions: suggestions.length > 0 ? suggestions : current,
-      },
-    });
-  });
 }
 
 function anchorFromKeyboard(view: EditorView): { x: number; y: number } {
@@ -114,7 +99,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         const node = view.state.doc.child(blockIndex);
         const rect = handle.getBoundingClientRect();
         const selection = { selectionAnchor: view.state.selection.anchor, selectionHead: view.state.selection.head };
-        publishContextMenu(view, started, {
+        void publishContextMenu(started, {
           tabId,
           kind: 'block',
           blockType: proseBlockType(node),
@@ -134,7 +119,7 @@ export function contextMenuEditorPlugin(tabId: string) {
       ): void {
         try {
           const target = resolveContextTarget(view, clientX, clientY, domTarget, false);
-          publishContextMenu(view, started, { tabId, ...target });
+          void publishContextMenu(started, { tabId, ...target });
         } catch {
           // Keep the editor alive if targeting fails for an odd hit target.
         }
@@ -182,7 +167,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           }
           try {
             const target = resolveContextTarget(view, event.clientX, event.clientY, event.target, false);
-            publishContextMenu(view, started, { tabId, ...target });
+            void publishContextMenu(started, { tabId, ...target });
           } catch {
             // Ignore bad hit targets so the renderer does not crash.
           }
@@ -199,7 +184,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         event.preventDefault();
         const anchor = anchorFromKeyboard(view);
         const target = resolveContextTarget(view, anchor.x, anchor.y, null, true);
-        publishContextMenu(view, started, { tabId, ...target });
+        void publishContextMenu(started, { tabId, ...target });
         return true;
       },
     },

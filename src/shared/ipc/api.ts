@@ -11,11 +11,6 @@ export interface SpellContextApi {
   unsubscribe(id: number): void;
 }
 
-export interface SpellLookupResult {
-  misspelled: boolean;
-  suggestions: string[];
-}
-
 export type ObeliskApi = {
   [C in InvokeChannel]: RequestMap[C] extends void
     ? () => Promise<ResultMap[C]>
@@ -23,5 +18,4 @@ export type ObeliskApi = {
 } & {
   'file:activated': FileActivatedApi;
   'spell:context': SpellContextApi;
-  'spell:lookup': (word: string) => SpellLookupResult;
 };

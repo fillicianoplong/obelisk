@@ -14,7 +14,6 @@ import type { AppMenu } from '../menus/model.js';
 import { focusMenuItemId, MenuItems } from '../menus/MenuTree.js';
 import {
   CONTEXT_MENU_REQUEST,
-  CONTEXT_MENU_SPELLING,
   dispatchContextMenuRestoreFocus,
   type ContextMenuRequestDetail,
 } from './events.js';
@@ -164,26 +163,9 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
         setOpen(payload);
       });
     }
-    function onSpelling(event: Event) {
-      if (!(event instanceof CustomEvent)) {
-        return;
-      }
-      const detail = event.detail as { tabId: string; spelling: { word: string; suggestions: string[] } };
-      if (detail.tabId !== tabId || detail.spelling.word.length === 0) {
-        return;
-      }
-      const current = openRef.current;
-      if (current === null) {
-        return;
-      }
-      rememberSpellingTarget(detail.spelling);
-      setOpen({ ...current, target: { ...current.target, spelling: detail.spelling } });
-    }
     window.addEventListener(CONTEXT_MENU_REQUEST, onRequest);
-    window.addEventListener(CONTEXT_MENU_SPELLING, onSpelling);
     return () => {
       window.removeEventListener(CONTEXT_MENU_REQUEST, onRequest);
-      window.removeEventListener(CONTEXT_MENU_SPELLING, onSpelling);
     };
   }, [tabId]);
 

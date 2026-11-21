@@ -2,10 +2,9 @@ import { baseKeymap, chainCommands } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
 import type { Node } from 'prosemirror-model';
-import { AllSelection, EditorState, Plugin, TextSelection } from 'prosemirror-state';
+import { EditorState, Plugin, TextSelection } from 'prosemirror-state';
 import type { Command, Selection, Transaction } from 'prosemirror-state';
-import type { EditorView } from 'prosemirror-view';
-import { SPELLCHECK_RECHECK, spellcheckEnabled } from './spellcheck-mode.js';
+import { spellcheckEnabled } from './spellcheck-mode.js';
 import { editorSchema } from './schema.js';
 import { blockHandleKeymap, blockHandlePlugin } from './block-handle-plugin.js';
 import { editorColorStylesPlugin } from './color-styles-plugin.js';
@@ -32,47 +31,21 @@ function applyCommand(state: EditorState, command: Command): EditorState | null 
   return next;
 }
 
-function recheckSpelling(view: EditorView): void {
-  if (view.isDestroyed || !spellcheckEnabled()) {
-    return;
-  }
-  view.dom.setAttribute('spellcheck', 'true');
-  const selection = view.state.selection;
-  if (view.state.doc.content.size > 0) {
-    view.dispatch(
-      view.state.tr.setSelection(new AllSelection(view.state.doc)).setMeta('addToHistory', false).setMeta('uiEvent', 'spellcheck'),
-    );
-    if (!view.isDestroyed) {
-      view.dispatch(
-        view.state.tr.setSelection(selection).setMeta('addToHistory', false).setMeta('uiEvent', 'spellcheck'),
-      );
-    }
-  }
-  if (!view.isDestroyed) {
-    view.focus();
-  }
-}
-
 function spellcheckModePlugin(): Plugin {
   return new Plugin({
     view(view) {
       const apply = () => {
-        const flag = spellcheckEnabled() ? 'true' : 'false';
-        if (view.dom.getAttribute('spellcheck') !== flag) {
-          view.dom.setAttribute('spellcheck', flag);
+        if (view.dom.getAttribute('spellcheck') !== 'true') {
+          view.dom.setAttribute('spellcheck', 'true');
+        }
+        if (spellcheckEnabled()) {
+          view.dom.removeAttribute('data-spell-hidden');
+        } else if (!view.dom.hasAttribute('data-spell-hidden')) {
+          view.dom.setAttribute('data-spell-hidden', '');
         }
       };
-      const onRecheck = () => {
-        recheckSpelling(view);
-      };
       apply();
-      view.dom.ownerDocument.defaultView?.addEventListener(SPELLCHECK_RECHECK, onRecheck);
-      return {
-        update: apply,
-        destroy() {
-          view.dom.ownerDocument.defaultView?.removeEventListener(SPELLCHECK_RECHECK, onRecheck);
-        },
-      };
+      return { update: apply };
     },
   });
 }

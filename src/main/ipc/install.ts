@@ -4,7 +4,6 @@ import { createFileService } from '../file/service.js';
 import { pickOpenDialogOwner, type OpenDialogOptions } from '../file/openDialog.js';
 import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '../file/saveDialog.js';
 import { ipcError } from '../../shared/ipc/errors.js';
-import { installSpellChecker } from '../security/session.js';
 import { readSpellingSetting, writeSpellingSetting } from '../settings.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
@@ -90,7 +89,6 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
       return ipcError('NOT_IMPLEMENTED', 'prefs:set is not available yet.');
     }
     writeSpellingSetting(userData(), request.value);
-    installSpellChecker(session.defaultSession, request.value);
     return { status: 'ok' };
   });
   bindIpcHandlers(ipc, registry);

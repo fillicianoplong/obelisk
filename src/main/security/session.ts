@@ -73,12 +73,9 @@ export function installPermissionDenials(ses: Session, handlers: SessionSecurity
   });
 }
 
-export function installSpellChecker(ses: Session, enabled = true): void {
+export function installSpellChecker(ses: Session): void {
   ses.setSpellCheckerDictionaryDownloadURL(SPELLCHECK_DICTIONARY_DOWNLOAD_URL);
-  ses.setSpellCheckerEnabled(enabled);
-  if (!enabled) {
-    return;
-  }
+  ses.setSpellCheckerEnabled(true);
   try {
     const languages = spellCheckerLanguages(
       ses.availableSpellCheckerLanguages,

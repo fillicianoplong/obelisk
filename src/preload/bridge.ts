@@ -1,4 +1,4 @@
-import type { ObeliskApi, SpellLookupResult } from '../shared/ipc/api.js';
+import type { ObeliskApi } from '../shared/ipc/api.js';
 import { IPC_EVENT_CHANNEL } from '../shared/ipc/channels.js';
 import type {
   ExportRunResult,
@@ -33,39 +33,6 @@ export interface PreloadIpc {
 
 export interface ContextBridgeLike {
   exposeInMainWorld(apiKey: string, api: unknown): void;
-}
-
-export interface SpellWordChecker {
-  isWordMisspelled(word: string): boolean;
-  getWordSuggestions(word: string): string[];
-}
-
-const EMPTY_LOOKUP: SpellLookupResult = { misspelled: false, suggestions: [] };
-
-function lookupSpelling(spell: SpellWordChecker | undefined, word: unknown): SpellLookupResult {
-  if (typeof word !== 'string' || word.length < 1 || word.length > 64 || spell === undefined) {
-    return EMPTY_LOOKUP;
-  }
-  try {
-    if (spell.isWordMisspelled(word) !== true) {
-      return EMPTY_LOOKUP;
-    }
-  } catch {
-    return EMPTY_LOOKUP;
-  }
-  let listed: readonly unknown[] = [];
-  try {
-    const value = spell.getWordSuggestions(word);
-    if (Array.isArray(value)) {
-      listed = value;
-    }
-  } catch {
-    listed = [];
-  }
-  const suggestions = listed
-    .filter((item): item is string => typeof item === 'string' && item.length > 0 && item.length <= 64)
-    .slice(0, 5);
-  return { misspelled: true, suggestions };
 }
 
 type ActivatedListener = (result: FileOpenResult) => void;
@@ -127,7 +94,7 @@ function createFileActivatedApi(ipc: PreloadIpc): ObeliskApi['file:activated'] {
   };
 }
 
-export function createObeliskApi(ipc: PreloadIpc, spell?: SpellWordChecker): ObeliskApi {
+export function createObeliskApi(ipc: PreloadIpc): ObeliskApi {
   return {
     'file:open': () => ipc.invoke('file:open') as Promise<FileOpenResult>,
     'file:save': (request) => ipc.invoke('file:save', request) as Promise<FileSaveResult>,
@@ -149,7 +116,6 @@ export function createObeliskApi(ipc: PreloadIpc, spell?: SpellWordChecker): Obe
     'spell:add': (request) => ipc.invoke('spell:add', request) as Promise<SpellAddResult>,
     'file:activated': createFileActivatedApi(ipc),
     'spell:context': createSpellContextApi(ipc),
-    'spell:lookup': (word) => lookupSpelling(spell, word),
   };
 }
 
@@ -206,6 +172,6 @@ function createSpellContextApi(ipc: PreloadIpc): ObeliskApi['spell:context'] {
   };
 }
 
-export function exposeObeliskApi(bridge: ContextBridgeLike, ipc: PreloadIpc, spell?: SpellWordChecker): void {
-  bridge.exposeInMainWorld(OBELISK_BRIDGE_KEY, createObeliskApi(ipc, spell));
+export function exposeObeliskApi(bridge: ContextBridgeLike, ipc: PreloadIpc): void {
+  bridge.exposeInMainWorld(OBELISK_BRIDGE_KEY, createObeliskApi(ipc));
 }

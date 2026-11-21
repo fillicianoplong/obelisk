@@ -173,3 +173,7 @@
     background-image: linear-gradient(var(--color-find-current), var(--color-find-current));
   }
 }
+
+.page-sheet[data-spell-hidden] ::spelling-error {
+  text-decoration-line: none;
+}
