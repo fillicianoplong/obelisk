@@ -105,6 +105,13 @@ async function markedWord(client) {
     const point = await wordPoint(client);
     assert.ok(point);
     const before = await evaluate(client, `window.__spellEvents.length`);
+    await client.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1,
+    });
+    await client.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1,
+    });
+    await sleep(40);
     await rightClick(client, point);
     const found = await evaluate(client, `(() => new Promise((resolve) => {
       const start = ${before};
@@ -127,7 +134,9 @@ async function markedWord(client) {
       return found;
     }
   }
-  return lastSpellPayload(client);
+  const last = await lastSpellPayload(client);
+  const typed = await evaluate(client, `document.querySelector('[data-region="page-editor"]')?.innerText || ''`);
+  assert.fail(`spell checker did not report hllo (${JSON.stringify({ last, typed })})`);
 }
 
 test('a right-click shows spelling suggestions and the toggle only hides them', { timeout: 90_000 }, async (t) => {

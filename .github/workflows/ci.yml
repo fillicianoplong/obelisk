@@ -42,6 +42,11 @@ jobs:
       - name: Install Electron
         run: node node_modules/electron/install.js
 
+      - name: Install the English spell checker
+        shell: pwsh
+        run: |
+          Install-Language en-US -CopyToSettings
+
       - name: Test and coverage
         run: npm test
 
