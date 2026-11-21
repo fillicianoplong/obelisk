@@ -97,10 +97,6 @@ async function wordPoint(client) {
   })()`);
 }
 
-async function lastSpellPayload(client) {
-  return evaluate(client, `window.__spellEvents.at(-1)`);
-}
-
 async function markedWord(client) {
   const deadline = Date.now() + 8000;
   while (Date.now() < deadline) {
