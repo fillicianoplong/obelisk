@@ -42,16 +42,6 @@ jobs:
       - name: Install Electron
         run: node node_modules/electron/install.js
 
-      - name: Install the English spell checker
-        shell: pwsh
-        run: |
-          $cap = 'Language.Basic~~~en-US~0.0.1.0'
-          $state = (Get-WindowsCapability -Online -Name $cap).State
-          Write-Host "$cap $state"
-          if ($state -ne 'Installed') {
-            Add-WindowsCapability -Online -Name $cap
-          }
-
       - name: Test and coverage
         run: npm test
 
