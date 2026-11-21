@@ -27,10 +27,13 @@ async function pageUrl(port) {
 
 async function rightClick(client, point) {
   await client.send('Input.dispatchMouseEvent', {
-    type: 'mousePressed', x: point.x, y: point.y, button: 'right', clickCount: 1,
+    type: 'mouseMoved', x: point.x, y: point.y,
   });
   await client.send('Input.dispatchMouseEvent', {
-    type: 'mouseReleased', x: point.x, y: point.y, button: 'right', clickCount: 1,
+    type: 'mousePressed', x: point.x, y: point.y, button: 'right', buttons: 2, clickCount: 1,
+  });
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mouseReleased', x: point.x, y: point.y, button: 'right', buttons: 0, clickCount: 1,
   });
 }
 
