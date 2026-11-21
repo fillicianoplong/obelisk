@@ -61,7 +61,7 @@ test('the channel list matches the architecture IPC table', async () => {
     }
   }
   assert.deepEqual([...names].sort(), [...IPC_CHANNELS].sort());
-  assert.equal(IPC_INVOKE_CHANNELS.length, 17);
+  assert.equal(IPC_INVOKE_CHANNELS.length, 18);
   assert.equal(IPC_CHANNELS.includes(IPC_EVENT_CHANNEL), true);
   assert.equal(IPC_INVOKE_CHANNELS.includes(IPC_EVENT_CHANNEL), false);
   assert.equal(IPC_INVOKE_CHANNELS.includes('prefs:get'), true);

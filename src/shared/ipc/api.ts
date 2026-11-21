@@ -1,8 +1,13 @@
 import type { InvokeChannel } from './channels.js';
-import type { FileOpenResult, RequestMap, ResultMap } from './types.js';
+import type { FileOpenResult, RequestMap, ResultMap, SpellContextEvent } from './types.js';
 
 export interface FileActivatedApi {
   subscribe(listener: (payload: FileOpenResult) => void): number;
+  unsubscribe(id: number): void;
+}
+
+export interface SpellContextApi {
+  subscribe(listener: (payload: SpellContextEvent) => void): number;
   unsubscribe(id: number): void;
 }
 
@@ -12,4 +17,5 @@ export type ObeliskApi = {
     : (request: RequestMap[C]) => Promise<ResultMap[C]>;
 } & {
   'file:activated': FileActivatedApi;
+  'spell:context': SpellContextApi;
 };

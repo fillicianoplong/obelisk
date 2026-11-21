@@ -217,6 +217,17 @@ export interface LinkOpenRequest {
 
 export type LinkOpenResult = { status: 'ok' } | { status: 'cancelled' } | RefusedResult | IpcErrorResult;
 
+export interface SpellAddRequest {
+  word: string;
+}
+
+export type SpellAddResult = { status: 'ok' } | IpcErrorResult;
+
+export interface SpellContextEvent {
+  misspelledWord: string;
+  suggestions: string[];
+}
+
 export interface RequestMap {
   'file:open': void;
   'file:save': FileSaveRequest;
@@ -235,6 +246,7 @@ export interface RequestMap {
   'recovery:restore': RecoveryRestoreRequest;
   'recovery:drop': RecoveryDropRequest;
   'link:open': LinkOpenRequest;
+  'spell:add': SpellAddRequest;
 }
 
 export interface ResultMap {
@@ -255,6 +267,7 @@ export interface ResultMap {
   'recovery:restore': RecoveryRestoreResult;
   'recovery:drop': RecoveryDropResult;
   'link:open': LinkOpenResult;
+  'spell:add': SpellAddResult;
 }
 
 export type IpcDispatchResult = ResultMap[keyof ResultMap];

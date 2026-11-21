@@ -278,6 +278,8 @@ Spike S-05 also tried an existing `.obk` name with a Word `.docx` filter. Window
 | `recovery:restore` | R to M | Recovery ID | file:open results, as a never-saved tab; refused offers Discard only |
 | `recovery:drop` | R to M | Recovery ID | ok; notFound |
 | `link:open` | R to M | Address | ok after the user confirms; cancelled; refused for a scheme off the allowlist |
+| `spell:add` | R to M | Word | ok; the word is added to the OS spell checker dictionary |
+| `spell:context` | M to R | Misspelled word and its suggestions from the context-menu event | None |
 
 R to M: renderer to main. M to R: main to renderer. Every error carries a code, a message, and retryable. Handles and IDs are made by main and looked up in its own lists; the renderer never sends a path.
 
@@ -288,7 +290,7 @@ These settings follow the Electron security checklist.
 - contextIsolation on, sandbox on, nodeIntegration off in every renderer, including the hidden window used for print and PDF.
 - The app loads from its own app: protocol, not file://.
 - Content Security Policy: default-src 'none'; script-src app:; style-src-elem app: plus a per-render nonce; style-src-attr 'none'; fonts from app: only; images from app:, data:, and blob:; no connect, frame, or object sources. No 'unsafe-inline' and no 'unsafe-eval'. Spike S-04.
-- A session-wide request filter in main cancels every request that is not app:, data:, or blob:. No crash reporter or updater runs; the Store updates the app.
+- A session-wide request filter in main cancels every request that is not app:, data:, or blob:. No crash reporter or updater runs; the Store updates the app. Spell check uses the operating system's languages. The dictionary download address is a local file URL, so a Hunspell dictionary is not fetched.
 - Every permission request is denied. Navigation, new windows, and webview tags are blocked.
 - Links: only http, https, and mailto, checked on load, paste, and Ctrl+K, and again in main before opening. The prompt shows the full address (OD-20).
 - The IPC bridge exposes named functions only. Main checks that each message comes from the app's own frame, validates every argument, and never passes the raw event to the renderer.
@@ -780,7 +782,7 @@ Every Must FR maps to at least one component. Package-wide requirements map to t
 | FR-28 | Must | EditorCore | - | Test |
 | FR-29 | Must | EditorCore | - | Test |
 | FR-30 | Must | EditorCore | - | Test |
-| FR-31 | Must | EditorCore | - | Demo |
+| FR-31 | Must | Spell check | - | Test |
 | FR-32 | Must | EditorCore | ADR-004 | Test |
 | FR-33 | Must | EditorCore | - | Demo |
 | FR-34 | Must | EditorCore | - | Test |

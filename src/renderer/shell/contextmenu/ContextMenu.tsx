@@ -17,7 +17,8 @@ import {
   dispatchContextMenuRestoreFocus,
   type ContextMenuRequestDetail,
 } from './events.js';
-import { composeContextMenu } from './model.js';
+import { composeContextMenu, withSpellingSuggestions } from './model.js';
+import { rememberSpellingTarget } from '../spellcheck/context.js';
 
 export const CONTEXT_MENU_ID = 'context';
 export const CONTEXT_MENU_LABEL = 'Context menu';
@@ -93,12 +94,16 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
   const targetKind = open?.target.kind ?? 'text';
   const entries = useMemo(() => {
     try {
-      return liveMenuEntries(composeContextMenu(targetKind), menuContext);
+      const spelling = open?.target.spelling ?? null;
+      return liveMenuEntries(
+        withSpellingSuggestions(composeContextMenu(targetKind), spelling),
+        menuContext,
+      );
     } catch (error) {
       console.error('[obelisk:context-menu] failed to compose menu entries', error);
       return [];
     }
-  }, [menuContext, targetKind]);
+  }, [menuContext, open?.target.spelling, targetKind]);
 
   const menus: readonly AppMenu[] = useMemo(() => {
     if (entries.length === 0) {
@@ -149,6 +154,7 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
       if (detail.tabId !== tabId) {
         return;
       }
+      rememberSpellingTarget(detail.spelling ?? null);
       const opened = detail.keyboard
         ? keyboardOpenContextMenu(CONTEXT_MENU_ID)
         : pointerOpenContextMenu(CONTEXT_MENU_ID);

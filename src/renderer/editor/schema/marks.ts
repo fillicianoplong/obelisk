@@ -32,7 +32,7 @@ export const markSpecs: { [name: string]: MarkSpec } = {
     excludes: '_',
     parseDOM: [{ tag: 'code' }],
     toDOM() {
-      return ['code', { class: 'inline-code' }, 0];
+      return ['code', { class: 'inline-code', spellcheck: 'false' }, 0];
     },
   },
   superscript: {

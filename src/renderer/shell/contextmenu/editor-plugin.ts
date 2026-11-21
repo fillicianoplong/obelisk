@@ -13,6 +13,16 @@ import {
   type ContextMenuRestoreDetail,
 } from './events.js';
 import { proseBlockType, resolveContextTarget } from './target.js';
+import { spellContextForMenu } from '../spellcheck/context.js';
+
+function publishContextMenu(
+  started: number,
+  detail: Omit<Parameters<typeof dispatchContextMenuRequest>[0], 'spelling'>,
+): void {
+  void spellContextForMenu(started).then((spelling) => {
+    dispatchContextMenuRequest({ ...detail, spelling });
+  });
+}
 
 function anchorFromKeyboard(view: EditorView): { x: number; y: number } {
   try {
@@ -69,6 +79,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         }
         event.preventDefault();
         event.stopPropagation();
+        const started = Date.now();
         const blockIndex = Number(handle.getAttribute('data-block-index'));
         if (!Number.isInteger(blockIndex)) {
           return;
@@ -80,7 +91,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         const node = view.state.doc.child(blockIndex);
         const rect = handle.getBoundingClientRect();
         const selection = { selectionAnchor: view.state.selection.anchor, selectionHead: view.state.selection.head };
-        dispatchContextMenuRequest({
+        publishContextMenu(started, {
           tabId,
           kind: 'block',
           blockType: proseBlockType(node),
@@ -96,10 +107,11 @@ export function contextMenuEditorPlugin(tabId: string) {
         clientX: number,
         clientY: number,
         domTarget: EventTarget | null,
+        started: number,
       ): void {
         try {
           const target = resolveContextTarget(view, clientX, clientY, domTarget, false);
-          dispatchContextMenuRequest({ tabId, ...target });
+          publishContextMenu(started, { tabId, ...target });
         } catch {
           // Keep the editor alive if targeting fails for an odd hit target.
         }
@@ -115,12 +127,13 @@ export function contextMenuEditorPlugin(tabId: string) {
         if (!(region instanceof HTMLElement) || !region.contains(event.target)) {
           return;
         }
+        const started = Date.now();
         event.preventDefault();
         event.stopPropagation();
         if (selectedBlockRange(view.state) === null) {
           view.dispatch(textSelectionForEditorPointer(view, event));
         }
-        openContextMenuAtPointer(event.clientX, event.clientY, event.target);
+        openContextMenuAtPointer(event.clientX, event.clientY, event.target, started);
       }
       const pageRegion = view.dom.closest('.page-region');
       pageRegion?.addEventListener('contextmenu', onPageRegionContextMenu, true);
@@ -136,6 +149,7 @@ export function contextMenuEditorPlugin(tabId: string) {
     props: {
       handleDOMEvents: {
         contextmenu(view, event) {
+          const started = Date.now();
           event.preventDefault();
           if (selectedBlockRange(view.state) === null) {
             try {
@@ -146,7 +160,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           }
           try {
             const target = resolveContextTarget(view, event.clientX, event.clientY, event.target, false);
-            dispatchContextMenuRequest({ tabId, ...target });
+            publishContextMenu(started, { tabId, ...target });
           } catch {
             // Ignore bad hit targets so the renderer does not crash.
           }
@@ -159,10 +173,11 @@ export function contextMenuEditorPlugin(tabId: string) {
         if (!isShiftF10 && !isMenuKey) {
           return false;
         }
+        const started = Date.now();
         event.preventDefault();
         const anchor = anchorFromKeyboard(view);
         const target = resolveContextTarget(view, anchor.x, anchor.y, null, true);
-        dispatchContextMenuRequest({ tabId, ...target });
+        publishContextMenu(started, { tabId, ...target });
         return true;
       },
     },

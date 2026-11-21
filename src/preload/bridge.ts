@@ -14,11 +14,13 @@ import type {
   RecoveryPutResult,
   RecoveryRestoreResult,
   SessionSetResult,
+  SpellAddResult,
   SigDeleteResult,
   SigGetResult,
   SigListResult,
   SigSaveResult,
 } from '../shared/ipc/types.js';
+import type { SpellContextEvent } from '../shared/ipc/types.js';
 import { parseFileOpenResult } from '../shared/ipc/validate.js';
 
 export const OBELISK_BRIDGE_KEY = 'obelisk';
@@ -111,7 +113,62 @@ export function createObeliskApi(ipc: PreloadIpc): ObeliskApi {
     'recovery:restore': (request) => ipc.invoke('recovery:restore', request) as Promise<RecoveryRestoreResult>,
     'recovery:drop': (request) => ipc.invoke('recovery:drop', request) as Promise<RecoveryDropResult>,
     'link:open': (request) => ipc.invoke('link:open', request) as Promise<LinkOpenResult>,
+    'spell:add': (request) => ipc.invoke('spell:add', request) as Promise<SpellAddResult>,
     'file:activated': createFileActivatedApi(ipc),
+    'spell:context': createSpellContextApi(ipc),
+  };
+}
+
+function parseSpellContext(payload: unknown): SpellContextEvent | null {
+  if (typeof payload !== 'object' || payload === null) {
+    return null;
+  }
+  const record = payload as Record<string, unknown>;
+  if (typeof record.misspelledWord !== 'string' || !Array.isArray(record.suggestions)) {
+    return null;
+  }
+  const suggestions = record.suggestions.filter((item): item is string => typeof item === 'string');
+  return { misspelledWord: record.misspelledWord, suggestions };
+}
+
+function createSpellContextApi(ipc: PreloadIpc): ObeliskApi['spell:context'] {
+  let nextId = 1;
+  const listenersById = new Map<number, (payload: SpellContextEvent) => void>();
+  let hubInstalled = false;
+
+  function ensureHub(): void {
+    if (hubInstalled) {
+      return;
+    }
+    hubInstalled = true;
+    ipc.on('spell:context', (_event, payload) => {
+      const parsed = parseSpellContext(payload);
+      if (parsed === null) {
+        return;
+      }
+      for (const listener of listenersById.values()) {
+        listener(parsed);
+      }
+    });
+  }
+
+  return {
+    subscribe(listener) {
+      if (typeof listener !== 'function') {
+        throw new TypeError('The spell:context listener must be a function.');
+      }
+      ensureHub();
+      const id = nextId;
+      nextId += 1;
+      listenersById.set(id, listener);
+      return id;
+    },
+    unsubscribe(id) {
+      if (typeof id !== 'number' || !Number.isSafeInteger(id)) {
+        return;
+      }
+      listenersById.delete(id);
+    },
   };
 }
 

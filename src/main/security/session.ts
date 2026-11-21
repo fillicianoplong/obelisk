@@ -1,6 +1,7 @@
 import { session, type Session } from 'electron';
 import { CONTENT_SECURITY_POLICY } from './csp.js';
 import { isAllowedRequestUrl } from './request-policy.js';
+import { SPELLCHECK_DICTIONARY_DOWNLOAD_URL, spellCheckerLanguages } from './spellcheck.js';
 
 const REPORTED_PERMISSIONS = new Set([
   'camera',
@@ -72,9 +73,25 @@ export function installPermissionDenials(ses: Session, handlers: SessionSecurity
   });
 }
 
+export function installSpellChecker(ses: Session): void {
+  ses.setSpellCheckerDictionaryDownloadURL(SPELLCHECK_DICTIONARY_DOWNLOAD_URL);
+  try {
+    const languages = spellCheckerLanguages(
+      ses.availableSpellCheckerLanguages,
+      ses.getSpellCheckerLanguages(),
+    );
+    if (languages.length > 0) {
+      ses.setSpellCheckerLanguages(languages);
+    }
+  } catch {
+    // An empty OS list leaves spell check off. No dictionary is downloaded.
+  }
+}
+
 export function installSessionSecurity(handlers: SessionSecurityHandlers = {}): void {
   const ses = session.defaultSession;
   installRequestFilter(ses, handlers);
   installContentSecurityPolicy(ses);
   installPermissionDenials(ses, handlers);
+  installSpellChecker(ses);
 }

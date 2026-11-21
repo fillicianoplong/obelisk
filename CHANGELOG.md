@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.38.0] - 2026-11-20
+
+### Added
+
+- Spell check underlines misspelled words with the operating system's spell checker. A right-click on a misspelled word lists suggestions at the top of the text menu, and Add to dictionary stores the word. Choosing a suggestion replaces that word, and Ctrl+Z restores it. Tools > Spell check turns it on or off and remembers the choice. Code blocks and inline code are not checked. No dictionary is downloaded.
+
 ## [0.1.37.10] - 2026-11-20
 
 ### Fixed

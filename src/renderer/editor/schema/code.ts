@@ -15,6 +15,10 @@ export const codeBlockSpec: NodeSpec = {
     return { blockId: dom.dataset.blockId ?? '' };
   } }],
   toDOM(node) {
-    return ['pre', { 'data-code-block': 'true', 'data-block-id': node.attrs.blockId }, ['code', 0]];
+    return ['pre', {
+      'data-code-block': 'true',
+      'data-block-id': node.attrs.blockId,
+      spellcheck: 'false',
+    }, ['code', { spellcheck: 'false' }, 0]];
   },
 };

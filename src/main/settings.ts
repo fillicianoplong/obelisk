@@ -2,10 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseThemeSetting, type ThemeSetting } from '../shared/theme.js';
 
-// Temporary theme store. Settings (#60) replaces this module.
-// The file is <userData>/settings.json and looks like { "theme": "system" }.
-// "light", "dark", and "system" are the only values. Anything else, including
-// a missing file, is Match Windows.
+// The file is <userData>/settings.json.
+// Theme values are "light", "dark", and "system". Anything else, including
+// a missing file, is Match Windows. Spell check is on unless the file says false.
 export const THEME_SETTINGS_FILE = 'settings.json';
 
 export function themeSettingsPath(userDataDir: string): string {
@@ -36,4 +35,33 @@ export function readThemeSetting(userDataDir: string): ThemeSetting {
   } catch {
     return parseThemeSetting(undefined);
   }
+}
+
+function readSettingsObject(userDataDir: string): Record<string, unknown> {
+  try {
+    const text = fs.readFileSync(themeSettingsPath(userDataDir), 'utf8');
+    const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+    const parsed: unknown = JSON.parse(source);
+    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+      return { ...(parsed as Record<string, unknown>) };
+    }
+  } catch {
+    // A missing or unreadable file keeps the defaults.
+  }
+  return {};
+}
+
+export function readSpellingSetting(userDataDir: string): boolean {
+  const record = readSettingsObject(userDataDir);
+  if (!Object.hasOwn(record, 'spelling')) {
+    return true;
+  }
+  return record.spelling !== false;
+}
+
+export function writeSpellingSetting(userDataDir: string, enabled: boolean): void {
+  const record = readSettingsObject(userDataDir);
+  record.spelling = enabled;
+  fs.mkdirSync(userDataDir, { recursive: true });
+  fs.writeFileSync(themeSettingsPath(userDataDir), `${JSON.stringify(record)}\n`, 'utf8');
 }

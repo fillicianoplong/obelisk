@@ -1,8 +1,10 @@
-import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, session, type IpcMainInvokeEvent } from 'electron';
 import { readInUtilityProcess } from '../codec/utility-host.js';
 import { createFileService } from '../file/service.js';
 import { pickOpenDialogOwner, type OpenDialogOptions } from '../file/openDialog.js';
 import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '../file/saveDialog.js';
+import { ipcError } from '../../shared/ipc/errors.js';
+import { readSpellingSetting, writeSpellingSetting } from '../settings.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
 import { createIpcRegistry } from './registry.js';
@@ -70,7 +72,26 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
     writer: app.getVersion(),
     privateAppData: [app.getPath('userData')],
   });
-  bindIpcHandlers(ipc, createIpcRegistry(createAppHandlers(files)));
+  const registry = createIpcRegistry(createAppHandlers(files));
+  const userData = () => app.getPath('userData');
+  registry.setHandler('spell:add', (request) => {
+    session.defaultSession.addWordToSpellCheckerDictionary(request.word);
+    return { status: 'ok' };
+  });
+  registry.setHandler('prefs:get', (request) => {
+    if (request.key !== 'spelling') {
+      return ipcError('NOT_IMPLEMENTED', 'prefs:get is not available yet.');
+    }
+    return { status: 'ok', key: 'spelling', value: readSpellingSetting(userData()) };
+  });
+  registry.setHandler('prefs:set', (request) => {
+    if (request.key !== 'spelling') {
+      return ipcError('NOT_IMPLEMENTED', 'prefs:set is not available yet.');
+    }
+    writeSpellingSetting(userData(), request.value);
+    return { status: 'ok' };
+  });
+  bindIpcHandlers(ipc, registry);
   return files;
 }
 

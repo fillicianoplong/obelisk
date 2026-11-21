@@ -25,6 +25,7 @@ import {
   type ExportRunRequest,
   type RefusedResult,
   type SessionSetRequest,
+  type SpellAddRequest,
   type SigDeleteRequest,
   type SigGetRequest,
   type SigSaveRequest,
@@ -85,6 +86,8 @@ export function parseInvokeRequest(channel: InvokeChannel, args: readonly unknow
       return parsed(parseRecoveryId(args));
     case 'link:open':
       return parsed(parseLinkOpen(args));
+    case 'spell:add':
+      return parsed(parseSpellAdd(args));
     default: {
       const neverChannel: never = channel;
       return neverChannel;
@@ -575,6 +578,19 @@ function parseRecoveryId(args: readonly unknown[]): RecoveryRestoreRequest & Rec
   }
   const recoveryId = parseToken(value.recoveryId);
   return recoveryId === null ? null : { recoveryId };
+}
+
+function parseSpellAdd(args: readonly unknown[]): SpellAddRequest | null {
+  const value = oneObject(args);
+  if (value === null || !hasExactKeys(value, ['word']) || typeof value.word !== 'string') {
+    return null;
+  }
+  const word = value.word;
+  const hasWhitespace = [...word].some((char) => char.trim() === '');
+  if (word.length < 1 || word.length > 64 || hasControlChar(word) || hasWhitespace) {
+    return null;
+  }
+  return { word };
 }
 
 function parseLinkOpen(args: readonly unknown[]): LinkOpenRequest | null {

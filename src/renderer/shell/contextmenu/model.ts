@@ -175,6 +175,55 @@ function joinSections(sections: readonly (readonly MenuEntry[])[]): MenuEntry[] 
   return out;
 }
 
+export interface SpellingMenuInfo {
+  word: string;
+  suggestions: readonly string[];
+}
+
+function spellingSuggestionEntries(info: SpellingMenuInfo): MenuEntry[] {
+  const rows: MenuEntry[] = info.suggestions.slice(0, 8).map((suggestion, index) => item({
+    id: `ctx-spelling-${index}`,
+    label: suggestion,
+    accessKey: '',
+    enabled: true,
+    command: `spell-replace:${index}`,
+  }));
+  if (rows.length === 0) {
+    rows.push(item({
+      id: 'ctx-spelling-none',
+      label: 'No suggestions',
+      accessKey: '',
+      enabled: false,
+    }));
+  }
+  rows.push(item({
+    id: 'ctx-spelling-add',
+    label: 'Add to dictionary',
+    accessKey: '',
+    enabled: true,
+    command: 'spell-add',
+  }));
+  return rows;
+}
+
+export function withSpellingSuggestions(
+  entries: readonly MenuEntry[],
+  info: SpellingMenuInfo | null,
+): MenuEntry[] {
+  if (info === null || info.word.length === 0) {
+    return [...entries];
+  }
+  const out: MenuEntry[] = [];
+  for (const entry of entries) {
+    if (!isSeparator(entry) && entry.id === 'ctx-spelling') {
+      out.push(...spellingSuggestionEntries(info));
+      continue;
+    }
+    out.push(entry);
+  }
+  return out;
+}
+
 export function composeContextMenu(kind: ContextTargetKind): readonly MenuEntry[] {
   switch (kind) {
     case 'text':

@@ -1,5 +1,5 @@
-// Section 6.3 has 17 table rows. prefs:get and prefs:set share a row, so the
-// named channels are those calls plus the main-to-renderer file:activated event.
+// Section 6.3 lists these channels. prefs:get and prefs:set share a row.
+// file:activated and spell:context are main-to-renderer events.
 export const IPC_CHANNELS = [
   'file:open',
   'file:save',
@@ -19,18 +19,24 @@ export const IPC_CHANNELS = [
   'recovery:restore',
   'recovery:drop',
   'link:open',
+  'spell:add',
+  'spell:context',
 ] as const;
 
 export type IpcChannelName = (typeof IPC_CHANNELS)[number];
 
-export const IPC_EVENT_CHANNEL = 'file:activated' as const satisfies IpcChannelName;
+export const IPC_EVENT_CHANNELS = ['file:activated', 'spell:context'] as const;
 
-export type IpcEventChannel = typeof IPC_EVENT_CHANNEL;
+export type IpcEventChannel = (typeof IPC_EVENT_CHANNELS)[number];
+
+export const IPC_EVENT_CHANNEL = 'file:activated' as const satisfies IpcEventChannel;
 
 export type InvokeChannel = Exclude<IpcChannelName, IpcEventChannel>;
 
+const EVENT_CHANNEL_SET: ReadonlySet<string> = new Set<string>(IPC_EVENT_CHANNELS);
+
 export const IPC_INVOKE_CHANNELS = IPC_CHANNELS.filter(
-  (channel): channel is InvokeChannel => channel !== IPC_EVENT_CHANNEL,
+  (channel): channel is InvokeChannel => !EVENT_CHANNEL_SET.has(channel),
 );
 
 export const IPC_DIRECTION = {
@@ -52,6 +58,8 @@ export const IPC_DIRECTION = {
   'recovery:restore': 'renderer-to-main',
   'recovery:drop': 'renderer-to-main',
   'link:open': 'renderer-to-main',
+  'spell:add': 'renderer-to-main',
+  'spell:context': 'main-to-renderer',
 } as const satisfies Record<IpcChannelName, 'renderer-to-main' | 'main-to-renderer'>;
 
 const INVOKE_CHANNEL_SET: ReadonlySet<string> = /* @__PURE__ */ new Set(IPC_INVOKE_CHANNELS);

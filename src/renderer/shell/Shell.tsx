@@ -2,7 +2,9 @@ import type { EditorState } from 'prosemirror-state';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
+import { setSpellcheckEnabled } from '../editor/spellcheck-mode.js';
 import { editorText } from '../editor/state.js';
+import { spellingSuggestionAt, spellingWordToAdd, startSpellContextListener } from './spellcheck/context.js';
 import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from '../../shared/ipc/types.js';
 import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
@@ -57,6 +59,7 @@ export function Shell() {
   const [openMessage, setOpenMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
   const [findBarOpen, setFindBarOpen] = useState(false);
+  const [spellingOn, setSpellingOn] = useState(true);
   const nextNumber = useRef(1);
   const opening = useRef(false);
   const saving = useRef(false);
@@ -463,6 +466,34 @@ export function Shell() {
     setActiveId(SETTINGS_TAB_ID);
   }, []);
 
+  useEffect(() => {
+    startSpellContextListener();
+    let current = true;
+    void window.obelisk['prefs:get']({ key: 'spelling' }).then((result) => {
+      if (!current || result.status !== 'ok' || result.key !== 'spelling') {
+        return;
+      }
+      setSpellingOn(result.value);
+      setSpellcheckEnabled(result.value);
+    }).catch(() => {
+      // Spell check stays on when settings cannot be read.
+    });
+    return () => {
+      current = false;
+    };
+  }, []);
+
+  const toggleSpelling = useCallback(() => {
+    setSpellingOn((current) => {
+      const next = !current;
+      setSpellcheckEnabled(next);
+      void window.obelisk['prefs:set']({ key: 'spelling', value: next }).catch(() => {
+        // The page already follows the toggle. The file write can fail quietly.
+      });
+      return next;
+    });
+  }, []);
+
   const onMenuCommand = useCallback(
     (command: string) => {
       if (command === 'new') {
@@ -501,11 +532,36 @@ export function Shell() {
         openFindBar(true);
         return;
       }
+      if (command === 'tools-spelling') {
+        toggleSpelling();
+        return;
+      }
+      if (command === 'spell-add') {
+        const word = spellingWordToAdd();
+        if (word !== null) {
+          void window.obelisk['spell:add']({ word }).catch(() => {
+            // The dictionary lives in the OS. A failed add leaves the underline.
+          });
+        }
+        return;
+      }
+      if (command.startsWith('spell-replace:')) {
+        const index = Number(command.slice('spell-replace:'.length));
+        const picked = spellingSuggestionAt(index);
+        const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+        const commands = page as HTMLElement & {
+          editorCommands?: { replaceSpelling?: (word: string, suggestion: string) => void };
+        } | null;
+        if (picked !== null && commands?.editorCommands?.replaceSpelling !== undefined) {
+          commands.editorCommands.replaceSpelling(picked.word, picked.suggestion);
+        }
+        return;
+      }
       if (runActiveEditorMenuCommand(command)) {
         return;
       }
     },
-    [addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave],
+    [addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave, toggleSpelling],
   );
 
   const menuContext = useMemo(() => {
@@ -516,8 +572,9 @@ export function Shell() {
       documentTab,
       selectionEmpty,
       editorState: editorState ?? null,
+      spelling: spellingOn,
     };
-  }, [activeTab]);
+  }, [activeTab, spellingOn]);
 
   const menus = useMemo(() => liveMenus(menuContext), [menuContext]);
 

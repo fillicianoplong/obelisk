@@ -28,6 +28,7 @@ import {
   formatMenuCommand,
 } from './format-commands.js';
 import { editorMenuCommand } from './menu-commands.js';
+import { replaceSpellingSuggestion } from './spell-replace.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { AllSelection } from 'prosemirror-state';
 import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
@@ -176,6 +177,14 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
         const command = formatMenuCommand(menuId);
         if (command !== null) {
           command(view.state, view.dispatch.bind(view));
+        }
+      });
+    },
+    replaceSpelling(word: string, suggestion: string) {
+      runWithSynchronousEditorUpdate(() => {
+        const tr = replaceSpellingSuggestion(view.state, word, suggestion);
+        if (tr !== null) {
+          view.dispatch(tr);
         }
       });
     },

@@ -322,14 +322,20 @@ test('the menu bar opens File and Settings from the keyboard', { timeout: 60_000
   await pressChord(client, 't', 'KeyT', 84);
   const tools = await waitForMenu(
     client,
-    (state) => state.focused?.id === 'menu-item-tools-settings',
-    'Alt+T opens Tools on Settings',
+    (state) => state.focused?.id === 'menu-item-tools-spelling',
+    'Alt+T opens Tools on Spell check',
   );
+  assert.equal(tools.spelling.role, 'menuitem');
+  assert.equal(tools.spelling.disabled, null);
   assert.equal(tools.settings.role, 'menuitem');
   assert.equal(tools.settings.label, 'Settings Ctrl+comma');
   assert.equal(tools.settings.disabled, null);
-  assert.equal(tools.spelling.role, 'menuitem');
-  assert.equal(tools.spelling.disabled, 'true');
+  await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
+  await waitForMenu(
+    client,
+    (state) => state.focused?.id === 'menu-item-tools-settings',
+    'Down moves to Settings',
+  );
 
   await pressKey(client, 'Enter', 'Enter', 13);
   const settings = await waitForMenu(

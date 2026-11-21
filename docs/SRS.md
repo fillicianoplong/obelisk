@@ -275,9 +275,9 @@ Formatting applies to text in any block that holds text, including table cells.
 | FR-28 | The system shall apply and clear the character formatting, fonts, and sizes in the [*Formatting reference*](#formatting-reference). | Must | Test: apply each mark, then Clear formatting. |
 | FR-29 | The system shall set alignment, line spacing, and space before and after each paragraph, per the [*Formatting reference*](#formatting-reference). | Must | Test: each value changes the layout on screen and in the PDF. |
 | FR-30 | The system shall set left, first-line, and hanging indents per paragraph, per the [*Formatting reference*](#formatting-reference). | Must | Test: a hanging indent of 0.5 in on a Works Cited entry. |
-| FR-31 | The system shall underline misspelled words and offer suggestions from the Windows spell checker. | Must | Demo: misspell a word, pick a suggestion from the text menu. |
+| FR-31 | The system shall underline misspelled words and offer suggestions from the Windows spell checker. | Must | Test: misspell a word, pick a suggestion from the text menu; Ctrl+Z restores the word. |
 
-**UNVERIFIED:** FR-31 assumes Electron uses the Windows spell checker on Windows and returns suggestions to the context menu. Check: Electron spellchecker docs.
+FR-31 is implemented. Electron uses the Windows spell checker and the languages the operating system already has. A right-click on a misspelled word lists that word's suggestions at the top of the text menu, and Add to dictionary stores the word with the spell checker. Choosing a suggestion replaces the word in one undo step. The app does not download a dictionary. Tools > Spell check turns the underlines on or off and remembers the choice. Code blocks and inline code are not checked.
 
 ### 6.6 Blocks and typing
 
@@ -861,7 +861,7 @@ Each requirement maps to the use cases and acceptance checks that cover it. Arch
 | FR-28 | Must | UC-03 | AC-09 | Test |
 | FR-29 | Must | UC-03 | AC-09 | Test |
 | FR-30 | Must | UC-04 | AC-09 | Test |
-| FR-31 | Must | UC-04 | - | Demo |
+| FR-31 | Must | UC-04 | - | Test |
 | FR-32 | Must | UC-02 | AC-02 | Test |
 | FR-33 | Must | UC-02 | AC-15 | Demo |
 | FR-34 | Must | UC-02, UC-07 | AC-16 | Test |
@@ -1031,7 +1031,7 @@ Composition rule: every block shows the block-handle menu plus its own items. Ev
 
 | Menu | Base | Own items |
 |---|---|---|
-| Text | - | Spelling suggestions; Cut; Copy; Paste; Paste as plain text; Link…; Clear formatting |
+| Text | - | Spelling suggestions, or the suggestions and Add to dictionary for a misspelled word; Cut; Copy; Paste; Paste as plain text; Link…; Clear formatting |
 | Block handle | - | Cut; Copy; Duplicate; Delete; Turn into; Insert above; Insert below; Move up; Move down |
 | Table cell | Block handle | Insert row above or below; Insert column left or right; Delete row; Delete column; Sort ascending; Sort descending; Header row |
 | Image | Block handle | Alt text…; Rotate left; Rotate right; Flip horizontal; Flip vertical; Draw on image; Reset size; Replace… |

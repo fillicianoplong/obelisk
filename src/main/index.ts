@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, nativeTheme, systemPreferences } from 'electron';
+import { app, BrowserWindow, Menu, nativeTheme, session, systemPreferences } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
@@ -10,7 +10,8 @@ import { SMOKE_MARKER_FILE } from './security/app-data.js';
 import { APP_START_URL } from './security/app-path.js';
 import { installAppProtocol, registerAppScheme } from './security/app-protocol.js';
 import { installContentsGuards } from './security/navigation.js';
-import { installSessionSecurity } from './security/session.js';
+import { installSessionSecurity, installSpellChecker } from './security/session.js';
+import { spellContextFromMenuParams } from './security/spellcheck.js';
 import { configureWritablePaths } from './security/writable-paths.js';
 import { readPackageIoRequest, runPackagedIoCheck } from './file/packageIo.js';
 import { removeStaleTempFiles } from './file/writeAtomic.js';
@@ -114,6 +115,14 @@ function createWindow(theme: ThemeSetting): void {
     }
   });
 
+  window.webContents.on('context-menu', (event, params) => {
+    event.preventDefault();
+    if (window.isDestroyed()) {
+      return;
+    }
+    window.webContents.send('spell:context', spellContextFromMenuParams(params));
+  });
+
   window.webContents.on('console-message', (details) => {
     if (details.message.startsWith('OBELISK_PRELOAD ')) {
       reportSecurity(details.message);
@@ -188,6 +197,7 @@ function startApp(): void {
         reportSecurity(`OBELISK_PERMISSION_DENIED ${kind}`);
       },
     });
+    installSpellChecker(session.defaultSession);
     installAppProtocol(path.join(__dirname, '../renderer'));
     createWindow(theme);
     const window = mainWindow;

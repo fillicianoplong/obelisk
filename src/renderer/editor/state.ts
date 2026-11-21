@@ -2,8 +2,9 @@ import { baseKeymap, chainCommands } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
 import type { Node } from 'prosemirror-model';
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState, Plugin, TextSelection } from 'prosemirror-state';
 import type { Command, Selection, Transaction } from 'prosemirror-state';
+import { spellcheckEnabled } from './spellcheck-mode.js';
 import { editorSchema } from './schema.js';
 import { blockHandleKeymap, blockHandlePlugin } from './block-handle-plugin.js';
 import { editorColorStylesPlugin } from './color-styles-plugin.js';
@@ -28,6 +29,21 @@ function applyCommand(state: EditorState, command: Command): EditorState | null 
     return null;
   }
   return next;
+}
+
+function spellcheckModePlugin(): Plugin {
+  return new Plugin({
+    view(view) {
+      const apply = () => {
+        const flag = spellcheckEnabled() ? 'true' : 'false';
+        if (view.dom.getAttribute('spellcheck') !== flag) {
+          view.dom.setAttribute('spellcheck', flag);
+        }
+      };
+      apply();
+      return { update: apply };
+    },
+  });
 }
 
 export function createTabEditorState(doc?: Node): EditorState {
@@ -55,6 +71,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       findPlugin(),
       typedShortcutInputRulesPlugin(),
       editorColorStylesPlugin(),
+      spellcheckModePlugin(),
     ],
   });
 }

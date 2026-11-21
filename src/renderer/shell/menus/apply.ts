@@ -100,7 +100,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'format-paragraph',
   'format-page-setup',
   'format-header',
-  'tools-spelling',
   'help-shortcuts',
   'help-about',
 ]);
@@ -113,6 +112,7 @@ const SHELL_ALWAYS = new Set([
   'file-close',
   'file-exit',
   'tools-settings',
+  'tools-spelling',
 ]);
 
 const SHELL_DOCUMENT = new Set([
@@ -124,6 +124,7 @@ export interface LiveMenuContext {
   documentTab: boolean;
   selectionEmpty: boolean;
   editorState: EditorState | null;
+  spelling?: boolean;
 }
 
 function hasSubmenu(item: MenuItem): boolean {
@@ -142,6 +143,9 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
   }
   if (!context.documentTab || context.editorState === null) {
     return false;
+  }
+  if (item.command === 'spell-add' || item.command?.startsWith('spell-replace:') === true) {
+    return context.documentTab && context.editorState !== null;
   }
   if (item.command === undefined) {
     return false;
@@ -184,7 +188,11 @@ function applyItem(item: MenuItem, context: LiveMenuContext): MenuItem {
       submenu,
     };
   }
-  return { ...item, enabled: leafEnabled(item, context) };
+  const enabled = leafEnabled(item, context);
+  if (item.id === 'tools-spelling') {
+    return { ...item, enabled, checked: context.spelling !== false };
+  }
+  return { ...item, enabled };
 }
 
 function applyEntries(entries: readonly MenuEntry[], context: LiveMenuContext): readonly MenuEntry[] {
