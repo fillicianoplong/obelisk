@@ -65,6 +65,9 @@ test('the text menu waits for the spell context before it opens', async () => {
     const arrived = publishContextMenu(Date.now(), detail);
     await Promise.resolve();
     assert.equal(opened.length, 0);
+    listener({ misspelledWord: '', suggestions: [] });
+    await Promise.resolve();
+    assert.equal(opened.length, 0);
     listener({
       misspelledWord: 'hllo',
       suggestions: ['hello', 'hollo', 'hallo', 'hullo', 'halo', 'extra'],

@@ -16,8 +16,7 @@ const waiters: Array<(event: SpellContextEvent) => void> = [];
 function note(event: SpellContextEvent): void {
   latest = event;
   latestAt = Date.now();
-  const pending = waiters.splice(0, waiters.length);
-  for (const waiter of pending) {
+  for (const waiter of waiters.slice()) {
     waiter(event);
   }
 }
@@ -35,25 +34,33 @@ export function startSpellContextListener(): void {
 export function spellContextForMenu(since: number, waitMs = 300): Promise<SpellingTarget | null> {
   startSpellContextListener();
   const ready = (): SpellingTarget | null => {
-    if (latest === null || latestAt < since) {
+    if (latest === null || latestAt < since || latest.misspelledWord.length === 0) {
       return null;
     }
     return { word: latest.misspelledWord, suggestions: latest.suggestions };
   };
-  if (latest !== null && latestAt >= since) {
+  const drop = (finish: (event: SpellContextEvent) => void): void => {
+    const index = waiters.indexOf(finish);
+    if (index >= 0) {
+      waiters.splice(index, 1);
+    }
+  };
+  if (ready() !== null) {
     return Promise.resolve(ready());
   }
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
-      const index = waiters.indexOf(finish);
-      if (index >= 0) {
-        waiters.splice(index, 1);
-      }
-      resolve(ready());
+      drop(finish);
+      resolve(null);
     }, waitMs);
     function finish(): void {
+      const found = ready();
+      if (found === null) {
+        return;
+      }
       clearTimeout(timer);
-      resolve(ready());
+      drop(finish);
+      resolve(found);
     }
     waiters.push(finish);
   });

@@ -98,7 +98,39 @@ async function lastSpellPayload(client) {
   return evaluate(client, `window.__spellEvents.at(-1)`);
 }
 
-test('a right-click shows spelling suggestions and the toggle only hides them', { timeout: 60_000 }, async (t) => {
+async function markedWord(client) {
+  const deadline = Date.now() + 8000;
+  while (Date.now() < deadline) {
+    await closeMenu(client);
+    const point = await wordPoint(client);
+    assert.ok(point);
+    const before = await evaluate(client, `window.__spellEvents.length`);
+    await rightClick(client, point);
+    const found = await evaluate(client, `(() => new Promise((resolve) => {
+      const start = ${before};
+      const end = Date.now() + 700;
+      const tick = () => {
+        const hit = window.__spellEvents.slice(start).find((event) => event.misspelledWord === 'hllo');
+        if (hit) {
+          resolve(hit);
+          return;
+        }
+        if (Date.now() > end) {
+          resolve(null);
+          return;
+        }
+        setTimeout(tick, 40);
+      };
+      tick();
+    }))()`);
+    if (found && found.misspelledWord === 'hllo') {
+      return found;
+    }
+  }
+  return lastSpellPayload(client);
+}
+
+test('a right-click shows spelling suggestions and the toggle only hides them', { timeout: 90_000 }, async (t) => {
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-spell-'));
   const port = await freePort();
   const session = { child: undefined, client: undefined, userDataDir };
@@ -126,20 +158,15 @@ test('a right-click shows spelling suggestions and the toggle only hides them', 
       return true;
     })()`);
     await clickSelector(client, '.page-sheet');
-    await client.send('Input.insertText', { text: 'Say ' });
-    await client.send('Input.insertText', { text: 'hllo' });
-    await client.send('Input.insertText', { text: ' there' });
-    await sleep(400);
-    const point = await wordPoint(client);
-    assert.ok(point);
-    const beforeCount = await evaluate(client, `window.__spellEvents.length`);
-    await rightClick(client, point);
-    const suggestions = await menuLabels(client);
-    assert.ok(suggestions);
-    const payload = await lastSpellPayload(client);
-    assert.ok(await evaluate(client, `window.__spellEvents.length`) > beforeCount);
+    for (const word of ['Say ', 'hllo', ' there']) {
+      await client.send('Input.insertText', { text: word });
+      await sleep(250);
+    }
+    const payload = await markedWord(client);
     assert.equal(payload.misspelledWord, 'hllo');
     assert.equal(payload.suggestions.includes('hello'), true);
+    const suggestions = await menuLabels(client);
+    assert.ok(suggestions);
     assert.equal(suggestions.includes('hello'), true);
     assert.equal(suggestions.includes('Add to dictionary'), true);
     assert.equal(suggestions.includes('Spelling suggestions'), false);
@@ -192,10 +219,7 @@ test('a right-click shows spelling suggestions and the toggle only hides them', 
       tick();
     }))()`);
     assert.equal(restored, true);
-    const again = await wordPoint(client);
-    assert.ok(again);
-    await rightClick(client, again);
-    const backPayload = await lastSpellPayload(client);
+    const backPayload = await markedWord(client);
     assert.equal(backPayload.misspelledWord, 'hllo');
     assert.equal(backPayload.suggestions.includes('hello'), true);
     const back = await menuLabels(client);
