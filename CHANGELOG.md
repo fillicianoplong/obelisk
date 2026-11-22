@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.38.3] - 2026-11-21
+
+### Fixed
+
+- Spelling underlines are now drawn by the app from a bundled English dictionary. Misspelled words stay underlined after a suggestion, undo, redo, paste, Enter, or Shift+Enter, including words already in an opened document. The word being typed is checked when the word ends. Code, inline code, URLs, and words with digits are not checked. Add to dictionary saves the word for this app.
+- Choosing a spelling suggestion leaves the caret at the end of the new word.
+
 ## [0.1.38.2] - 2026-11-20
 
 ### Fixed

@@ -12,6 +12,7 @@ export interface ContextMenuRestoreDetail {
   tabId: string;
   selectionAnchor: number;
   selectionHead: number;
+  keepSelection?: boolean;
 }
 
 export function dispatchContextMenuRequest(detail: ContextMenuRequestDetail): void {

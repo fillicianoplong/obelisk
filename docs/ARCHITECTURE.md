@@ -278,7 +278,9 @@ Spike S-05 also tried an existing `.obk` name with a Word `.docx` filter. Window
 | `recovery:restore` | R to M | Recovery ID | file:open results, as a never-saved tab; refused offers Discard only |
 | `recovery:drop` | R to M | Recovery ID | ok; notFound |
 | `link:open` | R to M | Address | ok after the user confirms; cancelled; refused for a scheme off the allowlist |
-| `spell:add` | R to M | Word | ok; the word is added to the OS spell checker dictionary |
+| `spell:add` | R to M | Word | ok; the word is saved in the user dictionary and the checker accepts it |
+| `spell:check` | R to M | Words | ok with the misspelled words from the bundled dictionary |
+| `spell:suggest` | R to M | Word | ok with whether it is misspelled and up to five suggestions |
 | `spell:context` | M to R | Misspelled word and its suggestions from the context-menu event. The text menu waits for this event before it opens | None |
 
 R to M: renderer to main. M to R: main to renderer. Every error carries a code, a message, and retryable. Handles and IDs are made by main and looked up in its own lists; the renderer never sends a path.
@@ -290,7 +292,7 @@ These settings follow the Electron security checklist.
 - contextIsolation on, sandbox on, nodeIntegration off in every renderer, including the hidden window used for print and PDF.
 - The app loads from its own app: protocol, not file://.
 - Content Security Policy: default-src 'none'; script-src app:; style-src-elem app: plus a per-render nonce; style-src-attr 'none'; fonts from app: only; images from app:, data:, and blob:; no connect, frame, or object sources. No 'unsafe-inline' and no 'unsafe-eval'. Spike S-04.
-- A session-wide request filter in main cancels every request that is not app:, data:, or blob:. No crash reporter or updater runs; the Store updates the app. Spell check uses the operating system's languages. The dictionary download address is a local file URL, so a Hunspell dictionary is not fetched. The spell checker stays enabled. Tools > Spell check hides or shows the underlines.
+- A session-wide request filter in main cancels every request that is not app:, data:, or blob:. No crash reporter or updater runs; the Store updates the app. The window spell checker is off. Spelling underlines are drawn by the app from a bundled English dictionary. The dictionary download address stays a local file URL, so a Hunspell dictionary is not fetched. Tools > Spell check clears or redraws the underlines.
 - Every permission request is denied. Navigation, new windows, and webview tags are blocked.
 - Links: only http, https, and mailto, checked on load, paste, and Ctrl+K, and again in main before opening. The prompt shows the full address (OD-20).
 - The IPC bridge exposes named functions only. Main checks that each message comes from the app's own frame, validates every argument, and never passes the raw event to the renderer.

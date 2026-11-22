@@ -340,7 +340,7 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
         'aria-label': DOCUMENT_LABEL,
         class: 'page-sheet',
         'data-region': 'page-editor',
-        spellcheck: 'true',
+        spellcheck: 'false',
       },
       dispatchTransaction(transaction: Transaction) {
         // Chromium moves a contenteditable caret to the end when the page is

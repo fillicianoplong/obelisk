@@ -33,6 +33,8 @@ export function createStubHandlers(): IpcHandlerMap {
     'recovery:drop': (_request) => notReady('recovery:drop'),
     'link:open': (_request) => notReady('link:open'),
     'spell:add': (_request) => notReady('spell:add'),
+    'spell:check': (_request) => notReady('spell:check'),
+    'spell:suggest': (_request) => notReady('spell:suggest'),
   };
 }
 

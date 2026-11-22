@@ -39,6 +39,8 @@ test('a spelling suggestion replaces the word under the caret in one undo step',
     assert.ok(tr);
     view.dispatch(tr);
     assert.equal(view.state.doc.textContent, 'Say hello there');
+    const helloAt = view.state.doc.textContent.indexOf('hello');
+    assert.equal(view.state.selection.head, 1 + helloAt + 'hello'.length);
     assert.equal(undoDepth(view.state), before + 1);
     undo(view.state, view.dispatch.bind(view));
     assert.equal(view.state.doc.textContent, 'Say helo there');

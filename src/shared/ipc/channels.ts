@@ -20,6 +20,8 @@ export const IPC_CHANNELS = [
   'recovery:drop',
   'link:open',
   'spell:add',
+  'spell:check',
+  'spell:suggest',
   'spell:context',
 ] as const;
 
@@ -59,6 +61,8 @@ export const IPC_DIRECTION = {
   'recovery:drop': 'renderer-to-main',
   'link:open': 'renderer-to-main',
   'spell:add': 'renderer-to-main',
+  'spell:check': 'renderer-to-main',
+  'spell:suggest': 'renderer-to-main',
   'spell:context': 'main-to-renderer',
 } as const satisfies Record<IpcChannelName, 'renderer-to-main' | 'main-to-renderer'>;
 

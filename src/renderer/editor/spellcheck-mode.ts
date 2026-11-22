@@ -1,4 +1,12 @@
 let enabled = true;
+const listeners = new Set<(enabled: boolean) => void>();
+
+export function whenSpellcheckChanges(handler: (enabled: boolean) => void): () => void {
+  listeners.add(handler);
+  return () => {
+    listeners.delete(handler);
+  };
+}
 
 export function spellcheckEnabled(): boolean {
   return enabled;
@@ -17,16 +25,17 @@ function pageSheets(): HTMLElement[] {
   return nodes;
 }
 
-// Chromium only spellchecks text as it is typed. The checker stays on, and
-// Tools > Spell check hides or shows the underlines.
+// Chromium draws nothing. The app draws the underlines.
 export function setSpellcheckEnabled(value: boolean): void {
+  const changed = enabled !== value;
   enabled = value;
   for (const node of pageSheets()) {
-    node.setAttribute('spellcheck', 'true');
-    if (value) {
-      node.removeAttribute('data-spell-hidden');
-    } else {
-      node.setAttribute('data-spell-hidden', '');
-    }
+    node.setAttribute('spellcheck', 'false');
+  }
+  if (!changed) {
+    return;
+  }
+  for (const handler of listeners) {
+    handler(value);
   }
 }

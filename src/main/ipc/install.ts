@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog, ipcMain, session, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { SpellHost } from '../spell/utility-host.js';
 import { readInUtilityProcess } from '../codec/utility-host.js';
 import { createFileService } from '../file/service.js';
 import { pickOpenDialogOwner, type OpenDialogOptions } from '../file/openDialog.js';
@@ -74,9 +75,30 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
   });
   const registry = createIpcRegistry(createAppHandlers(files));
   const userData = () => app.getPath('userData');
-  registry.setHandler('spell:add', (request) => {
-    session.defaultSession.addWordToSpellCheckerDictionary(request.word);
-    return { status: 'ok' };
+  const spell = new SpellHost(userData, () => app.getAppPath());
+  registry.setHandler('spell:add', async (request) => {
+    try {
+      await spell.add(request.word);
+      return { status: 'ok' };
+    } catch {
+      return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
+    }
+  });
+  registry.setHandler('spell:check', async (request) => {
+    try {
+      const misspelled = await spell.check(request.words);
+      return { status: 'ok', misspelled };
+    } catch {
+      return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
+    }
+  });
+  registry.setHandler('spell:suggest', async (request) => {
+    try {
+      const result = await spell.suggest(request.word);
+      return { status: 'ok', misspelled: result.misspelled, suggestions: result.suggestions };
+    } catch {
+      return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
+    }
   });
   registry.setHandler('prefs:get', (request) => {
     if (request.key !== 'spelling') {

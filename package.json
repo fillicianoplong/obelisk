@@ -1,6 +1,6 @@
 {
   "name": "obelisk",
-  "version": "0.1.38.2",
+  "version": "0.1.38.3",
   "private": true,
   "description": "Obelisk is a Windows document editor.",
   "main": "dist/main/index.js",
@@ -16,6 +16,8 @@
     "check:fuses": "node scripts/check-fuses.mjs"
   },
   "dependencies": {
+    "dictionary-en": "4.0.0",
+    "nspell": "2.1.5",
     "prosemirror-commands": "1.7.2",
     "prosemirror-history": "1.5.1",
     "prosemirror-inputrules": "1.4.0",

@@ -148,6 +148,7 @@
   --color-success: #0E6B0E;
   --color-warning: #8A5100;
   --color-error: #B3261E;
+  --color-spelling: #E53935;
   --color-success-surface: #DFF0DD;
   --color-warning-surface: #FCEFD6;
   --color-error-surface: #FBE4E2;
@@ -218,6 +219,7 @@
     --color-success: #6CCB5F;
     --color-warning: #F2C661;
     --color-error: #FF99A4;
+    --color-spelling: #FF6E6E;
     --color-success-surface: #1E3A1E;
     --color-warning-surface: #3D3115;
     --color-error-surface: #44201F;
@@ -283,6 +285,7 @@
   --color-success: #6CCB5F;
   --color-warning: #F2C661;
   --color-error: #FF99A4;
+  --color-spelling: #FF6E6E;
   --color-success-surface: #1E3A1E;
   --color-warning-surface: #3D3115;
   --color-error-surface: #44201F;
@@ -361,6 +364,7 @@
     --color-success: CanvasText;
     --color-warning: CanvasText;
     --color-error: CanvasText;
+    --color-spelling: CanvasText;
     --color-success-surface: Canvas;
     --color-warning-surface: Canvas;
     --color-error-surface: Canvas;

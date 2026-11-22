@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { setSpellcheckEnabled } from '../editor/spellcheck-mode.js';
 import { editorText } from '../editor/state.js';
+import { rememberCorrect } from '../editor/spell/client.js';
 import { spellingSuggestionAt, spellingWordToAdd, startSpellContextListener } from './spellcheck/context.js';
 import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from '../../shared/ipc/types.js';
 import { FocusCycle } from './focus/FocusCycle.js';
@@ -546,8 +547,12 @@ export function Shell() {
       if (command === 'spell-add') {
         const word = spellingWordToAdd();
         if (word !== null) {
-          void window.obelisk['spell:add']({ word }).catch(() => {
-            // The dictionary lives in the OS. A failed add leaves the underline.
+          void window.obelisk['spell:add']({ word }).then((result) => {
+            if (result.status === 'ok') {
+              rememberCorrect(word);
+            }
+          }).catch(() => {
+            // A failed add leaves the underline.
           });
         }
         return;

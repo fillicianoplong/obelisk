@@ -26,6 +26,8 @@ import {
   type RefusedResult,
   type SessionSetRequest,
   type SpellAddRequest,
+  type SpellCheckRequest,
+  type SpellSuggestRequest,
   type SigDeleteRequest,
   type SigGetRequest,
   type SigSaveRequest,
@@ -88,6 +90,10 @@ export function parseInvokeRequest(channel: InvokeChannel, args: readonly unknow
       return parsed(parseLinkOpen(args));
     case 'spell:add':
       return parsed(parseSpellAdd(args));
+    case 'spell:check':
+      return parsed(parseSpellCheck(args));
+    case 'spell:suggest':
+      return parsed(parseSpellSuggest(args));
     default: {
       const neverChannel: never = channel;
       return neverChannel;
@@ -580,17 +586,55 @@ function parseRecoveryId(args: readonly unknown[]): RecoveryRestoreRequest & Rec
   return recoveryId === null ? null : { recoveryId };
 }
 
+const SPELL_WORD_MAX = 64;
+const SPELL_CHECK_MAX = 400;
+
+function spellWord(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const hasWhitespace = [...value].some((char) => char.trim() === '');
+  if (value.length < 1 || value.length > SPELL_WORD_MAX || hasControlChar(value) || hasWhitespace) {
+    return null;
+  }
+  return value;
+}
+
+function parseSpellCheck(args: readonly unknown[]): SpellCheckRequest | null {
+  const value = oneObject(args);
+  if (value === null || !hasExactKeys(value, ['words']) || !Array.isArray(value.words)) {
+    return null;
+  }
+  if (value.words.length > SPELL_CHECK_MAX) {
+    return null;
+  }
+  const words: string[] = [];
+  for (const item of value.words) {
+    const word = spellWord(item);
+    if (word === null) {
+      return null;
+    }
+    words.push(word);
+  }
+  return { words };
+}
+
+function parseSpellSuggest(args: readonly unknown[]): SpellSuggestRequest | null {
+  const value = oneObject(args);
+  if (value === null || !hasExactKeys(value, ['word'])) {
+    return null;
+  }
+  const word = spellWord(value.word);
+  return word === null ? null : { word };
+}
+
 function parseSpellAdd(args: readonly unknown[]): SpellAddRequest | null {
   const value = oneObject(args);
-  if (value === null || !hasExactKeys(value, ['word']) || typeof value.word !== 'string') {
+  if (value === null || !hasExactKeys(value, ['word'])) {
     return null;
   }
-  const word = value.word;
-  const hasWhitespace = [...word].some((char) => char.trim() === '');
-  if (word.length < 1 || word.length > 64 || hasControlChar(word) || hasWhitespace) {
-    return null;
-  }
-  return { word };
+  const word = spellWord(value.word);
+  return word === null ? null : { word };
 }
 
 function parseLinkOpen(args: readonly unknown[]): LinkOpenRequest | null {

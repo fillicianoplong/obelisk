@@ -15,6 +15,8 @@ import type {
   RecoveryRestoreResult,
   SessionSetResult,
   SpellAddResult,
+  SpellCheckResult,
+  SpellSuggestResult,
   SigDeleteResult,
   SigGetResult,
   SigListResult,
@@ -114,6 +116,8 @@ export function createObeliskApi(ipc: PreloadIpc): ObeliskApi {
     'recovery:drop': (request) => ipc.invoke('recovery:drop', request) as Promise<RecoveryDropResult>,
     'link:open': (request) => ipc.invoke('link:open', request) as Promise<LinkOpenResult>,
     'spell:add': (request) => ipc.invoke('spell:add', request) as Promise<SpellAddResult>,
+    'spell:check': (request) => ipc.invoke('spell:check', request) as Promise<SpellCheckResult>,
+    'spell:suggest': (request) => ipc.invoke('spell:suggest', request) as Promise<SpellSuggestResult>,
     'file:activated': createFileActivatedApi(ipc),
     'spell:context': createSpellContextApi(ipc),
   };

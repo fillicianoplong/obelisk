@@ -223,6 +223,18 @@ export interface SpellAddRequest {
 
 export type SpellAddResult = { status: 'ok' } | IpcErrorResult;
 
+export interface SpellCheckRequest {
+  words: string[];
+}
+
+export type SpellCheckResult = { status: 'ok'; misspelled: string[] } | IpcErrorResult;
+
+export interface SpellSuggestRequest {
+  word: string;
+}
+
+export type SpellSuggestResult = { status: 'ok'; misspelled: boolean; suggestions: string[] } | IpcErrorResult;
+
 export interface SpellContextEvent {
   misspelledWord: string;
   suggestions: string[];
@@ -247,6 +259,8 @@ export interface RequestMap {
   'recovery:drop': RecoveryDropRequest;
   'link:open': LinkOpenRequest;
   'spell:add': SpellAddRequest;
+  'spell:check': SpellCheckRequest;
+  'spell:suggest': SpellSuggestRequest;
 }
 
 export interface ResultMap {
@@ -268,6 +282,8 @@ export interface ResultMap {
   'recovery:drop': RecoveryDropResult;
   'link:open': LinkOpenResult;
   'spell:add': SpellAddResult;
+  'spell:check': SpellCheckResult;
+  'spell:suggest': SpellSuggestResult;
 }
 
 export type IpcDispatchResult = ResultMap[keyof ResultMap];

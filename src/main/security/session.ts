@@ -1,7 +1,7 @@
 import { session, type Session } from 'electron';
 import { CONTENT_SECURITY_POLICY } from './csp.js';
 import { isAllowedRequestUrl } from './request-policy.js';
-import { SPELLCHECK_DICTIONARY_DOWNLOAD_URL, spellCheckerLanguages } from './spellcheck.js';
+import { SPELLCHECK_DICTIONARY_DOWNLOAD_URL } from './spellcheck.js';
 
 const REPORTED_PERMISSIONS = new Set([
   'camera',
@@ -75,18 +75,7 @@ export function installPermissionDenials(ses: Session, handlers: SessionSecurity
 
 export function installSpellChecker(ses: Session): void {
   ses.setSpellCheckerDictionaryDownloadURL(SPELLCHECK_DICTIONARY_DOWNLOAD_URL);
-  ses.setSpellCheckerEnabled(true);
-  try {
-    const languages = spellCheckerLanguages(
-      ses.availableSpellCheckerLanguages,
-      ses.getSpellCheckerLanguages(),
-    );
-    if (languages.length > 0) {
-      ses.setSpellCheckerLanguages(languages);
-    }
-  } catch {
-    // An empty OS list leaves spell check off. No dictionary is downloaded.
-  }
+  ses.setSpellCheckerEnabled(false);
 }
 
 export function installSessionSecurity(handlers: SessionSecurityHandlers = {}): void {

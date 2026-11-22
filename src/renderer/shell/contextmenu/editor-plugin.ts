@@ -6,9 +6,11 @@ import {
   textSelectionForEditorPointer,
   textSelectionFromDocumentCoords,
 } from '../../editor/block-handle-plugin.js';
+import { suggestWord } from '../../editor/spell/client.js';
+import { spanAt, wordSpans } from '../../editor/spell/ranges.js';
 import { spellcheckEnabled } from '../../editor/spellcheck-mode.js';
 import { resetPageFocusToPointer } from '../page-focus.js';
-import { spellContextForMenu, type SpellingTarget } from '../spellcheck/context.js';
+import type { SpellingTarget } from '../spellcheck/context.js';
 import {
   CONTEXT_MENU_RESTORE_FOCUS,
   dispatchContextMenuRequest,
@@ -16,18 +18,19 @@ import {
 } from './events.js';
 import { proseBlockType, resolveContextTarget } from './target.js';
 
-const SPELL_MENU_WAIT_MS = 300;
-
-// The menu stays closed until the main-process context-menu result arrives.
-// Opening it on the click covers the word, and Chromium then reports no misspelling.
 export async function publishContextMenu(
-  started: number,
+  view: EditorView,
   detail: Omit<Parameters<typeof dispatchContextMenuRequest>[0], 'spelling'>,
 ): Promise<void> {
-  const fromMain = await spellContextForMenu(started, SPELL_MENU_WAIT_MS);
   let spelling: SpellingTarget | null = null;
-  if (spellcheckEnabled() && fromMain !== null && fromMain.word.length > 0) {
-    spelling = { word: fromMain.word, suggestions: fromMain.suggestions.slice(0, 5) };
+  if (spellcheckEnabled()) {
+    const span = spanAt(wordSpans(view.state.doc), view.state.selection.head);
+    if (span !== null) {
+      const result = await suggestWord(span.word);
+      if (result !== null && result.status === 'ok' && result.misspelled) {
+        spelling = { word: span.word, suggestions: result.suggestions.slice(0, 5) };
+      }
+    }
   }
   dispatchContextMenuRequest({ ...detail, spelling });
 }
@@ -43,10 +46,12 @@ function anchorFromKeyboard(view: EditorView): { x: number; y: number } {
 }
 
 function restoreEditorAfterContextMenu(view: EditorView, detail: ContextMenuRestoreDetail): void {
-  const { doc } = view.state;
-  const anchor = Math.max(0, Math.min(detail.selectionAnchor, doc.content.size));
-  const head = Math.max(0, Math.min(detail.selectionHead, doc.content.size));
-  view.dispatch(view.state.tr.setSelection(textSelectionFromDocumentCoords(doc, anchor, head)));
+  if (!detail.keepSelection) {
+    const { doc } = view.state;
+    const anchor = Math.max(0, Math.min(detail.selectionAnchor, doc.content.size));
+    const head = Math.max(0, Math.min(detail.selectionHead, doc.content.size));
+    view.dispatch(view.state.tr.setSelection(textSelectionFromDocumentCoords(doc, anchor, head)));
+  }
   const active = view.dom.ownerDocument.activeElement;
   if (active instanceof HTMLElement && active !== view.dom && !view.dom.contains(active)) {
     active.blur();
@@ -87,7 +92,6 @@ export function contextMenuEditorPlugin(tabId: string) {
         }
         event.preventDefault();
         event.stopPropagation();
-        const started = Date.now();
         const blockIndex = Number(handle.getAttribute('data-block-index'));
         if (!Number.isInteger(blockIndex)) {
           return;
@@ -99,7 +103,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         const node = view.state.doc.child(blockIndex);
         const rect = handle.getBoundingClientRect();
         const selection = { selectionAnchor: view.state.selection.anchor, selectionHead: view.state.selection.head };
-        void publishContextMenu(started, {
+        void publishContextMenu(view, {
           tabId,
           kind: 'block',
           blockType: proseBlockType(node),
@@ -115,11 +119,10 @@ export function contextMenuEditorPlugin(tabId: string) {
         clientX: number,
         clientY: number,
         domTarget: EventTarget | null,
-        started: number,
       ): void {
         try {
           const target = resolveContextTarget(view, clientX, clientY, domTarget, false);
-          void publishContextMenu(started, { tabId, ...target });
+          void publishContextMenu(view, { tabId, ...target });
         } catch {
           // Keep the editor alive if targeting fails for an odd hit target.
         }
@@ -135,13 +138,12 @@ export function contextMenuEditorPlugin(tabId: string) {
         if (!(region instanceof HTMLElement) || !region.contains(event.target)) {
           return;
         }
-        const started = Date.now();
         event.preventDefault();
         event.stopPropagation();
         if (selectedBlockRange(view.state) === null) {
           view.dispatch(textSelectionForEditorPointer(view, event));
         }
-        openContextMenuAtPointer(event.clientX, event.clientY, event.target, started);
+        openContextMenuAtPointer(event.clientX, event.clientY, event.target);
       }
       const pageRegion = view.dom.closest('.page-region');
       pageRegion?.addEventListener('contextmenu', onPageRegionContextMenu, true);
@@ -157,7 +159,6 @@ export function contextMenuEditorPlugin(tabId: string) {
     props: {
       handleDOMEvents: {
         contextmenu(view, event) {
-          const started = Date.now();
           if (selectedBlockRange(view.state) === null) {
             try {
               view.dispatch(textSelectionForEditorPointer(view, event));
@@ -167,7 +168,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           }
           try {
             const target = resolveContextTarget(view, event.clientX, event.clientY, event.target, false);
-            void publishContextMenu(started, { tabId, ...target });
+            void publishContextMenu(view, { tabId, ...target });
           } catch {
             // Ignore bad hit targets so the renderer does not crash.
           }
@@ -180,11 +181,10 @@ export function contextMenuEditorPlugin(tabId: string) {
         if (!isShiftF10 && !isMenuKey) {
           return false;
         }
-        const started = Date.now();
         event.preventDefault();
         const anchor = anchorFromKeyboard(view);
         const target = resolveContextTarget(view, anchor.x, anchor.y, null, true);
-        void publishContextMenu(started, { tabId, ...target });
+        void publishContextMenu(view, { tabId, ...target });
         return true;
       },
     },

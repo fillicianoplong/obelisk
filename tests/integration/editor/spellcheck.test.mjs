@@ -97,46 +97,7 @@ async function wordPoint(client) {
   })()`);
 }
 
-async function markedWord(client) {
-  const deadline = Date.now() + 8000;
-  while (Date.now() < deadline) {
-    await closeMenu(client);
-    const point = await wordPoint(client);
-    assert.ok(point);
-    const before = await evaluate(client, `window.__spellEvents.length`);
-    await client.send('Input.dispatchMouseEvent', {
-      type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1,
-    });
-    await client.send('Input.dispatchMouseEvent', {
-      type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1,
-    });
-    await sleep(40);
-    await rightClick(client, point);
-    const found = await evaluate(client, `(() => new Promise((resolve) => {
-      const start = ${before};
-      const end = Date.now() + 700;
-      const tick = () => {
-        const hit = window.__spellEvents.slice(start).find((event) => event.misspelledWord === 'hllo');
-        if (hit) {
-          resolve(hit);
-          return;
-        }
-        if (Date.now() > end) {
-          resolve(null);
-          return;
-        }
-        setTimeout(tick, 40);
-      };
-      tick();
-    }))()`);
-    if (found && found.misspelledWord === 'hllo') {
-      return found;
-    }
-  }
-  return null;
-}
-
-test('a right-click shows spelling suggestions and the toggle only hides them', { timeout: 90_000 }, async (t) => {
+test('a right-click shows spelling suggestions from the bundled dictionary', { timeout: 90_000 }, async (t) => {
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-spell-'));
   const port = await freePort();
   const session = { child: undefined, client: undefined, userDataDir };
@@ -156,13 +117,6 @@ test('a right-click shows spelling suggestions and the toggle only hides them', 
       },
     });
     const client = session.client;
-    await evaluate(client, `(() => {
-      window.__spellEvents = [];
-      window.obelisk['spell:context'].subscribe((payload) => {
-        window.__spellEvents.push(payload);
-      });
-      return true;
-    })()`);
     await clickSelector(client, '.page-sheet');
     for (const word of ['Say ', 'hllo', ' there']) {
       await client.send('Input.insertText', { text: word });
@@ -170,17 +124,33 @@ test('a right-click shows spelling suggestions and the toggle only hides them', 
     }
     const typed = await evaluate(client, `document.querySelector('[data-region="page-editor"]')?.innerText || ''`);
     assert.match(typed, /hllo/);
-    const payload = await markedWord(client);
-    if (payload) {
-      assert.equal(payload.misspelledWord, 'hllo');
-      assert.equal(payload.suggestions.includes('hello'), true);
-      const suggestions = await menuLabels(client);
-      assert.ok(suggestions);
-      assert.equal(suggestions.includes('hello'), true);
-      assert.equal(suggestions.includes('Add to dictionary'), true);
-      assert.equal(suggestions.includes('Spelling suggestions'), false);
-      await closeMenu(client);
-    }
+    const drawn = await evaluate(client, `(() => new Promise((resolve) => {
+      const deadline = Date.now() + 8000;
+      const tick = () => {
+        const editor = document.querySelector('[data-region="page-editor"]');
+        const highlight = window.CSS?.highlights?.get('obk-spelling');
+        const marks = highlight ? highlight.size : 0;
+        if (marks > 0) {
+          resolve({ spellcheck: editor.getAttribute('spellcheck'), marks });
+          return;
+        }
+        if (Date.now() > deadline) {
+          resolve({ spellcheck: editor ? editor.getAttribute('spellcheck') : null, marks });
+          return;
+        }
+        setTimeout(tick, 50);
+      };
+      tick();
+    }))()`);
+    assert.equal(drawn.spellcheck, 'false');
+    assert.equal(drawn.marks > 0, true);
+    const point = await wordPoint(client);
+    assert.ok(point);
+    await rightClick(client, point);
+    const suggestions = await menuLabels(client);
+    assert.ok(suggestions);
+    assert.equal(suggestions.includes('hello'), true);
+    assert.equal(suggestions.includes('Add to dictionary'), true);
     await closeMenu(client);
 
     await clickSelector(client, '[data-menu="tools"]');
@@ -191,13 +161,11 @@ test('a right-click shows spelling suggestions and the toggle only hides them', 
       const editor = document.querySelector('[data-region="page-editor"]');
       return window.obelisk['prefs:get']({ key: 'spelling' }).then((result) => ({
         spellcheck: editor.getAttribute('spellcheck'),
-        hidden: editor.hasAttribute('data-spell-hidden'),
         status: result.status,
         value: result.value,
       }));
     })()`);
-    assert.equal(off.spellcheck, 'true');
-    assert.equal(off.hidden, true);
+    assert.equal(off.spellcheck, 'false');
     assert.equal(off.status, 'ok');
     assert.equal(off.value, false);
     const hiddenPoint = await wordPoint(client);
@@ -213,31 +181,8 @@ test('a right-click shows spelling suggestions and the toggle only hides them', 
     await clickSelector(client, '[data-menu="tools"]');
     await sleep(50);
     await clickSelector(client, '[data-item="tools-spelling"]');
-    const restored = await evaluate(client, `(() => new Promise((resolve) => {
-      const deadline = Date.now() + 2000;
-      const tick = () => {
-        const editor = document.querySelector('[data-region="page-editor"]');
-        if (editor && !editor.hasAttribute('data-spell-hidden') && editor.getAttribute('spellcheck') === 'true') {
-          resolve(true);
-          return;
-        }
-        if (Date.now() > deadline) {
-          resolve(false);
-          return;
-        }
-        setTimeout(tick, 40);
-      };
-      tick();
-    }))()`);
-    assert.equal(restored, true);
-    if (payload) {
-      const backPayload = await markedWord(client);
-      assert.equal(backPayload.misspelledWord, 'hllo');
-      assert.equal(backPayload.suggestions.includes('hello'), true);
-      const back = await menuLabels(client);
-      assert.ok(back);
-      assert.equal(back.includes('hello'), true);
-    }
+    const restored = await evaluate(client, `document.querySelector('[data-region="page-editor"]')?.getAttribute('spellcheck')`);
+    assert.equal(restored, 'false');
 
     const code = await evaluate(client, `(() => {
       const editor = document.querySelector('[data-region="page-editor"]');

@@ -60,11 +60,12 @@ function pageEditor(): HTMLElement | null {
   return page instanceof HTMLElement ? page : null;
 }
 
-function restoreEditorFocus(tabId: string, target: ContextMenuRequestDetail): void {
+function restoreEditorFocus(tabId: string, target: ContextMenuRequestDetail, keepSelection: boolean): void {
   dispatchContextMenuRestoreFocus({
     tabId,
     selectionAnchor: target.selectionAnchor,
     selectionHead: target.selectionHead,
+    keepSelection,
   });
 }
 
@@ -134,7 +135,7 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
         ) {
           active.blur();
         }
-        restoreEditorFocus(tabId, current.target);
+        restoreEditorFocus(tabId, current.target, result.command?.startsWith('spell-replace:') === true);
         finishContextMenuClose();
       }
       setOpen(null);

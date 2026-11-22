@@ -368,7 +368,7 @@ export function ignoredByPackager(candidate) {
 // Main and the utility process are tsc output. They load yauzl and yazl with
 // require. The packager ignore still drops the rest of node_modules, including
 // dev dependencies and the libraries the renderer bundle already contains.
-export const ZIP_RUNTIME_ROOTS = ['yauzl', 'yazl'];
+export const ZIP_RUNTIME_ROOTS = ['yauzl', 'yazl', 'nspell'];
 
 const RUNTIME_SKIP_DIRS = new Set(['node_modules', 'test', 'tests']);
 
@@ -430,7 +430,7 @@ function entryPoints(pkg) {
 function listedFiles(packageDir, pkg) {
   const listed = Array.isArray(pkg.files) && pkg.files.length > 0 ? pkg.files : entryPoints(pkg);
   const files = new Set(['package.json']);
-  for (const license of ['LICENSE', 'LICENSE.md', 'LICENSE.txt']) {
+  for (const license of ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'license', 'license.md']) {
     if (existsSync(path.join(packageDir, license))) {
       files.add(license);
     }

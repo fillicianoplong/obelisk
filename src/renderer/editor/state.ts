@@ -2,9 +2,9 @@ import { baseKeymap, chainCommands } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
 import type { Node } from 'prosemirror-model';
-import { EditorState, Plugin, TextSelection } from 'prosemirror-state';
+import { EditorState, TextSelection } from 'prosemirror-state';
 import type { Command, Selection, Transaction } from 'prosemirror-state';
-import { spellcheckEnabled } from './spellcheck-mode.js';
+import { spellingViewPlugin } from './spell/view.js';
 import { editorSchema } from './schema.js';
 import { blockHandleKeymap, blockHandlePlugin } from './block-handle-plugin.js';
 import { editorColorStylesPlugin } from './color-styles-plugin.js';
@@ -29,25 +29,6 @@ function applyCommand(state: EditorState, command: Command): EditorState | null 
     return null;
   }
   return next;
-}
-
-function spellcheckModePlugin(): Plugin {
-  return new Plugin({
-    view(view) {
-      const apply = () => {
-        if (view.dom.getAttribute('spellcheck') !== 'true') {
-          view.dom.setAttribute('spellcheck', 'true');
-        }
-        if (spellcheckEnabled()) {
-          view.dom.removeAttribute('data-spell-hidden');
-        } else if (!view.dom.hasAttribute('data-spell-hidden')) {
-          view.dom.setAttribute('data-spell-hidden', '');
-        }
-      };
-      apply();
-      return { update: apply };
-    },
-  });
 }
 
 export function createTabEditorState(doc?: Node): EditorState {
@@ -75,7 +56,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       findPlugin(),
       typedShortcutInputRulesPlugin(),
       editorColorStylesPlugin(),
-      spellcheckModePlugin(),
+      spellingViewPlugin(),
     ],
   });
 }

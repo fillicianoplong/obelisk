@@ -1,20 +1,19 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { mock, test } from 'node:test';
+import test from 'node:test';
+import { TextSelection } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 import { parseHTML } from 'linkedom';
 import { loadRenderer } from '../editor/load-renderer.mjs';
+import { prepareEditorDom } from '../editor/dom-test-helpers.mjs';
 
 const pluginUrl = new URL('../../../src/renderer/shell/contextmenu/editor-plugin.ts', import.meta.url);
+const stateUrl = new URL('../../../src/renderer/editor/state.ts', import.meta.url);
 const modeUrl = new URL('../../../src/renderer/editor/spellcheck-mode.ts', import.meta.url);
-const detail = { tabId: 'tab-1' };
 
-test('the text menu waits for the spell context before it opens', async () => {
-  const saved = { document: globalThis.document, window: globalThis.window, HTMLElement: globalThis.HTMLElement };
-  const parsed = parseHTML('<!doctype html><html><body><div class="page-sheet" spellcheck="true"></div></body></html>');
-  const { document, window } = parsed;
-  globalThis.document = document;
-  globalThis.window = window;
-  globalThis.HTMLElement = window.HTMLElement;
+test('the text menu reads the misspelled word under the caret', async () => {
+  const { document, window } = parseHTML('<!doctype html><html><body></body></html>');
+  const restore = prepareEditorDom(document, window);
   const buckets = new Map();
   void window.addEventListener;
   void window.dispatchEvent;
@@ -29,75 +28,69 @@ test('the text menu waits for the spell context before it opens', async () => {
     }
     return true;
   };
-  mock.timers.enable({ apis: ['setTimeout', 'Date'] });
-  let listener = null;
   window.obelisk = {
-    'spell:context': {
-      subscribe(fn) {
-        listener = fn;
-        return 1;
-      },
-      unsubscribe() {},
-    },
+    'spell:suggest': (request) => Promise.resolve(request.word === 'hllo'
+      ? { status: 'ok', misspelled: true, suggestions: ['hello', 'hollo', 'hallo', 'hullo', 'halo', 'extra'] }
+      : { status: 'ok', misspelled: false, suggestions: [] }),
+    'spell:check': () => Promise.resolve({ status: 'ok', misspelled: [] }),
   };
   const opened = [];
   window.addEventListener('obelisk:context-menu-request', (event) => {
     opened.push(event.detail);
   });
+  const { createTabEditorState, insertText } = await loadRenderer(stateUrl);
+  const { publishContextMenu } = await loadRenderer(pluginUrl);
+  const { setSpellcheckEnabled } = await loadRenderer(modeUrl);
+  setSpellcheckEnabled(true);
+  const host = document.createElement('div');
+  document.body.append(host);
+  const view = new EditorView(host, {
+    state: insertText(createTabEditorState(), 'Say hllo there'),
+    attributes: { class: 'page-sheet', spellcheck: 'true' },
+  });
   try {
-    const { publishContextMenu } = await loadRenderer(pluginUrl);
-    const { setSpellcheckEnabled } = await loadRenderer(modeUrl);
-    setSpellcheckEnabled(true);
-
-    const timedOut = publishContextMenu(Date.now(), detail);
-    await Promise.resolve();
-    assert.equal(opened.length, 0);
-    mock.timers.tick(299);
-    await Promise.resolve();
-    assert.equal(opened.length, 0);
-    mock.timers.tick(1);
-    await timedOut;
-    assert.equal(opened.length, 1);
-    assert.equal(opened[0].spelling, null);
-
-    mock.timers.tick(1000);
-    opened.length = 0;
-    const arrived = publishContextMenu(Date.now(), detail);
-    await Promise.resolve();
-    assert.equal(opened.length, 0);
-    listener({ misspelledWord: '', suggestions: [] });
-    await Promise.resolve();
-    assert.equal(opened.length, 0);
-    listener({
-      misspelledWord: 'hllo',
-      suggestions: ['hello', 'hollo', 'hallo', 'hullo', 'halo', 'extra'],
+    assert.equal(view.dom.getAttribute('spellcheck'), 'false');
+    const hllo = view.state.doc.textContent.indexOf('hllo');
+    const inside = 1 + hllo + 2;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, inside)));
+    await publishContextMenu(view, {
+      tabId: 'tab-1',
+      kind: 'text',
+      blockType: 'paragraph',
+      blockIndex: 0,
+      clientX: 12,
+      clientY: 12,
+      keyboard: false,
+      selectionAnchor: inside,
+      selectionHead: inside,
     });
-    await arrived;
     assert.equal(opened.length, 1);
     assert.equal(opened[0].spelling.word, 'hllo');
     assert.deepEqual(opened[0].spelling.suggestions, ['hello', 'hollo', 'hallo', 'hullo', 'halo']);
-
     setSpellcheckEnabled(false);
-    const sheet = document.querySelector('.page-sheet');
-    assert.equal(sheet.getAttribute('spellcheck'), 'true');
-    assert.equal(sheet.hasAttribute('data-spell-hidden'), true);
-    mock.timers.tick(1000);
     opened.length = 0;
-    const hidden = publishContextMenu(Date.now(), detail);
-    listener({ misspelledWord: 'hllo', suggestions: ['hello'] });
-    await hidden;
+    await publishContextMenu(view, {
+      tabId: 'tab-1',
+      kind: 'text',
+      blockType: 'paragraph',
+      blockIndex: 0,
+      clientX: 12,
+      clientY: 12,
+      keyboard: false,
+      selectionAnchor: inside,
+      selectionHead: inside,
+    });
     assert.equal(opened[0].spelling, null);
-    setSpellcheckEnabled(true);
-    assert.equal(sheet.hasAttribute('data-spell-hidden'), false);
+    assert.equal(view.dom.getAttribute('spellcheck'), 'false');
   } finally {
-    mock.timers.reset();
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.HTMLElement = saved.HTMLElement;
+    setSpellcheckEnabled(true);
+    view.destroy();
+    restore();
   }
 });
 
-test('hiding spell check clears the spelling underline', async () => {
+test('spelling underlines use the highlight rule', async () => {
   const css = await readFile(new URL('../../../src/renderer/editor/editor.css', import.meta.url), 'utf8');
-  assert.match(css, /\.page-sheet\[data-spell-hidden\] ::spelling-error \{[^}]*text-decoration-line:\s*none/);
+  assert.match(css, /::highlight\(obk-spelling\) \{[^}]*text-decoration-style:\s*wavy/);
+  assert.match(css, /::highlight\(obk-spelling\) \{[^}]*text-decoration-color:\s*var\(--color-spelling\)/);
 });

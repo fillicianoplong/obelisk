@@ -12,12 +12,12 @@ const nodeModules = path.join(root, 'node_modules');
 
 test('the package copies yauzl, yazl, and their dependencies, and not dev dependencies', async () => {
   const names = zipRuntimeClosure(nodeModules);
-  assert.deepEqual(names.sort(), ['buffer-crc32', 'pend', 'yauzl', 'yazl']);
+  assert.deepEqual(names.sort(), ['buffer-crc32', 'is-buffer', 'nspell', 'pend', 'yauzl', 'yazl']);
   const destinationParent = await mkdtemp(path.join(tmpdir(), 'obelisk-zip-runtime-'));
   const destination = path.join(destinationParent, 'node_modules');
   try {
     const copied = await copyZipRuntime(nodeModules, destination);
-    assert.deepEqual(copied.sort(), ['buffer-crc32', 'pend', 'yauzl', 'yazl']);
+    assert.deepEqual(copied.sort(), ['buffer-crc32', 'is-buffer', 'nspell', 'pend', 'yauzl', 'yazl']);
     const requireRuntime = createRequire(path.join(destination, 'yazl', 'package.json'));
     assert.equal(typeof requireRuntime('yazl').ZipFile, 'function');
     assert.equal(typeof requireRuntime('yauzl').open, 'function');
