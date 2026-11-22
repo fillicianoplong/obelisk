@@ -35,7 +35,7 @@ Notable changes, newest first. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
-- Spell check underlines misspelled words with the operating system's spell checker. A right-click on a misspelled word lists suggestions at the top of the text menu, and Add to dictionary stores the word. Choosing a suggestion replaces that word, and Ctrl+Z restores it. Tools > Spell check turns it on or off and remembers the choice. Code blocks and inline code are not checked. No dictionary is downloaded.
+- Spell check underlines misspelled words using a bundled en-US dictionary. A right-click on a misspelled word lists suggestions at the top of the text menu, and Add to dictionary stores the word. Choosing a suggestion replaces that word, and Ctrl+Z restores it. Tools > Spell check turns it on or off and remembers the choice. Code blocks and inline code are not checked. Nothing is downloaded.
 
 ## [0.1.37.10] - 2026-11-20
 
@@ -156,7 +156,7 @@ Notable changes, newest first. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
-- Right-click, Shift+F10, and the Menu key open the same context menu on the block or text I point at. Each menu follows the Context menus reference and reuses the menu bar’s command wiring; items without handlers stay visible but disabled. ([#PR](https://github.com/fillicianoplong/obelisk/pull/PR))
+- Right-click, Shift+F10, and the Menu key open the same context menu on the block or text I point at. Each menu follows the Context menus reference and reuses the menu bar’s command wiring; items without handlers stay visible but disabled.
 
 ## [0.1.35.0] - 2026-11-14
 
