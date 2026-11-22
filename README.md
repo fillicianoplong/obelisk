@@ -115,6 +115,7 @@ Until [Settings (#60)](https://github.com/fillicianoplong/obelisk/issues/60) rep
 
 - [Software Requirements Specification](docs/SRS.md) (version 1.3; also as [Word](docs/Plong_Obelisk_SRS.docx) and [PDF](docs/out/Plong_Obelisk_SRS.pdf))
 - [Architecture (design document)](docs/ARCHITECTURE.md) (version 1.3; also as [Word](docs/Plong_Obelisk_Architecture.docx) and [PDF](docs/out/Plong_Obelisk_Architecture.pdf))
+- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) (version 1.0; also as [Word](docs/Plong_Obelisk_Implementation_Plan.docx) and [PDF](docs/out/Plong_Obelisk_Implementation_Plan.pdf))
 - [Diagrams](docs/diagrams/) (PlantUML sources, rendered in [docs/images](docs/images/))
 - [Packaging](docs/packaging.md)
 - [Testing](docs/testing.md)
