@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.38.4] - 2026-11-21
+
+### Fixed
+
+- Undo and redo underline a restored misspelling while the caret is still on that word. A spelling suggestion and a paste do the same.
+- The English dictionary is included once in the package.
+- The words ok and okay are not marked as misspelled.
+
 ## [0.1.38.3] - 2026-11-21
 
 ### Fixed

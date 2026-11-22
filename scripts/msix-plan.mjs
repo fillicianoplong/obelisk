@@ -315,6 +315,8 @@ export const PACKAGER_IGNORE = [
   /[\\/]\.github([\\/]|$)/,
   /[\\/]coverage([\\/]|$)/,
   /[\\/]dist[\\/]msix([\\/]|$)/,
+  // Vite's public dir copies assets/spell here. The package keeps assets/spell.
+  /[\\/]dist[\\/]renderer[\\/]spell([\\/]|$)/,
   /[\\/]dist[\\/]packaged([\\/]|$)/,
   /[\\/]docs([\\/]|$)/,
   /[\\/]node_modules([\\/]|$)/,

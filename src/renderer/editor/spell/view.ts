@@ -1,3 +1,4 @@
+import { isHistoryTransaction } from 'prosemirror-history';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Transaction } from 'prosemirror-state';
 import { ReplaceStep } from 'prosemirror-transform';
@@ -29,9 +30,17 @@ interface HighlightRegistry {
 
 const painted = new Map<EditorView, HighlightRange[]>();
 let highlightRegistry: HighlightRegistry | null = null;
+let underlinedWords: string[] = [];
+
+export function latestUnderlinedWords(): readonly string[] {
+  return underlinedWords;
+}
 
 function typingWord(tr: Transaction): boolean {
-  if (!tr.docChanged || tr.getMeta('addToHistory') === false || tr.steps.length !== 1) {
+  if (!tr.docChanged || isHistoryTransaction(tr) || tr.getMeta('closeHistoryGroup') === true) {
+    return false;
+  }
+  if (tr.getMeta('addToHistory') === false || tr.steps.length !== 1) {
     return false;
   }
   const ui = tr.getMeta('uiEvent');
@@ -143,6 +152,7 @@ export function spellingViewPlugin(): Plugin {
         }
         view.dom.setAttribute('spellcheck', 'false');
         if (!spellcheckEnabled()) {
+          underlinedWords = [];
           paintView(view, []);
           return;
         }
@@ -157,7 +167,9 @@ export function spellingViewPlugin(): Plugin {
           if (generation !== generationNow || view.isDestroyed || !spellcheckEnabled()) {
             return;
           }
-          paintView(view, spellingSpans(view.state.doc, caret, (word) => cachedMisspelled(word) === true));
+          const spans = spellingSpans(view.state.doc, caret, (word) => cachedMisspelled(word) === true);
+          underlinedWords = spans.map((span) => span.word);
+          paintView(view, spans);
         };
         if (needed.length === 0) {
           apply();
@@ -198,6 +210,7 @@ export function spellingViewPlugin(): Plugin {
         update(next, prev) {
           next.dom.setAttribute('spellcheck', 'false');
           if (!spellcheckEnabled()) {
+            underlinedWords = [];
             paintView(next, []);
             return;
           }

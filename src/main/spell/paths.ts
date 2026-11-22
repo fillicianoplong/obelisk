@@ -6,7 +6,6 @@ const DIC = 'en-US.dic';
 
 export function bundledDictionary(appPath: string): { aff: string; dic: string } | null {
   const roots = [
-    path.join(appPath, 'dist', 'renderer', 'spell'),
     path.join(appPath, 'assets', 'spell'),
   ];
   for (const root of roots) {
