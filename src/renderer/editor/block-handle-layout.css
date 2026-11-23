@@ -1,16 +1,244 @@
-/* Block handle bar: thin vertical stroke, full block height, centered in the hit column. */
+/* Block gutter: add and grip controls in the margin, centered on the block.
+   Pointer hover uses the accent fill. Keyboard focus uses the two-tone ring.
+   The fill and the ring are never on the control at the same time.
+   Menu rows follow the same split: the accent bar is pointer-only. */
 
-.block-handle::before {
-  content: '';
-  display: block;
-  width: var(--size-block-handle-bar);
-  height: 100%;
-  margin-inline: auto;
-  border-radius: var(--radius-round);
-  background: var(--color-border-control);
+.block-gutter-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 var(--size-control-small);
+  height: var(--size-control-small);
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  width: var(--size-control-small);
 }
 
-.block-handle:hover::before,
-.block-handle:focus-visible::before {
-  background: var(--color-accent);
+.block-gutter-grip {
+  cursor: grab;
+}
+
+.block-gutter-icon {
+  display: block;
+  height: var(--space-l);
+  pointer-events: none;
+  width: var(--space-l);
+}
+
+.block-handle[data-input='pointer'] .block-gutter-button:hover:not(:focus-visible) {
+  background: var(--color-subtle-fill-hover);
+  color: var(--color-accent);
+}
+
+.block-handle[data-input='pointer'] .block-gutter-button:hover:not(:focus-visible):active {
+  background: var(--color-subtle-fill-pressed);
+  color: var(--color-accent-pressed);
+}
+
+.block-gutter-button:focus {
+  outline: none;
+}
+
+.block-gutter-button:focus-visible {
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer),
+    inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) var(--color-focus-inner);
+  color: var(--color-text-secondary);
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+}
+
+.block-gutter-tooltip {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-control);
+  bottom: calc(100% + var(--space-xs));
+  box-shadow: var(--shadow-tooltip);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-caption);
+  left: 0;
+  line-height: var(--line-height-caption);
+  max-width: var(--size-tab-max);
+  padding: var(--space-s) var(--space-m);
+  pointer-events: none;
+  position: absolute;
+  white-space: normal;
+  width: max-content;
+  z-index: 1;
+}
+
+.block-gutter-tooltip[data-open='false'] {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: calc(var(--space-2xs) / 2);
+  overflow: hidden;
+  padding: 0;
+  white-space: nowrap;
+  width: calc(var(--space-2xs) / 2);
+}
+
+.block-empty-hint {
+  position: relative;
+}
+
+.block-empty-hint::after {
+  color: var(--color-text-disabled);
+  content: attr(data-empty-hint);
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  pointer-events: none;
+  position: absolute;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.block-menu {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-menu);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  max-height: var(--size-slash-menu-max-height);
+  padding: var(--space-xs) 0;
+  left: var(--block-menu-left, 0);
+  pointer-events: auto;
+  position: fixed;
+  top: var(--block-menu-top, 0);
+  width: var(--size-slash-menu-max-width);
+  z-index: var(--z-index-block-menu);
+}
+
+.block-menu[hidden] {
+  display: none;
+}
+
+.block-menu-search {
+  appearance: none;
+  background: var(--color-surface-input);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-body-small);
+  height: var(--size-control-small);
+  margin: var(--space-xs) var(--space-s) var(--space-2xs);
+  outline: none;
+  padding: 0 var(--space-s);
+}
+
+.block-menu-search:focus {
+  border-color: var(--color-accent);
+}
+
+.block-menu-header {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-caption);
+  padding: var(--space-xs) var(--space-m) var(--space-2xs);
+}
+
+.block-menu-list {
+  overflow: auto;
+}
+
+.block-menu-action {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: var(--space-s);
+  min-height: var(--size-control);
+  outline: none;
+  padding: var(--space-xs) var(--space-m) var(--space-xs) calc(var(--space-m) + var(--size-menu-accent));
+  text-align: left;
+  width: 100%;
+}
+
+.block-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.block-menu-shortcut {
+  color: var(--color-text-secondary);
+  flex: 0 0 auto;
+  font-size: var(--font-size-caption);
+}
+
+.block-menu[data-input='pointer'] .block-menu-action:not([aria-disabled='true']):hover {
+  background: var(--color-surface-raised-hover);
+  box-shadow: inset var(--size-menu-accent) 0 0 var(--color-accent);
+}
+
+.block-menu[data-input='keyboard'] .block-menu-action[data-focused='true'] {
+  background: var(--color-surface-raised-hover);
+  box-shadow:
+    inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer),
+    inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) var(--color-focus-inner);
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+}
+
+.block-menu-action[aria-disabled='true'],
+.block-menu-action[aria-disabled='true'] .block-menu-shortcut {
+  color: var(--color-text-disabled);
+  cursor: default;
+}
+
+.block-menu-empty {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-caption);
+  padding: var(--space-xs) var(--space-m) var(--space-s);
+}
+
+@media (forced-colors: active) {
+  .block-gutter-button {
+    border: calc(var(--space-2xs) / 2) solid ButtonText;
+  }
+
+  .block-gutter-button:focus-visible,
+  .block-menu[data-input='keyboard'] .block-menu-action[data-focused='true'] {
+    forced-color-adjust: none;
+    outline-color: Highlight;
+    box-shadow:
+      inset 0 0 0 var(--size-focus-ring) Highlight,
+      inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) Canvas;
+  }
+
+  .block-handle[data-input='pointer'] .block-gutter-button:hover:not(:focus-visible),
+  .block-menu[data-input='pointer'] .block-menu-action:not([aria-disabled='true']):hover {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .block-empty-hint::after {
+    color: GrayText;
+  }
+
+  .block-menu,
+  .block-gutter-tooltip {
+    border: calc(var(--space-2xs) / 2) solid CanvasText;
+  }
 }

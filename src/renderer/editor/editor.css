@@ -12,32 +12,30 @@
 }
 
 .block-handle-layer .block-handle {
-  position: absolute;
-  top: var(--block-handle-top, 0);
-  left: var(--block-handle-left, 0);
-  width: var(--size-block-handle-hit);
-  height: var(--block-handle-height, 0);
-  margin: 0;
-  padding: 0;
+  align-items: center;
+  background: transparent;
   border: none;
   border-radius: 0;
-  background: transparent;
-  cursor: grab;
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--space-xs);
+  height: var(--block-handle-height, 0);
+  justify-content: flex-end;
+  left: var(--block-handle-left, 0);
+  margin: 0;
+  padding: 0;
   pointer-events: auto;
+  position: absolute;
+  top: var(--block-handle-top, 0);
+  width: var(--size-block-gutter);
 }
 
-.block-handle-layer[data-block-drag='true'] .block-handle {
+.block-handle-layer[data-block-drag='true'] .block-gutter-grip {
   cursor: grabbing;
 }
 
 .block-handle[hidden] {
   display: none;
-}
-
-.block-handle:focus-visible {
-  opacity: 1;
-  outline: var(--size-focus-ring) solid var(--color-focus-outer);
-  outline-offset: var(--space-2xs);
 }
 
 .block-drop-indicator {

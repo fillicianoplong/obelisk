@@ -5,6 +5,18 @@ import { NodeSelection, TextSelection, type Selection } from 'prosemirror-state'
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
+import { resetPageFocusToPointer } from '../shell/page-focus.js';
+import {
+  applyBlockMenuAction,
+  blockMenuOptionIds,
+  createBlockMenu,
+  createGripTooltip,
+  createGutterButton,
+  emptyBlockHintDecoration,
+  GRIP_TOOLTIP_HOVER_MS,
+  insertEmptyBlockWithSlash,
+  paintBlockMenu,
+} from './block-gutter.js';
 
 export interface BlockDragState {
   sourceFrom: number;
@@ -290,18 +302,18 @@ export function blockHandleKindForNode(node: ProseNode): string {
   return node.type.name;
 }
 
-function applyHandleBlockAttrs(button: HTMLButtonElement, node: ProseNode): void {
+function applyHandleBlockAttrs(gutter: HTMLElement, node: ProseNode): void {
   const kind = blockHandleKindForNode(node);
-  button.setAttribute('data-block-kind', kind);
+  gutter.setAttribute('data-block-kind', kind);
   if (typeof node.attrs.blockId === 'string' && node.attrs.blockId.length > 0) {
-    button.setAttribute('data-block-id', node.attrs.blockId);
+    gutter.setAttribute('data-block-id', node.attrs.blockId);
   }
   if (node.type.name === 'paragraph') {
-    button.setAttribute('data-line-spacing', String(node.attrs.lineSpacing ?? 'single'));
-    button.setAttribute('data-space-before', String(node.attrs.spaceBefore ?? 0));
+    gutter.setAttribute('data-line-spacing', String(node.attrs.lineSpacing ?? 'single'));
+    gutter.setAttribute('data-space-before', String(node.attrs.spaceBefore ?? 0));
   }
   if (node.type.name === 'heading') {
-    button.setAttribute('data-heading-level', String(node.attrs.level ?? 1));
+    gutter.setAttribute('data-heading-level', String(node.attrs.level ?? 1));
   }
 }
 
@@ -438,6 +450,7 @@ function startBlockDragListeners(
   sourceTo: number,
   startX: number,
   startY: number,
+  onClick: (() => void) | null,
 ): void {
   const doc = view.dom.ownerDocument;
   let pointerX = startX;
@@ -483,6 +496,9 @@ function startBlockDragListeners(
     cleanup();
     if (!dragging || dragState === null || dragState.dropIndex === null) {
       endBlockDrag(view, dragState);
+      if (!dragging) {
+        onClick?.();
+      }
       return;
     }
     const command = moveBlockRangeToDropCommand(
@@ -587,7 +603,12 @@ export function clearBlockSelectionForPointerClick(view: EditorView, event: Mous
   return true;
 }
 
-function blockHandleMouseDown(view: EditorView, event: MouseEvent, blockIndex: number): void {
+function blockHandleMouseDown(
+  view: EditorView,
+  event: MouseEvent,
+  blockIndex: number,
+  onClick: (() => void) | null,
+): void {
   event.preventDefault();
   event.stopPropagation();
   dispatchHover(view, blockIndex, true);
@@ -600,7 +621,7 @@ function blockHandleMouseDown(view: EditorView, event: MouseEvent, blockIndex: n
   const range = selectedBlockRange(view.state);
   const from = range?.from ?? blockIndex;
   const to = range?.to ?? blockIndex;
-  startBlockDragListeners(view, from, to, event.clientX, event.clientY);
+  startBlockDragListeners(view, from, to, event.clientX, event.clientY, onClick);
 }
 
 export function activeBlockHandleIndex(state: EditorState): number | null {
@@ -614,6 +635,10 @@ export function activeBlockHandleIndex(state: EditorState): number | null {
 function blockDecorations(state: EditorState): DecorationSet {
   const pluginState = blockHandleState(state);
   const decorations: Decoration[] = [];
+  const hint = emptyBlockHintDecoration(state);
+  if (hint !== null) {
+    decorations.push(hint);
+  }
   let pos = 0;
   for (let index = 0; index < state.doc.childCount; index += 1) {
     const node = state.doc.child(index);
@@ -689,21 +714,21 @@ export function blockHandleLayoutForBlock(
     return null;
   }
   const rootStyle = getComputedStyle(view.dom.ownerDocument.documentElement);
-  const hitWidth = parseFloat(rootStyle.getPropertyValue('--size-block-handle-hit')) || 12;
+  const gutterWidth = parseFloat(rootStyle.getPropertyValue('--size-block-gutter')) || 52;
   return {
     top: blockRect.top - layerRect.top,
-    left: blockRect.left - layerRect.left - hitWidth,
+    left: blockRect.left - layerRect.left - gutterWidth,
     height: blockRect.height,
   };
 }
 
 function applyBlockHandleLayout(
-  button: HTMLButtonElement,
+  gutter: HTMLElement,
   layout: { top: number; left: number; height: number },
 ): void {
-  button.style.setProperty('--block-handle-top', `${layout.top}px`);
-  button.style.setProperty('--block-handle-left', `${layout.left}px`);
-  button.style.setProperty('--block-handle-height', `${layout.height}px`);
+  gutter.style.setProperty('--block-handle-top', `${layout.top}px`);
+  gutter.style.setProperty('--block-handle-left', `${layout.left}px`);
+  gutter.style.setProperty('--block-handle-height', `${layout.height}px`);
 }
 
 function scrollableAncestors(element: HTMLElement): HTMLElement[] {
@@ -728,55 +753,81 @@ function scrollableAncestors(element: HTMLElement): HTMLElement[] {
   return [...seen];
 }
 
+function eventElement(target: EventTarget | null): Element | null {
+  if (!(target instanceof Node)) {
+    return null;
+  }
+  if (target.nodeType === Node.ELEMENT_NODE) {
+    return target as Element;
+  }
+  return target.parentElement;
+}
+
 function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
-  const layer = document.createElement('div');
+  const doc = view.dom.ownerDocument;
+  const layer = doc.createElement('div');
   layer.className = 'block-handle-layer';
   layer.setAttribute('data-region', 'block-handle-layer');
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'block-handle';
-  button.tabIndex = -1;
-  button.setAttribute('aria-label', 'Select block');
-  button.hidden = true;
+  const gutter = doc.createElement('div');
+  gutter.className = 'block-handle';
+  gutter.dataset.input = 'pointer';
+  gutter.hidden = true;
+  const add = createGutterButton(doc, 'add');
+  const grip = createGutterButton(doc, 'grip');
+  const tooltip = createGripTooltip(doc);
+  grip.setAttribute('aria-describedby', tooltip.id);
+  grip.append(tooltip);
+  gutter.append(add, grip);
+  const menu = createBlockMenu(doc);
   const host = blockHandleLayerHost(view);
   host.append(layer);
-  layer.append(button);
+  layer.append(gutter);
 
   let layoutFrame: number | null = null;
   let destroyed = false;
+  let menuOpen = false;
+  let focusedAction: string | null = null;
+  let tooltipTimer: number | null = null;
+
+  const clearGutterLayout = (): void => {
+    gutter.hidden = true;
+    gutter.removeAttribute('data-block-index');
+    gutter.removeAttribute('data-hover-active');
+    gutter.style.removeProperty('--block-handle-top');
+    gutter.style.removeProperty('--block-handle-left');
+    gutter.style.removeProperty('--block-handle-height');
+  };
+
   const relayout = (): void => {
-    if (destroyed || button.hidden) {
+    if (destroyed || gutter.hidden) {
       return;
     }
-    const blockIndex = Number(button.getAttribute('data-block-index'));
+    const blockIndex = Number(gutter.getAttribute('data-block-index'));
     if (!Number.isInteger(blockIndex)) {
       return;
     }
     const layout = blockHandleLayoutForBlock(view, blockIndex, layer);
     if (layout === null || layout.height <= 0) {
-      button.hidden = true;
-      button.style.removeProperty('--block-handle-top');
-      button.style.removeProperty('--block-handle-left');
-      button.style.removeProperty('--block-handle-height');
+      clearGutterLayout();
       return;
     }
-    button.hidden = false;
-    applyBlockHandleLayout(button, layout);
+    gutter.hidden = false;
+    applyBlockHandleLayout(gutter, layout);
   };
   const scheduleLayout = (): void => {
     if (destroyed) {
       return;
     }
-    const win = view.dom.ownerDocument.defaultView;
-    const useFrame = win !== null && typeof win.requestAnimationFrame === 'function';
+    const frameWindow = view.dom.ownerDocument.defaultView;
+    const useFrame = frameWindow !== null && typeof frameWindow.requestAnimationFrame === 'function';
     if (!useFrame) {
       queueMicrotask(relayout);
       return;
     }
     if (layoutFrame !== null) {
-      win.cancelAnimationFrame(layoutFrame);
+      frameWindow.cancelAnimationFrame(layoutFrame);
     }
-    layoutFrame = win.requestAnimationFrame(() => {
+    layoutFrame = frameWindow.requestAnimationFrame(() => {
       layoutFrame = null;
       relayout();
     });
@@ -795,63 +846,314 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
   }
   win?.addEventListener('resize', onScrollOrResize, { passive: true });
 
-  button.addEventListener('mouseenter', () => {
+  const hideTooltip = (): void => {
+    if (tooltipTimer !== null) {
+      win?.clearTimeout(tooltipTimer);
+      tooltipTimer = null;
+    }
+    tooltip.dataset.open = 'false';
+  };
+  const showTooltip = (immediate: boolean): void => {
+    hideTooltip();
+    const reveal = (): void => {
+      tooltipTimer = null;
+      tooltip.dataset.open = 'true';
+    };
+    if (immediate || win === null) {
+      reveal();
+      return;
+    }
+    tooltipTimer = win.setTimeout(reveal, GRIP_TOOLTIP_HOVER_MS);
+  };
+
+  const closeMenu = (restoreFocus: boolean): void => {
+    menuOpen = false;
+    menu.root.hidden = true;
+    menu.root.remove();
+    menu.search.value = '';
+    focusedAction = null;
+    menu.search.removeAttribute('aria-activedescendant');
+    if (!restoreFocus || view.isDestroyed) {
+      return;
+    }
+    const page = view.dom.closest('.page-sheet');
+    if (page instanceof HTMLElement) {
+      resetPageFocusToPointer(page);
+    }
+    view.focus();
+  };
+
+  const paintMenu = (blockIndex: number): void => {
+    const mode = menu.root.dataset.input === 'keyboard' ? 'keyboard' : 'pointer';
+    focusedAction = paintBlockMenu(
+      menu,
+      view.state,
+      blockIndex,
+      menu.search.value,
+      mode,
+      focusedAction,
+    );
+  };
+
+  const openMenu = (blockIndex: number): void => {
+    if (blockIndex < 0 || blockIndex >= view.state.doc.childCount) {
+      return;
+    }
+    menuOpen = true;
+    focusedAction = null;
+    menu.search.value = '';
+    menu.root.dataset.input = 'pointer';
+    paintBlockMenu(menu, view.state, blockIndex, '', 'pointer', null);
+    if (!menu.root.isConnected) {
+      layer.append(menu.root);
+    }
+    menu.root.hidden = false;
+    const gripRect = grip.getBoundingClientRect();
+    const menuRect = menu.root.getBoundingClientRect();
+    const gap = 8;
+    const width = menuRect.width > 0 ? menuRect.width : 280;
+    const height = menuRect.height > 0 ? menuRect.height : 240;
+    const viewWidth = win?.innerWidth ?? gripRect.right + width;
+    const viewHeight = win?.innerHeight ?? gripRect.bottom + height;
+    let left = gripRect.right + gap;
+    let top = gripRect.top;
+    if (left + width > viewWidth) {
+      left = Math.max(gap, gripRect.left - width - gap);
+    }
+    if (top + height > viewHeight) {
+      top = Math.max(gap, viewHeight - height - gap);
+    }
+    menu.root.style.setProperty('--block-menu-left', `${left}px`);
+    menu.root.style.setProperty('--block-menu-top', `${top}px`);
+    dispatchHover(view, blockIndex, true);
+    menu.search.focus();
+  };
+
+  const runAction = (actionId: string): void => {
+    const blockIndex = Number(menu.root.dataset.blockIndex);
+    if (!Number.isInteger(blockIndex)) {
+      closeMenu(true);
+      return;
+    }
+    const select = selectBlockByIndex(view.state, blockIndex, false);
+    if (select !== null) {
+      view.dispatch(select);
+    }
+    applyBlockMenuAction(view.state, blockIndex, actionId, (tr) => {
+      view.dispatch(tr);
+    });
+    closeMenu(true);
+  };
+
+  gutter.addEventListener('mouseenter', () => {
     const index = activeBlockHandleIndex(view.state);
     if (index !== null) {
       dispatchHover(view, index, true);
     }
   });
-  button.addEventListener('mouseleave', (event) => {
+  gutter.addEventListener('mouseleave', (event) => {
+    if (menuOpen) {
+      return;
+    }
     const index = activeBlockHandleIndex(view.state);
     const blockEl = index === null ? null : blockContentElement(view, index);
-    if (event.relatedTarget instanceof Node && blockEl !== null) {
-      if (blockEl === event.relatedTarget || blockEl.contains(event.relatedTarget)) {
+    const related = event.relatedTarget;
+    if (related instanceof Node && blockEl !== null) {
+      if (blockEl === related || blockEl.contains(related)) {
         return;
       }
+    }
+    if (related instanceof Node && (gutter.contains(related) || menu.root.contains(related))) {
+      return;
     }
     if (blockHandleState(view.state).drag === null) {
       dispatchHover(view, null, false);
     }
   });
-  button.addEventListener('mousedown', (event) => {
-    const blockIndex = Number(button.getAttribute('data-block-index'));
+  add.addEventListener('mousedown', (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    gutter.dataset.input = 'pointer';
+    const blockIndex = Number(gutter.getAttribute('data-block-index'));
     if (!Number.isInteger(blockIndex)) {
       return;
     }
-    blockHandleMouseDown(view, event, blockIndex);
+    closeMenu(false);
+    const tr = insertEmptyBlockWithSlash(view.state, blockIndex, 'below');
+    if (tr === null) {
+      return;
+    }
+    view.dispatch(tr);
+    view.focus();
   });
+  gutter.addEventListener('mousedown', (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    const target = eventElement(event.target);
+    if (target === null) {
+      return;
+    }
+    if (target.closest('.block-gutter-add') !== null) {
+      return;
+    }
+    gutter.dataset.input = 'pointer';
+    const blockIndex = Number(gutter.getAttribute('data-block-index'));
+    if (!Number.isInteger(blockIndex)) {
+      return;
+    }
+    const openOnClick = !event.shiftKey && target.closest('.block-gutter-grip') !== null;
+    blockHandleMouseDown(
+      view,
+      event,
+      blockIndex,
+      openOnClick ? () => openMenu(blockIndex) : null,
+    );
+  });
+  for (const control of [add, grip]) {
+    control.addEventListener('focus', () => {
+      gutter.dataset.input = 'keyboard';
+    });
+    control.addEventListener('pointerdown', () => {
+      gutter.dataset.input = 'pointer';
+    });
+  }
+  grip.addEventListener('mouseenter', () => {
+    showTooltip(false);
+  });
+  grip.addEventListener('mouseleave', hideTooltip);
+  grip.addEventListener('focus', () => {
+    showTooltip(true);
+  });
+  grip.addEventListener('blur', hideTooltip);
+
+  menu.search.addEventListener('input', () => {
+    const blockIndex = Number(menu.root.dataset.blockIndex);
+    if (!Number.isInteger(blockIndex) || blockIndex < 0 || blockIndex >= view.state.doc.childCount) {
+      return;
+    }
+    focusedAction = null;
+    paintMenu(blockIndex);
+  });
+  menu.search.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      menu.root.dataset.input = 'keyboard';
+      const ids = blockMenuOptionIds(menu.list);
+      if (ids.length === 0) {
+        return;
+      }
+      const current = focusedAction === null ? -1 : ids.indexOf(focusedAction);
+      const delta = event.key === 'ArrowDown' ? 1 : -1;
+      const next = current === -1
+        ? (delta > 0 ? 0 : ids.length - 1)
+        : (current + delta + ids.length) % ids.length;
+      focusedAction = ids[next] ?? null;
+      const blockIndex = Number(menu.root.dataset.blockIndex);
+      if (Number.isInteger(blockIndex)) {
+        paintMenu(blockIndex);
+      }
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const ids = blockMenuOptionIds(menu.list);
+      const chosen = focusedAction !== null && ids.includes(focusedAction) ? focusedAction : ids[0];
+      if (chosen !== undefined) {
+        runAction(chosen);
+      }
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenu(true);
+    }
+  });
+  menu.list.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+  });
+  menu.list.addEventListener('click', (event) => {
+    const target = eventElement(event.target);
+    if (target === null) {
+      return;
+    }
+    const row = target.closest('.block-menu-action');
+    if (!(row instanceof HTMLElement)) {
+      return;
+    }
+    if (row.getAttribute('aria-disabled') === 'true') {
+      return;
+    }
+    const actionId = row.dataset.action;
+    if (actionId === undefined) {
+      return;
+    }
+    runAction(actionId);
+  });
+  menu.list.addEventListener('mousemove', (event) => {
+    const target = eventElement(event.target);
+    if (target === null || target.closest('.block-menu-action') === null) {
+      return;
+    }
+    if (menu.root.dataset.input === 'pointer' && focusedAction === null) {
+      return;
+    }
+    menu.root.dataset.input = 'pointer';
+    focusedAction = null;
+    const blockIndex = Number(menu.root.dataset.blockIndex);
+    if (Number.isInteger(blockIndex) && blockIndex >= 0 && blockIndex < view.state.doc.childCount) {
+      paintMenu(blockIndex);
+    }
+  });
+  const onDocumentMouseDown = (event: MouseEvent): void => {
+    if (!menuOpen) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Node && (menu.root.contains(target) || gutter.contains(target))) {
+      return;
+    }
+    closeMenu(false);
+  };
+  doc.addEventListener('mousedown', onDocumentMouseDown);
 
   const sync = (editorView: EditorView): void => {
     const pluginState = blockHandleState(editorView.state);
     const dragActive = pluginState.drag !== null || editorView.dom.hasAttribute('data-block-drag');
     if (dragActive) {
+      if (menuOpen) {
+        closeMenu(false);
+      }
       layer.hidden = true;
       layer.setAttribute('data-block-drag', 'true');
-      button.hidden = true;
-      button.removeAttribute('data-block-index');
-      button.removeAttribute('data-hover-active');
-      button.style.removeProperty('--block-handle-top');
-      button.style.removeProperty('--block-handle-left');
-      button.style.removeProperty('--block-handle-height');
+      clearGutterLayout();
       return;
     }
     layer.hidden = false;
     layer.removeAttribute('data-block-drag');
     const index = activeBlockHandleIndex(editorView.state);
     if (index === null || index < 0 || index >= editorView.state.doc.childCount) {
-      button.hidden = true;
-      button.removeAttribute('data-block-index');
-      button.removeAttribute('data-hover-active');
-      button.style.removeProperty('--block-handle-top');
-      button.style.removeProperty('--block-handle-left');
-      button.style.removeProperty('--block-handle-height');
+      if (menuOpen) {
+        closeMenu(false);
+      }
+      clearGutterLayout();
       return;
     }
     const node = editorView.state.doc.child(index);
-    button.hidden = false;
-    button.setAttribute('data-block-index', String(index));
-    button.setAttribute('data-hover-active', 'true');
-    applyHandleBlockAttrs(button, node);
+    gutter.hidden = false;
+    gutter.setAttribute('data-block-index', String(index));
+    gutter.setAttribute('data-hover-active', 'true');
+    applyHandleBlockAttrs(gutter, node);
+    if (menuOpen) {
+      const menuIndex = Number(menu.root.dataset.blockIndex);
+      if (menuIndex === index) {
+        paintMenu(index);
+      }
+    }
     scheduleLayout();
   };
 
@@ -859,6 +1161,8 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     sync,
     destroy(): void {
       destroyed = true;
+      hideTooltip();
+      doc.removeEventListener('mousedown', onDocumentMouseDown);
       if (layoutFrame !== null) {
         win?.cancelAnimationFrame(layoutFrame);
       }

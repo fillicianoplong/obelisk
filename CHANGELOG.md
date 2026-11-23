@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.0] - 2026-11-23
+
+### Added
+
+- Hovering a block shows a + button and a grip in the left margin, and the text does not move. The + button adds a paragraph below with the slash menu open. Dragging the grip moves the block and shows a line where it will drop. Clicking the grip opens the block menu with a search box and the block type at the top.
+- An empty paragraph shows the hint Press / to insert blocks.
+- The gutter buttons show the hover accent for the mouse and the focus ring for the keyboard, never both, in Light and Dark.
+
 ## [0.1.40.0] - 2026-11-23
 
 ### Added

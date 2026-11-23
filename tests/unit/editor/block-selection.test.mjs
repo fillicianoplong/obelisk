@@ -511,18 +511,23 @@ test('the hover bar lines up with the hovered block top and height', async () =>
   }
 });
 
-test('the hover bar handle uses token sizing and spans the block height in CSS', async () => {
+test('the block gutter uses token sizing and names its add and grip controls', async () => {
   const layoutCss = await readFile(path.join(root, 'src/renderer/editor/block-handle-layout.css'), 'utf8');
   const tokensCss = await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8');
-  assert.match(layoutCss, /\.block-handle::before\s*\{[^}]*height:\s*100%/);
-  assert.match(layoutCss, /width:\s*var\(--size-block-handle-bar\)/);
-  assert.match(tokensCss, /--size-block-handle-hit:\s*12px/);
+  const editorCss = await readFile(path.join(root, 'src/renderer/editor/editor.css'), 'utf8');
+  assert.match(editorCss, /width:\s*var\(--size-block-gutter\)/);
+  assert.match(tokensCss, /--size-block-gutter:\s*52px/);
+  assert.match(layoutCss, /\.block-gutter-grip/);
+  assert.doesNotMatch(layoutCss, /\.block-handle::before/);
   const { view, restore } = await editorViewFromBlocks([paragraph('Line')]);
   try {
     const handle = handleElement(view, 0);
     assert.equal(handle.getAttribute('data-block-kind'), 'paragraph');
-    assert.equal(handle.getAttribute('aria-label'), 'Select block');
     assert.equal(handle.hidden, false);
+    const add = handle.querySelector('.block-gutter-add');
+    const grip = handle.querySelector('.block-gutter-grip');
+    assert.equal(add?.getAttribute('aria-label'), 'Add block below');
+    assert.equal(grip?.getAttribute('aria-label'), 'Block menu');
   } finally {
     view.destroy();
     restore();

@@ -74,10 +74,13 @@
   --size-block-handle-column: 24px;
   --size-block-handle-hit: 12px;
   --size-block-handle-bar: 3px;
+  /* Two small controls plus the gap between them. Sits in the page margin. */
+  --size-block-gutter: 52px;
   --size-block-hover-inset-spread: 9999px;
   --size-block-drop-indicator: 2px;
   --z-index-block-handle-layer: 2;
   --z-index-find: 3;
+  --z-index-block-menu: 4;
   --size-slash-menu-max-width: 280px;
   --size-slash-menu-max-height: 360px;
 
