@@ -208,6 +208,9 @@ test('the generator writes one fixture for every H-01 to H-32 sample', async () 
         assert.match(pendingText(item.pending), /^pending #\d+ /, item.key);
       } else {
         assert.ok(item.check, item.key);
+        if (item.check === 'app') {
+          assert.equal(item.outcome, 'safe', item.key);
+        }
         if (item.outcome === 'refused') {
           assert.equal(typeof item.expectReason, 'string', item.key);
           assert.equal(typeof item.expectPath, 'string', item.key);
@@ -277,7 +280,8 @@ test('the generator writes one fixture for every H-01 to H-32 sample', async () 
 for (const item of cases) {
   if (item.pending.length > 0) {
     test(`${item.id} ${item.title} — ${pendingText(item.pending)}`, { todo: true });
-  } else {
+  } else if (item.check !== 'app') {
+    // An app check is the Electron launch, not a Node decode.
     const options = item.check === 'archive' || item.check === 'decode' ? { timeout: 120_000 } : {};
     test(`${item.id} ${item.title} is ${item.outcome} and the file is unchanged`, options, async () => {
       await assertAttempt(item);
