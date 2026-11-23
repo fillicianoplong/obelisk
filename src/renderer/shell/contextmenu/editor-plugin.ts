@@ -70,13 +70,18 @@ function restoreEditorAfterContextMenu(view: EditorView, detail: ContextMenuRest
   });
 }
 
-/** A block menu keeps its block's add and grip controls showing until it closes. */
+/**
+ * A right-click menu keeps its block's add and grip controls showing until it closes.
+ * The menu opens under the pointer, so without the lock the editor's mouseleave
+ * would hide them. Only the block menu gives the grip its pressed look.
+ */
 function lockGutterForBlockMenu(
   view: EditorView,
-  target: { kind: string; blockIndex: number | null },
+  target: { kind: string; blockIndex: number | null; keyboard: boolean },
 ): void {
-  if (target.kind === 'block' && target.blockIndex !== null) {
-    lockBlockMenuGutter(view, target.blockIndex, 'context');
+  // Shift+F10 on text has no pointer on the block, so only its block menu shows the controls.
+  if (target.blockIndex !== null && (target.kind === 'block' || !target.keyboard)) {
+    lockBlockMenuGutter(view, target.blockIndex, 'context', target.kind === 'block' ? 'grip' : null);
   }
 }
 

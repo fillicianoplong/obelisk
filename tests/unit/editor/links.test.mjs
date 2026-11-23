@@ -171,6 +171,7 @@ test('Insert Link and Open link follow the selection', async () => {
   assert.equal(resolveMenuKind(plain, 'paragraph', null, true), 'text');
 });
 
+const bubbleUrl = new URL('../../../src/renderer/editor/link/link-bubble-plugin.ts', import.meta.url);
 const clickUrl = new URL('../../../src/renderer/editor/link/open-on-click.ts', import.meta.url);
 
 function linkTarget(address = 'https://example.com/docs') {
@@ -187,11 +188,42 @@ function click(target, extra = {}) {
   return { target, button: 0, detail: 1, shiftKey: false, altKey: false, ...extra };
 }
 
-test('a plain click on a link offers to open it, and Ctrl+click does the same', async () => {
-  const { linkClickAddress } = await loadRenderer(clickUrl);
+test('a plain click on a link shows the bubble, and Ctrl+click goes straight to Open link', async () => {
+  const { linkClickAction } = await loadRenderer(clickUrl);
   const { text } = linkTarget();
-  assert.equal(linkClickAddress(click(text), true), 'https://example.com/docs');
-  assert.equal(linkClickAddress(click(text, { ctrlKey: true }), true), 'https://example.com/docs');
+  assert.deepEqual(linkClickAction(click(text), true), { kind: 'bubble', address: 'https://example.com/docs' });
+  assert.deepEqual(linkClickAction(click(text, { ctrlKey: true }), true), { kind: 'open', address: 'https://example.com/docs' });
+  assert.deepEqual(
+    linkClickAction(click(text, { ctrlKey: true }), false),
+    { kind: 'open', address: 'https://example.com/docs' },
+    'Ctrl+click opens even when the click selected the block',
+  );
+  assert.deepEqual(linkClickAction(click(text, { metaKey: true }), true), { kind: 'open', address: 'https://example.com/docs' });
+});
+
+test('a drag, a double click, Shift or Alt on a link shows no bubble and opens nothing', async () => {
+  const { linkClickAction } = await loadRenderer(clickUrl);
+  const { text } = linkTarget();
+  assert.equal(linkClickAction(click(text), false), null, 'a drag leaves a selection');
+  assert.equal(linkClickAction(click(text, { detail: 2 }), true), null);
+  assert.equal(linkClickAction(click(text, { shiftKey: true }), true), null);
+  assert.equal(linkClickAction(click(text, { altKey: true }), true), null);
+  assert.equal(linkClickAction(click(text, { ctrlKey: true, detail: 2 }), true), null);
+  assert.equal(linkClickAction(click(linkTarget('javascript:alert(1)').text), true), null);
+});
+
+test('the link bubble shortens long addresses in the middle', async () => {
+  const { shortLinkAddress } = await loadRenderer(bubbleUrl);
+  assert.equal(shortLinkAddress('https://example.com/docs'), 'example.com/docs');
+  assert.equal(
+    shortLinkAddress('https://docs.blender.org/manual/en/latest/getting_started/installing/windows.html'),
+    'docs.blender.org/…/windows.html',
+  );
+  assert.equal(shortLinkAddress('mailto:someone@example.com'), 'someone@example.com');
+  const long = shortLinkAddress(`https://example.com/${'a'.repeat(80)}`);
+  assert.ok(long.length <= 32);
+  assert.match(long, /…/);
+  assert.equal(shortLinkAddress('http://example.com/a'), 'http://example.com/a', 'http:// stays so it is not mistaken for https');
 });
 
 test('a drag, a double click, Shift, Alt, or another button on a link does not open it', async () => {

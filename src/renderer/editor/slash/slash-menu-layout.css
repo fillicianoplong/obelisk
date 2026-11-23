@@ -7,9 +7,8 @@
   z-index: 3;
 }
 
-.slash-menu-host[data-open='true'] {
-  pointer-events: auto;
-}
+/* The host covers the window but never takes the pointer, even while open.
+   Only the panel does, so a press anywhere else reaches the page and closes the menu. */
 
 .slash-menu-panel {
   background: var(--color-surface-raised);

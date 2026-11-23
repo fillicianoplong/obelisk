@@ -16,34 +16,53 @@ function selectableRows(): SlashMenuRow[] {
   return SLASH_MENU_ENTRIES.filter((entry): entry is SlashMenuRow => entry.type === 'item');
 }
 
-export function slashTypedQuery(state: EditorState, slashPos: number): string {
-  return slashTypedQueryFromSelection(state.doc, state.selection, slashPos);
+/**
+ * Where the filter text starts. A typed slash menu filters on the text after the '/'.
+ * The slash menu opened from + has no '/', so it filters from its anchor.
+ */
+export function slashQueryStart(slashPos: number, typed = true): number {
+  return typed ? slashPos + 1 : slashPos;
+}
+
+export function slashTypedQuery(state: EditorState, slashPos: number, typed = true): string {
+  return slashTypedQueryFromSelection(state.doc, state.selection, slashPos, typed);
 }
 
 export function slashTypedQueryFromSelection(
   doc: ProseNode,
   selection: EditorState['selection'],
   slashPos: number,
+  typed = true,
 ): string {
   const { head } = selection;
-  if (!(selection instanceof TextSelection) || !selection.empty || head <= slashPos + 1) {
+  const start = slashQueryStart(slashPos, typed);
+  if (!(selection instanceof TextSelection) || !selection.empty || head <= start) {
     return '';
   }
-  return doc.textBetween(slashPos + 1, head, '\0', '\0');
+  return doc.textBetween(start, head, '\0', '\0');
 }
 
 export function slashMenuContextActive(
   doc: ProseNode,
   selection: EditorState['selection'],
   slashPos: number,
+  typed = true,
 ): boolean {
-  if (!(selection instanceof TextSelection) || !selection.empty || selection.head <= slashPos) {
+  if (!(selection instanceof TextSelection) || !selection.empty) {
     return false;
   }
-  if (doc.textBetween(slashPos, slashPos + 1, '\0', '\0') !== '/') {
-    return false;
+  if (typed) {
+    if (selection.head <= slashPos || doc.textBetween(slashPos, slashPos + 1, '\0', '\0') !== '/') {
+      return false;
+    }
+  } else {
+    // The menu from + stays open while the caret stays in its block at or after the anchor.
+    if (slashPos > doc.content.size || selection.head < slashPos
+      || !doc.resolve(slashPos).sameParent(selection.$head)) {
+      return false;
+    }
   }
-  const query = doc.textBetween(slashPos + 1, selection.head, '\0', '\0');
+  const query = doc.textBetween(slashQueryStart(slashPos, typed), selection.head, '\0', '\0');
   return /^[\w-]*$/i.test(query);
 }
 
@@ -101,8 +120,12 @@ function slashItemById(itemId: string): SlashMenuItem | null {
   return row?.item ?? null;
 }
 
-export function exactSlashCommandItem(state: EditorState, slashPos: number): SlashMenuItem | null {
-  const query = slashTypedQuery(state, slashPos).trim().toLowerCase();
+export function exactSlashCommandItem(
+  state: EditorState,
+  slashPos: number,
+  typed = true,
+): SlashMenuItem | null {
+  const query = slashTypedQuery(state, slashPos, typed).trim().toLowerCase();
   if (query.length === 0) {
     return null;
   }
@@ -157,7 +180,7 @@ export function applySlashMenuItem(state: EditorState, slashPos: number, item: S
     if (item.command === undefined) {
       return null;
     }
-    // A command item, such as Link, removes the typed /text and leaves the caret there.
+    // A command item, such as Link, removes the typed /text (or filter text) and leaves the caret there.
     return state.tr.delete(slashPos, Math.max(slashPos, state.selection.head));
   }
   const head = state.selection.head;

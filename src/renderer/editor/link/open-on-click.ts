@@ -29,6 +29,29 @@ export function eventTargetsLink(event: { target: EventTarget | null }): boolean
   return element?.closest('a.editor-link, [data-link], a[data-href]') != null;
 }
 
+export interface LinkClickAction {
+  /** 'open' goes straight to the Open link prompt. 'bubble' shows the link bubble. */
+  kind: 'open' | 'bubble';
+  address: string;
+}
+
+/**
+ * What a click on a link does. A plain click shows the link bubble.
+ * Ctrl+click (Cmd+click on a Mac) goes straight to the Open link prompt, even when
+ * the click selected the block. Drags, double clicks, Shift, Alt and other buttons do nothing.
+ */
+export function linkClickAction(
+  event: LinkClick & { ctrlKey?: boolean; metaKey?: boolean },
+  selectionEmpty: boolean,
+): LinkClickAction | null {
+  const modified = event.ctrlKey === true || event.metaKey === true;
+  const address = linkClickAddress(event, modified || selectionEmpty);
+  if (address === null) {
+    return null;
+  }
+  return { kind: modified ? 'open' : 'bubble', address };
+}
+
 /**
  * The address a plain click on a link should offer to open, or null.
  * Only a single left click with a collapsed caret counts, with or without Ctrl.

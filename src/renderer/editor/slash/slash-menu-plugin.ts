@@ -1,13 +1,15 @@
 import { NodeSelection, Plugin, PluginKey, TextSelection } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import { blockHandleState } from '../block-handle-plugin.js';
+import { blockHandleState, lockBlockMenuGutter } from '../block-handle-plugin.js';
+import { watchOutsidePress } from '../../shell/outside-press.js';
 import {
   applySlashMenuItem,
   exactSlashCommandItem,
   filteredSlashMenuRows,
   firstFilteredIndex,
   slashMenuContextActive,
+  slashQueryStart,
   slashTypedQuery,
   slashTypedQueryFromSelection,
 } from './slash-commands.js';
@@ -27,8 +29,13 @@ function runSlashItemCommand(item: SlashMenuItem, view: EditorView | undefined):
 
 export interface SlashMenuState {
   open: boolean;
-  /** Document position of the typed slash. */
+  /**
+   * Document position of the typed slash. For the menu opened from + (typed false)
+   * there is no slash: this is the empty block's caret position where filter text starts.
+   */
   slashPos: number;
+  /** False when the menu was opened by the + button without typing a '/'. */
+  typed: boolean;
   /** Flat index among selectable items in SLASH_MENU_ENTRIES. */
   activeIndex: number;
 }
@@ -37,7 +44,7 @@ const POSITION_RULE_SELECTOR = '.slash-menu-host .slash-menu-panel';
 
 export const slashMenuPluginKey = new PluginKey<SlashMenuState>('slashMenu');
 
-const CLOSED: SlashMenuState = { open: false, slashPos: 0, activeIndex: 0 };
+const CLOSED: SlashMenuState = { open: false, slashPos: 0, typed: true, activeIndex: 0 };
 
 export function slashMenuState(state: EditorState): SlashMenuState {
   return slashMenuPluginKey.getState(state) ?? CLOSED;
@@ -89,8 +96,22 @@ function openSlashMenuAt(tr: Transaction, slashPos: number): Transaction {
   return tr.setMeta(slashMenuPluginKey, {
     open: true,
     slashPos,
+    typed: true,
     activeIndex: firstFilteredIndex(''),
-  });
+  } satisfies SlashMenuState);
+}
+
+/**
+ * Opens the slash menu at an empty block's caret without typing a '/'.
+ * The + button uses this. The filter starts empty and Esc leaves the block empty.
+ */
+export function openSlashMenuWithoutSlash(tr: Transaction, caretPos: number): Transaction {
+  return tr.setMeta(slashMenuPluginKey, {
+    open: true,
+    slashPos: caretPos,
+    typed: false,
+    activeIndex: firstFilteredIndex(''),
+  } satisfies SlashMenuState);
 }
 
 function closeSlashMenu(tr: Transaction): Transaction {
@@ -110,7 +131,7 @@ export function closeSlashMenuCommand(): Command {
 }
 
 function filteredActiveIndex(state: EditorState, menu: SlashMenuState): number {
-  const query = slashTypedQuery(state, menu.slashPos);
+  const query = slashTypedQuery(state, menu.slashPos, menu.typed);
   const visible = filteredSlashMenuRows(query);
   const current = rowByFlatIndex(menu.activeIndex);
   if (current !== undefined && visible.some((row) => row.item.id === current.item.id)) {
@@ -125,7 +146,7 @@ function moveSlashMenu(delta: number): Command {
     if (!menu.open) {
       return false;
     }
-    const query = slashTypedQuery(state, menu.slashPos);
+    const query = slashTypedQuery(state, menu.slashPos, menu.typed);
     const visible = filteredSlashMenuRows(query);
     if (visible.length === 0) {
       return false;
@@ -180,8 +201,9 @@ function confirmSlashMenuItem(): Command {
   };
 }
 
-function applyExactSlashCommand(state: EditorState, slashPos: number): Transaction | null {
-  const item = exactSlashCommandItem(state, slashPos);
+function applyExactSlashCommand(state: EditorState, menu: SlashMenuState): Transaction | null {
+  const { slashPos } = menu;
+  const item = exactSlashCommandItem(state, slashPos, menu.typed);
   if (item === null || item.block === null) {
     // Command items like Link run from the menu or /link plus Space or Enter.
     return null;
@@ -236,12 +258,22 @@ function backspaceOnSlashTrigger(): Command {
     if (!menu.open) {
       return false;
     }
-    const query = slashTypedQuery(state, menu.slashPos);
+    const query = slashTypedQuery(state, menu.slashPos, menu.typed);
     if (query.length > 0) {
       return false;
     }
     if (!(state.selection instanceof TextSelection) || !state.selection.empty) {
       return false;
+    }
+    if (!menu.typed) {
+      // No slash to delete: Backspace on the empty filter just closes the menu from +.
+      if (state.selection.head !== menu.slashPos) {
+        return false;
+      }
+      if (dispatch !== undefined) {
+        dispatch(closeSlashMenu(state.tr));
+      }
+      return true;
     }
     if (state.selection.head !== menu.slashPos + 1) {
       return false;
@@ -407,7 +439,7 @@ function positionSlashMenu(
   }
   let coords;
   try {
-    coords = view.coordsAtPos(menu.slashPos + 1);
+    coords = view.coordsAtPos(slashQueryStart(menu.slashPos, menu.typed));
   } catch {
     return;
   }
@@ -419,26 +451,19 @@ function positionSlashMenu(
   syncPositionRule(sheet, placed.left, placed.top);
 }
 
-function outsideSlashMenu(target: EventTarget | null, root: HTMLElement, editor: HTMLElement): boolean {
-  if (!(target instanceof Node)) {
-    return true;
-  }
-  if (root.contains(target) || editor.contains(target)) {
-    return false;
-  }
-  return true;
-}
-
 function syncSlashMenuStateOnEdit(tr: Transaction, value: SlashMenuState): SlashMenuState {
   if (!value.open) {
     return value;
   }
-  if (!slashMenuContextActive(tr.doc, tr.selection, value.slashPos)) {
+  // Text inserted before the anchor (another block, or the menu from + after an edit) moves it.
+  const slashPos = tr.mapping.map(value.slashPos, value.typed ? 1 : -1);
+  if (!slashMenuContextActive(tr.doc, tr.selection, slashPos, value.typed)) {
     return CLOSED;
   }
-  const query = slashTypedQueryFromSelection(tr.doc, tr.selection, value.slashPos);
+  const query = slashTypedQueryFromSelection(tr.doc, tr.selection, slashPos, value.typed);
   return {
     ...value,
+    slashPos,
     activeIndex: firstFilteredIndex(query),
   };
 }
@@ -469,7 +494,7 @@ export function slashMenuPlugin(): Plugin {
         const menu = slashMenuState(view.state);
         if (menu.open) {
           if (text === ' ') {
-            const applied = applyExactSlashCommand(view.state, menu.slashPos);
+            const applied = applyExactSlashCommand(view.state, menu);
             if (applied !== null) {
               view.dispatch(closeSlashMenu(applied));
               view.focus();
@@ -576,16 +601,21 @@ export function slashMenuPlugin(): Plugin {
         editorView.dispatch(editorView.state.tr.setMeta(slashMenuPluginKey, { ...menu, activeIndex: flatIndex }));
       });
 
-      const onDocumentMouseDown = (event: MouseEvent) => {
-        if (!slashMenuState(editorView.state).open) {
-          return;
-        }
-        if (outsideSlashMenu(event.target, root, editorView.dom)) {
-          editorView.dispatch(closeSlashMenu(editorView.state.tr));
-          editorView.focus();
-        }
-      };
-      doc.addEventListener('mousedown', onDocumentMouseDown, true);
+      // Same rule as the grip menu and the context menu: a press or right-click
+      // anywhere outside the panel closes it, and so does the window losing focus.
+      // Capture on the window so a handler that stops the event, or a pointerdown
+      // whose default is prevented (which skips mousedown), cannot keep it open.
+      // A press in the text then places the caret as usual.
+      const stopOutsidePress = watchOutsidePress(win, {
+        isOpen: () => slashMenuState(editorView.state).open,
+        // The panel, not the full-window host, is the menu.
+        isInside: (target) => target !== null && panel.contains(target),
+        onOutside() {
+          if (!editorView.isDestroyed && slashMenuState(editorView.state).open) {
+            editorView.dispatch(closeSlashMenu(editorView.state.tr));
+          }
+        },
+      });
 
       const onKey = (event: KeyboardEvent) => {
         if (event.key === 'Escape' && slashMenuState(editorView.state).open) {
@@ -607,6 +637,15 @@ export function slashMenuPlugin(): Plugin {
         update(view, prevState) {
           const was = slashMenuState(prevState);
           const now = slashMenuState(view.state);
+          if (was.open && !now.open && !was.typed) {
+            // The + controls stay on their block only while the menu they opened is open.
+            // Release after this update so the gutter's own dispatch is not nested in it.
+            queueMicrotask(() => {
+              if (!view.isDestroyed && !slashMenuState(view.state).open) {
+                lockBlockMenuGutter(view, null, 'slash');
+              }
+            });
+          }
           if (
             was.open !== now.open
             || was.activeIndex !== now.activeIndex
@@ -619,7 +658,7 @@ export function slashMenuPlugin(): Plugin {
           }
         },
         destroy() {
-          doc.removeEventListener('mousedown', onDocumentMouseDown, true);
+          stopOutsidePress();
           doc.removeEventListener('keydown', onKey, true);
           root.remove();
           installed?.release();

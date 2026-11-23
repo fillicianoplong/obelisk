@@ -11,8 +11,7 @@ import {
 } from './block-handle-plugin.js';
 import { editorMenuCommand } from './menu-commands.js';
 import type { TextBlockKind } from './schema/index.js';
-import { firstFilteredIndex } from './slash/slash-commands.js';
-import { slashMenuPluginKey } from './slash/slash-menu-plugin.js';
+import { openSlashMenuWithoutSlash, slashMenuPluginKey } from './slash/slash-menu-plugin.js';
 
 export const ADD_BLOCK_LABEL = 'Add block below';
 export const GRIP_LABEL = 'Block menu';
@@ -118,7 +117,17 @@ export function blockMenuActionEnabled(
   return BLOCK_MENU_ACTIONS.some((action) => action.id === actionId);
 }
 
-export function insertEmptyBlockWithSlash(
+/** True while the slash menu opened by + (no typed '/') is open. */
+export function slashMenuOpenWithoutSlash(state: EditorState): boolean {
+  const menu = slashMenuPluginKey.getState(state);
+  return menu?.open === true && !menu.typed;
+}
+
+/**
+ * Inserts an empty paragraph and opens the slash menu on it without typing a '/'.
+ * The filter starts empty, and Esc or an outside click leaves the paragraph empty.
+ */
+export function insertEmptyBlockWithSlashMenu(
   state: EditorState,
   blockIndex: number,
   place: 'above' | 'below',
@@ -134,13 +143,7 @@ export function insertEmptyBlockWithSlash(
   let tr = state.tr.insert(pos, node);
   const caret = caretInsideBlock(tr.doc, insertIndex, 0);
   tr = tr.setSelection(caret);
-  const slashPos = caret.from;
-  tr = tr.insertText('/', slashPos);
-  tr = tr.setMeta(slashMenuPluginKey, {
-    open: true,
-    slashPos,
-    activeIndex: firstFilteredIndex(''),
-  });
+  tr = openSlashMenuWithoutSlash(tr, caret.from);
   tr = tr.setMeta(blockHandlePluginKey, emptyBlockHandleState());
   return tr;
 }
@@ -191,7 +194,7 @@ export function applyBlockMenuAction(
     return true;
   }
   if (actionId === 'block-insert-above' || actionId === 'block-insert-below') {
-    const tr = insertEmptyBlockWithSlash(
+    const tr = insertEmptyBlockWithSlashMenu(
       state,
       blockIndex,
       actionId === 'block-insert-below' ? 'below' : 'above',
@@ -218,6 +221,10 @@ function caretInEmptyHintBlock(state: EditorState): number | null {
   }
   const from = selection.$from;
   if (!from.parent.isTextblock || from.parent.content.size > 0) {
+    return null;
+  }
+  // The slash menu opened from + sits on this block, so the "Press /" hint would only repeat it.
+  if (slashMenuPluginKey.getState(state)?.open === true) {
     return null;
   }
   for (let depth = from.depth; depth > 0; depth -= 1) {

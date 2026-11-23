@@ -2,6 +2,19 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.2] - 2026-11-23
+
+### Changed
+
+- Clicking a link shows a small bubble under it with the address and Open, Edit and Remove, like Google Docs, instead of asking to open it right away. Clicking the address or Open asks before opening, with the full address and Cancel as the default. Edit opens the Link dialog for that link, and Remove keeps the text without the link. Ctrl+click still goes straight to the Open link question.
+- Alt+Enter with the caret on a link opens the bubble with focus on Open. Tab, Shift+Tab and the arrow keys move between the address, Open, Edit and Remove, and Esc closes it and puts the caret back in the text. Pointing at the address or giving it focus shows the full address.
+
+### Fixed
+
+- A click outside the slash menu closes it, on the text, the page margin, the menu bar, or the status bar.
+- The + button opens the slash menu without typing a / into the new block. Typing filters the menu, and Esc or Backspace with nothing typed closes it.
+- The + button and grip stay on their block while the slash menu opened from + or a right-click menu on the block's text is open.
+
 ## [0.1.41.1] - 2026-11-23
 
 ### Added

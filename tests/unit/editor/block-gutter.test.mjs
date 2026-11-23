@@ -8,6 +8,8 @@ import { EditorView } from 'prosemirror-view';
 import { parseHTML } from 'linkedom';
 import { loadRenderer } from './load-renderer.mjs';
 import {
+  dispatchEditorKeyDown,
+  dispatchEditorTextInput,
   prepareEditorDom,
   syntheticMouseDown,
   syntheticMouseMove,
@@ -171,15 +173,72 @@ test('the add button inserts an empty block below and opens the slash menu', asy
     add.dispatchEvent(syntheticMouseDown());
     assert.equal(view.state.doc.childCount, 3);
     assert.equal(blockText(view, 0), 'Keep');
-    assert.equal(blockText(view, 1), '/');
+    assert.equal(blockText(view, 1), '', 'no / is typed into the new block');
     assert.equal(blockText(view, 2), 'After');
     assert.ok(view.state.selection instanceof TextSelection);
     assert.equal(view.state.selection.$from.index(0), 1);
     assert.equal(slashMenuState(view.state).open, true);
+    assert.equal(slashMenuState(view.state).typed, false);
     assert.equal(view.dom.querySelector('.block-empty-hint'), null);
   } finally {
     view.destroy();
     restore();
+  }
+});
+
+test('the slash menu from + filters from an empty start and leaves no / behind', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([
+    paragraph('Keep'),
+    paragraph('After', id(4)),
+  ]);
+  const options = () => [...view.dom.parentElement.querySelectorAll('.slash-menu-option')]
+    .map((node) => node.textContent);
+  try {
+    const add = gutterElement(view, 0).querySelector('.block-gutter-add');
+    add.dispatchEvent(syntheticMouseDown());
+    const all = options().length;
+    assert.ok(all > 1, 'the full list shows with an empty filter');
+    dispatchEditorTextInput(view, 'head');
+    assert.equal(blockText(view, 1), 'head');
+    assert.equal(slashMenuState(view.state).open, true);
+    assert.ok(options().length < all, 'typing filters the list');
+    assert.ok(options().every((label) => /heading/i.test(label)));
+    dispatchEditorKeyDown(view, 'Enter');
+    assert.equal(slashMenuState(view.state).open, false);
+    assert.equal(view.state.doc.child(1).type.name, 'heading');
+    assert.equal(blockText(view, 1), '', 'the filter text goes away with the menu');
+    assert.equal(view.state.doc.childCount, 3);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Esc and Backspace close the slash menu from + and leave the paragraph empty', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  for (const key of ['Escape', 'Backspace']) {
+    const { view, restore } = await editorViewFromBlocks([
+      paragraph('Keep'),
+      paragraph('After', id(4)),
+    ]);
+    try {
+      gutterElement(view, 0).querySelector('.block-gutter-add').dispatchEvent(syntheticMouseDown());
+      assert.equal(slashMenuState(view.state).open, true);
+      dispatchEditorKeyDown(view, key);
+      assert.equal(slashMenuState(view.state).open, false, `${key} closes the menu`);
+      assert.equal(view.state.doc.childCount, 3, `${key} keeps the new paragraph`);
+      assert.equal(blockText(view, 1), '');
+      assert.equal(view.state.doc.child(1).type.name, 'paragraph');
+      // Typing / by hand on the now-empty paragraph still opens the typed menu.
+      dispatchEditorTextInput(view, '/');
+      assert.equal(slashMenuState(view.state).open, true);
+      assert.equal(slashMenuState(view.state).typed, true);
+      assert.equal(blockText(view, 1), '/');
+    } finally {
+      view.destroy();
+      restore();
+    }
   }
 });
 

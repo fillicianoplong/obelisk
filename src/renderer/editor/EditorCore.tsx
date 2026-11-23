@@ -28,7 +28,9 @@ import {
   formatMenuCommand,
 } from './format-commands.js';
 import { applyLinkCommand, linkAround, linkDraftFromState, removeLinkCommand } from './link/commands.js';
-import { eventTargetsLink, linkClickAddress } from './link/open-on-click.js';
+import { eventTargetsLink, linkClickAction } from './link/open-on-click.js';
+import { openLinkBubble } from './link/link-bubble-plugin.js';
+import { requestShellCommand } from './editor-command-event.js';
 import { editorMenuCommand } from './menu-commands.js';
 import { replaceSpellingSuggestion } from './spell-replace.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
@@ -391,12 +393,20 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
             return false;
           }
           event.preventDefault();
-          // A plain click on a link offers to open it. Open link still asks first.
-          const address = linkClickAddress(event, clickView.state.selection.empty);
-          if (address !== null) {
-            void window.obelisk?.['link:open']?.({ address })?.catch(() => {
-              // A refused or cancelled open leaves the document unchanged.
-            });
+          // A plain click on a link shows the link bubble, like Google Docs.
+          // Ctrl+click goes straight to Open link, which still asks first.
+          // The page's own selection is current here; the editor state may not have caught up yet.
+          const domSelection = clickView.dom.ownerDocument.getSelection();
+          const collapsed = domSelection === null ? clickView.state.selection.empty : domSelection.isCollapsed;
+          const action = linkClickAction(event, collapsed);
+          if (action?.kind === 'open') {
+            requestShellCommand('link-open', clickView.dom.ownerDocument.defaultView, action.address);
+          } else if (action?.kind === 'bubble') {
+            const at = clickView.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+            const tr = openLinkBubble(clickView.state, null, at);
+            if (tr !== null) {
+              clickView.dispatch(tr);
+            }
           }
           return false;
         },

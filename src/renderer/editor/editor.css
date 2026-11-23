@@ -2,6 +2,7 @@
 @import './format/csp-format.css';
 @import './block-handle-layout.css';
 @import './slash/slash-menu-layout.css';
+@import './link/link-bubble.css';
 
 .block-handle-layer {
   position: absolute;

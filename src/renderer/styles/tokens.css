@@ -83,6 +83,8 @@
   --z-index-block-menu: 4;
   --size-slash-menu-max-width: 280px;
   --size-slash-menu-max-height: 360px;
+  --z-index-link-bubble: 5;
+  --size-link-tooltip-max: 480px;
 
   /* Page geometry (Page setup reference: Letter, Normal margins) */
   --page-width: 8.5in;

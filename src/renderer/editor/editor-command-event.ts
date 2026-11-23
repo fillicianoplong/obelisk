@@ -3,9 +3,11 @@ export const EDITOR_SHELL_COMMAND = 'obelisk:editor-shell-command';
 
 export interface EditorShellCommandDetail {
   command: string;
+  /** For link-open: the address to offer. The shell still asks before opening it. */
+  address?: string;
 }
 
-export function requestShellCommand(command: string, target?: EventTarget | null): void {
+export function requestShellCommand(command: string, target?: EventTarget | null, address?: string): void {
   const view = (target ?? (typeof window === 'undefined' ? null : window)) as
     (EventTarget & { CustomEvent?: typeof CustomEvent }) | null;
   if (view === null || typeof view.dispatchEvent !== 'function') {
@@ -15,5 +17,6 @@ export function requestShellCommand(command: string, target?: EventTarget | null
   if (typeof Ctor !== 'function') {
     return;
   }
-  view.dispatchEvent(new Ctor<EditorShellCommandDetail>(EDITOR_SHELL_COMMAND, { detail: { command } }));
+  const detail: EditorShellCommandDetail = address === undefined ? { command } : { command, address };
+  view.dispatchEvent(new Ctor<EditorShellCommandDetail>(EDITOR_SHELL_COMMAND, { detail }));
 }

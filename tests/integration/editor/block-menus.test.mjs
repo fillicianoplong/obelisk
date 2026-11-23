@@ -313,3 +313,147 @@ test('the slash menu Link item opens the Link dialog with the standard field foc
   })()`);
   assert.equal(address, 'none', 'the Address field matches');
 });
+
+const SLASH = `(() => {
+  const host = document.querySelector('.slash-menu-host');
+  const gutter = document.querySelector('.block-handle');
+  const rect = gutter ? gutter.getBoundingClientRect() : null;
+  const blocks = [...document.querySelectorAll('[data-region="page-editor"] > *')];
+  const add = document.querySelector('.block-gutter-add');
+  return {
+    open: host?.dataset.open === 'true',
+    texts: blocks.map((block) => block.textContent),
+    gutterShown: gutter !== null && !gutter.hidden && rect.height > 0,
+    gutterBlock: rect ? blocks.findIndex((block) => Math.abs(block.getBoundingClientRect().top - rect.top) < 2) : -1,
+    menuControl: gutter?.getAttribute('data-menu-control') ?? null,
+    addFill: add ? getComputedStyle(add).backgroundColor : null,
+  };
+})()`;
+
+async function slashState(client) {
+  return evaluate(client, SLASH);
+}
+
+async function waitSlash(client, predicate, label) {
+  return poll(async () => {
+    const state = await slashState(client);
+    return predicate(state) ? state : null;
+  }, label);
+}
+
+/** Types / on a new empty last line so the typed slash menu opens there. */
+async function openTypedSlashMenu(client) {
+  await evaluate(client, `(() => {
+    const editor = document.querySelector('[data-region="page-editor"]');
+    editor.focus();
+  })()`);
+  const end = await linePoint(client, 4, 400);
+  await click(client, end);
+  await key(client, 'End', 'End', 35);
+  await key(client, 'Enter', 'Enter', 13);
+  await client.send('Input.insertText', { text: '/' });
+  return waitSlash(client, (state) => state.open, 'typed slash menu open');
+}
+
+async function clickAddOnLine(client, line) {
+  const point = await linePoint(client, line);
+  await mouse(client, 'mouseMoved', point);
+  await waitState(client, (state) => state.gutterShown && state.gutterBlock === line, `gutter on line ${line + 1}`);
+  const add = await centerOf(client, '.block-gutter-add');
+  await glide(client, point, add, 6);
+  await click(client, add);
+  return add;
+}
+
+test('a click or right-click outside the slash menu closes it, wherever it lands', { timeout: 120_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const places = [
+    ['text on another line', 'left', async () => linePoint(client, 1, 30)],
+    ['empty page margin', 'left', async () => ({ x: 6, y: 300 })],
+    ['menu bar', 'left', async () => {
+      const bar = await centerOf(client, '[role="menubar"]');
+      return { x: 12, y: bar.y };
+    }],
+    ['status bar', 'left', async () => centerOf(client, '[data-region="status-bar"]')],
+    ['right-click on another line', 'right', async () => linePoint(client, 0, 30)],
+  ];
+  for (const [label, button, where] of places) {
+    await openTypedSlashMenu(client);
+    const point = await where();
+    assert.ok(point, label);
+    await click(client, point, button);
+    await waitSlash(client, (state) => !state.open, `slash menu closes on ${label}`);
+    await key(client, 'Escape', 'Escape', 27);
+    await key(client, 'Escape', 'Escape', 27);
+  }
+  await openTypedSlashMenu(client);
+  await evaluate(client, `window.dispatchEvent(new Event('blur'))`);
+  await waitSlash(client, (state) => !state.open, 'slash menu closes when the window loses focus');
+});
+
+test('+ opens the slash menu on an empty paragraph without typing a slash', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  await clickAddOnLine(client, 1);
+  const open = await waitSlash(client, (state) => state.open, 'slash menu from +');
+  assert.equal(open.texts[2], '', 'no / in the new paragraph');
+  assert.equal(open.texts.length, 6);
+  await key(client, 'Escape', 'Escape', 27);
+  const closed = await waitSlash(client, (state) => !state.open, 'Esc closes it');
+  assert.equal(closed.texts[2], '', 'Esc leaves an empty paragraph');
+  assert.equal(closed.texts.length, 6);
+});
+
+test('the add and grip controls stay on the new block while the slash menu from + is open', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const add = await clickAddOnLine(client, 1);
+  const open = await waitSlash(client, (state) => state.open && state.gutterShown, 'controls with the slash menu');
+  assert.equal(open.gutterBlock, 2, 'the controls move to the new paragraph');
+  assert.equal(open.menuControl, 'add', '+ keeps its pressed look');
+  assert.notEqual(open.addFill, 'rgba(0, 0, 0, 0)');
+  // The pointer crosses other lines on its way into the menu.
+  const far = await linePoint(client, 5, 200);
+  await glide(client, add, far);
+  const panel = await centerOf(client, '.slash-menu-panel');
+  await glide(client, far, panel);
+  const during = await slashState(client);
+  assert.equal(during.open, true);
+  assert.equal(during.gutterShown, true);
+  assert.equal(during.gutterBlock, 2, 'the controls did not follow the pointer');
+  // Typing to filter keeps them too.
+  await client.send('Input.insertText', { text: 'he' });
+  await sleep(150);
+  const typed = await slashState(client);
+  assert.equal(typed.open, true);
+  assert.equal(typed.gutterBlock, 2);
+  await key(client, 'Escape', 'Escape', 27);
+  await waitSlash(client, (state) => !state.open && state.menuControl === null, 'released on close');
+  const after = await linePoint(client, 4);
+  await mouse(client, 'mouseMoved', after);
+  await waitState(client, (state) => state.gutterBlock === 4, 'hover follows the pointer again');
+});
+
+test('the controls stay on the block while a right-click menu on its text is open', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const point = await linePoint(client, 1);
+  await mouse(client, 'mouseMoved', point);
+  await waitState(client, (state) => state.gutterShown && state.gutterBlock === 1, 'gutter on line 2');
+  await click(client, point, 'right');
+  await waitState(client, (state) => state.contextKind === 'text', 'text context menu');
+  const panel = await centerOf(client, '[data-region="context-menu"] .menu-panel--root');
+  await glide(client, point, panel);
+  const open = await evaluate(client, STATE);
+  assert.equal(open.gutterShown, true);
+  assert.equal(open.gutterBlock, 1);
+  assert.equal(open.menuOpenMark, null, 'a text menu does not press the grip');
+  for (let press = 0; press < 3; press += 1) {
+    await key(client, 'Escape', 'Escape', 27);
+    await sleep(80);
+    if ((await evaluate(client, STATE)).contextKind === null) {
+      break;
+    }
+  }
+  await waitState(client, (state) => state.contextKind === null, 'context menu closed');
+  const after = await linePoint(client, 4);
+  await mouse(client, 'mouseMoved', after);
+  await waitState(client, (state) => state.gutterBlock === 4, 'hover follows the pointer again');
+});

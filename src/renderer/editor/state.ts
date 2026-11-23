@@ -20,6 +20,7 @@ import { softBreakKeymap } from './keymap/soft-break.js';
 import { backspaceUnindentAtStartCommand, splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { closeFindOnEscape, findPlugin } from './find/find-plugin.js';
 import { editorPastePlugin } from '../clipboard/editor-paste.js';
+import { linkBubbleKeymap, linkBubblePlugin } from './link/link-bubble-plugin.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -37,6 +38,8 @@ export function createTabEditorState(doc?: Node): EditorState {
     schema: editorSchema,
     ...(doc ? { doc } : {}),
     plugins: [
+      // Esc closes the link bubble before anything else, and Alt+Enter opens it.
+      keymap(linkBubbleKeymap()),
       keymap({ Escape: closeFindOnEscape }),
       ...editorHistoryPlugins(),
       keymap(editorHistoryKeymap()),
@@ -59,6 +62,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       editorColorStylesPlugin(),
       spellingViewPlugin(),
       editorPastePlugin(),
+      linkBubblePlugin(),
     ],
   });
 }

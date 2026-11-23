@@ -741,10 +741,18 @@ export function Shell() {
   }, [addTab, onMenuCommand, openDocument, openSettings, runSave]);
 
   useEffect(() => {
-    // The slash menu's Link item opens the same dialog as Ctrl+K.
+    // The slash menu's Link item and the link bubble's Edit open the same dialog as Ctrl+K.
     function onEditorCommand(event: Event) {
-      const command = (event as CustomEvent<EditorShellCommandDetail>).detail?.command;
-      if (command === 'insert-link' && linkDialogRef.current === null) {
+      const detail = (event as CustomEvent<EditorShellCommandDetail>).detail;
+      const command = detail?.command;
+      if (command === 'link-open' && typeof detail?.address === 'string') {
+        // The link bubble and Ctrl+click: the main process asks before it opens anything.
+        void window.obelisk['link:open']({ address: detail.address }).catch(() => {
+          // A refused or cancelled open leaves the document unchanged.
+        });
+        return;
+      }
+      if ((command === 'insert-link' || command === 'link-edit') && linkDialogRef.current === null) {
         onMenuCommand(command);
       }
     }

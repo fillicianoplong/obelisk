@@ -1,0 +1,153 @@
+/* Link bubble: shows under a clicked link with its address, then Open, Edit and Remove.
+   Same surface, radius, shadow, hover fill, and focus ring as the find bubble.
+   The hover fill and the focus ring are never on a control at the same time. */
+
+.link-bubble {
+  align-items: center;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-menu);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body-small);
+  gap: var(--space-xs);
+  left: var(--link-bubble-left, 0);
+  line-height: var(--line-height-body-small);
+  padding: var(--size-find-padding);
+  position: fixed;
+  top: var(--link-bubble-top, 0);
+  width: max-content;
+  z-index: var(--z-index-link-bubble);
+}
+
+.link-bubble[hidden] {
+  display: none;
+}
+
+.link-bubble-address,
+.link-bubble-button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  cursor: pointer;
+  font: inherit;
+  height: var(--size-find-icon);
+  margin: 0;
+}
+
+.link-bubble-address {
+  align-items: center;
+  color: var(--color-text-link);
+  display: inline-flex;
+  gap: var(--space-xs);
+  max-width: var(--size-find-field-width);
+  padding: 0 var(--space-xs) 0 var(--space-2xs);
+  white-space: nowrap;
+}
+
+.link-bubble-address .link-bubble-glyph {
+  color: var(--color-text-secondary);
+}
+
+.link-bubble-address-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.link-bubble-address:hover .link-bubble-address-text {
+  text-decoration-line: underline;
+}
+
+.link-bubble-divider {
+  align-self: center;
+  background: var(--color-border-subtle);
+  flex: 0 0 auto;
+  height: var(--space-l);
+  width: calc(var(--space-2xs) / 2);
+}
+
+.link-bubble-button {
+  align-items: center;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 0;
+  width: var(--size-find-icon);
+}
+
+.link-bubble-button:hover:not(:focus-visible) {
+  background: var(--color-surface-raised-hover);
+}
+
+.link-bubble-button:hover:not(:focus-visible):active {
+  background: var(--color-surface-raised-pressed);
+}
+
+.link-bubble-address:focus,
+.link-bubble-button:focus {
+  outline: none;
+}
+
+.link-bubble-address:focus-visible,
+.link-bubble-button:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: var(--space-2xs);
+}
+
+.link-bubble-glyph {
+  display: block;
+  fill: none;
+  flex: 0 0 auto;
+  height: var(--space-l);
+  pointer-events: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  width: var(--space-l);
+}
+
+.link-bubble-tooltip {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-tooltip);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-caption);
+  left: var(--link-tooltip-left, 0);
+  line-height: var(--line-height-caption);
+  max-width: var(--size-link-tooltip-max);
+  overflow-wrap: anywhere;
+  padding: var(--space-s) var(--space-m);
+  pointer-events: none;
+  position: fixed;
+  top: var(--link-tooltip-top, 0);
+  width: max-content;
+  z-index: var(--z-index-link-bubble);
+}
+
+.link-bubble-tooltip[hidden] {
+  display: none;
+}
+
+@media (forced-colors: active) {
+  .link-bubble {
+    border: calc(var(--space-2xs) / 2) solid CanvasText;
+  }
+
+  .link-bubble-address:focus-visible,
+  .link-bubble-button:focus-visible {
+    outline: var(--size-focus-ring) solid Highlight;
+  }
+
+  .link-bubble-button:hover:not(:focus-visible) {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}

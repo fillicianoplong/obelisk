@@ -6,6 +6,7 @@ import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
 import { resetPageFocusToPointer } from '../shell/page-focus.js';
+import { watchOutsidePress } from '../shell/outside-press.js';
 import {
   applyBlockMenuAction,
   blockMenuOptionIds,
@@ -14,8 +15,9 @@ import {
   createGutterButton,
   emptyBlockHintDecoration,
   GRIP_TOOLTIP_HOVER_MS,
-  insertEmptyBlockWithSlash,
+  insertEmptyBlockWithSlashMenu,
   paintBlockMenu,
+  slashMenuOpenWithoutSlash,
 } from './block-gutter.js';
 
 export interface BlockDragState {
@@ -129,7 +131,14 @@ export function setBlockHandleHover(view: EditorView, blockIndex: number | null)
  * The pointer moving over other blocks or off the page does not move or hide them.
  */
 const blockMenuLocks = new WeakMap<EditorView, number>();
-const contextMenuLocks = new WeakSet<EditorView>();
+/** Which menu holds the lock: the grip menu, a right-click menu, or the slash menu opened from +. */
+export type BlockMenuLockOwner = 'grip' | 'context' | 'slash';
+interface BlockMenuLockInfo {
+  owner: BlockMenuLockOwner;
+  /** The control that opened the menu keeps its pressed look: grip or add. */
+  control: 'grip' | 'add' | null;
+}
+const blockMenuLockInfo = new WeakMap<EditorView, BlockMenuLockInfo>();
 const blockMenuSyncs = new WeakMap<EditorView, (view: EditorView) => void>();
 
 export function blockMenuLockIndex(view: EditorView): number | null {
@@ -137,21 +146,31 @@ export function blockMenuLockIndex(view: EditorView): number | null {
   return index === undefined ? null : index;
 }
 
+export function blockMenuLockOwner(view: EditorView): BlockMenuLockOwner | null {
+  return blockMenuLockInfo.get(view)?.owner ?? null;
+}
+
+function clearBlockMenuLock(view: EditorView): void {
+  blockMenuLocks.delete(view);
+  blockMenuLockInfo.delete(view);
+}
+
 export function lockBlockMenuGutter(
   view: EditorView,
   blockIndex: number | null,
-  owner: 'grip' | 'context' = 'grip',
+  owner: BlockMenuLockOwner = 'grip',
+  control: 'grip' | 'add' | null = owner === 'slash' ? 'add' : 'grip',
 ): void {
   if (view.isDestroyed) {
     return;
   }
-  const locked = blockMenuLocks.has(view);
+  const current = blockMenuLockInfo.get(view);
   if (blockIndex === null) {
-    if (!locked || (owner === 'context') !== contextMenuLocks.has(view)) {
+    // Only the menu that took the lock can release it.
+    if (!blockMenuLocks.has(view) || current?.owner !== owner) {
       return;
     }
-    blockMenuLocks.delete(view);
-    contextMenuLocks.delete(view);
+    clearBlockMenuLock(view);
     dispatchHover(view, null, false);
     blockMenuSyncs.get(view)?.(view);
     return;
@@ -161,11 +180,7 @@ export function lockBlockMenuGutter(
     return;
   }
   blockMenuLocks.set(view, index);
-  if (owner === 'context') {
-    contextMenuLocks.add(view);
-  } else {
-    contextMenuLocks.delete(view);
-  }
+  blockMenuLockInfo.set(view, { owner, control });
   dispatchHover(view, index, true);
   blockMenuSyncs.get(view)?.(view);
 }
@@ -915,9 +930,11 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
   const markGutterMenu = (open: boolean): void => {
     if (open) {
       gutter.setAttribute('data-menu-open', 'true');
+      gutter.setAttribute('data-menu-control', 'grip');
       grip.setAttribute('aria-expanded', 'true');
     } else {
       gutter.removeAttribute('data-menu-open');
+      gutter.removeAttribute('data-menu-control');
       grip.removeAttribute('aria-expanded');
     }
   };
@@ -1063,12 +1080,17 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
       return;
     }
     closeMenu(false);
-    const tr = insertEmptyBlockWithSlash(view.state, blockIndex, 'below');
+    const tr = insertEmptyBlockWithSlashMenu(view.state, blockIndex, 'below');
     if (tr === null) {
       return;
     }
     view.dispatch(tr);
     view.focus();
+    // The insert resets hover, so without a lock the controls vanish as the menu opens.
+    // Keep them on the new block, with + pressed, until that slash menu closes.
+    if (slashMenuOpenWithoutSlash(view.state)) {
+      lockBlockMenuGutter(view, blockIndex + 1, 'slash', 'add');
+    }
   });
   gutter.addEventListener('mousedown', (event) => {
     if (event.button !== 0) {
@@ -1196,45 +1218,23 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
       paintMenu(blockIndex);
     }
   });
-  // Same rule as the context menu: any press outside the menu closes it.
-  // Capture on the window so a handler that stops the event, or a pointerdown
-  // whose default is prevented (which skips mousedown), cannot keep it open.
+  // Same rule as the context menu and the slash menu: any press or right-click
+  // outside the menu closes it, and so does the window losing focus.
   // A left press on this gutter's own buttons is left to their handlers.
-  const onOutsidePress = (event: Event): void => {
-    if (!menuOpen) {
-      return;
-    }
-    const target = event.target;
-    if (target instanceof Node && menu.root.contains(target)) {
-      return;
-    }
-    const button = event instanceof MouseEvent ? event.button : 0;
-    if (button === 0 && target instanceof Element && target.closest('.block-gutter-button') !== null
-      && gutter.contains(target)) {
-      return;
-    }
-    closeMenu(false);
-  };
-  const onOutsideContextMenu = (event: Event): void => {
-    if (!menuOpen) {
-      return;
-    }
-    const target = event.target;
-    if (target instanceof Node && menu.root.contains(target)) {
-      return;
-    }
-    closeMenu(false);
-  };
-  const onWindowBlur = (): void => {
-    if (menuOpen) {
+  const stopOutsidePress = watchOutsidePress(win ?? doc, {
+    isOpen: () => menuOpen,
+    isInside(target, event) {
+      if (target !== null && menu.root.contains(target)) {
+        return true;
+      }
+      const button = event instanceof MouseEvent ? event.button : 0;
+      return event.type !== 'contextmenu' && button === 0 && target instanceof Element
+        && target.closest('.block-gutter-button') !== null && gutter.contains(target);
+    },
+    onOutside() {
       closeMenu(false);
-    }
-  };
-  const pressTarget: Window | Document = win ?? doc;
-  pressTarget.addEventListener('pointerdown', onOutsidePress, true);
-  pressTarget.addEventListener('mousedown', onOutsidePress, true);
-  pressTarget.addEventListener('contextmenu', onOutsideContextMenu, true);
-  win?.addEventListener('blur', onWindowBlur);
+    },
+  });
 
   const sync = (editorView: EditorView): void => {
     if (destroyed) {
@@ -1245,7 +1245,7 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     if (dragActive) {
       if (menuOpen) {
         closeMenu(false, false);
-        blockMenuLocks.delete(editorView);
+        clearBlockMenuLock(editorView);
       }
       layer.hidden = true;
       layer.setAttribute('data-block-drag', 'true');
@@ -1256,23 +1256,31 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     layer.removeAttribute('data-block-drag');
     let locked = blockMenuLockIndex(editorView);
     if (locked !== null && locked >= editorView.state.doc.childCount) {
-      blockMenuLocks.delete(editorView);
+      clearBlockMenuLock(editorView);
       locked = null;
     }
     const index = locked ?? activeBlockHandleIndex(editorView.state);
     if (index === null || index < 0 || index >= editorView.state.doc.childCount) {
       if (menuOpen) {
         closeMenu(false, false);
-        blockMenuLocks.delete(editorView);
+        clearBlockMenuLock(editorView);
       }
       gutter.removeAttribute('data-menu-open');
+      gutter.removeAttribute('data-menu-control');
       clearGutterLayout();
       return;
     }
+    const control = locked === null ? null : blockMenuLockInfo.get(editorView)?.control ?? null;
     if (locked === null && !menuOpen) {
       gutter.removeAttribute('data-menu-open');
-    } else if (locked !== null) {
+      gutter.removeAttribute('data-menu-control');
+    } else if (locked !== null && control !== null) {
       gutter.setAttribute('data-menu-open', 'true');
+      gutter.setAttribute('data-menu-control', control);
+    } else if (locked !== null) {
+      // A text right-click menu keeps the controls showing without the pressed look.
+      gutter.removeAttribute('data-menu-open');
+      gutter.removeAttribute('data-menu-control');
     }
     const node = editorView.state.doc.child(index);
     gutter.hidden = false;
@@ -1296,12 +1304,8 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
       destroyed = true;
       hideTooltip();
       blockMenuSyncs.delete(view);
-      blockMenuLocks.delete(view);
-      contextMenuLocks.delete(view);
-      pressTarget.removeEventListener('pointerdown', onOutsidePress, true);
-      pressTarget.removeEventListener('mousedown', onOutsidePress, true);
-      pressTarget.removeEventListener('contextmenu', onOutsideContextMenu, true);
-      win?.removeEventListener('blur', onWindowBlur);
+      clearBlockMenuLock(view);
+      stopOutsidePress();
       if (layoutFrame !== null) {
         win?.cancelAnimationFrame(layoutFrame);
       }
@@ -1359,7 +1363,7 @@ export function blockHandlePlugin(): Plugin {
       },
       handleDOMEvents: {
         mousemove(view, event) {
-          if (contextMenuLocks.has(view)
+          if (blockMenuLockOwner(view) === 'context'
             && view.dom.ownerDocument.querySelector('[data-region="context-menu"]') === null) {
             // The context menu closed without telling the editor. Let hover follow the pointer again.
             lockBlockMenuGutter(view, null, 'context');
