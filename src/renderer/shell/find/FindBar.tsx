@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { FIND_BAR_REGION } from '../focus/regions.js';
-import { commitPageKeyboardFocus, pageFocusIsKeyboard, resetPageFocusToPointer } from '../page-focus.js';
+import { resetPageFocusToPointer } from '../page-focus.js';
 import { editShellShortcut } from '../shortcuts.js';
 import { escapeWouldCloseSomethingElse } from '../../editor/find/find-plugin.js';
 import { activeEditorFindCommands } from './find-bridge.js';
@@ -192,12 +192,10 @@ export function FindBar({ visible, onVisibilityChange }: FindBarProps) {
     onVisibilityChange(false);
     const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
     if (page instanceof HTMLElement) {
+      // Closing Find returns to the caret or selection, like closing a menu, so the page gets no keyboard ring.
+      resetPageFocusToPointer(page);
       page.focus({ preventScroll: true });
-      if (pageFocusIsKeyboard()) {
-        commitPageKeyboardFocus(page);
-      } else {
-        resetPageFocusToPointer(page);
-      }
+      resetPageFocusToPointer(page);
     }
     refresh();
   }, [onVisibilityChange, refresh]);

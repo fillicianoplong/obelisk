@@ -8,7 +8,7 @@ import { linkAround, removeLinkCommand } from './commands.js';
 /**
  * Link bubble: a plain click on a link (or Alt+Enter with the caret on one) shows a
  * small bubble under it with the address, then Open, Edit and Remove.
- * The address and Open both go through the Open link confirm prompt.
+ * The address and Open both open the link right away through the main-process allow-list.
  */
 export interface LinkBubbleState {
   open: boolean;
@@ -357,7 +357,7 @@ export function linkBubblePlugin(): Plugin {
         }
         if (id === 'address' || id === 'open') {
           close(true);
-          // The shell shows the Open link confirm prompt for this address.
+          // The shell hands this address to the main process, which opens only allowed links.
           requestShellCommand('link-open', win, bubble.address);
           return;
         }

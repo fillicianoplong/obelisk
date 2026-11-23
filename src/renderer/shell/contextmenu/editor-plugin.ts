@@ -1,4 +1,4 @@
-import { Plugin } from 'prosemirror-state';
+import { Plugin, TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import {
   lockBlockMenuGutter,
@@ -34,6 +34,36 @@ export async function publishContextMenu(
     }
   }
   dispatchContextMenuRequest({ ...detail, spelling });
+}
+
+/**
+ * A right-click inside selected text keeps the selection, as in Word and Google Docs,
+ * so Cut, Copy, and Link act on what was selected.
+ */
+export function pointerInsideTextSelection(view: EditorView, event: MouseEvent): boolean {
+  const { selection } = view.state;
+  if (selection.empty || !(selection instanceof TextSelection)) {
+    return false;
+  }
+  let hit: { pos: number; inside: number } | null;
+  try {
+    hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
+  } catch {
+    hit = null;
+  }
+  if (hit === null || hit.pos < selection.from || hit.pos > selection.to) {
+    return false;
+  }
+  const domSelection = view.dom.ownerDocument.getSelection();
+  if (domSelection === null || domSelection.rangeCount === 0) {
+    return true;
+  }
+  // posAtCoords rounds to the nearest gap, so also check the selected text boxes.
+  const rects = [...domSelection.getRangeAt(0).getClientRects()];
+  return rects.length === 0 || rects.some((rect) => (
+    event.clientX >= rect.left - 1 && event.clientX <= rect.right + 1
+    && event.clientY >= rect.top - 1 && event.clientY <= rect.bottom + 1
+  ));
 }
 
 function anchorFromKeyboard(view: EditorView): { x: number; y: number } {
@@ -178,7 +208,7 @@ export function contextMenuEditorPlugin(tabId: string) {
     props: {
       handleDOMEvents: {
         contextmenu(view, event) {
-          if (selectedBlockRange(view.state) === null) {
+          if (selectedBlockRange(view.state) === null && !pointerInsideTextSelection(view, event)) {
             try {
               view.dispatch(textSelectionForEditorPointer(view, event));
             } catch {

@@ -27,7 +27,7 @@ const READY = `(() => {
 const ADDRESS = 'https://docs.blender.org/manual/en/latest/getting_started/installing/windows.html';
 const LINK_TEXT = 'Blender manual';
 
-/** Sets up three lines with a link on the second, and records Open link requests without showing the prompt. */
+/** Sets up three lines with a link on the second, and records Open link requests instead of opening the browser. */
 const SETUP = `(() => {
   const editor = document.querySelector('[data-region="page-editor"]');
   editor.focus();
@@ -39,7 +39,7 @@ const SETUP = `(() => {
   const mark = view.state.schema.marks.link.create({ address: ${JSON.stringify(ADDRESS)} });
   view.dispatch(view.state.tr.addMark(from, from + ${LINK_TEXT.length}, mark));
   window.__linkOpens = [];
-  // Capture runs before the shell's listener, so tests see the request and no prompt shows.
+  // Capture runs before the shell's listener, so tests see the request and nothing opens.
   window.addEventListener('obelisk:editor-shell-command', (event) => {
     if (event.detail && event.detail.command === 'link-open') {
       window.__linkOpens.push(event.detail.address ?? null);
@@ -194,7 +194,7 @@ test('a plain click on a link shows the bubble under it, and opens nothing', { t
   await waitState(client, (snap) => snap.tooltip === ADDRESS, 'full address tooltip');
 });
 
-test('Open and the address both go to the Open link prompt with the full address', { timeout: 60_000 }, async (t) => {
+test('Open and the address both open the full address right away', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
   await openBubbleByClick(client);
   await click(client, await centerOf(client, '.link-bubble-button[data-control="open"]'));
@@ -247,7 +247,7 @@ test('Esc, an outside click, and typing each close the bubble', { timeout: 60_00
   assert.deepEqual((await evaluate(client, STATE)).opens, []);
 });
 
-test('Ctrl+click goes straight to the Open link prompt with no bubble', { timeout: 60_000 }, async (t) => {
+test('Ctrl+click opens the link right away with no bubble', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
   const link = await centerOf(client, '[data-region="page-editor"] a.editor-link');
   await click(client, link, { modifiers: 2 });

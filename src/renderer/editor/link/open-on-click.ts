@@ -30,14 +30,14 @@ export function eventTargetsLink(event: { target: EventTarget | null }): boolean
 }
 
 export interface LinkClickAction {
-  /** 'open' goes straight to the Open link prompt. 'bubble' shows the link bubble. */
+  /** 'open' opens the link right away. 'bubble' shows the link bubble. */
   kind: 'open' | 'bubble';
   address: string;
 }
 
 /**
  * What a click on a link does. A plain click shows the link bubble.
- * Ctrl+click (Cmd+click on a Mac) goes straight to the Open link prompt, even when
+ * Ctrl+click (Cmd+click on a Mac) opens the link right away, even when
  * the click selected the block. Drags, double clicks, Shift, Alt and other buttons do nothing.
  */
 export function linkClickAction(

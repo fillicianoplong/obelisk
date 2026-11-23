@@ -2,6 +2,17 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.3] - 2026-11-23
+
+### Changed
+
+- Open in the link bubble, a click on its address, Ctrl+click, and Open link in the right-click menu open the link right away in my browser or mail app, the way Word and Google Docs do. There is no Open link question anymore. Only http, https, and mailto links can be saved or opened, and anything else is still refused.
+
+### Fixed
+
+- Right-clicking selected text keeps the selection, so Link… fills in the Text field with what I selected, and OK turns exactly that text into the link, even part of a word. If I change the Text field, the new text replaces the selection as the link. Cut and Copy from the right-click menu also act on the selection.
+- Esc in the find bubble closes it and puts me back in the text with my selection, without a focus ring around the page.
+
 ## [0.1.41.2] - 2026-11-23
 
 ### Changed

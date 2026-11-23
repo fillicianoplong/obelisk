@@ -215,7 +215,7 @@ export interface LinkOpenRequest {
   address: string;
 }
 
-export type LinkOpenResult = { status: 'ok' } | { status: 'cancelled' } | RefusedResult | IpcErrorResult;
+export type LinkOpenResult = { status: 'ok' } | RefusedResult | IpcErrorResult;
 
 export interface SpellAddRequest {
   word: string;

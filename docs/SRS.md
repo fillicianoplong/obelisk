@@ -743,7 +743,7 @@ Keyboard, mouse, pen, and touch input; any printer with a Windows driver. No oth
 
 ### 10.5 Communications
 
-Obelisk makes no network requests itself, and it blocks any request it did not start. Open link hands an http, https, or mailto address to the default browser or mail app after the user confirms; see the [*Links reference*](#links-reference). Store updates are handled by Windows, not by Obelisk.
+Obelisk makes no network requests itself, and it blocks any request it did not start. Open link hands an http, https, or mailto address straight to the default browser or mail app, the same way Word and Google Docs do; see the [*Links reference*](#links-reference). Store updates are handled by Windows, not by Obelisk.
 
 ## 11. Open decisions
 
@@ -770,7 +770,7 @@ Open items use the proposed default until decided. Decided items show the date.
 | OD-17 | Restore tabs on launch | Keep, with a session file; drop from 1.0 | Keep; open paths are stored in session.json (section 9) | Decided 2026-10-23 |
 | OD-18 | Animated GIF and WebP images | Keep the animation; keep only the first frame | Keep the original and play it in the editor; PDF, Word, and print use the first frame; Markdown keeps the original file | Decided 2026-10-23 |
 | OD-19 | Mermaid security level | strict; sandbox; loose | strict, which a diagram cannot change | Decided 2026-10-23 |
-| OD-20 | Open link | Keep, with a scheme allowlist; remove it | Keep; http, https, and mailto only, after a prompt | Decided 2026-10-23 |
+| OD-20 | Open link | Keep, with a scheme allowlist; remove it | Keep; http, https, and mailto only, opened right away with no prompt (the prompt was dropped on 2026-11-23) | Decided 2026-10-23, changed 2026-11-23 |
 | OD-21 | Uncompressed size caps for .obk files | Caps per entry and in total; no caps | document.json 25 MB, each image 20 MB, 250 MB in total | Decided 2026-10-23 |
 
 ## 12. Acceptance criteria
@@ -807,7 +807,7 @@ Each check runs end to end on the reference machine with a packaged build.
 | AC-26 | Should: create each kind of signature, reuse a saved one, set its options, and export to each format. | FR-78, FR-79, FR-80, FR-81, NFR-08, NFR-09 |
 | AC-27 | Should: render a flowchart offline, then break its source; the error shows in place. | FR-82, FR-83 |
 | AC-28 | Pass Store certification; the About page lists every notice; uninstall keeps documents. | NFR-26, NFR-27, NFR-28, NFR-29, NFR-30, NFR-31 |
-| AC-29 | Open link on an https link shows the full address and asks first; file:, javascript:, and network-path links are refused on open and paste. | FR-44, NFR-05, NFR-06 |
+| AC-29 | Open link on an https link opens it in the default browser right away; file:, javascript:, and network-path links are refused on open and paste. | FR-44, NFR-05, NFR-06 |
 | AC-30 | Insert an animated GIF; it plays in the editor and stays still with Windows animations off. PDF, Word, and print show the first frame; Markdown keeps the GIF. | FR-49, FR-62, FR-63, FR-65, NFR-20 |
 | AC-31 | Turn on Restore tabs, open two files, exit, delete one file, and relaunch; the other reopens and one message names the missing file. | FR-05, FR-06 |
 
@@ -1040,7 +1040,7 @@ Composition rule: every block shows the block-handle menu plus its own items. Ev
 | Drawing pad | Block handle | Clear drawing; Reset size |
 | Diagram | Block handle | Edit source; Copy source |
 | Signature | Block handle, minus Turn into | Change signature…; Edit line and labels…; Blank mode; Reset size |
-| Link | Text | Open link (asks first; see the [*Links reference*](#links-reference)); Edit link…; Remove link |
+| Link | Text | Open link (opens right away; see the [*Links reference*](#links-reference)); Edit link…; Remove link |
 | Inline equation | Text | Edit LaTeX; Copy LaTeX |
 | Date and time | Text | Edit date and time…; Change format; Convert to text; Remove |
 
@@ -1332,7 +1332,8 @@ Settings are checked when read; a bad or unknown value falls back to its default
 |---|---|
 | Schemes | http, https, and mailto; any other is refused, including file:, javascript:, and network paths |
 | Checked | On open, paste, and Ctrl+K, and again just before the link is opened |
-| Open link | Shows the full address and asks first; then the default browser or mail app opens it |
+| Open link | Opens right away in the default browser or mail app, from the link bubble's Open button or address, Ctrl+click, or the right-click menu. There is no prompt, because only allowed schemes can be saved or opened |
+| Linking a selection | Ctrl+K or Link… on selected text fills Text with the selection; OK links exactly that text, or replaces it when Text is changed |
 | Length | Up to 2,048 characters |
 
 ### File format reference

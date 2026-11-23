@@ -105,24 +105,4 @@ export function classifyLinkAddress(address: string): ClassifiedLink {
   return inspectLink(address);
 }
 
-export function linkConfirmPrompt(href: string): {
-  title: string;
-  message: string;
-  detail: string;
-  buttons: readonly ['Open', 'Cancel'];
-  defaultId: number;
-  cancelId: number;
-  noLink: true;
-} {
-  return {
-    title: 'Open link',
-    message: href,
-    detail: 'Open this address in the default browser or mail app?',
-    buttons: ['Open', 'Cancel'],
-    defaultId: 1,
-    cancelId: 1,
-    noLink: true,
-  };
-}
-
 export { ALLOWED_PROTOCOLS, LINK_MAX_CHARS };

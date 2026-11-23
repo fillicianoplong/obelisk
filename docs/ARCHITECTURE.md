@@ -277,7 +277,7 @@ Spike S-05 also tried an existing `.obk` name with a Word `.docx` filter. Window
 | `recovery:list` | R to M | None | IDs, first lines, and times, from the metadata records only |
 | `recovery:restore` | R to M | Recovery ID | file:open results, as a never-saved tab; refused offers Discard only |
 | `recovery:drop` | R to M | Recovery ID | ok; notFound |
-| `link:open` | R to M | Address | ok after the user confirms; cancelled; refused for a scheme off the allowlist |
+| `link:open` | R to M | Address | ok once the address is handed to the default browser or mail app; refused for a scheme off the allowlist |
 | `spell:add` | R to M | Word | ok; the word is saved in the user dictionary and the checker accepts it |
 | `spell:check` | R to M | Words | ok with the misspelled words from the bundled dictionary |
 | `spell:suggest` | R to M | Word | ok with whether it is misspelled and up to five suggestions |
@@ -294,7 +294,7 @@ These settings follow the Electron security checklist.
 - Content Security Policy: default-src 'none'; script-src app:; style-src-elem app: plus a per-render nonce; style-src-attr 'none'; fonts from app: only; images from app:, data:, and blob:; no connect, frame, or object sources. No 'unsafe-inline' and no 'unsafe-eval'. Spike S-04.
 - A session-wide request filter in main cancels every request that is not app:, data:, or blob:. No crash reporter or updater runs; the Store updates the app. The window spell checker is off. Spelling underlines are drawn by the app from a bundled English dictionary. The dictionary download address stays a local file URL, so a Hunspell dictionary is not fetched. Tools > Spell check clears or redraws the underlines.
 - Every permission request is denied. Navigation, new windows, and webview tags are blocked.
-- Links: only http, https, and mailto, checked on load, paste, and Ctrl+K, and again in main before opening. The prompt shows the full address (OD-20).
+- Links: only http, https, and mailto, checked on load, paste, and Ctrl+K, and again in main before opening. Main opens an allowed address right away, with no prompt (OD-20).
 - The IPC bridge exposes named functions only. Main checks that each message comes from the app's own frame, validates every argument, and never passes the raw event to the renderer.
 - The renderer never sends a path. Main shows every file dialog, keeps a handle-to-path map, and makes every recovery and signature ID itself.
 - Documents are decoded from JSON into the schema; no stored HTML is ever rendered. KaTeX and Mermaid output enters the page only through FormulaRenderer and BlockViews.
@@ -901,7 +901,7 @@ These SRS open decisions affect the architecture. IDs match the SRS.
 | OD-17 | Restore tabs on launch | Keep; open paths are stored in session.json (section 9) | Decided 2026-10-23 |
 | OD-18 | Animated GIF and WebP images | Keep the original and play it in the editor; PDF, Word, and print use the first frame; Markdown keeps the original file | Decided 2026-10-23 |
 | OD-19 | Mermaid security level | strict, which a diagram cannot change | Decided 2026-10-23 |
-| OD-20 | Open link | Keep; http, https, and mailto only, after a prompt | Decided 2026-10-23 |
+| OD-20 | Open link | Keep; http, https, and mailto only, opened right away with no prompt (the prompt was dropped on 2026-11-23) | Decided 2026-10-23, changed 2026-11-23 |
 | OD-21 | Uncompressed size caps for .obk files | document.json 25 MB, each image 20 MB, 250 MB in total | Decided 2026-10-23 |
 
 ## 12. Maintenance and references
