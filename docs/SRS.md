@@ -275,9 +275,9 @@ Formatting applies to text in any block that holds text, including table cells.
 | FR-28 | The system shall apply and clear the character formatting, fonts, and sizes in the [*Formatting reference*](#formatting-reference). | Must | Test: apply each mark, then Clear formatting. |
 | FR-29 | The system shall set alignment, line spacing, and space before and after each paragraph, per the [*Formatting reference*](#formatting-reference). | Must | Test: each value changes the layout on screen and in the PDF. |
 | FR-30 | The system shall set left, first-line, and hanging indents per paragraph, per the [*Formatting reference*](#formatting-reference). | Must | Test: a hanging indent of 0.5 in on a Works Cited entry. |
-| FR-31 | The system shall underline misspelled words and offer suggestions from the Windows spell checker. | Must | Test: misspell a word, pick a suggestion from the text menu; Ctrl+Z restores the word. |
+| FR-31 | The system shall underline misspelled words with app-drawn underlines and offer suggestions from a bundled Hunspell en-US dictionary. | Must | Test: misspell a word, pick a suggestion from the text menu; Ctrl+Z restores the word. |
 
-FR-31 is implemented. Electron uses the Windows spell checker and the languages the operating system already has. A right-click on a misspelled word lists up to five suggestions for that word at the top of the text menu, then Add to dictionary, which stores the word with the spell checker. Choosing a suggestion replaces the word in one undo step. The app does not download a dictionary. Tools > Spell check hides or shows the underlines and remembers the choice. The checker stays on, so turning it back on shows the underlines already on the page. Code blocks and inline code are not checked.
+FR-31 is implemented. The window spell checker is off. Spelling underlines are drawn by the app from a bundled Hunspell en-US dictionary. The dictionary download address stays a local file URL, so a Hunspell dictionary is not fetched. A right-click on a misspelled word lists up to five suggestions for that word at the top of the text menu, then Add to dictionary, which stores the word in the app's user word list. Choosing a suggestion replaces the word in one undo step. Tools > Spell check hides or shows the underlines and remembers the choice. The checker stays on, so turning it back on shows the underlines already on the page. Code blocks and inline code are not checked.
 
 ### 6.6 Blocks and typing
 
@@ -719,7 +719,7 @@ Keyboard, mouse, pen, and touch input; any printer with a Windows driver. No oth
 | Windows Open and Save dialogs | Pick files and folders | Electron dialog API |
 | Windows print dialog and spooler | Print | Electron webContents.print |
 | Windows clipboard | Rich text and plain text | Electron clipboard API |
-| Windows spell checker | Underline and suggestions | Electron spellchecker |
+| Bundled Hunspell en-US dictionary | App-drawn underlines, suggestions, and the user word list | Local files; window spell checker off |
 | DPAPI | Encrypt saved signatures | Electron safeStorage |
 | File Explorer | Open .obk files by double-click | MSIX file-type association |
 
