@@ -130,9 +130,9 @@ const SIGNATURE_OWN: readonly MenuEntry[] = [
 ];
 
 const LINK_OWN: readonly MenuEntry[] = [
-  item({ id: 'link-open', label: 'Open link', accessKey: 'o' }),
-  item({ id: 'link-edit', label: 'Edit link', accessKey: 'e', ellipsis: true }),
-  item({ id: 'link-remove', label: 'Remove link', accessKey: 'r' }),
+  item({ id: 'link-open', label: 'Open link', accessKey: 'o', command: 'link-open' }),
+  item({ id: 'link-edit', label: 'Edit link', accessKey: 'e', ellipsis: true, command: 'link-edit' }),
+  item({ id: 'link-remove', label: 'Remove link', accessKey: 'r', command: 'link-remove' }),
 ];
 
 const INLINE_EQUATION_OWN: readonly MenuEntry[] = [

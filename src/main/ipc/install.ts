@@ -1,10 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron';
 import { SpellHost } from '../spell/utility-host.js';
 import { readInUtilityProcess } from '../codec/utility-host.js';
 import { createFileService } from '../file/service.js';
 import { pickOpenDialogOwner, type OpenDialogOptions } from '../file/openDialog.js';
 import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '../file/saveDialog.js';
 import { ipcError } from '../../shared/ipc/errors.js';
+import { linkConfirmPrompt } from '../../shared/links/address.js';
+import { openConfirmedLink } from '../security/links.js';
 import { readSpellingSetting, writeSpellingSetting } from '../settings.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
@@ -44,6 +46,25 @@ async function showSaveDialog(options: SaveDialogOptions): Promise<SaveDialogRes
     ? await dialog.showSaveDialog(owner.window, options)
     : await dialog.showSaveDialog(options);
   return { canceled: result.canceled, filePath: result.filePath };
+}
+
+async function confirmOpenLink(href: string): Promise<boolean> {
+  const prompt = linkConfirmPrompt(href);
+  const owner = dialogOwner();
+  const box = {
+    type: 'question' as const,
+    title: prompt.title,
+    message: prompt.message,
+    detail: prompt.detail,
+    buttons: [...prompt.buttons],
+    cancelId: prompt.cancelId,
+    defaultId: prompt.defaultId,
+    noLink: prompt.noLink,
+  };
+  const result = owner
+    ? await dialog.showMessageBox(owner.window, box)
+    : await dialog.showMessageBox(box);
+  return result.response === 0;
 }
 
 async function confirmReplace(options: ReplacePromptOptions): Promise<boolean> {
@@ -100,6 +121,10 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
       return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
     }
   });
+  registry.setHandler('link:open', (request) => openConfirmedLink(request.address, {
+    confirm: confirmOpenLink,
+    openExternal: (href) => shell.openExternal(href),
+  }));
   registry.setHandler('prefs:get', (request) => {
     if (request.key !== 'spelling') {
       return ipcError('NOT_IMPLEMENTED', 'prefs:get is not available yet.');

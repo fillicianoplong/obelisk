@@ -15,7 +15,9 @@ import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { suppressPageFocusRing } from './page-focus.js';
-import { editShellShortcut, shellShortcut } from './shortcuts.js';
+import { LinkDialog } from './link/LinkDialog.js';
+import type { LinkDraft } from '../editor/link/commands.js';
+import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
 import { FindBar } from './find/FindBar.js';
 import { StatusBar } from './statusbar/StatusBar.js';
 import { ClosePrompt } from './tabs/ClosePrompt.js';
@@ -52,6 +54,25 @@ import './find/find-bar.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
+function editorPageCommands(): {
+  linkDraft?: () => LinkDraft | null;
+  linkAddress?: () => string | null;
+  applyLink?: (text: string, address: string) => boolean;
+} | null {
+  const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+  if (page === null) {
+    return null;
+  }
+  const commands = (page as HTMLElement & {
+    editorCommands?: {
+      linkDraft?: () => LinkDraft | null;
+      linkAddress?: () => string | null;
+      applyLink?: (text: string, address: string) => boolean;
+    };
+  }).editorCommands;
+  return commands ?? null;
+}
+
 export function Shell() {
   const [tabs, setTabs] = useState<PageTab[]>([]);
   const [activeId, setActiveId] = useState('');
@@ -60,6 +81,9 @@ export function Shell() {
   const [openMessage, setOpenMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
   const [findBarOpen, setFindBarOpen] = useState(false);
+  const [linkDialog, setLinkDialog] = useState<LinkDraft | null>(null);
+  const linkDialogRef = useRef(linkDialog);
+  linkDialogRef.current = linkDialog;
   const [spellingOn, setSpellingOn] = useState(true);
   const nextNumber = useRef(1);
   const opening = useRef(false);
@@ -540,6 +564,20 @@ export function Shell() {
         openFindBar(true);
         return;
       }
+      if (command === 'insert-link' || command === 'link-edit') {
+        const draft = editorPageCommands()?.linkDraft?.() ?? null;
+        setLinkDialog(draft);
+        return;
+      }
+      if (command === 'link-open') {
+        const address = editorPageCommands()?.linkAddress?.() ?? null;
+        if (address !== null) {
+          void window.obelisk['link:open']({ address }).catch(() => {
+            // A refused or cancelled open leaves the document unchanged.
+          });
+        }
+        return;
+      }
       if (command === 'tools-spelling') {
         toggleSpelling();
         return;
@@ -663,6 +701,12 @@ export function Shell() {
         onMenuCommand(editCommand);
         return;
       }
+      const linkCommand = linkShellShortcut(event);
+      if (linkCommand !== null && linkDialogRef.current === null) {
+        event.preventDefault();
+        onMenuCommand(linkCommand);
+        return;
+      }
       const command = shellShortcut(event);
       if (command === null) {
         return;
@@ -707,6 +751,20 @@ export function Shell() {
       <MenuBar menus={menus} onCommand={onMenuCommand} />
       {activeTab.kind !== 'settings' ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
+      ) : null}
+      {linkDialog !== null && conflict === null && closePromptTab === undefined ? (
+        <LinkDialog
+          draft={linkDialog}
+          onCancel={() => setLinkDialog(null)}
+          onSubmit={(text, address) => {
+            const applied = editorPageCommands()?.applyLink?.(text, address) === true;
+            if (!applied) {
+              return 'Link address is not allowed.';
+            }
+            setLinkDialog(null);
+            return null;
+          }}
+        />
       ) : null}
       {conflict !== null ? <SaveConflict onChoose={chooseConflict} /> : null}
       {closePromptTab !== undefined && conflict === null ? (

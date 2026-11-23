@@ -1,5 +1,6 @@
 import type { Mark, Node as ProseNode, Schema } from 'prosemirror-model';
 import type { JsonObject, JsonValue } from '../../../shared/ipc/types.js';
+import { classifyLinkAddress } from '../../../shared/links/address.js';
 import type { TextMarks } from '../../../shared/schema/types.js';
 import {
   DEFAULT_FONT_FAMILY,
@@ -102,7 +103,24 @@ export function jsonMarksFromPm(marks: readonly Mark[]): TextMarks | undefined {
   return json;
 }
 
+function linkAddressFromMarks(marks: readonly Mark[]): string | null {
+  for (const mark of marks) {
+    if (mark.type.name !== 'link' || typeof mark.attrs.address !== 'string') {
+      continue;
+    }
+    const checked = classifyLinkAddress(mark.attrs.address);
+    if (checked.ok) {
+      return checked.address;
+    }
+  }
+  return null;
+}
+
 function runFromTextNode(node: ProseNode): JsonObject {
+  const address = linkAddressFromMarks(node.marks);
+  if (address !== null) {
+    return { type: 'link', address, text: node.text ?? '' };
+  }
   const marks = jsonMarksFromPm(node.marks);
   const run: JsonObject = { type: 'text', text: node.text ?? '' };
   if (marks !== undefined) {
@@ -137,12 +155,15 @@ export function mergeAdjacentRuns(runs: JsonObject[]): JsonObject[] {
   const merged: JsonObject[] = [];
   for (const run of runs) {
     const previous = merged.at(-1);
-    if (
-      previous
+    const sameText = previous !== undefined
       && previous.type === 'text'
       && run.type === 'text'
-      && JSON.stringify(previous.marks ?? null) === JSON.stringify(run.marks ?? null)
-    ) {
+      && JSON.stringify(previous.marks ?? null) === JSON.stringify(run.marks ?? null);
+    const sameLink = previous !== undefined
+      && previous.type === 'link'
+      && run.type === 'link'
+      && previous.address === run.address;
+    if (previous !== undefined && (sameText || sameLink)) {
       previous.text = String(previous.text) + String(run.text);
     } else {
       merged.push({ ...run });
@@ -165,7 +186,15 @@ export function inlineContentFromJson(content: JsonValue | undefined, schema: Sc
       nodes.push(textNodeFromRun(record.text, record.marks as TextMarks | undefined, schema));
     }
     if (record.type === 'link' && typeof record.text === 'string' && record.text.length > 0) {
-      nodes.push(schema.text(record.text));
+      const address = typeof record.address === 'string' ? record.address : '';
+      const checked = classifyLinkAddress(address);
+      if (checked.ok && schema.marks.link !== undefined) {
+        nodes.push(schema.text(record.text, [
+          schema.marks.link.create({ address: checked.address }),
+        ]));
+      } else {
+        nodes.push(schema.text(record.text));
+      }
     }
   }
   return nodes;

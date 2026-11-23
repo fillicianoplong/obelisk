@@ -1,4 +1,5 @@
 import type { MarkSpec } from 'prosemirror-model';
+import { classifyLinkAddress } from '../../../shared/links/address.js';
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
@@ -118,6 +119,37 @@ export const markSpecs: { [name: string]: MarkSpec } = {
       const color = hexColorAttr(mark.attrs.color);
       return ['span', {
         'data-highlight': color ?? mark.attrs.color,
+      }, 0];
+    },
+  },
+  link: {
+    attrs: { address: {} },
+    inclusive: false,
+    excludes: '_',
+    parseDOM: [{
+      tag: 'a[data-href]',
+      getAttrs(dom) {
+        if (!(dom instanceof HTMLElement)) {
+          return false;
+        }
+        const address = dom.dataset.href ?? '';
+        const checked = classifyLinkAddress(address);
+        if (!checked.ok) {
+          return false;
+        }
+        return { address: checked.address };
+      },
+    }],
+    toDOM(mark) {
+      const address = typeof mark.attrs.address === 'string' ? mark.attrs.address : '';
+      const checked = classifyLinkAddress(address);
+      if (!checked.ok) {
+        return ['span', { 'data-link-refused': 'true' }, 0];
+      }
+      return ['a', {
+        class: 'editor-link',
+        'data-link': 'true',
+        'data-href': checked.address,
       }, 0];
     },
   },

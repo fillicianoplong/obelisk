@@ -172,7 +172,6 @@ export const TYPED_SHORTCUTS_UNBOUND = [
 ] as const;
 
 export const EDITOR_KEYS_UNBOUND = [
-  'Ctrl+K → Link',
   'Ctrl+Shift+V → Paste as plain text',
 ] as const;
 

@@ -1,3 +1,4 @@
+import { classifyLinkAddress, linkRefusalMessage } from '../links/address.js';
 import {
   ANIMATION_PIXEL_MAX,
   BLOCK_MAX,
@@ -5,7 +6,6 @@ import {
   LENGTH_DECIMAL_PLACES,
   LETTER_HEIGHT_IN,
   LETTER_WIDTH_IN,
-  LINK_SCHEMES,
   STILL_IMAGE_TYPES,
   TABLE_CELL_MAX_CHARS,
   TEXT_AREA_MIN_IN,
@@ -27,7 +27,6 @@ import type {
 } from './types.js';
 import { characterLength } from './validate.js';
 
-const LINK_SCHEME_SET: ReadonlySet<string> = new Set(LINK_SCHEMES);
 const STILL_IMAGE_SET: ReadonlySet<string> = new Set(STILL_IMAGE_TYPES);
 const MONTH_LENGTHS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -99,23 +98,11 @@ function isRealDateTime(value: string): boolean {
 }
 
 function linkIssue(address: string, path: string): SchemaFailure | null {
-  let url: URL;
-  try {
-    url = new URL(address);
-  } catch {
-    return failure('invalid', path, 'Link address is not allowed.');
+  const checked = classifyLinkAddress(address);
+  if (checked.ok) {
+    return null;
   }
-  const scheme = url.protocol.slice(0, -1);
-  if (!LINK_SCHEME_SET.has(scheme)) {
-    return failure('invalid', path, 'Link scheme is not allowed.');
-  }
-  if ((scheme === 'http' || scheme === 'https') && url.hostname.length === 0) {
-    return failure('invalid', path, 'Link address is not allowed.');
-  }
-  if (scheme === 'mailto' && url.pathname.length === 0) {
-    return failure('invalid', path, 'Link address is not allowed.');
-  }
-  return null;
+  return failure('invalid', path, linkRefusalMessage(checked.reason));
 }
 
 function bodyTextLength(content: readonly BodyInline[]): number {

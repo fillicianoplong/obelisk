@@ -27,6 +27,7 @@ import {
   applyCharacterMarksCommand,
   formatMenuCommand,
 } from './format-commands.js';
+import { applyLinkCommand, linkAround, linkDraftFromState, removeLinkCommand } from './link/commands.js';
 import { editorMenuCommand } from './menu-commands.js';
 import { replaceSpellingSuggestion } from './spell-replace.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
@@ -39,6 +40,14 @@ interface EditorCoreProps {
   tabId: string;
   state: EditorState;
   onChange: (tabId: string, state: EditorState) => void;
+}
+
+function eventTargetsLink(event: Event): boolean {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return false;
+  }
+  return target.closest('a.editor-link, [data-link], a[data-href]') !== null;
 }
 
 function writeReportedCaret(view: EditorView): void {
@@ -258,6 +267,24 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
     findSnapshot() {
       return findCommands.snapshot(view.state);
     },
+    linkDraft() {
+      return linkDraftFromState(view.state);
+    },
+    linkAddress() {
+      return linkAround(view.state)?.address ?? null;
+    },
+    applyLink(text: string, address: string) {
+      let applied = false;
+      runWithSynchronousEditorUpdate(() => {
+        applied = applyLinkCommand(text, address)(view.state, dispatch);
+      });
+      return applied;
+    },
+    removeLink() {
+      runWithSynchronousEditorUpdate(() => {
+        removeLinkCommand()(view.state, dispatch);
+      });
+    },
   };
   Object.defineProperty(view.dom, 'editorCommands', {
     configurable: true,
@@ -365,6 +392,18 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
         publish(view, next);
       },
       handleDOMEvents: {
+        click(_view, event) {
+          if (eventTargetsLink(event)) {
+            event.preventDefault();
+          }
+          return false;
+        },
+        auxclick(_view, event) {
+          if (eventTargetsLink(event)) {
+            event.preventDefault();
+          }
+          return false;
+        },
         blur() {
           adoptDomSelection(view);
           return false;

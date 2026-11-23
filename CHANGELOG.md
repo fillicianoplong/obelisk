@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.39.0] - 2026-11-23
+
+### Added
+
+- I can add a link with Ctrl+K or Insert > Link. The dialog takes the text and an http, https, or mailto address up to 2,048 characters, and it refuses javascript:, file:, and network paths such as `\\server` with a message. Right-clicking a link offers Open link, Edit link, and Remove link. Open link shows the full address and asks before it opens the default browser or mail app, and Cancel is the default. Clicking a link does not open it. A file whose link address is not allowed does not open.
+
 ## [0.1.38.4] - 2026-11-21
 
 ### Fixed

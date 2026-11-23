@@ -13,6 +13,7 @@ import {
 } from './block-move-commands.js';
 import { formatMenuCommand } from './format-commands.js';
 import { insertPageBreakCommand } from './keymap/editor-keys.js';
+import { linkMenuCommand } from './link/commands.js';
 
 const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null> = {
   'insert-text': { kind: 'paragraph' },
@@ -34,10 +35,13 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
   'insert-drawing': null,
   'insert-signature': null,
   'insert-date-time': null,
-  'insert-link': null,
 };
 
 export function editorMenuCommand(menuId: string): Command | null {
+  const linkCommand = linkMenuCommand(menuId);
+  if (linkCommand !== null) {
+    return linkCommand;
+  }
   if (menuId === 'edit-undo') {
     return undo;
   }

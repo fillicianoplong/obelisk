@@ -3,6 +3,7 @@ import type { EditorState } from 'prosemirror-state';
 import { NodeSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { blockHandleState, blockIndexAtPos, dropIndexFromClientY } from '../../editor/block-handle-plugin.js';
+import { linkAround } from '../../editor/link/commands.js';
 import type { ContextTargetKind } from './model.js';
 
 export type ContextBlockType =
@@ -164,7 +165,10 @@ export function resolveMenuKind(
   keyboard = false,
 ): ContextTargetKind {
   if (keyboard) {
-    return blockSelectionActive(state) ? 'block' : 'text';
+    if (blockSelectionActive(state)) {
+      return 'block';
+    }
+    return linkAround(state) !== null ? 'link' : 'text';
   }
   if (pointerOpensBlockMenu(domTarget)) {
     return 'block';

@@ -145,6 +145,76 @@
   padding: var(--space-xs) var(--space-s);
 }
 
+.link-dialog-backdrop {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-surface-canvas) 35%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 6;
+}
+
+.link-dialog {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-overlay);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  max-width: min(28rem, calc(100% - var(--space-l)));
+  padding: var(--space-m);
+  width: min(28rem, calc(100% - var(--space-l)));
+}
+
+.link-dialog-title,
+.link-dialog-error {
+  margin: 0;
+}
+
+.link-dialog-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-2xs);
+}
+
+.link-dialog-label {
+  font-size: var(--font-size-body-small);
+}
+
+.link-dialog-input {
+  background: var(--color-surface-input);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs);
+  width: 100%;
+}
+
+.link-dialog-error {
+  color: var(--color-text-primary);
+}
+
+.link-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+}
+
+.link-dialog-button {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs) var(--space-s);
+}
+
 .context-menu-host {
   left: var(--context-menu-left, 0);
   pointer-events: auto;
@@ -720,10 +790,17 @@
   }
 
   .save-conflict,
-  .save-conflict-button {
+  .save-conflict-button,
+  .link-dialog,
+  .link-dialog-button,
+  .link-dialog-input {
     background: Canvas;
     border-color: CanvasText;
     color: CanvasText;
+  }
+
+  .link-dialog-backdrop {
+    background: transparent;
   }
 
   .tab[aria-selected='true'] {

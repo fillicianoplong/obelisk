@@ -33,6 +33,7 @@ test('the editor schema includes every text block node', async () => {
     'fontSize',
     'highlight',
     'italic',
+    'link',
     'strike',
     'subscript',
     'superscript',

@@ -69,6 +69,7 @@ test('the editor schema exposes every character mark', async () => {
     'fontSize',
     'highlight',
     'italic',
+    'link',
     'strike',
     'subscript',
     'superscript',
