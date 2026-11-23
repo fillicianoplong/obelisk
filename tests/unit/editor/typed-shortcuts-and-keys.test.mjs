@@ -250,7 +250,6 @@ test('keyboard reference lists unbound shortcuts and keys', async () => {
     '$...$ → inline equation',
   ]);
   assert.deepEqual([...EDITOR_KEYS_UNBOUND], [
-    'Ctrl+Shift+V → Paste as plain text',
   ]);
 });
 

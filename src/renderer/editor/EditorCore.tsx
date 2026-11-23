@@ -201,7 +201,7 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
       runWithSynchronousEditorUpdate(() => {
         const command = editorMenuCommand(menuId);
         if (command !== null) {
-          command(view.state, view.dispatch.bind(view));
+          command(view.state, view.dispatch.bind(view), view);
         }
       });
     },

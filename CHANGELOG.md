@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.40.0] - 2026-11-23
+
+### Added
+
+- Paste and Ctrl+V clean what I paste from a web page or another app. Headings, paragraphs, lists, quotes, code, and bold, italic, underline, and strikethrough are kept. A table pastes as one line per row with tabs between cells. Scripts, styles, frames, event handlers, fonts, and colors are dropped, and images are never downloaded from the web. An http, https, or mailto link stays a link, and any other link keeps its words without the address.
+- Edit > Paste as plain text and Ctrl+Shift+V paste the words and lines without formatting. Pasting into a code block keeps the text as it is, tabs included.
+
 ## [0.1.39.0] - 2026-11-23
 
 ### Added

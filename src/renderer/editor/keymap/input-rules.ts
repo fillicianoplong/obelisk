@@ -172,7 +172,6 @@ export const TYPED_SHORTCUTS_UNBOUND = [
 ] as const;
 
 export const EDITOR_KEYS_UNBOUND = [
-  'Ctrl+Shift+V → Paste as plain text',
 ] as const;
 
 const HEADING_RULES: InputRule[] = [1, 2, 3, 4, 5, 6].map((level) => {

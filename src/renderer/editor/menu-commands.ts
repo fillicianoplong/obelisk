@@ -14,6 +14,7 @@ import {
 import { formatMenuCommand } from './format-commands.js';
 import { insertPageBreakCommand } from './keymap/editor-keys.js';
 import { linkMenuCommand } from './link/commands.js';
+import { pasteMenuCommand } from '../clipboard/editor-paste.js';
 
 const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null> = {
   'insert-text': { kind: 'paragraph' },
@@ -47,6 +48,12 @@ export function editorMenuCommand(menuId: string): Command | null {
   }
   if (menuId === 'edit-redo') {
     return redo;
+  }
+  if (menuId === 'edit-paste') {
+    return pasteMenuCommand(false);
+  }
+  if (menuId === 'edit-paste-plain') {
+    return pasteMenuCommand(true);
   }
   if (menuId === 'edit-select-all') {
     return (state, dispatch) => {

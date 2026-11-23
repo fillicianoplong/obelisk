@@ -73,8 +73,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'edit-cut',
   'edit-copy',
-  'edit-paste',
-  'edit-paste-plain',
   'file-template-mla',
   'file-print',
   'file-export-pdf',

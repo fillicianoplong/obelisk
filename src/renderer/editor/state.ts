@@ -19,6 +19,7 @@ import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-edi
 import { softBreakKeymap } from './keymap/soft-break.js';
 import { backspaceUnindentAtStartCommand, splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { closeFindOnEscape, findPlugin } from './find/find-plugin.js';
+import { editorPastePlugin } from '../clipboard/editor-paste.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -57,6 +58,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       typedShortcutInputRulesPlugin(),
       editorColorStylesPlugin(),
       spellingViewPlugin(),
+      editorPastePlugin(),
     ],
   });
 }
