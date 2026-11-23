@@ -14,6 +14,7 @@
 .tab-close:focus-visible,
 .status-bar:focus-visible,
 .status-save:focus-visible,
+.link-dialog-button:focus-visible,
 .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
   outline: var(--size-focus-ring) solid var(--color-focus-outer);
   outline-offset: calc(var(--size-focus-ring) * -1);
@@ -48,6 +49,7 @@
   .tab-close:focus-visible,
   .status-bar:focus-visible,
   .status-save:focus-visible,
+  .link-dialog-button:focus-visible,
   .page-sheet[data-focus-source='keyboard']:focus,
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
     outline-color: Highlight;
@@ -62,6 +64,7 @@
   .tab-close:focus-visible,
   .status-bar:focus-visible,
   .status-save:focus-visible,
+  .link-dialog-button:focus-visible,
   .page-sheet[data-focus-source='keyboard']:focus,
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
     position: relative;
@@ -73,6 +76,7 @@
   .tab-close:focus-visible::after,
   .status-bar:focus-visible::after,
   .status-save:focus-visible::after,
+  .link-dialog-button:focus-visible::after,
   .page-sheet[data-focus-source='keyboard']:focus::after,
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true']::after {
     content: "";

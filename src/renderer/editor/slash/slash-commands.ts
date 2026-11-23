@@ -154,7 +154,11 @@ function replaceTopLevelBlock(tr: Transaction, blockIndex: number, ref: SlashMen
 
 export function applySlashMenuItem(state: EditorState, slashPos: number, item: SlashMenuItem): Transaction | null {
   if (item.block === null) {
-    return null;
+    if (item.command === undefined) {
+      return null;
+    }
+    // A command item, such as Link, removes the typed /text and leaves the caret there.
+    return state.tr.delete(slashPos, Math.max(slashPos, state.selection.head));
   }
   const head = state.selection.head;
   const tr = state.tr.delete(slashPos, head);

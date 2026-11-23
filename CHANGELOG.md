@@ -2,6 +2,21 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.1] - 2026-11-23
+
+### Added
+
+- Clicking a link, or Ctrl+clicking it, shows the Open link question with the full address, and Cancel is still the default. Clicking with Shift or Alt, double-clicking, and dragging across a link select text as before, and the keyboard and Edit link work as before.
+- The slash menu has a Link item after Date. It removes what I typed and opens the same Link dialog as Ctrl+K.
+
+### Fixed
+
+- A click anywhere outside the block menu closes it, on the text, the page margin, the menu bar, or the status bar, even when a right-click menu was open over it. Clicking the grip again also closes it.
+- The + button and grip stay on their block, in the active look, while the block menu or the block's right-click menu is open. Esc closes the block menu and puts the caret back in the block's text.
+- Pasting code from an editor into a paragraph keeps each line as its own paragraph and keeps tabs and indentation, the same as Ctrl+Shift+V. Pasting into a code block keeps the text exactly.
+- Pasting a web page keeps its headings, including side headings marked only for screen readers, and its lists. Hidden parts of the page, empty list items, and empty blocks are dropped, and runs of empty paragraphs become one.
+- The Text and Address fields in the Link dialog show the same accent border as the other text fields when they have focus, not a thick white ring, and the dialog buttons show the standard focus ring.
+
 ## [0.1.41.0] - 2026-11-23
 
 ### Added

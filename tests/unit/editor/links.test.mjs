@@ -170,3 +170,45 @@ test('Insert Link and Open link follow the selection', async () => {
   assert.equal(plainEntries.find((entry) => entry.id === 'link-open').enabled, false);
   assert.equal(resolveMenuKind(plain, 'paragraph', null, true), 'text');
 });
+
+const clickUrl = new URL('../../../src/renderer/editor/link/open-on-click.ts', import.meta.url);
+
+function linkTarget(address = 'https://example.com/docs') {
+  const anchor = {
+    nodeType: 1,
+    getAttribute: (name) => (name === 'data-href' ? address : null),
+    closest: (selector) => (selector.includes('a.editor-link') ? anchor : null),
+  };
+  const text = { nodeType: 3, parentElement: anchor };
+  return { anchor, text };
+}
+
+function click(target, extra = {}) {
+  return { target, button: 0, detail: 1, shiftKey: false, altKey: false, ...extra };
+}
+
+test('a plain click on a link offers to open it, and Ctrl+click does the same', async () => {
+  const { linkClickAddress } = await loadRenderer(clickUrl);
+  const { text } = linkTarget();
+  assert.equal(linkClickAddress(click(text), true), 'https://example.com/docs');
+  assert.equal(linkClickAddress(click(text, { ctrlKey: true }), true), 'https://example.com/docs');
+});
+
+test('a drag, a double click, Shift, Alt, or another button on a link does not open it', async () => {
+  const { linkClickAddress } = await loadRenderer(clickUrl);
+  const { text } = linkTarget();
+  assert.equal(linkClickAddress(click(text), false), null, 'a drag leaves a selection');
+  assert.equal(linkClickAddress(click(text, { detail: 2 }), true), null);
+  assert.equal(linkClickAddress(click(text, { shiftKey: true }), true), null);
+  assert.equal(linkClickAddress(click(text, { altKey: true }), true), null);
+  assert.equal(linkClickAddress(click(text, { button: 2 }), true), null);
+});
+
+test('a click off a link, or on a refused address, opens nothing', async () => {
+  const { linkClickAddress } = await loadRenderer(clickUrl);
+  const plain = { nodeType: 3, parentElement: { nodeType: 1, closest: () => null, getAttribute: () => null } };
+  assert.equal(linkClickAddress(click(plain), true), null);
+  assert.equal(linkClickAddress(click(linkTarget('javascript:alert(1)').text), true), null);
+  assert.equal(linkClickAddress(click(linkTarget('file:///C:/Windows/win.ini').text), true), null);
+  assert.equal(linkClickAddress(click(null), true), null);
+});

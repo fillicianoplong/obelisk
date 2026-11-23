@@ -392,3 +392,147 @@ test('plain text keeps lines and drops everything else', async () => {
   assertSchema(plain.blocks);
   assertSchema(cleaned.blocks);
 });
+
+const fixtureDir = new URL('./fixtures/', import.meta.url);
+
+async function fixture(name) {
+  const { readFile } = await import('node:fs/promises');
+  return readFile(new URL(name, fixtureDir), 'utf8');
+}
+
+function plainText(content) {
+  return (content ?? []).map((run) => run.text ?? '').join('');
+}
+
+function blankBlocks(blocks) {
+  const blanks = [];
+  for (const block of blocks) {
+    if ((block.type === 'paragraph' || block.type === 'heading') && plainText(block.content).trim() === '') {
+      blanks.push(block);
+    }
+    if (block.type === 'list') {
+      for (const item of block.items) {
+        if (plainText(item.content).replace(/[\s\u00a0]/g, '') === '') {
+          blanks.push(item);
+        }
+      }
+    }
+  }
+  return blanks;
+}
+
+test('a copy of the Blender manual home keeps the title, headings, and lists', async () => {
+  const { blocks } = await paste({ html: await fixture('blender-manual-home-copied.html') });
+  assertSchema(blocks);
+  const title = blocks[0];
+  assert.equal(title.type, 'heading');
+  assert.equal(title.level, 1);
+  assert.equal(plainText(title.content), 'Blender 5.3 Reference Manual');
+  const headings = blocks.filter((block) => block.type === 'heading').map((block) => [block.level, plainText(block.content)]);
+  assert.deepEqual(headings, [
+    [1, 'Blender 5.3 Reference Manual'],
+    [2, 'Getting Started'],
+    [2, 'Sections'],
+    [2, 'Get Involved'],
+  ]);
+  const lists = blocks.filter((block) => block.type === 'list');
+  assert.equal(lists.length, 2);
+  assert.ok(lists.every((list) => list.style === 'bulleted' && list.items.length === 2));
+  assert.deepEqual(blankBlocks(blocks), []);
+});
+
+test('the Blender manual home markup drops hidden parts and empty card shells', async () => {
+  const html = await fixture('blender-manual-home-structure.html');
+  const { blocks } = await paste({ html });
+  assertSchema(blocks);
+  assert.deepEqual(blankBlocks(blocks), [], 'no empty paragraphs or empty bullets');
+  const headings = blocks.filter((block) => block.type === 'heading').map((block) => plainText(block.content));
+  assert.deepEqual(headings, ['Blender 5.3 Reference Manual', 'Getting Started', 'Sections']);
+  assert.equal(blocks[0].level, 1);
+  assert.ok(!textOf(blocks).includes('¶'), 'hidden heading anchors are left out');
+  assert.ok(!textOf(blocks).includes('Window System'), 'the hidden index is left out');
+  const lists = blocks.filter((block) => block.type === 'list');
+  assert.equal(lists.length, 1);
+  assert.equal(lists[0].items.length, 2);
+});
+
+test('the Blender manual index keeps its captions as headings and its lists as lists when shown', async () => {
+  const html = (await fixture('blender-manual-home-structure.html'))
+    .replaceAll(' style="display: none"', '');
+  const { blocks } = await paste({ html });
+  assertSchema(blocks);
+  const captions = blocks.filter((block) => block.type === 'heading' && block.level === 2)
+    .map((block) => plainText(block.content));
+  assert.deepEqual(captions, ['Getting Started', 'Getting Started', 'Sections', 'Sections']);
+  const index = blocks.filter((block) => block.type === 'list' && block.items.some((item) => item.level === 1));
+  assert.equal(index.length, 1);
+  assert.deepEqual(blankBlocks(blocks), []);
+});
+
+test('hidden elements from a copied page are left out', async () => {
+  const { blocks } = await paste({
+    html: [
+      '<p>Shown</p>',
+      '<div style="display: none"><p>Display none</p></div>',
+      '<div hidden><p>Hidden attribute</p></div>',
+      '<p style="visibility: hidden">Invisible</p>',
+      '<div style="overflow: hidden !important; height: 0px; opacity: 0"><h2>Closed panel</h2></div>',
+      '<ul><li>One</li><li style="display:none">Gone</li></ul>',
+    ].join(''),
+  });
+  assertSchema(blocks);
+  assert.deepEqual(blocks.map((block) => block.type), ['paragraph', 'list']);
+  assert.equal(plainText(blocks[0].content), 'Shown');
+  assert.deepEqual(blocks[1].items.map((item) => plainText(item.content)), ['One']);
+});
+
+test('empty paragraphs, line-break paragraphs, and empty bullets do not become gaps', async () => {
+  const { blocks } = await paste({
+    html: '<p>&nbsp;</p><h2>Getting Started</h2><p><br></p><p><br><br></p><div>&nbsp;</div>'
+      + '<ul><li></li><li><p></p></li></ul><p>Text<br></p><p>&nbsp;</p><p>End</p>',
+  });
+  assertSchema(blocks);
+  assert.deepEqual(
+    blocks.map((block) => [block.type, plainText(block.content)]),
+    [['heading', 'Getting Started'], ['paragraph', 'Text'], ['paragraph', 'End']],
+  );
+});
+
+test('code copied from an editor keeps its lines and tabs', async () => {
+  const html = '<meta charset="utf-8"><div style="font-family: Consolas, monospace; white-space: pre;">'
+    + '<div><span>function add(a, b) {</span></div>'
+    + '<div><span>\t</span><span>return a + b;</span></div>'
+    + '<br>'
+    + '<div><span>    </span><span>// four spaces</span></div>'
+    + '<div><span>}</span></div></div>';
+  const { blocks } = await paste({ html, text: 'function add(a, b) {\n\treturn a + b;\n\n    // four spaces\n}' });
+  assertSchema(blocks);
+  assert.deepEqual(blocks.map((block) => block.type), ['paragraph', 'paragraph', 'paragraph', 'paragraph', 'paragraph']);
+  assert.deepEqual(blocks.map((block) => plainText(block.content)), [
+    'function add(a, b) {',
+    '\treturn a + b;',
+    '',
+    '    // four spaces',
+    '}',
+  ]);
+});
+
+test('pre-wrap text keeps its line breaks and tabs, one paragraph per line', async () => {
+  const { blocks } = await paste({
+    html: '<div style="white-space: pre-wrap">line one\n\tline two\r\n\n    line four\n</div>',
+  });
+  assertSchema(blocks);
+  assert.deepEqual(blocks.map((block) => plainText(block.content)), ['line one', '\tline two', '', '    line four']);
+});
+
+test('markup indentation inside a pre block container is not read as blank lines', async () => {
+  const { blocks } = await paste({
+    html: '<div style="white-space-collapse: preserve">\n  <div>a</div>\n  <div>\tb</div>\n</div>',
+  });
+  assert.deepEqual(blocks.map((block) => plainText(block.content)), ['a', '\tb']);
+});
+
+test('ordinary page text still collapses spaces and drops tabs', async () => {
+  const { blocks } = await paste({ html: '<p>one\n\t two</p>' });
+  assert.deepEqual(blocks.map((block) => plainText(block.content)), ['one two']);
+});

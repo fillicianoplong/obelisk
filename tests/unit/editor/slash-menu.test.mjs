@@ -281,3 +281,70 @@ test('Escape closes the slash menu and leaves the typed slash', async () => {
     restore();
   }
 });
+
+test('the slash menu lists Link right after Date, in the same group', async () => {
+  const { SLASH_MENU_ENTRIES } = await loadRenderer(referenceUrl);
+  const ids = SLASH_MENU_ENTRIES.map((entry) => (entry.type === 'item' ? entry.item.id : '|'));
+  const date = ids.indexOf('date');
+  assert.ok(date >= 0);
+  assert.equal(ids[date + 1], 'link');
+  const link = SLASH_MENU_ENTRIES[date + 1];
+  assert.equal(link.item.label, 'Link');
+  assert.equal(link.enabled, true);
+});
+
+async function linkCommandRequests(view, run) {
+  const { EDITOR_SHELL_COMMAND } = await loadRenderer(
+    new URL('../../../src/renderer/editor/editor-command-event.ts', import.meta.url),
+  );
+  const win = view.dom.ownerDocument.defaultView;
+  const seen = [];
+  const listener = (event) => {
+    seen.push(event.detail?.command);
+  };
+  win.addEventListener(EDITOR_SHELL_COMMAND, listener);
+  try {
+    run();
+  } finally {
+    win.removeEventListener(EDITOR_SHELL_COMMAND, listener);
+  }
+  return seen;
+}
+
+test('choosing Link removes /link and opens the Link dialog', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    view.dispatch(view.state.tr.insertText('link', 2));
+    const seen = await linkCommandRequests(view, () => {
+      dispatchEditorKeyDown(view, 'Enter');
+    });
+    assert.deepEqual(seen, ['insert-link']);
+    assert.equal(slashMenuState(view.state).open, false);
+    assert.equal(view.state.doc.child(0).type.name, 'paragraph');
+    assert.equal(view.dom.textContent, '');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('clicking the Link item opens the Link dialog', async () => {
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    const option = view.dom.parentElement.querySelector('.slash-menu-option[data-item-id="link"]');
+    assert.ok(option);
+    const seen = await linkCommandRequests(view, () => {
+      option.dispatchEvent(syntheticMouseDown());
+    });
+    assert.deepEqual(seen, ['insert-link']);
+    assert.equal(view.dom.textContent, '');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});

@@ -1,6 +1,7 @@
 import { Plugin } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import {
+  lockBlockMenuGutter,
   selectedBlockRange,
   selectBlockByIndex,
   textSelectionForEditorPointer,
@@ -69,6 +70,16 @@ function restoreEditorAfterContextMenu(view: EditorView, detail: ContextMenuRest
   });
 }
 
+/** A block menu keeps its block's add and grip controls showing until it closes. */
+function lockGutterForBlockMenu(
+  view: EditorView,
+  target: { kind: string; blockIndex: number | null },
+): void {
+  if (target.kind === 'block' && target.blockIndex !== null) {
+    lockBlockMenuGutter(view, target.blockIndex, 'context');
+  }
+}
+
 export function contextMenuEditorPlugin(tabId: string) {
   return new Plugin({
     view(view) {
@@ -80,6 +91,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         if (detail.tabId !== tabId) {
           return;
         }
+        lockBlockMenuGutter(view, null, 'context');
         restoreEditorAfterContextMenu(view, detail);
       }
       function onHandleContextMenu(event: MouseEvent) {
@@ -101,6 +113,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           view.dispatch(tr);
         }
         const node = view.state.doc.child(blockIndex);
+        lockBlockMenuGutter(view, blockIndex, 'context');
         const rect = handle.getBoundingClientRect();
         const selection = { selectionAnchor: view.state.selection.anchor, selectionHead: view.state.selection.head };
         void publishContextMenu(view, {
@@ -122,6 +135,7 @@ export function contextMenuEditorPlugin(tabId: string) {
       ): void {
         try {
           const target = resolveContextTarget(view, clientX, clientY, domTarget, false);
+          lockGutterForBlockMenu(view, target);
           void publishContextMenu(view, { tabId, ...target });
         } catch {
           // Keep the editor alive if targeting fails for an odd hit target.
@@ -168,6 +182,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           }
           try {
             const target = resolveContextTarget(view, event.clientX, event.clientY, event.target, false);
+            lockGutterForBlockMenu(view, target);
             void publishContextMenu(view, { tabId, ...target });
           } catch {
             // Ignore bad hit targets so the renderer does not crash.
@@ -184,6 +199,7 @@ export function contextMenuEditorPlugin(tabId: string) {
         event.preventDefault();
         const anchor = anchorFromKeyboard(view);
         const target = resolveContextTarget(view, anchor.x, anchor.y, null, true);
+        lockGutterForBlockMenu(view, target);
         void publishContextMenu(view, { tabId, ...target });
         return true;
       },

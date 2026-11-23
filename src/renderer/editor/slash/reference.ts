@@ -15,6 +15,8 @@ export interface SlashMenuItem {
   id: string;
   label: string;
   block: SlashMenuBlockRef | null;
+  /** A shell command the item runs instead of inserting a block, such as the Link dialog. */
+  command?: 'insert-link';
 }
 
 export interface SlashMenuRow {
@@ -47,6 +49,7 @@ const EXISTING: SlashMenuItem[] = [
   { id: 'drawing', label: 'Drawing', block: null },
   { id: 'signature', label: 'Signature', block: null },
   { id: 'date', label: 'Date', block: null },
+  { id: 'link', label: 'Link', block: null, command: 'insert-link' },
   { id: 'horizontal-line', label: 'Horizontal line', block: { kind: 'divider' } },
   { id: 'page-break', label: 'Page break', block: { kind: 'page-break' } },
 ];
@@ -55,7 +58,7 @@ function group(items: SlashMenuItem[]): SlashMenuEntry[] {
   return items.map((item) => ({
     type: 'item' as const,
     item,
-    enabled: item.block !== null,
+    enabled: item.block !== null || item.command !== undefined,
   }));
 }
 
@@ -69,9 +72,9 @@ export const SLASH_MENU_ENTRIES: readonly SlashMenuEntry[] = [
   { type: 'separator' },
   ...group(EXISTING.slice(9, 10)),
   { type: 'separator' },
-  ...group(EXISTING.slice(10, 17)),
+  ...group(EXISTING.slice(10, 18)),
   { type: 'separator' },
-  ...group(EXISTING.slice(17, 19)),
+  ...group(EXISTING.slice(18, 20)),
 ];
 
 export const SLASH_MENU_ITEM_LABELS: readonly string[] = EXISTING.map((item) => item.label);
@@ -95,6 +98,7 @@ export const SLASH_ITEM_SEARCH_WORDS: Readonly<Record<string, readonly string[]>
   drawing: ['draw', 'sketch', 'pad'],
   signature: ['sign', 'signature'],
   date: ['date', 'time', 'today', 'now'],
+  link: ['url', 'hyperlink', 'web', 'address'],
   'horizontal-line': ['hr', 'line', 'divider'],
   'page-break': ['break', 'new page'],
 };

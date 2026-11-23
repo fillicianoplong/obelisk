@@ -215,3 +215,72 @@ test('Paste from the menu is enabled and uses the sanitizer', async () => {
     restore();
   }
 });
+
+const CODE = 'function add(a, b) {\n\treturn a + b;\n\n    // four spaces\n}';
+
+function codeBlock(text) {
+  return { type: 'code', id: id(4), text };
+}
+
+function paragraphTexts(view) {
+  const texts = [];
+  view.state.doc.forEach((node) => {
+    texts.push([node.type.name, node.textContent]);
+  });
+  return texts;
+}
+
+test('Ctrl+V of code from an editor into a paragraph keeps each line and its tabs', async () => {
+  const { view, restore } = await editorView([paragraph('')]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    view.dom.dispatchEvent(pasteEvent(view, {
+      html: '<div style="white-space: pre;"><div><span>function add(a, b) {</span></div>'
+        + '<div><span>\t</span><span>return a + b;</span></div><br>'
+        + '<div><span>    // four spaces</span></div><div><span>}</span></div></div>',
+      text: CODE,
+    }));
+    await flush();
+    assert.deepEqual(paragraphTexts(view), [
+      ['paragraph', 'function add(a, b) {'],
+      ['paragraph', '\treturn a + b;'],
+      ['paragraph', ''],
+      ['paragraph', '    // four spaces'],
+      ['paragraph', '}'],
+    ]);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Ctrl+V of plain multi-line code into a paragraph keeps each line and its tabs', async () => {
+  const { view, restore } = await editorView([paragraph('')]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    view.dom.dispatchEvent(pasteEvent(view, { text: `${CODE}\r\n` }));
+    await flush();
+    assert.deepEqual(paragraphTexts(view).map(([, text]) => text), CODE.split('\n'));
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Ctrl+V into a code block keeps the newlines and tabs exactly', async () => {
+  const { view, restore } = await editorView([codeBlock('')]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    view.dom.dispatchEvent(pasteEvent(view, {
+      html: '<div style="white-space: pre;"><div><span>ignored markup</span></div></div>',
+      text: CODE,
+    }));
+    await flush();
+    assert.equal(view.state.doc.childCount, 1);
+    assert.equal(view.state.doc.child(0).type.name, 'code_block');
+    assert.equal(view.state.doc.child(0).textContent, CODE);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});

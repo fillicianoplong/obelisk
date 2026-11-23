@@ -195,6 +195,13 @@
   width: 100%;
 }
 
+/* Same focus look as the find and block menu search fields: the border turns
+   accent. No browser ring on top of it. */
+.link-dialog-input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
 .link-dialog-error {
   color: var(--color-text-primary);
 }
@@ -801,6 +808,12 @@
 
   .link-dialog-backdrop {
     background: transparent;
+  }
+
+  .link-dialog-input:focus {
+    border-color: Highlight;
+    outline: var(--size-focus-ring) solid Highlight;
+    outline-offset: calc(var(--size-focus-ring) * -1);
   }
 
   .tab[aria-selected='true'] {

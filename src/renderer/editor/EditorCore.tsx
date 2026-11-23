@@ -28,6 +28,7 @@ import {
   formatMenuCommand,
 } from './format-commands.js';
 import { applyLinkCommand, linkAround, linkDraftFromState, removeLinkCommand } from './link/commands.js';
+import { eventTargetsLink, linkClickAddress } from './link/open-on-click.js';
 import { editorMenuCommand } from './menu-commands.js';
 import { replaceSpellingSuggestion } from './spell-replace.js';
 import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
@@ -42,13 +43,6 @@ interface EditorCoreProps {
   onChange: (tabId: string, state: EditorState) => void;
 }
 
-function eventTargetsLink(event: Event): boolean {
-  const target = event.target;
-  if (!(target instanceof Element)) {
-    return false;
-  }
-  return target.closest('a.editor-link, [data-link], a[data-href]') !== null;
-}
 
 function writeReportedCaret(view: EditorView): void {
   const caret = paragraphCaret(view.state);
@@ -392,9 +386,17 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
         publish(view, next);
       },
       handleDOMEvents: {
-        click(_view, event) {
-          if (eventTargetsLink(event)) {
-            event.preventDefault();
+        click(clickView, event) {
+          if (!eventTargetsLink(event)) {
+            return false;
+          }
+          event.preventDefault();
+          // A plain click on a link offers to open it. Open link still asks first.
+          const address = linkClickAddress(event, clickView.state.selection.empty);
+          if (address !== null) {
+            void window.obelisk?.['link:open']?.({ address })?.catch(() => {
+              // A refused or cancelled open leaves the document unchanged.
+            });
           }
           return false;
         },

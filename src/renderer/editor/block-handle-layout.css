@@ -46,6 +46,12 @@
   outline: none;
 }
 
+/* While its menu is open the grip keeps the pointer's active look. */
+.block-handle[data-menu-open='true'] .block-gutter-grip:not(:focus-visible) {
+  background: var(--color-subtle-fill-hover);
+  color: var(--color-accent);
+}
+
 .block-gutter-button:focus-visible {
   background: transparent;
   box-shadow:
@@ -228,6 +234,7 @@
   }
 
   .block-handle[data-input='pointer'] .block-gutter-button:hover:not(:focus-visible),
+  .block-handle[data-menu-open='true'] .block-gutter-grip:not(:focus-visible),
   .block-menu[data-input='pointer'] .block-menu-action:not([aria-disabled='true']):hover {
     background: Highlight;
     color: HighlightText;

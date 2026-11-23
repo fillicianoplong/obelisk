@@ -11,7 +11,19 @@ import {
   slashTypedQuery,
   slashTypedQueryFromSelection,
 } from './slash-commands.js';
-import { SLASH_MENU_ENTRIES, type SlashMenuRow } from './reference.js';
+import { SLASH_MENU_ENTRIES, type SlashMenuItem, type SlashMenuRow } from './reference.js';
+import { requestShellCommand } from '../editor-command-event.js';
+
+function itemDoesNothing(item: SlashMenuItem): boolean {
+  return item.block === null && item.command === undefined;
+}
+
+/** After the /text is gone, a command item asks the shell to run it. */
+function runSlashItemCommand(item: SlashMenuItem, view: EditorView | undefined): void {
+  if (item.command !== undefined) {
+    requestShellCommand(item.command, view?.dom.ownerDocument.defaultView ?? null);
+  }
+}
 
 export interface SlashMenuState {
   open: boolean;
@@ -148,7 +160,7 @@ function confirmSlashMenuItem(): Command {
       return false;
     }
     const row = rowByFlatIndex(filteredActiveIndex(state, menu));
-    if (row === undefined || !row.enabled || row.item.block === null) {
+    if (row === undefined || !row.enabled || itemDoesNothing(row.item)) {
       if (dispatch !== undefined) {
         dispatch(closeSlashMenu(state.tr));
       }
@@ -161,6 +173,7 @@ function confirmSlashMenuItem(): Command {
       } else {
         dispatch(closeSlashMenu(applied));
         view?.focus();
+        runSlashItemCommand(row.item, view);
       }
     }
     return true;
@@ -170,6 +183,7 @@ function confirmSlashMenuItem(): Command {
 function applyExactSlashCommand(state: EditorState, slashPos: number): Transaction | null {
   const item = exactSlashCommandItem(state, slashPos);
   if (item === null || item.block === null) {
+    // Command items like Link run from the menu or /link plus Space or Enter.
     return null;
   }
   return applySlashMenuItem(state, slashPos, item);
@@ -208,6 +222,7 @@ function tryExactSlashOnBoundary(eventKey: string): Command {
       if (applied !== null) {
         dispatch(applied);
         view?.focus();
+        runSlashItemCommand(item, view);
         return true;
       }
     }
@@ -526,7 +541,7 @@ export function slashMenuPlugin(): Plugin {
         event.preventDefault();
         const flatIndex = Number(option.dataset.flatIndex);
         const row = rowByFlatIndex(flatIndex);
-        if (row === undefined || !row.enabled || row.item.block === null) {
+        if (row === undefined || !row.enabled || itemDoesNothing(row.item)) {
           return;
         }
         const menu = slashMenuState(editorView.state);
@@ -537,6 +552,7 @@ export function slashMenuPlugin(): Plugin {
         if (applied !== null) {
           editorView.dispatch(closeSlashMenu(applied));
           editorView.focus();
+          runSlashItemCommand(row.item, editorView);
         }
       });
 

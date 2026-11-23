@@ -16,6 +16,7 @@ import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { suppressPageFocusRing } from './page-focus.js';
 import { LinkDialog } from './link/LinkDialog.js';
+import { EDITOR_SHELL_COMMAND, type EditorShellCommandDetail } from '../editor/editor-command-event.js';
 import type { LinkDraft } from '../editor/link/commands.js';
 import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
 import { FindBar } from './find/FindBar.js';
@@ -738,6 +739,20 @@ export function Shell() {
       delete document.documentElement.dataset.shellCommands;
     };
   }, [addTab, onMenuCommand, openDocument, openSettings, runSave]);
+
+  useEffect(() => {
+    // The slash menu's Link item opens the same dialog as Ctrl+K.
+    function onEditorCommand(event: Event) {
+      const command = (event as CustomEvent<EditorShellCommandDetail>).detail?.command;
+      if (command === 'insert-link' && linkDialogRef.current === null) {
+        onMenuCommand(command);
+      }
+    }
+    window.addEventListener(EDITOR_SHELL_COMMAND, onEditorCommand);
+    return () => {
+      window.removeEventListener(EDITOR_SHELL_COMMAND, onEditorCommand);
+    };
+  }, [onMenuCommand]);
 
   if (!shellReady || activeTab === undefined) {
     return null;

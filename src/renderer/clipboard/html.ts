@@ -114,6 +114,8 @@ interface BuildCtx {
   assets: Map<string, PastedImageAsset>;
   depth: number;
   nodes: number;
+  /** Inside white-space: pre (code copied from an editor). Line breaks and tabs are kept. */
+  pre: boolean;
 }
 
 interface TextPiece {
@@ -121,6 +123,12 @@ interface TextPiece {
   text: string;
   marks: MarkState;
   link?: string;
+  pre?: boolean;
+}
+
+/** A line end inside preserved white space. Each line becomes its own paragraph. */
+interface LinePiece {
+  kind: 'line';
 }
 
 interface ImagePiece {
@@ -133,7 +141,7 @@ interface BlockPiece {
   blocks: Block[];
 }
 
-type Piece = TextPiece | ImagePiece | BlockPiece;
+type Piece = TextPiece | ImagePiece | BlockPiece | LinePiece;
 
 type ListStyle = 'bulleted' | 'numbered' | 'checklist';
 
@@ -158,6 +166,91 @@ function tagName(node: Node): string {
 
 function nodesOf(node: ParentNode): Node[] {
   return Array.from(node.childNodes);
+}
+
+function styleValue(element: Element, property: string): string | null {
+  const style = element.getAttribute('style');
+  if (style === null || style.length === 0) {
+    return null;
+  }
+  let found: string | null = null;
+  for (const declaration of style.split(';')) {
+    const colon = declaration.indexOf(':');
+    if (colon < 0) {
+      continue;
+    }
+    if (declaration.slice(0, colon).trim().toLowerCase() === property) {
+      found = declaration.slice(colon + 1).replace(/!important/i, '').trim().toLowerCase();
+    }
+  }
+  return found;
+}
+
+function zeroLength(value: string | null): boolean {
+  return value !== null && /^0(?:\.0+)?(?:px|em|rem|%)?$/.test(value);
+}
+
+/**
+ * Hidden on the page it was copied from. Chromium writes the computed style
+ * into copied markup, so collapsed menus, closed panels, and screen reader
+ * only text show up here.
+ */
+function hiddenElement(element: Element): boolean {
+  if (element.hasAttribute('hidden')) {
+    return true;
+  }
+  const display = styleValue(element, 'display');
+  if (display === 'none') {
+    return true;
+  }
+  const visibility = styleValue(element, 'visibility');
+  if (visibility === 'hidden' || visibility === 'collapse') {
+    return true;
+  }
+  if (zeroLength(styleValue(element, 'opacity'))) {
+    return true;
+  }
+  const overflow = styleValue(element, 'overflow') ?? styleValue(element, 'overflow-y') ?? '';
+  const clipped = overflow.startsWith('hidden') || overflow.startsWith('clip');
+  if (clipped && (zeroLength(styleValue(element, 'height')) || zeroLength(styleValue(element, 'max-height'))
+    || zeroLength(styleValue(element, 'width')))) {
+    return true;
+  }
+  return false;
+}
+
+/** Whether this element keeps line breaks and tabs (white-space: pre and its kin). */
+function preservesWhiteSpace(element: Element, inherited: boolean): boolean {
+  const collapse = styleValue(element, 'white-space-collapse');
+  if (collapse !== null) {
+    if (collapse.startsWith('preserve') || collapse === 'break-spaces') {
+      return true;
+    }
+    if (collapse === 'collapse') {
+      return false;
+    }
+  }
+  const space = styleValue(element, 'white-space');
+  if (space !== null) {
+    if (/^(pre|pre-wrap|pre-line|break-spaces)\b/.test(space)) {
+      return true;
+    }
+    if (/^(normal|nowrap)\b/.test(space)) {
+      return false;
+    }
+  }
+  return inherited;
+}
+
+function headingLevelFromRole(element: Element): number | null {
+  if ((element.getAttribute('role') ?? '').toLowerCase() !== 'heading') {
+    return null;
+  }
+  const level = Number.parseInt(element.getAttribute('aria-level') ?? '2', 10);
+  if (!Number.isFinite(level)) {
+    return 2;
+  }
+  return Math.min(6, Math.max(1, level));
 }
 
 function stopped(ctx: BuildCtx): boolean {
@@ -208,11 +301,11 @@ function trimEdges(content: readonly BodyInline[]): BodyInline[] {
   const copy = content.map((item) => ({ ...item }));
   const first = copy[0];
   if (first && (first.type === 'text' || first.type === 'link')) {
-    first.text = first.text.replace(/^[ \t]+/, '');
+    first.text = first.text.replace(/^[ \t\n]+/, '');
   }
   const last = copy[copy.length - 1];
   if (last && (last.type === 'text' || last.type === 'link')) {
-    last.text = last.text.replace(/[ \t]+$/, '');
+    last.text = last.text.replace(/[ \t\n]+$/, '');
   }
   return mergeAdjacent(copy);
 }
@@ -222,7 +315,7 @@ function isBlank(content: readonly BodyInline[]): boolean {
     if (item.type !== 'text' && item.type !== 'link') {
       continue;
     }
-    if (item.text.replace(/[ \t]/g, '').length > 0) {
+    if (item.text.replace(/[ \t\n\u00a0]/g, '').length > 0) {
       return false;
     }
   }
@@ -268,9 +361,16 @@ function runsFrom(pieces: readonly TextPiece[]): BodyInline[] {
 function blocksFromPieces(pieces: readonly Piece[], ctx: BuildCtx): Block[] {
   const blocks: Block[] = [];
   let texts: TextPiece[] = [];
-  const flush = () => {
-    const content = limitInlines(trimEdges(runsFrom(texts)), TEXT_MAX_CHARS);
+  const flush = (lineEnd = false) => {
+    // Preserved lines keep their leading tabs and spaces, and an empty line stays empty.
+    const pre = texts.length > 0 ? texts.every((piece) => piece.pre === true) : lineEnd;
+    const runs = runsFrom(texts);
+    const content = limitInlines(pre ? mergeAdjacent(runs) : trimEdges(runs), TEXT_MAX_CHARS);
     texts = [];
+    if (pre && lineEnd) {
+      pushBlock(blocks, paragraphBlock(ctx.ids(), isBlank(content) ? [] : content));
+      return;
+    }
     if (isBlank(content)) {
       return;
     }
@@ -282,6 +382,8 @@ function blocksFromPieces(pieces: readonly Piece[], ctx: BuildCtx): Block[] {
     }
     if (piece.kind === 'text') {
       texts.push(piece);
+    } else if (piece.kind === 'line') {
+      flush(true);
     } else if (piece.kind === 'image') {
       flush();
       pushBlock(blocks, piece.block);
@@ -351,6 +453,24 @@ function applyLink(pieces: readonly Piece[], address: string): Piece[] {
   return out;
 }
 
+function besideFlowElement(node: Node): boolean {
+  const before = node.previousSibling;
+  const after = node.nextSibling;
+  return (before !== null && FLOW_TAGS.has(tagName(before))) || (after !== null && FLOW_TAGS.has(tagName(after)));
+}
+
+function preservedPieces(value: string, marks: MarkState, pieces: Piece[]): void {
+  const lines = stripUnsafe(value.replace(/\r\n/g, '\n').replace(/\r/g, '\n')).split('\n');
+  lines.forEach((line, index) => {
+    if (index > 0) {
+      pieces.push({ kind: 'line' });
+    }
+    if (line.length > 0) {
+      pieces.push({ kind: 'text', text: line, marks, pre: true });
+    }
+  });
+}
+
 async function piecesFrom(nodes: readonly Node[], marks: MarkState, ctx: BuildCtx): Promise<Piece[]> {
   const pieces: Piece[] = [];
   for (const node of nodes) {
@@ -359,7 +479,16 @@ async function piecesFrom(nodes: readonly Node[], marks: MarkState, ctx: BuildCt
       break;
     }
     if (node.nodeType === 3) {
-      const text = collapseInline(node.nodeValue ?? '');
+      const value = node.nodeValue ?? '';
+      if (ctx.pre) {
+        // Markup indentation between block elements is not part of the copied text.
+        if (value.trim().length === 0 && besideFlowElement(node)) {
+          continue;
+        }
+        preservedPieces(value, marks, pieces);
+        continue;
+      }
+      const text = collapseInline(value);
       if (text.length > 0) {
         pieces.push({ kind: 'text', text, marks });
       }
@@ -370,13 +499,25 @@ async function piecesFrom(nodes: readonly Node[], marks: MarkState, ctx: BuildCt
     }
     const element = node as Element;
     const tag = tagName(element);
-    if (DROP_TAGS.has(tag) || ctx.depth >= MAX_DEPTH) {
+    if (DROP_TAGS.has(tag) || ctx.depth >= MAX_DEPTH || hiddenElement(element)) {
       continue;
     }
+    const outerPre = ctx.pre;
+    ctx.pre = preservesWhiteSpace(element, outerPre);
     ctx.depth += 1;
     try {
+      const roleLevel = headingLevelFromRole(element);
       if (tag === 'br') {
-        pieces.push({ kind: 'text', text: '\n', marks });
+        if (ctx.pre) {
+          pieces.push({ kind: 'line' });
+        } else {
+          pieces.push({ kind: 'text', text: '\n', marks });
+        }
+      } else if (roleLevel !== null && !/^h[1-6]$/.test(tag)) {
+        const blocks = await fromHeading(element, roleLevel, ctx);
+        if (blocks.length > 0) {
+          pieces.push({ kind: 'block', blocks });
+        }
       } else if (tag === 'img') {
         const block = await imageFromElement(element, ctx);
         if (block) {
@@ -398,6 +539,7 @@ async function piecesFrom(nodes: readonly Node[], marks: MarkState, ctx: BuildCt
       }
     } finally {
       ctx.depth -= 1;
+      ctx.pre = outerPre;
     }
   }
   return pieces;
@@ -615,6 +757,9 @@ async function fromList(element: Element, ctx: BuildCtx, requestedLevel: number)
     }
     const node = child as Element;
     const childTag = tagName(node);
+    if (hiddenElement(node)) {
+      continue;
+    }
     if (childTag !== 'li') {
       if (FLOW_TAGS.has(childTag)) {
         flush();
@@ -638,8 +783,8 @@ async function fromList(element: Element, ctx: BuildCtx, requestedLevel: number)
     }
     const flattened = flattenBlocks(await fromNodes(contentNodes, ctx));
     const content = limitInlines(trimEdges(flattened.inline), TEXT_MAX_CHARS);
-    const blank = isBlank(content);
-    if (!blank || (flattened.extras.length === 0 && nested.length === 0)) {
+    // An item with no text is an empty bullet on the page, so it is left out.
+    if (!isBlank(content)) {
       const length = inlineLength(content);
       if (items.length > 0 && used + length > TEXT_MAX_CHARS) {
         flush();
@@ -831,10 +976,29 @@ async function fromTag(element: Element, ctx: BuildCtx): Promise<Block[]> {
   return fromContainer(element, ctx);
 }
 
+function emptyParagraph(block: Block | undefined): boolean {
+  return block !== undefined && block.type === 'paragraph' && isBlank(block.content);
+}
+
+/** No empty paragraphs at the edges, and never more than one in a row. */
+function collapseEmptyParagraphs(blocks: readonly Block[]): Block[] {
+  const out: Block[] = [];
+  for (const block of blocks) {
+    if (emptyParagraph(block) && (out.length === 0 || emptyParagraph(out[out.length - 1]))) {
+      continue;
+    }
+    out.push(block);
+  }
+  while (emptyParagraph(out[out.length - 1])) {
+    out.pop();
+  }
+  return out;
+}
+
 export async function blocksFromDocument(document: Document, read: HtmlRead): Promise<Block[]> {
-  const ctx: BuildCtx = { ids: read.ids, assets: read.assets, depth: 0, nodes: 0 };
+  const ctx: BuildCtx = { ids: read.ids, assets: read.assets, depth: 0, nodes: 0, pre: false };
   const body = document.body;
   const nodes = body ? nodesOf(body) : nodesOf(document);
-  const blocks = await fromNodes(nodes, ctx);
+  const blocks = collapseEmptyParagraphs(await fromNodes(nodes, ctx));
   return blocks.slice(0, BLOCK_MAX);
 }
