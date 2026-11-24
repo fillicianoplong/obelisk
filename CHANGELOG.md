@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.5] - 2026-11-23
+
+### Fixed
+
+- Paste in the right-click menu, the Edit menu, and the block menu reads the clipboard and inserts it the same way Ctrl+V does. Paste as plain text keeps the words without formatting.
+- Cut and Copy stay enabled when text is selected, including when I right-click right after a drag or a double-click, or open the Edit menu right after Shift+arrow.
+
 ## [0.1.41.4] - 2026-11-23
 
 ### Fixed

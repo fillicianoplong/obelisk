@@ -156,21 +156,17 @@ test('Ctrl+Shift+V and Paste as plain text keep lines without marks', async () =
     assert.equal(view.state.doc.textContent.includes('Bold'), false);
     assert.equal(marksNamed(view, 'Plain line').length, 0);
 
-    view.dom.ownerDocument.execCommand = (command) => {
-      if (command !== 'paste') {
-        return false;
-      }
-      view.dom.dispatchEvent(pasteEvent(view, {
-        html: '<p><b>Hidden</b></p>',
-        text: 'Menu plain',
-      }));
-      return true;
-    };
+    const restoreClipboard = installClipboard({
+      html: '<p><b>Hidden</b></p>',
+      text: 'Menu plain',
+    });
     const ran = editorMenuCommand('edit-paste-plain')(view.state, view.dispatch, view);
     assert.equal(ran, true);
     await flush();
+    await flush();
     assert.equal(view.state.doc.textContent.includes('Menu plain'), true);
     assert.equal(view.state.doc.textContent.includes('Hidden'), false);
+    restoreClipboard();
   } finally {
     view.destroy();
     restore();
@@ -193,18 +189,13 @@ test('Paste from the menu is enabled and uses the sanitizer', async () => {
     assert.equal(edit.entries.find((entry) => entry.id === 'edit-paste').enabled, true);
     assert.equal(edit.entries.find((entry) => entry.id === 'edit-paste-plain').enabled, true);
 
-    view.dom.ownerDocument.execCommand = (command) => {
-      if (command !== 'paste') {
-        return false;
-      }
-      view.dom.dispatchEvent(pasteEvent(view, {
-        html: '<h2>Title</h2><table><tr><td>A</td><td><b>B</b></td></tr></table><img src="https://evil.example/a.png">',
-        text: 'Title',
-      }));
-      return true;
-    };
+    const restoreClipboard = installClipboard({
+      html: '<h2>Title</h2><table><tr><td>A</td><td><b>B</b></td></tr></table><img src="https://evil.example/a.png">',
+      text: 'Title',
+    });
     view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
     editorMenuCommand('edit-paste')(view.state, view.dispatch, view);
+    await flush();
     await flush();
     assert.equal(view.state.doc.child(0).type.name, 'heading');
     assert.equal(view.state.doc.textContent.includes('Title'), true);
@@ -212,6 +203,7 @@ test('Paste from the menu is enabled and uses the sanitizer', async () => {
     assert.equal(view.state.doc.textContent.includes('B'), true);
     assert.equal(view.state.doc.textContent.includes('evil.example'), false);
     assert.deepEqual(marksNamed(view, 'B'), ['bold']);
+    restoreClipboard();
   } finally {
     view.destroy();
     restore();
@@ -291,6 +283,23 @@ function menuItem(entries, id) {
   return entries.find((entry) => entry.id === id);
 }
 
+function installClipboard({ html, text }) {
+  const host = globalThis;
+  const previous = host.window;
+  host.window = {
+    obelisk: {
+      'clipboard:read': () => Promise.resolve({ status: 'ok', html, text }),
+    },
+  };
+  return () => {
+    if (previous === undefined) {
+      delete host.window;
+    } else {
+      host.window = previous;
+    }
+  };
+}
+
 test('Cut and Copy follow the selection and call copy and cut', async () => {
   const { editorMenuCommand, editorMenuCommandEnabled } = await loadRenderer(menuUrl);
   const { liveMenus, liveMenuEntries } = await loadRenderer(applyUrl);
@@ -342,6 +351,50 @@ test('Cut and Copy follow the selection and call copy and cut', async () => {
     assert.equal(applyBlockMenuAction(view.state, 0, 'edit-cut', view.dispatch, view), true);
     assert.deepEqual(commands, ['copy', 'cut', 'copy', 'cut']);
   } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Cut and Copy use the editor selection when the menu snapshot is stale', async () => {
+  const { withLiveEditor } = await loadRenderer(new URL('../../../src/renderer/shell/menus/live-editor.ts', import.meta.url));
+  const { liveMenus } = await loadRenderer(applyUrl);
+  const { pointerInsideTextSelection } = await loadRenderer(
+    new URL('../../../src/renderer/shell/contextmenu/editor-plugin.ts', import.meta.url),
+  );
+  const { view, restore } = await editorView([paragraph('Selected words')]);
+  const previousDocument = globalThis.document;
+  globalThis.document = view.dom.ownerDocument;
+  view.dom.editorView = view;
+  try {
+    const end = 1 + view.state.doc.textContent.length;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, end)));
+    const live = withLiveEditor({
+      documentTab: true,
+      selectionEmpty: true,
+      editorState: null,
+      spelling: true,
+    });
+    assert.equal(live.selectionEmpty, false);
+    const edit = liveMenus(live).find((menu) => menu.id === 'edit');
+    assert.equal(menuItem(edit.entries, 'edit-cut').enabled, true);
+    assert.equal(menuItem(edit.entries, 'edit-copy').enabled, true);
+
+    view.posAtCoords = () => ({ pos: 4, inside: -1 });
+    view.dom.ownerDocument.getSelection = () => ({
+      rangeCount: 0,
+      isCollapsed: true,
+      getRangeAt: () => ({ getClientRects: () => [] }),
+    });
+    assert.equal(pointerInsideTextSelection(view, { clientX: 12, clientY: 12 }), true);
+    view.posAtCoords = () => ({ pos: end + 5, inside: -1 });
+    assert.equal(pointerInsideTextSelection(view, { clientX: 1, clientY: 1 }), false);
+  } finally {
+    if (previousDocument === undefined) {
+      delete globalThis.document;
+    } else {
+      globalThis.document = previousDocument;
+    }
     view.destroy();
     restore();
   }

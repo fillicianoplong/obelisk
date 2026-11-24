@@ -17,6 +17,7 @@ import type {
   SpellAddResult,
   SpellCheckResult,
   SpellSuggestResult,
+  ClipboardReadResult,
   SigDeleteResult,
   SigGetResult,
   SigListResult,
@@ -118,6 +119,7 @@ export function createObeliskApi(ipc: PreloadIpc): ObeliskApi {
     'spell:add': (request) => ipc.invoke('spell:add', request) as Promise<SpellAddResult>,
     'spell:check': (request) => ipc.invoke('spell:check', request) as Promise<SpellCheckResult>,
     'spell:suggest': (request) => ipc.invoke('spell:suggest', request) as Promise<SpellSuggestResult>,
+    'clipboard:read': () => ipc.invoke('clipboard:read') as Promise<ClipboardReadResult>,
     'file:activated': createFileActivatedApi(ipc),
     'spell:context': createSpellContextApi(ipc),
   };

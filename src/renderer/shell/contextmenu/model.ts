@@ -61,6 +61,7 @@ export function blockHandleEntries(options: { omitTurnInto?: boolean } = {}): Me
   const entries: MenuEntry[] = [
     item({ id: 'edit-cut', label: 'Cut', accessKey: 't', shortcut: 'Ctrl+X', command: 'edit-cut' }),
     item({ id: 'edit-copy', label: 'Copy', accessKey: 'c', shortcut: 'Ctrl+C', command: 'edit-copy' }),
+    item({ id: 'edit-paste', label: 'Paste', accessKey: 'p', shortcut: 'Ctrl+V', command: 'edit-paste' }),
     item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+D', command: 'edit-duplicate' }),
     item({ id: 'block-delete', label: 'Delete', accessKey: 'e', command: 'block-delete' }),
   ];

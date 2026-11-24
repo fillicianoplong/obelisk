@@ -181,6 +181,27 @@ async function openGripMenu(client, line = 0) {
   return grip;
 }
 
+test('grip Copy then grip Paste puts the block text on the next line', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  await openGripMenu(client, 0);
+  const copy = await centerOf(client, '.block-menu [data-action="edit-copy"]');
+  assert.ok(copy, 'Copy is in the grip menu');
+  await click(client, copy);
+  await waitState(client, (state) => !state.menuOpen, 'copy closes the grip menu');
+  await openGripMenu(client, 1);
+  const paste = await centerOf(client, '.block-menu [data-action="edit-paste"]');
+  assert.ok(paste, 'Paste is in the grip menu');
+  await click(client, paste);
+  const lines = await poll(async () => {
+    const text = await evaluate(client, `(() => {
+      return [...document.querySelectorAll('[data-region="page-editor"] > p')].map((node) => node.textContent);
+    })()`);
+    return text[1] === 'First line here' ? text : null;
+  }, 'grip Paste replaces the next line');
+  assert.equal(lines[0], 'First line here');
+  assert.equal(lines[1], 'First line here');
+});
+
 test('the add and grip controls stay on their block while the grip menu is open', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
   const grip = await openGripMenu(client, 0);

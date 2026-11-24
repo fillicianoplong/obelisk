@@ -158,3 +158,76 @@ test('the menu bar enables formatting only with a selection and runs Insert', { 
   const afterInsert = await waitForState(client, (state) => state.blocks >= 2, 'Insert > Heading 1 adds a block');
   assert.ok(afterInsert.blocks >= 2);
 });
+
+test('Shift+arrow then the Edit menu enables Cut immediately', { timeout: 60_000 }, async (t) => {
+  const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-menu-shift-'));
+  const session = { child: undefined, client: undefined, userDataDir };
+  bindLaunchedApp(t, session);
+  const port = await freePort();
+  session.child = await launchWithSandboxFallback({
+    binary: electronBinary(),
+    args: ['.', `--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`],
+    ready(running) {
+      return waitFor(
+        running,
+        async () => {
+          const pages = (await debuggerTargets(port)).filter((target) => target.type === 'page');
+          if (pages.length !== 1 || pages[0].title !== 'Obelisk') {
+            return null;
+          }
+          const client = await openPage(port, session);
+          return evaluate(client, READY);
+        },
+        20_000,
+      );
+    },
+  });
+  const client = await openPage(port, session);
+  await client.send('Page.bringToFront');
+  await evaluate(
+    client,
+    `(() => {
+      const editor = document.querySelector('[data-region="page-editor"]');
+      editor.editorCommands.insertText('Bold me');
+      editor.editorCommands.setSelection(2, 2);
+      editor.focus();
+    })()`,
+  );
+  const point = await evaluate(client, `(() => {
+    const rect = document.querySelector('[data-region="page-editor"]').getBoundingClientRect();
+    return { x: Math.round(rect.left + 30), y: Math.round(rect.top + 16) };
+  })()`);
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none', clickCount: 0 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  await evaluate(client, `(() => {
+    const editor = document.querySelector('[data-region="page-editor"]');
+    editor.editorCommands.setSelection(2, 2);
+    editor.focus();
+  })()`);
+  async function extendWithShiftArrow() {
+    await client.send('Input.dispatchKeyEvent', {
+      type: 'keyDown', key: 'Shift', code: 'ShiftLeft', windowsVirtualKeyCode: 16, nativeVirtualKeyCode: 16, modifiers: 8,
+    });
+    for (let step = 0; step < 4; step += 1) {
+      await pressKey(client, 'ArrowRight', 'ArrowRight', 39, 8);
+    }
+    await client.send('Input.dispatchKeyEvent', {
+      type: 'keyUp', key: 'Shift', code: 'ShiftLeft', windowsVirtualKeyCode: 16, nativeVirtualKeyCode: 16, modifiers: 0,
+    });
+    return evaluate(client, `document.querySelector('[data-region="page-editor"]').editorCommands.selection()`);
+  }
+  let selected = await extendWithShiftArrow();
+  if (selected.empty) {
+    await evaluate(client, `(() => {
+      const editor = document.querySelector('[data-region="page-editor"]');
+      editor.editorCommands.setSelection(2, 2);
+      editor.focus();
+    })()`);
+    selected = await extendWithShiftArrow();
+  }
+  assert.equal(selected.empty, false, `Shift+arrow selection: ${JSON.stringify(selected)}`);
+  await pressChord(client, 'e', 'KeyE', 69);
+  const edit = await waitForState(client, (state) => state.cut?.disabled === null, 'Cut is enabled right after Shift+arrow');
+  assert.equal(edit.cut.disabled, null);
+});

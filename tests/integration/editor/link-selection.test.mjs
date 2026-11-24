@@ -371,6 +371,81 @@ test('right-click inside a selection enables Cut and Copy', { timeout: 60_000 },
   assert.equal(afterCut.selection.from, selected.selection.from);
 });
 
+async function dragSelectFast(client, line, from, to) {
+  const a = await pointAt(client, line, from);
+  const b = await pointAt(client, line, to);
+  await mouse(client, 'mouseMoved', a);
+  await mouse(client, 'mousePressed', a, 'left');
+  await mouse(client, 'mouseMoved', b, 'left');
+  await mouse(client, 'mouseReleased', b, 'left');
+  return { a, b };
+}
+
+async function doubleClick(client, point) {
+  await mouse(client, 'mouseMoved', point);
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1,
+  });
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1,
+  });
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 2,
+  });
+  await client.send('Input.dispatchMouseEvent', {
+    type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 2,
+  });
+}
+
+test('a drag then an immediate right-click keeps Cut and Copy enabled', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const { a, b } = await dragSelectFast(client, 0, 8, 13);
+  const mid = { x: Math.round((a.x + b.x) / 2), y: a.y };
+  await rightClick(client, mid);
+  await waitState(client, (state) => state.contextOpen && state.selection.to > state.selection.from, 'selection survives the right-click');
+  const copyItem = await menuItemBox(client, 'edit-copy');
+  const cutItem = await menuItemBox(client, 'edit-cut');
+  assert.equal(copyItem.disabled, null);
+  assert.equal(cutItem.disabled, null);
+});
+
+test('a double-click then an immediate right-click keeps Cut and Copy enabled', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const point = await pointAt(client, 1, 3);
+  await doubleClick(client, point);
+  await rightClick(client, point);
+  await waitState(client, (state) => state.contextOpen && state.selection.to - state.selection.from > 1, 'double-click selection stays');
+  const copyItem = await menuItemBox(client, 'edit-copy');
+  const cutItem = await menuItemBox(client, 'edit-cut');
+  assert.equal(copyItem.disabled, null);
+  assert.equal(cutItem.disabled, null);
+});
+
+test('Copy from the menu and Paste from the menu round-trip the text', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const { a, b } = await dragSelect(client, 0, 8, 13);
+  const mid = { x: Math.round((a.x + b.x) / 2), y: a.y };
+  await rightClick(client, mid);
+  await waitState(client, (state) => state.contextOpen, 'copy menu open');
+  const copyItem = await menuItemBox(client, 'edit-copy');
+  assert.equal(copyItem.disabled, null);
+  await click(client, copyItem);
+  await waitState(client, (state) => state.contextOpen === false, 'copy menu closed');
+  const caret = await pointAt(client, 2, 0);
+  await click(client, caret);
+  await rightClick(client, caret);
+  await waitState(client, (state) => state.contextOpen, 'paste menu open');
+  const pasteItem = await menuItemBox(client, 'edit-paste');
+  assert.equal(pasteItem.disabled, null);
+  await click(client, pasteItem);
+  const pasted = await waitState(
+    client,
+    (state) => state.contextOpen === false && state.lines[2].includes('notes'),
+    'menu Paste inserts the copied text',
+  );
+  assert.equal(pasted.lines[2].includes('notes'), true);
+});
+
 test('Cut and Copy stay disabled when nothing is selected', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
   const point = await pointAt(client, 1, 12);

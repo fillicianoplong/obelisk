@@ -240,6 +240,10 @@ export interface SpellContextEvent {
   suggestions: string[];
 }
 
+export type ClipboardReadResult =
+  | { status: 'ok'; text: string; html: string }
+  | IpcErrorResult;
+
 export interface RequestMap {
   'file:open': void;
   'file:save': FileSaveRequest;
@@ -261,6 +265,7 @@ export interface RequestMap {
   'spell:add': SpellAddRequest;
   'spell:check': SpellCheckRequest;
   'spell:suggest': SpellSuggestRequest;
+  'clipboard:read': void;
 }
 
 export interface ResultMap {
@@ -284,6 +289,7 @@ export interface ResultMap {
   'spell:add': SpellAddResult;
   'spell:check': SpellCheckResult;
   'spell:suggest': SpellSuggestResult;
+  'clipboard:read': ClipboardReadResult;
 }
 
 export type IpcDispatchResult = ResultMap[keyof ResultMap];

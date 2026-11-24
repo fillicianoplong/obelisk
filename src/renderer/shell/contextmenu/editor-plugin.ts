@@ -10,6 +10,7 @@ import {
 import { suggestWord } from '../../editor/spell/client.js';
 import { spanAt, wordSpans } from '../../editor/spell/ranges.js';
 import { spellcheckEnabled } from '../../editor/spellcheck-mode.js';
+import { noteLiveSelection } from '../menus/live-editor.js';
 import { resetPageFocusToPointer } from '../page-focus.js';
 import type { SpellingTarget } from '../spellcheck/context.js';
 import {
@@ -51,18 +52,20 @@ export function pointerInsideTextSelection(view: EditorView, event: MouseEvent):
   } catch {
     hit = null;
   }
-  if (hit === null || hit.pos < selection.from || hit.pos > selection.to) {
-    return false;
+  const posInside = hit !== null && hit.pos >= selection.from && hit.pos <= selection.to;
+  // The editor range and the painted boxes can disagree for a moment after a drag
+  // or a double-click. Either one is enough to keep the selection.
+  if (posInside) {
+    return true;
   }
   const domSelection = view.dom.ownerDocument.getSelection();
   if (domSelection === null || domSelection.rangeCount === 0) {
-    return true;
+    return false;
   }
-  // posAtCoords rounds to the nearest gap, so also check the selected text boxes.
   const rects = [...domSelection.getRangeAt(0).getClientRects()];
-  return rects.length === 0 || rects.some((rect) => (
-    event.clientX >= rect.left - 1 && event.clientX <= rect.right + 1
-    && event.clientY >= rect.top - 1 && event.clientY <= rect.bottom + 1
+  return rects.some((rect) => (
+    event.clientX >= rect.left - 2 && event.clientX <= rect.right + 2
+    && event.clientY >= rect.top - 2 && event.clientY <= rect.bottom + 2
   ));
 }
 
@@ -208,6 +211,7 @@ export function contextMenuEditorPlugin(tabId: string) {
     props: {
       handleDOMEvents: {
         contextmenu(view, event) {
+          noteLiveSelection();
           if (selectedBlockRange(view.state) === null && !pointerInsideTextSelection(view, event)) {
             try {
               view.dispatch(textSelectionForEditorPointer(view, event));
@@ -232,6 +236,7 @@ export function contextMenuEditorPlugin(tabId: string) {
           return false;
         }
         event.preventDefault();
+        noteLiveSelection();
         const anchor = anchorFromKeyboard(view);
         const target = resolveContextTarget(view, anchor.x, anchor.y, null, true);
         lockGutterForBlockMenu(view, target);

@@ -49,6 +49,7 @@ const TURN_BY_ID = new Map(TURN_INTO.map((action) => [action.id, action]));
 export const BLOCK_MENU_ACTIONS: readonly BlockMenuAction[] = [
   { id: 'edit-cut', label: 'Cut', shortcut: 'Ctrl+X' },
   { id: 'edit-copy', label: 'Copy', shortcut: 'Ctrl+C' },
+  { id: 'edit-paste', label: 'Paste', shortcut: 'Ctrl+V' },
   { id: 'edit-duplicate', label: 'Duplicate', shortcut: 'Ctrl+D' },
   { id: 'block-delete', label: 'Delete' },
   ...TURN_INTO.map(({ id, label }) => ({ id, label })),

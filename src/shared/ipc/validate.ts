@@ -94,6 +94,8 @@ export function parseInvokeRequest(channel: InvokeChannel, args: readonly unknow
       return parsed(parseSpellCheck(args));
     case 'spell:suggest':
       return parsed(parseSpellSuggest(args));
+    case 'clipboard:read':
+      return args.length === 0 ? { ok: true, request: undefined } : { ok: false };
     default: {
       const neverChannel: never = channel;
       return neverChannel;

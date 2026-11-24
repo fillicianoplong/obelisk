@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { liveMenuEntries, type LiveMenuContext } from '../menus/apply.js';
+import { noteLiveSelection, withLiveEditor } from '../menus/live-editor.js';
 import {
   keyboardOpenContextMenu,
   pointerActivate,
@@ -97,18 +98,19 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
   onCommandRef.current = onCommand;
 
   const targetKind = open?.target.kind ?? 'text';
+  const shownContext = open === null ? menuContext : withLiveEditor(menuContext);
   const entries = useMemo(() => {
     try {
       const spelling = open?.target.spelling ?? null;
       return liveMenuEntries(
         withSpellingSuggestions(composeContextMenu(targetKind), spelling),
-        menuContext,
+        shownContext,
       );
     } catch (error) {
       console.error('[obelisk:context-menu] failed to compose menu entries', error);
       return [];
     }
-  }, [menuContext, open?.target.spelling, targetKind]);
+  }, [open?.target.spelling, shownContext, targetKind]);
 
   const menus: readonly AppMenu[] = useMemo(() => {
     if (entries.length === 0) {
@@ -160,6 +162,7 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
       if (detail.tabId !== tabId) {
         return;
       }
+      noteLiveSelection();
       rememberSpellingTarget(detail.spelling ?? null);
       const opened = detail.keyboard
         ? keyboardOpenContextMenu(CONTEXT_MENU_ID)

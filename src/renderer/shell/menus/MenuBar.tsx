@@ -16,10 +16,12 @@ import {
 } from './keyboard.js';
 import type { MenuResult, MenuSession } from './keyboard.js';
 import { focusMenuItemId, MenuItems, MenuText } from './MenuTree.js';
+import { liveMenus, type LiveMenuContext } from './apply.js';
+import { noteLiveSelection, withLiveEditor } from './live-editor.js';
 import type { AppMenu } from './model.js';
 
 interface MenuBarProps {
-  menus: readonly AppMenu[];
+  menuContext: LiveMenuContext;
   onCommand: (command: string) => void;
 }
 
@@ -63,15 +65,21 @@ function topTabIndex(menuId: string, session: MenuSession, index: number): 0 | -
   return index === 0 ? 0 : -1;
 }
 
-export function MenuBar({ menus, onCommand }: MenuBarProps) {
+export function MenuBar({ menuContext, onCommand }: MenuBarProps) {
   const [session, setSession] = useState<MenuSession>(initialMenuSession);
   const sessionRef = useRef(session);
   sessionRef.current = session;
+  const menuContextRef = useRef(menuContext);
+  menuContextRef.current = menuContext;
   const barRef = useRef<HTMLElement>(null);
   const outsideFocus = useRef<HTMLElement | null>(null);
   const pendingRestore = useRef(false);
   const onCommandRef = useRef(onCommand);
   onCommandRef.current = onCommand;
+
+  function menusNow(): readonly AppMenu[] {
+    return liveMenus(withLiveEditor(menuContextRef.current));
+  }
 
   function applyResult(result: MenuResult) {
     if (result.command !== null) {
@@ -95,7 +103,12 @@ export function MenuBar({ menus, onCommand }: MenuBarProps) {
         return;
       }
       noteOutsideFocus(barRef.current, outsideFocus);
-      const result = reduceMenuKey(menus, sessionRef.current, {
+      const session = sessionRef.current;
+      const menuOpening = event.altKey || event.key === 'Alt' || (event.key === 'F10' && !event.shiftKey);
+      if (menuOpening || session.menuId !== null || session.keyboard) {
+        noteLiveSelection();
+      }
+      const result = reduceMenuKey(menusNow(), session, {
         type: event.type === 'keyup' ? 'keyup' : 'keydown',
         key: event.key,
         altKey: event.altKey,
@@ -115,7 +128,7 @@ export function MenuBar({ menus, onCommand }: MenuBarProps) {
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keyup', onKey, true);
     };
-  }, [menus]);
+  }, [menuContext]);
 
   useLayoutEffect(() => {
     // Focus after the key event. Doing it in the key listener runs before the
@@ -195,6 +208,7 @@ export function MenuBar({ menus, onCommand }: MenuBarProps) {
   }
 
   const showKeys = accessKeysVisible(session);
+  const menus = menusNow();
 
   return (
     <header
@@ -229,6 +243,7 @@ export function MenuBar({ menus, onCommand }: MenuBarProps) {
               aria-controls={open ? `menu-panel-${menu.id}` : undefined}
               data-menu={menu.id}
               onClick={() => {
+                noteLiveSelection();
                 applyResult(pointerToggleMenu(sessionRef.current, menu.id));
               }}
             >
@@ -242,10 +257,11 @@ export function MenuBar({ menus, onCommand }: MenuBarProps) {
                 depth={0}
                 panels={session.panels}
                 onActivate={(itemId) => {
-                  applyResult(pointerActivate(menus, sessionRef.current, itemId));
+                  noteLiveSelection();
+                  applyResult(pointerActivate(menusNow(), sessionRef.current, itemId));
                 }}
                 onHoverItem={(itemId) => {
-                  applyResult(pointerHoverItem(menus, sessionRef.current, itemId));
+                  applyResult(pointerHoverItem(menusNow(), sessionRef.current, itemId));
                 }}
               />
             ) : null}

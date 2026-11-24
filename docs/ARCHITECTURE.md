@@ -282,6 +282,7 @@ Spike S-05 also tried an existing `.obk` name with a Word `.docx` filter. Window
 | `spell:check` | R to M | Words | ok with the misspelled words from the bundled dictionary |
 | `spell:suggest` | R to M | Word | ok with whether it is misspelled and up to five suggestions |
 | `spell:context` | M to R | Misspelled word and its suggestions from the context-menu event. The text menu waits for this event before it opens | None |
+| `clipboard:read` | R to M | None | ok with the clipboard text and HTML. Menu Paste runs that through the same sanitizer as Ctrl+V |
 
 R to M: renderer to main. M to R: main to renderer. Every error carries a code, a message, and retryable. Handles and IDs are made by main and looked up in its own lists; the renderer never sends a path.
 

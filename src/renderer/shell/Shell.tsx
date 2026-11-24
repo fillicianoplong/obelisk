@@ -9,7 +9,6 @@ import { spellingSuggestionAt, spellingWordToAdd, startSpellContextListener } fr
 import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from '../../shared/ipc/types.js';
 import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
-import { liveMenus } from './menus/apply.js';
 import { ContextMenu } from './contextmenu/ContextMenu.js';
 import { MenuBar } from './menus/MenuBar.js';
 import { PageArea } from './PageArea.js';
@@ -627,8 +626,6 @@ export function Shell() {
     };
   }, [activeTab, spellingOn]);
 
-  const menus = useMemo(() => liveMenus(menuContext), [menuContext]);
-
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
       setTabs((current) => {
@@ -771,7 +768,7 @@ export function Shell() {
       <ThemeSync />
       <FocusCycle />
       <TitleBar />
-      <MenuBar menus={menus} onCommand={onMenuCommand} />
+      <MenuBar menuContext={menuContext} onCommand={onMenuCommand} />
       {activeTab.kind !== 'settings' ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}

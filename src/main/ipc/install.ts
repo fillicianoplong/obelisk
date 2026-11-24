@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron';
 import { SpellHost } from '../spell/utility-host.js';
 import { readInUtilityProcess } from '../codec/utility-host.js';
 import { createFileService } from '../file/service.js';
@@ -6,6 +6,7 @@ import { pickOpenDialogOwner, type OpenDialogOptions } from '../file/openDialog.
 import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '../file/saveDialog.js';
 import { ipcError } from '../../shared/ipc/errors.js';
 import { openAllowedLink } from '../security/links.js';
+import { readClipboardItems } from '../clipboard/read.js';
 import { readSpellingSetting, writeSpellingSetting } from '../settings.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
@@ -91,6 +92,17 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
       return { status: 'ok', misspelled };
     } catch {
       return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
+    }
+  });
+  registry.setHandler('clipboard:read', async () => {
+    try {
+      const [plain, items] = await Promise.all([
+        clipboard.readText().catch(() => ''),
+        clipboard.read().catch(() => []),
+      ]);
+      return { status: 'ok', ...(await readClipboardItems(items, plain)) };
+    } catch {
+      return ipcError('EACCES', 'The clipboard could not be read.');
     }
   });
   registry.setHandler('spell:suggest', async (request) => {

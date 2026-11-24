@@ -1032,7 +1032,7 @@ Composition rule: every block shows the block-handle menu plus its own items. Ev
 | Menu | Base | Own items |
 |---|---|---|
 | Text | - | Spelling suggestions, or the suggestions and Add to dictionary for a misspelled word; Cut; Copy; Paste; Paste as plain text; Link…; Clear formatting |
-| Block handle | - | Cut; Copy; Duplicate; Delete; Turn into; Insert above; Insert below; Move up; Move down |
+| Block handle | - | Cut; Copy; Paste; Duplicate; Delete; Turn into; Insert above; Insert below; Move up; Move down |
 | Table cell | Block handle | Insert row above or below; Insert column left or right; Delete row; Delete column; Sort ascending; Sort descending; Header row |
 | Image | Block handle | Alt text…; Rotate left; Rotate right; Flip horizontal; Flip vertical; Draw on image; Reset size; Replace… |
 | Equation block | Block handle | Edit LaTeX; Copy LaTeX |

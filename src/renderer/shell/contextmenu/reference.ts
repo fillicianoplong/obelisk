@@ -12,6 +12,7 @@ export const CONTEXT_MENU_REFERENCE: Readonly<Record<string, readonly string[]>>
   'Block handle': [
     'Cut',
     'Copy',
+    'Paste',
     'Duplicate',
     'Delete',
     'Turn into',

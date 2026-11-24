@@ -1,14 +1,12 @@
 import { Fragment, Slice, type Node as ProseNode } from 'prosemirror-model';
 import { Plugin, type Command } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import type { JsonObject } from '../../shared/ipc/types.js';
+import type { ClipboardReadResult, JsonObject } from '../../shared/ipc/types.js';
 import type { Block, BodyInline } from '../../shared/schema/types.js';
 import { newBlockId } from '../editor/block-id.js';
 import { blockNodeFromJson } from '../editor/schema/mapping.js';
 import { parseDetachedHtml, sanitizePaste } from './sanitize.js';
 import type { PasteInput } from './types.js';
-
-let plainRequested = false;
 
 const PARAGRAPH = {
   align: 'left',
@@ -181,10 +179,8 @@ export function editorPastePlugin(): Plugin {
       handleDOMEvents: {
         paste(view, event) {
           const shiftKey = 'shiftKey' in event && event.shiftKey === true;
-          const plain = plainRequested || shiftKey;
-          plainRequested = false;
           event.preventDefault();
-          void pasteFromEvent(view, event, plain);
+          void pasteFromEvent(view, event, shiftKey);
           return true;
         },
       },
@@ -192,23 +188,39 @@ export function editorPastePlugin(): Plugin {
   });
 }
 
-/** Edit and context menu Paste. The editor's paste event does the sanitizing. */
+function readMenuClipboard(): Promise<ClipboardReadResult> | null {
+  const host = globalThis as typeof globalThis & { window?: Window };
+  const read = host.window?.obelisk?.['clipboard:read'];
+  if (typeof read !== 'function') {
+    return null;
+  }
+  return read();
+}
+
+/** Edit, context, and block menu Paste. Main reads the clipboard; the sanitizer inserts it. */
 export function pasteMenuCommand(plain: boolean): Command {
   return (_state, dispatch, view) => {
     if (!dispatch || !view) {
       return true;
     }
-    plainRequested = plain;
-    view.focus();
-    let ran: boolean;
-    try {
-      ran = view.dom.ownerDocument.execCommand('paste') === true;
-    } catch {
-      ran = false;
+    const target = view;
+    const read = readMenuClipboard();
+    if (read === null) {
+      return true;
     }
-    if (!ran) {
-      plainRequested = false;
-    }
+    void read.then((result) => {
+      if (target.isDestroyed || result.status !== 'ok') {
+        return;
+      }
+      target.focus();
+      void applySanitizedPaste(target, {
+        html: result.html,
+        text: result.text,
+        plain,
+      });
+    }).catch(() => {
+      // A clipboard the page cannot read leaves the document unchanged.
+    });
     return true;
   };
 }
