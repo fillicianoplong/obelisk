@@ -74,6 +74,7 @@ const STATE = `(() => {
       address: dialog.querySelector('[data-link-address]').value,
     } : null,
     menu: [...document.querySelectorAll('[role="menuitem"]')].map((item) => item.textContent),
+    contextOpen: document.querySelector('[data-region="context-menu"]') !== null,
   };
 })()`;
 
@@ -290,4 +291,97 @@ test('with no selection, Ctrl+K still inserts a new link at the caret', { timeou
   const done = await waitState(client, (state) => state.dialog === null && state.links.length === 1, 'OK inserts a link');
   assert.equal(done.links[0].text, 'site ');
   assert.equal(done.lines[1], 'Download it site and run it.');
+});
+
+function menuItemBox(client, id) {
+  return evaluate(client, `(() => {
+    const node = document.querySelector('[data-region="context-menu"] [data-item="${id}"]');
+    if (!node) {
+      return null;
+    }
+    const rect = node.getBoundingClientRect();
+    return {
+      x: Math.round(rect.left + rect.width / 2),
+      y: Math.round(rect.top + rect.height / 2),
+      disabled: node.getAttribute('aria-disabled'),
+    };
+  })()`);
+}
+
+async function rememberClipboard(client) {
+  await evaluate(client, `(() => {
+    window.__copiedText = '';
+    if (window.__copyListener) {
+      return true;
+    }
+    const save = (event) => {
+      const text = event.clipboardData ? event.clipboardData.getData('text/plain') : '';
+      if (text) {
+        window.__copiedText = text;
+      }
+    };
+    document.addEventListener('copy', save);
+    document.addEventListener('cut', save);
+    window.__copyListener = true;
+    return true;
+  })()`);
+}
+
+function copiedText(client) {
+  return evaluate(client, `window.__copiedText || ''`);
+}
+
+async function rightClick(client, point) {
+  await mouse(client, 'mouseMoved', point);
+  await mouse(client, 'mousePressed', point, 'right');
+  await mouse(client, 'mouseReleased', point, 'right');
+}
+
+test('right-click inside a selection enables Cut and Copy', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  await rememberClipboard(client);
+  const { a, b } = await dragSelect(client, 0, 8, 13);
+  const selected = await waitState(client, (state) => state.selection.to - state.selection.from === 5, 'drag selects notes');
+  const mid = { x: Math.round((a.x + b.x) / 2), y: a.y };
+  await rightClick(client, mid);
+  await waitState(client, (state) => state.menu.some((label) => label.startsWith('Copy')), 'right-click menu shows Copy');
+  const kept = await evaluate(client, STATE);
+  assert.deepEqual(kept.selection, selected.selection, 'the right-click keeps the selection');
+  const copyItem = await menuItemBox(client, 'edit-copy');
+  const cutItem = await menuItemBox(client, 'edit-cut');
+  assert.equal(copyItem.disabled, null);
+  assert.equal(cutItem.disabled, null);
+  await click(client, copyItem);
+  await waitState(client, (state) => state.contextOpen === false, 'Copy closes the menu');
+  assert.equal(await copiedText(client), 'notes');
+  const afterCopy = await evaluate(client, STATE);
+  assert.equal(afterCopy.lines[0], 'Install notes');
+
+  const start = await pointAt(client, 0, 8);
+  const end = await pointAt(client, 0, 13);
+  await rightClick(client, { x: Math.round((start.x + end.x) / 2), y: start.y });
+  await waitState(client, (state) => state.menu.some((label) => label.startsWith('Cut')), 'right-click menu shows Cut');
+  const cutAgain = await menuItemBox(client, 'edit-cut');
+  assert.equal(cutAgain.disabled, null);
+  await evaluate(client, `window.__copiedText = ''`);
+  await click(client, cutAgain);
+  const afterCut = await waitState(client, (state) => state.lines[0] === 'Install ', 'Cut removes the selection');
+  assert.equal(await copiedText(client), 'notes');
+  assert.equal(afterCut.selection.from, afterCut.selection.to);
+  assert.equal(afterCut.selection.from, selected.selection.from);
+});
+
+test('Cut and Copy stay disabled when nothing is selected', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const point = await pointAt(client, 1, 12);
+  await click(client, point);
+  await waitState(client, (state) => state.selection.from === state.selection.to, 'caret placed');
+  await rightClick(client, point);
+  await waitState(client, (state) => state.menu.some((label) => label.startsWith('Copy')), 'right-click menu shows Copy');
+  const copyItem = await menuItemBox(client, 'edit-copy');
+  const cutItem = await menuItemBox(client, 'edit-cut');
+  assert.equal(copyItem.disabled, 'true');
+  assert.equal(cutItem.disabled, 'true');
+  const caret = await evaluate(client, STATE);
+  assert.equal(caret.selection.from, caret.selection.to);
 });

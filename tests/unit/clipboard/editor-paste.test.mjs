@@ -10,6 +10,8 @@ const stateUrl = new URL('../../../src/renderer/editor/state.ts', import.meta.ur
 const mappingUrl = new URL('../../../src/renderer/editor/schema/mapping.ts', import.meta.url);
 const menuUrl = new URL('../../../src/renderer/editor/menu-commands.ts', import.meta.url);
 const applyUrl = new URL('../../../src/renderer/shell/menus/apply.ts', import.meta.url);
+const contextMenuUrl = new URL('../../../src/renderer/shell/contextmenu/model.ts', import.meta.url);
+const gutterUrl = new URL('../../../src/renderer/editor/block-gutter.ts', import.meta.url);
 
 function id(n) {
   return `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -279,6 +281,66 @@ test('Ctrl+V into a code block keeps the newlines and tabs exactly', async () =>
     assert.equal(view.state.doc.childCount, 1);
     assert.equal(view.state.doc.child(0).type.name, 'code_block');
     assert.equal(view.state.doc.child(0).textContent, CODE);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+function menuItem(entries, id) {
+  return entries.find((entry) => entry.id === id);
+}
+
+test('Cut and Copy follow the selection and call copy and cut', async () => {
+  const { editorMenuCommand, editorMenuCommandEnabled } = await loadRenderer(menuUrl);
+  const { liveMenus, liveMenuEntries } = await loadRenderer(applyUrl);
+  const { composeContextMenu } = await loadRenderer(contextMenuUrl);
+  const { applyBlockMenuAction, blockMenuActionEnabled } = await loadRenderer(gutterUrl);
+  const { view, restore } = await editorView([paragraph('Selected words')]);
+  try {
+    const emptyContext = {
+      documentTab: true,
+      selectionEmpty: true,
+      editorState: view.state,
+    };
+    const emptyEdit = liveMenus(emptyContext).find((menu) => menu.id === 'edit');
+    assert.equal(menuItem(emptyEdit.entries, 'edit-cut').enabled, false);
+    assert.equal(menuItem(emptyEdit.entries, 'edit-copy').enabled, false);
+    const emptyMenu = liveMenuEntries(composeContextMenu('text'), emptyContext);
+    assert.equal(menuItem(emptyMenu, 'edit-cut').enabled, false);
+    assert.equal(menuItem(emptyMenu, 'edit-copy').enabled, false);
+    assert.equal(editorMenuCommandEnabled(view.state, 'edit-cut'), false);
+    assert.equal(editorMenuCommandEnabled(view.state, 'edit-copy'), false);
+    assert.equal(blockMenuActionEnabled(view.state, 0, 'edit-cut'), true);
+    assert.equal(blockMenuActionEnabled(view.state, 0, 'edit-copy'), true);
+
+    const end = 1 + view.state.doc.textContent.length;
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, end)));
+    const selectedContext = {
+      documentTab: true,
+      selectionEmpty: false,
+      editorState: view.state,
+    };
+    const edit = liveMenus(selectedContext).find((menu) => menu.id === 'edit');
+    assert.equal(menuItem(edit.entries, 'edit-cut').enabled, true);
+    assert.equal(menuItem(edit.entries, 'edit-copy').enabled, true);
+    const context = liveMenuEntries(composeContextMenu('text'), selectedContext);
+    assert.equal(menuItem(context, 'edit-cut').enabled, true);
+    assert.equal(menuItem(context, 'edit-copy').enabled, true);
+    assert.equal(editorMenuCommandEnabled(view.state, 'edit-cut'), true);
+    assert.equal(editorMenuCommandEnabled(view.state, 'edit-copy'), true);
+
+    const commands = [];
+    view.focus = () => {};
+    view.dom.ownerDocument.execCommand = (command) => {
+      commands.push(command);
+      return true;
+    };
+    assert.equal(editorMenuCommand('edit-copy')(view.state, view.dispatch, view), true);
+    assert.equal(editorMenuCommand('edit-cut')(view.state, view.dispatch, view), true);
+    assert.equal(applyBlockMenuAction(view.state, 0, 'edit-copy', view.dispatch, view), true);
+    assert.equal(applyBlockMenuAction(view.state, 0, 'edit-cut', view.dispatch, view), true);
+    assert.deepEqual(commands, ['copy', 'cut', 'copy', 'cut']);
   } finally {
     view.destroy();
     restore();

@@ -1036,7 +1036,7 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     }
     applyBlockMenuAction(view.state, blockIndex, actionId, (tr) => {
       view.dispatch(tr);
-    });
+    }, view);
     closeMenu(true);
   };
 

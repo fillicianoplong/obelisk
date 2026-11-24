@@ -1,7 +1,7 @@
 import type { Node as ProseNode } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorState, Transaction } from 'prosemirror-state';
-import { Decoration } from 'prosemirror-view';
+import { Decoration, type EditorView } from 'prosemirror-view';
 import { caretInsideBlock, createTextBlockNode } from './block-commands.js';
 import { newBlockId } from './block-id.js';
 import {
@@ -102,9 +102,6 @@ export function blockMenuActionEnabled(
   if (blockIndex < 0 || blockIndex >= state.doc.childCount) {
     return false;
   }
-  if (actionId === 'edit-cut' || actionId === 'edit-copy') {
-    return false;
-  }
   if (actionId === 'block-move-up') {
     return blockIndex > 0;
   }
@@ -178,6 +175,7 @@ export function applyBlockMenuAction(
   blockIndex: number,
   actionId: string,
   dispatch?: (tr: Transaction) => void,
+  view?: EditorView,
 ): boolean {
   if (!blockMenuActionEnabled(state, blockIndex, actionId)) {
     return false;
@@ -211,7 +209,7 @@ export function applyBlockMenuAction(
   if (command === null) {
     return false;
   }
-  return command(state, dispatch);
+  return command(state, dispatch, view);
 }
 
 function caretInEmptyHintBlock(state: EditorState): number | null {

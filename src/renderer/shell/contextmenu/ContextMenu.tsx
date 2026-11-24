@@ -60,6 +60,10 @@ function pageEditor(): HTMLElement | null {
   return page instanceof HTMLElement ? page : null;
 }
 
+function keepsEditedSelection(id: string): boolean {
+  return id === 'edit-cut' || id.startsWith('spell-replace:');
+}
+
 function restoreEditorFocus(tabId: string, target: ContextMenuRequestDetail, keepSelection: boolean): void {
   dispatchContextMenuRestoreFocus({
     tabId,
@@ -135,7 +139,8 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
         ) {
           active.blur();
         }
-        restoreEditorFocus(tabId, current.target, result.command?.startsWith('spell-replace:') === true);
+        const keepSelection = result.command !== null && keepsEditedSelection(result.command);
+        restoreEditorFocus(tabId, current.target, keepSelection);
         finishContextMenuClose();
       }
       setOpen(null);

@@ -44,11 +44,13 @@ const SNAPSHOT = `(() => {
   const snapshot = commands ? commands.blockSnapshot() : [];
   const blocks = Array.isArray(snapshot) ? snapshot.length : 0;
   const hasBold = Boolean(editor && editor.querySelector('strong'));
+  const text = editor ? editor.textContent : '';
   return {
     cut: item('edit-cut'),
     bold: item('format-bold'),
     blocks,
     hasBold,
+    text,
   };
 })()`;
 
@@ -128,19 +130,21 @@ test('the menu bar enables formatting only with a selection and runs Insert', { 
     client,
     `(() => {
       const editor = document.querySelector('[data-region="page-editor"]');
-      editor.editorCommands.setSelection(1, 5);
+      editor.editorCommands.setSelection(1, 8);
     })()`,
   );
   await pressChord(client, 'e', 'KeyE', 69);
+  await waitForState(client, (state) => state.cut?.disabled === null, 'Cut is enabled with a selection');
   await pressKey(client, 't', 'KeyT', 84);
-  const cutFocused = await waitForState(client, (state) => state.cut?.disabled === 'true', 'Cut stays disabled without a handler');
-  assert.equal(cutFocused.cut.disabled, 'true');
+  await waitForState(client, (state) => state.text.trim() === '', 'Edit > Cut removes the selection');
 
   await evaluate(
     client,
     `(() => {
       const editor = document.querySelector('[data-region="page-editor"]');
+      editor.editorCommands.insertText('Bold me');
       editor.editorCommands.setSelection(1, 5);
+      editor.focus();
     })()`,
   );
   await pressChord(client, 'o', 'KeyO', 79);
