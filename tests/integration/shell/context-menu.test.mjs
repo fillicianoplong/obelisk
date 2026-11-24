@@ -659,3 +659,40 @@ test('outside click then Escape on the block menu leaves no page focus ring', { 
   assert.equal(focus.activeIsEditor, true);
   assert.equal(focus.editorFocusSource, null);
 });
+
+test('resize and a window blur close the context menu where it opened', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  await evaluate(client, `(() => {
+    const editor = document.querySelector('[data-region="page-editor"]');
+    editor.focus();
+    editor.editorCommands.replaceText('Close me');
+  })()`);
+  const point = await editorPoint(client, 'paragraph');
+  await rightClick(client, point);
+  await waitForMenu(client, (state) => state.open, 'menu open');
+  const before = await evaluate(client, `(() => {
+    const host = document.querySelector('[data-region="context-menu"]');
+    return {
+      left: host.style.getPropertyValue('--context-menu-left'),
+      top: host.style.getPropertyValue('--context-menu-top'),
+    };
+  })()`);
+  await sleep(80);
+  const afterHover = await evaluate(client, `(() => {
+    const host = document.querySelector('[data-region="context-menu"]');
+    const item = host.querySelector('.menu-item');
+    item.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    return {
+      left: host.style.getPropertyValue('--context-menu-left'),
+      top: host.style.getPropertyValue('--context-menu-top'),
+    };
+  })()`);
+  assert.equal(afterHover.left, before.left);
+  assert.equal(afterHover.top, before.top);
+  await evaluate(client, `window.dispatchEvent(new Event('resize'))`);
+  await waitForMenu(client, (state) => !state.open, 'resize closes the menu');
+  await rightClick(client, point);
+  await waitForMenu(client, (state) => state.open, 'menu open again');
+  await evaluate(client, `window.dispatchEvent(new Event('blur'))`);
+  await waitForMenu(client, (state) => !state.open, 'blur closes the menu');
+});

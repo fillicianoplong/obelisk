@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { liveMenuEntries, type LiveMenuContext } from '../menus/apply.js';
 import { noteLiveSelection, withLiveEditor } from '../menus/live-editor.js';
+import { clampedMenuPoint, keepMenuPoint, type MenuPoint } from '../menus/place-menu.js';
+import { watchWindowDisposition } from '../outside-press.js';
 import {
   keyboardOpenContextMenu,
   pointerActivate,
@@ -35,21 +37,9 @@ interface OpenState {
   session: MenuSession;
 }
 
-function clampPosition(host: HTMLElement, clientX: number, clientY: number): void {
-  const margin = 8;
-  const rect = host.getBoundingClientRect();
-  let left = clientX;
-  let top = clientY;
-  const maxLeft = window.innerWidth - rect.width - margin;
-  const maxTop = window.innerHeight - rect.height - margin;
-  if (left > maxLeft) {
-    left = Math.max(margin, maxLeft);
-  }
-  if (top > maxTop) {
-    top = Math.max(margin, maxTop);
-  }
-  host.style.setProperty('--context-menu-left', `${left}px`);
-  host.style.setProperty('--context-menu-top', `${top}px`);
+function applyMenuPoint(host: HTMLElement, point: MenuPoint): void {
+  host.style.setProperty('--context-menu-left', `${point.left}px`);
+  host.style.setProperty('--context-menu-top', `${point.top}px`);
 }
 
 function sessionClosed(session: MenuSession): boolean {
@@ -92,6 +82,7 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
   const openRef = useRef(open);
   openRef.current = open;
   const hostRef = useRef<HTMLDivElement>(null);
+  const placedPoint = useRef<MenuPoint | null>(null);
   const flyoutLayerRef = useRef<HTMLDivElement | null>(null);
   const [flyoutLayerReady, setFlyoutLayerReady] = useState(false);
   const onCommandRef = useRef(onCommand);
@@ -229,11 +220,33 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
 
   useLayoutEffect(() => {
     if (open === null) {
+      placedPoint.current = null;
+      return;
+    }
+    if (!flyoutLayerReady || placedPoint.current !== null) {
       return;
     }
     const host = hostRef.current;
-    if (host !== null) {
-      clampPosition(host, open.target.clientX, open.target.clientY);
+    if (host === null) {
+      return;
+    }
+    const rect = host.getBoundingClientRect();
+    const next = clampedMenuPoint(
+      open.target.clientX,
+      open.target.clientY,
+      rect.width,
+      rect.height,
+      window.innerWidth,
+      window.innerHeight,
+    );
+    const point = keepMenuPoint(placedPoint.current, next);
+    placedPoint.current = point;
+    applyMenuPoint(host, point);
+  }, [flyoutLayerReady, open]);
+
+  useLayoutEffect(() => {
+    if (open === null) {
+      return;
     }
     const timer = window.setTimeout(() => {
       const current = openRef.current;
@@ -279,12 +292,18 @@ export function ContextMenu({ tabId, menuContext, onCommand }: ContextMenuProps)
       if (current === null) {
         return;
       }
-      event.preventDefault();
       applyRef.current(pointerDismissContextMenu(current.session));
     }
+    const stopWindow = watchWindowDisposition(window, () => openRef.current !== null, () => {
+      const current = openRef.current;
+      if (current !== null) {
+        applyRef.current(pointerDismissContextMenu(current.session));
+      }
+    });
     window.addEventListener('pointerdown', onOutsidePointer, true);
     window.addEventListener('mousedown', onOutsidePointer, true);
     return () => {
+      stopWindow();
       window.removeEventListener('pointerdown', onOutsidePointer, true);
       window.removeEventListener('mousedown', onOutsidePointer, true);
     };

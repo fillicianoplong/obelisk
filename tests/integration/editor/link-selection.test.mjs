@@ -446,6 +446,57 @@ test('Copy from the menu and Paste from the menu round-trip the text', { timeout
   assert.equal(pasted.lines[2].includes('notes'), true);
 });
 
+test('the text menu offers Paste as plain text under Paste', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const { a, b } = await dragSelect(client, 0, 0, 7);
+  const mid = { x: Math.round((a.x + b.x) / 2), y: a.y };
+  await rightClick(client, mid);
+  await waitState(client, (state) => state.contextOpen, 'text menu open');
+  const labels = await evaluate(client, `(() => {
+    return [...document.querySelectorAll('[data-region="context-menu"] .menu-panel--root .menu-label')]
+      .map((node) => node.textContent);
+  })()`);
+  const pasteAt = labels.indexOf('Paste');
+  assert.ok(pasteAt >= 0, 'Paste is in the text menu');
+  assert.equal(labels[pasteAt + 1], 'Paste as plain text');
+  const copyItem = await menuItemBox(client, 'edit-copy');
+  await click(client, copyItem);
+  await waitState(client, (state) => state.contextOpen === false, 'copy closes');
+  const caret = await pointAt(client, 2, 0);
+  await click(client, caret);
+  await rightClick(client, caret);
+  await waitState(client, (state) => state.contextOpen, 'paste menu open');
+  const plain = await menuItemBox(client, 'edit-paste-plain');
+  assert.equal(plain.disabled, null);
+  await click(client, plain);
+  const pasted = await waitState(
+    client,
+    (state) => state.contextOpen === false && state.lines[2].includes('Install') && state.bold === 'Install',
+    'plain paste keeps the words and drops bold',
+  );
+  assert.equal(pasted.bold, 'Install');
+  assert.equal(pasted.lines[2].includes('Install'), true);
+});
+
+test('a double-click outside an open menu selects the word', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const margin = await evaluate(client, `(() => {
+    const rect = document.querySelector('[data-region="page-editor"]').getBoundingClientRect();
+    return { x: Math.round(rect.right - 8), y: Math.round(rect.top + 24) };
+  })()`);
+  await rightClick(client, margin);
+  await waitState(client, (state) => state.contextOpen, 'menu open');
+  const word = await pointAt(client, 1, 3);
+  await doubleClick(client, word);
+  const selected = await waitState(
+    client,
+    (state) => state.contextOpen === false && state.selection.to - state.selection.from >= 8,
+    'double-click selects Download',
+  );
+  assert.equal(selected.contextOpen, false);
+  assert.ok(selected.selection.to - selected.selection.from >= 8);
+});
+
 test('Cut and Copy stay disabled when nothing is selected', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
   const point = await pointAt(client, 1, 12);

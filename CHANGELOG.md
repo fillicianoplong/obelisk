@@ -2,6 +2,16 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.6] - 2026-11-23
+
+### Fixed
+
+- Paste from the block menu inserts the copied blocks directly under that block and leaves the block I pasted onto as it was. The caret is in the pasted block.
+- The text right-click menu has Paste as plain text under Paste, with the same shortcut as the Edit menu, Ctrl+Shift+V.
+- A click outside an open menu still reaches the text, so a double-click selects the word on the first try.
+- A menu opened near the bottom of the window stays where it opened. Hovering an item or opening a submenu does not slide it out from under the pointer.
+- An open menu closes when I minimize the window, switch to another app, or resize or maximize the window.
+
 ## [0.1.41.5] - 2026-11-23
 
 ### Fixed

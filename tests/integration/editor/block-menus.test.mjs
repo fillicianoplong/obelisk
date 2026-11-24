@@ -194,12 +194,46 @@ test('grip Copy then grip Paste puts the block text on the next line', { timeout
   await click(client, paste);
   const lines = await poll(async () => {
     const text = await evaluate(client, `(() => {
-      return [...document.querySelectorAll('[data-region="page-editor"] > p')].map((node) => node.textContent);
+      const editor = document.querySelector('[data-region="page-editor"]');
+      const blocks = [...editor.querySelectorAll(':scope > p')].map((node) => node.textContent);
+      const index = editor.editorView.state.selection.$from.index(0);
+      return { blocks, index };
     })()`);
-    return text[1] === 'First line here' ? text : null;
-  }, 'grip Paste replaces the next line');
+    return text.blocks[1] === 'Second line here' && text.blocks[2] === 'First line here' && text.index === 2
+      ? text
+      : null;
+  }, 'grip Paste inserts below the block');
+  assert.equal(lines.blocks[0], 'First line here');
+  assert.equal(lines.blocks[1], 'Second line here');
+  assert.equal(lines.blocks[2], 'First line here');
+  assert.equal(lines.index, 2);
+});
+
+test('block right-click Paste inserts below the block', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  await openGripMenu(client, 0);
+  const copy = await centerOf(client, '.block-menu [data-action="edit-copy"]');
+  await click(client, copy);
+  await waitState(client, (state) => !state.menuOpen, 'copy closes the grip menu');
+  const point = await linePoint(client, 1);
+  await mouse(client, 'mouseMoved', point);
+  await waitState(client, (state) => state.gutterShown && state.gutterBlock === 1, 'gutter on the second line');
+  const grip = await centerOf(client, '.block-gutter-grip');
+  await click(client, grip, 'right');
+  await waitState(client, (state) => state.contextKind === 'block', 'block context menu');
+  const paste = await centerOf(client, '[data-region="context-menu"] [data-item="edit-paste"]');
+  assert.ok(paste, 'Paste is in the block menu');
+  await click(client, paste);
+  const lines = await poll(async () => {
+    const text = await evaluate(client, `(() => {
+      const editor = document.querySelector('[data-region="page-editor"]');
+      return [...editor.querySelectorAll(':scope > p')].map((node) => node.textContent);
+    })()`);
+    return text[1] === 'Second line here' && text[2] === 'First line here' ? text : null;
+  }, 'block Paste inserts below the block');
   assert.equal(lines[0], 'First line here');
-  assert.equal(lines[1], 'First line here');
+  assert.equal(lines[1], 'Second line here');
+  assert.equal(lines[2], 'First line here');
 });
 
 test('the add and grip controls stay on their block while the grip menu is open', { timeout: 60_000 }, async (t) => {

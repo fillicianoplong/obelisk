@@ -27,22 +27,61 @@ export function watchOutsidePress(target: Window | Document, options: OutsidePre
     }
     options.onOutside(event);
   };
-  const onBlur = (event: Event): void => {
-    // Focus moving between elements inside the page also fires blur on
-    // elements, but only the window's own blur reaches this listener.
-    if (event.target !== target || !options.isOpen()) {
-      return;
-    }
-    (options.onBlur ?? options.onOutside)(event);
-  };
+  let win: Window | null = null;
+  if (typeof Window !== 'undefined' && target instanceof Window) {
+    win = target;
+  } else if ('defaultView' in target) {
+    win = target.defaultView;
+  }
+  const stopDisposition = win
+    ? watchWindowDisposition(win, options.isOpen, () => {
+        (options.onBlur ?? options.onOutside)(new Event('blur'));
+      })
+    : () => {};
   target.addEventListener('pointerdown', onPress, true);
   target.addEventListener('mousedown', onPress, true);
   target.addEventListener('contextmenu', onPress, true);
-  target.addEventListener('blur', onBlur);
   return () => {
+    stopDisposition();
     target.removeEventListener('pointerdown', onPress, true);
     target.removeEventListener('mousedown', onPress, true);
     target.removeEventListener('contextmenu', onPress, true);
+  };
+}
+
+/**
+ * Close open menus when the window is minimized, gives focus to another app,
+ * or changes size. A hover inside the window is not one of these.
+ */
+export function watchWindowDisposition(
+  target: Window,
+  isOpen: () => boolean,
+  onChange: () => void,
+): () => void {
+  const close = (): void => {
+    if (isOpen()) {
+      onChange();
+    }
+  };
+  const onBlur = (event: Event): void => {
+    if (event.target === target) {
+      close();
+    }
+  };
+  const onResize = (): void => {
+    close();
+  };
+  const onVisibility = (): void => {
+    if (target.document.hidden) {
+      close();
+    }
+  };
+  target.addEventListener('blur', onBlur);
+  target.addEventListener('resize', onResize);
+  target.document.addEventListener('visibilitychange', onVisibility);
+  return () => {
     target.removeEventListener('blur', onBlur);
+    target.removeEventListener('resize', onResize);
+    target.document.removeEventListener('visibilitychange', onVisibility);
   };
 }

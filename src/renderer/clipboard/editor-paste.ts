@@ -1,5 +1,5 @@
 import { Fragment, Slice, type Node as ProseNode } from 'prosemirror-model';
-import { Plugin, type Command } from 'prosemirror-state';
+import { NodeSelection, Plugin, TextSelection, type Command, type EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import type { ClipboardReadResult, JsonObject } from '../../shared/ipc/types.js';
 import type { Block, BodyInline } from '../../shared/schema/types.js';
@@ -113,6 +113,41 @@ function nodesFromBlocks(blocks: readonly Block[], schema: EditorView['state']['
   return nodes;
 }
 
+function topLevelBlockIndex(state: EditorState): number | null {
+  const { selection } = state;
+  if (!(selection instanceof NodeSelection) || selection.$from.depth !== 0) {
+    return null;
+  }
+  return selection.$from.index(0);
+}
+
+function positionAfterBlock(doc: EditorState['doc'], blockIndex: number): number | null {
+  if (blockIndex < 0 || blockIndex >= doc.childCount) {
+    return null;
+  }
+  let pos = 0;
+  for (let index = 0; index <= blockIndex; index += 1) {
+    pos += doc.child(index).nodeSize;
+  }
+  return pos;
+}
+
+function insertNodesBelow(view: EditorView, blockIndex: number, nodes: readonly ProseNode[]): void {
+  const pos = positionAfterBlock(view.state.doc, blockIndex);
+  if (pos === null) {
+    insertNodes(view, nodes);
+    return;
+  }
+  let tr = view.state.tr.insert(pos, Fragment.from(nodes));
+  const pasted = tr.doc.nodeAt(pos);
+  if (pasted?.isTextblock) {
+    tr = tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+  } else if (pasted) {
+    tr = tr.setSelection(NodeSelection.create(tr.doc, pos));
+  }
+  view.dispatch(tr.scrollIntoView().setMeta('paste', true).setMeta('uiEvent', 'paste'));
+}
+
 function insertNodes(view: EditorView, nodes: readonly ProseNode[]): void {
   const { state } = view;
   const single = nodes.length === 1 ? nodes[0] : undefined;
@@ -129,11 +164,15 @@ function insertNodes(view: EditorView, nodes: readonly ProseNode[]): void {
   );
 }
 
-export async function applySanitizedPaste(view: EditorView, input: PasteInput): Promise<void> {
+export async function applySanitizedPaste(
+  view: EditorView,
+  input: PasteInput,
+  belowBlockIndex: number | null = null,
+): Promise<void> {
   if (view.isDestroyed) {
     return;
   }
-  const inCode = view.state.selection.$from.parent.type.spec.code === true;
+  const inCode = belowBlockIndex === null && view.state.selection.$from.parent.type.spec.code === true;
   const Parser = parserFrom(view);
   const result = await sanitizePaste(
     inCode ? { text: input.text ?? '', plain: true } : input,
@@ -156,6 +195,10 @@ export async function applySanitizedPaste(view: EditorView, input: PasteInput): 
   }
   const nodes = nodesFromBlocks(result.blocks, view.state.schema);
   if (nodes.length === 0) {
+    return;
+  }
+  if (belowBlockIndex !== null) {
+    insertNodesBelow(view, belowBlockIndex, nodes);
     return;
   }
   insertNodes(view, nodes);
@@ -199,10 +242,13 @@ function readMenuClipboard(): Promise<ClipboardReadResult> | null {
 
 /** Edit, context, and block menu Paste. Main reads the clipboard; the sanitizer inserts it. */
 export function pasteMenuCommand(plain: boolean): Command {
-  return (_state, dispatch, view) => {
+  return (state, dispatch, view) => {
     if (!dispatch || !view) {
       return true;
     }
+    // A block menu selects the block before Paste. Remember it now, before the
+    // menu closes and the selection moves, and insert below that block.
+    const belowBlock = topLevelBlockIndex(state);
     const target = view;
     const read = readMenuClipboard();
     if (read === null) {
@@ -217,7 +263,7 @@ export function pasteMenuCommand(plain: boolean): Command {
         html: result.html,
         text: result.text,
         plain,
-      });
+      }, belowBlock);
     }).catch(() => {
       // A clipboard the page cannot read leaves the document unchanged.
     });

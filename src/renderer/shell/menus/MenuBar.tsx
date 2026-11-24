@@ -4,6 +4,7 @@ import { announceFocusRegion } from '../focus/bind.js';
 import { onMenuRegionLeave } from '../focus/menu-leave.js';
 import { MENU_BAR_LABEL, PAGE_REGION } from '../focus/regions.js';
 import { commitPageKeyboardFocus } from '../page-focus.js';
+import { watchWindowDisposition } from '../outside-press.js';
 import {
   accessKeysVisible,
   initialMenuSession,
@@ -188,6 +189,13 @@ export function MenuBar({ menuContext, onCommand }: MenuBarProps) {
     if (session.menuId === null && !session.keyboard) {
       return undefined;
     }
+    const stopWindow = watchWindowDisposition(
+      window,
+      () => sessionRef.current.menuId !== null || sessionRef.current.keyboard,
+      () => {
+        applyRef.current(pointerDismiss(sessionRef.current));
+      },
+    );
     function onPointerDown(event: PointerEvent) {
       const target = event.target;
       if (!(target instanceof Node) || barRef.current?.contains(target)) {
@@ -197,6 +205,7 @@ export function MenuBar({ menuContext, onCommand }: MenuBarProps) {
     }
     window.addEventListener('pointerdown', onPointerDown);
     return () => {
+      stopWindow();
       window.removeEventListener('pointerdown', onPointerDown);
     };
   }, [session.keyboard, session.menuId]);
