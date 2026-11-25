@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.41.7] - 2026-11-24
+
+### Fixed
+
+- Double-clicking a word selects only that word, not the space after it. The same holds at the end of a line and next to a comma or a period. Triple-click and dragging a selection are unchanged, and a double-click still selects the word while a menu is open.
+
 ## [0.1.41.6] - 2026-11-23
 
 ### Fixed

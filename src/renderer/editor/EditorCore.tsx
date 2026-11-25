@@ -22,6 +22,7 @@ import { editorBlockSnapshot } from './schema/mapping.js';
 import { newBlockId } from './block-id.js';
 import { pageFrameStyle, pageHeaderStyle } from './layout/page.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
+import { isDoubleClickDrag, trimDoubleClickedWord } from './select-word.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
 import {
   applyCharacterMarksCommand,
@@ -357,6 +358,7 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
     const viewState = state.reconfigure({
       plugins: [...state.plugins, contextMenuEditorPlugin(ownedTabId)],
     });
+    let wordClick: { x: number; y: number } | null = null;
     const view = new EditorView(host, {
       state: viewState,
       attributes: {
@@ -388,6 +390,34 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
         publish(view, next);
       },
       handleDOMEvents: {
+        // A double-click selects the word. The space after it is dropped once
+        // the browser selection has landed. A drag and a triple-click are not
+        // this gesture, and the event is not swallowed, so a menu can still close.
+        mousedown(_view, event) {
+          if (event.button !== 0 || event.detail !== 2 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+            wordClick = null;
+            return false;
+          }
+          wordClick = { x: event.clientX, y: event.clientY };
+          return false;
+        },
+        mouseup(upView, event) {
+          const start = wordClick;
+          wordClick = null;
+          if (start === null || event.button !== 0) {
+            return false;
+          }
+          if (isDoubleClickDrag(start.x, start.y, event.clientX, event.clientY)) {
+            return false;
+          }
+          const win = upView.dom.ownerDocument.defaultView;
+          win?.requestAnimationFrame(() => {
+            if (!upView.isDestroyed) {
+              trimDoubleClickedWord(upView);
+            }
+          });
+          return false;
+        },
         click(clickView, event) {
           if (!eventTargetsLink(event)) {
             return false;
