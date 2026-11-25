@@ -32,7 +32,13 @@ import {
   takeCaretAnchor,
 } from './layout/paginate-plugin.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
-import { isDoubleClickDrag, trimDoubleClickedWord } from './select-word.js';
+import {
+  selectDoubleClickedWord,
+  textblockRangeAt,
+  trimDoubleClickedWord,
+  watchSelectionDrag,
+  wordRangeAt,
+} from './select-word.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
 import {
   applyCharacterMarksCommand,
@@ -415,7 +421,7 @@ export function EditorCore({
     const viewState = state.reconfigure({
       plugins: [...plugins, contextMenuEditorPlugin(ownedTabId), paginationPlugin(layoutHost)],
     });
-    let wordClick: { x: number; y: number } | null = null;
+    let wordGesture: { drag: boolean } | null = null;
     const view = new EditorView(host, {
       state: viewState,
       attributes: {
@@ -446,33 +452,53 @@ export function EditorCore({
         view.updateState(next);
         publish(view, next);
       },
+      // The word is selected in the double-click handler, before the browser
+      // paints the space after it. Returning true makes ProseMirror cancel that
+      // default. The event still bubbles, so an open menu can close.
+      handleDoubleClick(clickView, pos, event) {
+        if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+          return false;
+        }
+        const range = wordRangeAt(clickView.state.doc, pos);
+        if (range === null || !selectDoubleClickedWord(clickView, pos)) {
+          return false;
+        }
+        watchSelectionDrag(clickView, event, 'word', range, () => {
+          if (wordGesture !== null) {
+            wordGesture.drag = true;
+          }
+        });
+        return true;
+      },
+      handleTripleClick(clickView, pos, event) {
+        if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+          return false;
+        }
+        const range = textblockRangeAt(clickView.state.doc, pos);
+        if (range === null) {
+          return false;
+        }
+        const tr = clickView.state.tr.setSelection(TextSelection.create(clickView.state.doc, range.from, range.to));
+        tr.setMeta('pointer', true);
+        clickView.dispatch(tr);
+        watchSelectionDrag(clickView, event, 'line', range);
+        return true;
+      },
       handleDOMEvents: {
-        // A double-click selects the word. The space after it is dropped once
-        // the browser selection has landed. A drag and a triple-click are not
-        // this gesture, and the event is not swallowed, so a menu can still close.
         mousedown(_view, event) {
           if (event.button !== 0 || event.detail !== 2 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
-            wordClick = null;
+            wordGesture = null;
             return false;
           }
-          wordClick = { x: event.clientX, y: event.clientY };
+          wordGesture = { drag: false };
           return false;
         },
         mouseup(upView, event) {
-          const start = wordClick;
-          wordClick = null;
-          if (start === null || event.button !== 0) {
-            return false;
+          const gesture = wordGesture;
+          wordGesture = null;
+          if (gesture !== null && !gesture.drag && event.button === 0) {
+            trimDoubleClickedWord(upView);
           }
-          if (isDoubleClickDrag(start.x, start.y, event.clientX, event.clientY)) {
-            return false;
-          }
-          const win = upView.dom.ownerDocument.defaultView;
-          win?.requestAnimationFrame(() => {
-            if (!upView.isDestroyed) {
-              trimDoubleClickedWord(upView);
-            }
-          });
           return false;
         },
         click(clickView, event) {
@@ -537,6 +563,12 @@ export function EditorCore({
     placeSelectionInDom(view);
 
     const onSelectionChange = () => {
+      // The browser's word selection includes the space after the word. Drop
+      // that space in this event, before the next paint, if the double-click
+      // handler did not already select the word.
+      if (wordGesture !== null && !wordGesture.drag && !placing) {
+        trimDoubleClickedWord(view);
+      }
       // Arrow keys move the DOM caret before ProseMirror records them. After
       // the page blurs, ProseMirror drops that event, so copy it into the tab.
       if (!view.hasFocus() && !placing) {

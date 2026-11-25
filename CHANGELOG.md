@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.42.1] - 2026-11-25
+
+### Fixed
+
+- Double-clicking a word selects only that word, without first showing the space after it.
+- After a triple-click, dragging extends the selection by whole lines. A press and drag still selects by character.
+- Ctrl+Enter and Insert > Page break split the block at the caret and put the break between the two halves, with the caret at the start of the second half on the next page. At the end of a block the break comes after it and the caret goes into a new empty block. A selection is replaced and then split, and undo puts the text back in one step.
+
 ## [0.1.42.0] - 2026-11-24
 
 ### Added

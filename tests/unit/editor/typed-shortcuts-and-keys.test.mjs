@@ -418,8 +418,10 @@ test('Editor keyboard keys run without a mouse', async () => {
     assert.ok(FONT_SIZE_PT.includes(sizeMark.attrs.pt));
 
     dispatchEditorKeyDown(view, 'Enter', { ctrlKey: true });
-    assert.equal(view.state.doc.childCount, 3);
     assert.equal(view.state.doc.child(1).type.name, 'page_break');
+    assert.equal(view.state.doc.child(0).textContent, '');
+    assert.equal(view.state.doc.child(2).textContent, '');
+    assert.equal(view.state.doc.child(3).textContent, 'Two');
 
     caretAtStart(view);
     dispatchEditorKeyDown(view, 'Tab');

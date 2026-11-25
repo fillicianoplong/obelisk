@@ -98,12 +98,28 @@ function pointAt(client, line, offset) {
   })()`);
 }
 
+function pointOfWord(client, line, word) {
+  return evaluate(client, `(() => {
+    const block = document.querySelectorAll('[data-region="page-editor"] > p')[${line}];
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const node = walker.nextNode();
+    const at = node.textContent.indexOf(${JSON.stringify(word)});
+    const range = document.createRange();
+    range.setStart(node, at);
+    range.setEnd(node, at + ${JSON.stringify(word)}.length);
+    const rect = range.getBoundingClientRect();
+    return { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) };
+  })()`);
+}
+
 async function mouse(client, type, point, button = 'none', clickCount = 1) {
+  const held = button === 'left' ? 1 : button === 'right' ? 2 : button === 'middle' ? 4 : 0;
   await client.send('Input.dispatchMouseEvent', {
     type,
     x: point.x,
     y: point.y,
     button,
+    buttons: type === 'mouseReleased' || button === 'none' ? 0 : held,
     clickCount: button === 'none' ? 0 : clickCount,
   });
 }
@@ -113,8 +129,10 @@ async function doubleClick(client, point) {
   await mouse(client, 'mousePressed', point, 'left', 1);
   await mouse(client, 'mouseReleased', point, 'left', 1);
   await mouse(client, 'mousePressed', point, 'left', 2);
+  const immediate = await evaluate(client, STATE);
   await mouse(client, 'mouseReleased', point, 'left', 2);
-  await sleep(80);
+  await sleep(40);
+  return immediate;
 }
 
 async function tripleClick(client, point) {
@@ -147,27 +165,29 @@ async function waitText(client, text) {
 
 test('a double-click selects the word and not the space after it', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
-  await doubleClick(client, await pointAt(client, 0, 7));
+  const immediate = await doubleClick(client, await pointOfWord(client, 0, 'beta'));
+  assert.equal(/\s/.test(immediate.text), false, `the word flashed a wider selection: ${JSON.stringify(immediate)}`);
+  assert.ok(immediate.text === '' || immediate.text === 'beta', JSON.stringify(immediate));
   const beta = await waitText(client, 'beta');
   assert.equal(beta.text, 'beta');
   assert.equal(/\s/.test(beta.text), false);
 
-  await doubleClick(client, await pointAt(client, 1, 7));
+  await doubleClick(client, await pointOfWord(client, 1, 'end'));
   const end = await waitText(client, 'end');
   assert.equal(end.text, 'end');
 
-  await doubleClick(client, await pointAt(client, 0, 13));
+  await doubleClick(client, await pointOfWord(client, 0, 'gamma'));
   const gamma = await waitText(client, 'gamma');
   assert.equal(gamma.text, 'gamma');
 
-  await doubleClick(client, await pointAt(client, 2, 2));
+  await doubleClick(client, await pointOfWord(client, 2, 'Comma'));
   const comma = await waitText(client, 'Comma');
   assert.equal(comma.text, 'Comma');
 });
 
 test('triple-click and drag-select still include the spaces', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
-  await tripleClick(client, await pointAt(client, 0, 7));
+  await tripleClick(client, await pointOfWord(client, 0, 'beta'));
   const line = await waitText(client, 'Alpha beta gamma.');
   assert.equal(line.text, 'Alpha beta gamma.');
 
@@ -177,6 +197,22 @@ test('triple-click and drag-select still include the spaces', { timeout: 60_000 
   const dragged = await evaluate(client, STATE);
   assert.equal(dragged.text.includes(' '), true, JSON.stringify(dragged));
   assert.ok(dragged.text.startsWith('Alpha'), JSON.stringify(dragged));
+});
+
+test('a triple-click then drag extends by whole lines', { timeout: 60_000 }, async (t) => {
+  const { client } = await launchApp(t);
+  const from = await pointOfWord(client, 0, 'beta');
+  const to = await pointOfWord(client, 1, 'end');
+  await mouse(client, 'mouseMoved', from);
+  await mouse(client, 'mousePressed', from, 'left', 1);
+  await mouse(client, 'mouseReleased', from, 'left', 1);
+  await mouse(client, 'mousePressed', from, 'left', 2);
+  await mouse(client, 'mouseReleased', from, 'left', 2);
+  await mouse(client, 'mousePressed', from, 'left', 3);
+  await mouse(client, 'mouseMoved', to, 'left', 3);
+  await mouse(client, 'mouseReleased', to, 'left', 3);
+  const selected = await waitText(client, 'Alpha beta gamma.Delta end');
+  assert.equal(selected.text, 'Alpha beta gamma.Delta end');
 });
 
 test('a double-click with a menu open selects only the word', { timeout: 60_000 }, async (t) => {
@@ -196,7 +232,7 @@ test('a double-click with a menu open selects only the word', { timeout: 60_000 
     menu = await evaluate(client, STATE);
   }
   assert.equal(menu.contextOpen, true, JSON.stringify(menu));
-  await doubleClick(client, await pointAt(client, 0, 7));
+  await doubleClick(client, await pointOfWord(client, 0, 'beta'));
   const selected = await waitText(client, 'beta');
   assert.equal(selected.text, 'beta');
   assert.equal(selected.contextOpen, false);

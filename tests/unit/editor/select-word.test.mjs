@@ -42,6 +42,37 @@ function textPos(doc, word) {
   throw new Error(`${word} missing after ${seen}`);
 }
 
+test('a word range stops before the space and before punctuation', async () => {
+  const editorSchema = await schema();
+  const { wordRangeAt, textblockRangeAt, extendTextblockSelection, extendCharacterSelection } = await loadRenderer(wordUrl);
+  const doc = editorSchema.node('doc', null, [
+    paragraph(editorSchema, 3, 'Alpha beta gamma.'),
+    paragraph(editorSchema, 4, 'Delta end '),
+    paragraph(editorSchema, 5, "don't stop"),
+  ]);
+  const beta = textPos(doc, 'beta');
+  assert.deepEqual(wordRangeAt(doc, beta.from + 1), { from: beta.from, to: beta.to });
+  assert.deepEqual(wordRangeAt(doc, beta.to), { from: beta.from, to: beta.to });
+  const gamma = textPos(doc, 'gamma');
+  assert.deepEqual(wordRangeAt(doc, gamma.to), { from: gamma.from, to: gamma.to });
+  const end = textPos(doc, 'end');
+  assert.deepEqual(wordRangeAt(doc, end.to + 1), { from: end.from, to: end.to });
+  const dont = textPos(doc, "don't");
+  assert.deepEqual(wordRangeAt(doc, dont.from + 3), { from: dont.from, to: dont.to });
+
+  const first = textblockRangeAt(doc, beta.from);
+  const second = textblockRangeAt(doc, end.from);
+  assert.equal(doc.textBetween(first.from, first.to), 'Alpha beta gamma.');
+  const extended = extendTextblockSelection(doc, first, end.from);
+  assert.equal(doc.textBetween(Math.min(extended.anchor, extended.head), Math.max(extended.anchor, extended.head), '\n'), 'Alpha beta gamma.\nDelta end ');
+  assert.deepEqual(extendTextblockSelection(doc, first, beta.from), { anchor: first.from, head: first.to });
+  const upward = extendTextblockSelection(doc, second, beta.from);
+  assert.equal(upward.anchor, second.to);
+  assert.equal(upward.head, first.from);
+  assert.deepEqual(extendCharacterSelection(beta, beta.to + 3), { anchor: beta.from, head: beta.to + 3 });
+  assert.deepEqual(extendCharacterSelection(beta, beta.from + 1), { anchor: beta.from, head: beta.to });
+});
+
 test('a double-clicked word drops the space after it and keeps punctuation', async () => {
   const editorSchema = await schema();
   const { selectionWithoutTrailingSpace } = await loadRenderer(wordUrl);
