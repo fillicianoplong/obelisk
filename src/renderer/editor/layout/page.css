@@ -45,20 +45,53 @@
   flex-direction: column;
   gap: var(--page-gap);
   min-width: 100%;
+  position: relative;
   width: max-content;
 }
 
+.page-canvas[data-page-view='pageless'] {
+  background: var(--color-surface-page);
+  min-height: 100%;
+}
+
+/* Sheets sit behind the one editor. The gap between them is the canvas. */
+.page-frames {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
 .page-frame {
+  background: var(--color-surface-page);
+  box-shadow: var(--shadow-page);
   box-sizing: border-box;
-  flex: 0 0 auto;
   height: var(--page-height);
+  left: 0;
   margin-inline: auto;
   max-height: var(--page-height);
   max-width: var(--page-width);
   min-height: var(--page-height);
   min-width: var(--page-width);
-  position: relative;
+  position: absolute;
+  right: 0;
   width: var(--page-width);
+}
+
+.page-flow-spacer {
+  border: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  user-select: none;
+  width: 100%;
+}
+
+/* Measure the unpaginated lines. Spacers and break gaps stay out of that pass. */
+.page-sheet.page-measuring .page-flow-spacer,
+.page-sheet.page-measuring .page-break {
+  display: none !important;
 }
 
 .page-header {
@@ -72,10 +105,13 @@
 }
 
 .editor-host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  min-width: 100%;
-  width: 100%;
+  display: block;
+  margin-inline: auto;
+  position: relative;
+  width: var(--page-width);
+  z-index: 1;
+}
+
+.page-canvas[data-page-view='pages'] .page-sheet {
+  min-height: var(--page-stack-height, var(--page-height));
 }

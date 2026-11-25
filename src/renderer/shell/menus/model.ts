@@ -18,6 +18,8 @@ export interface MenuItem {
   enabled: boolean;
   ellipsis?: boolean;
   checked?: boolean;
+  /** View > Pages and Pageless. Exactly one is checked. */
+  radio?: boolean;
   command?: string;
   submenu?: readonly MenuEntry[];
 }
@@ -99,6 +101,7 @@ interface ItemInit {
   enabled?: boolean;
   ellipsis?: boolean;
   checked?: boolean;
+  radio?: boolean;
   command?: string;
   submenu?: readonly MenuEntry[];
 }
@@ -256,8 +259,8 @@ export const APP_MENUS: readonly AppMenu[] = [
     label: 'View',
     accessKey: 'v',
     entries: [
-      item({ id: 'view-pages', label: 'Pages', accessKey: 'p' }),
-      item({ id: 'view-pageless', label: 'Pageless', accessKey: 'g' }),
+      item({ id: 'view-pages', label: 'Pages', accessKey: 'p', command: 'view-pages', radio: true }),
+      item({ id: 'view-pageless', label: 'Pageless', accessKey: 'g', command: 'view-pageless', radio: true }),
       separator('view-sep-1'),
       item({ id: 'view-zoom-in', label: 'Zoom in', accessKey: 'i', shortcut: 'Ctrl++' }),
       item({ id: 'view-zoom-out', label: 'Zoom out', accessKey: 'o', accessOccurrence: 2, shortcut: 'Ctrl+-' }),

@@ -2,13 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { STATUS_BAR_LABEL } from '../focus/regions.js';
 import { CountItems, ViewItem, ZoomItem } from './items.js';
 import { LiveRegion } from './LiveRegion.js';
-import { isSaveState, nextViewLabel, saveStateLabel, textCounts } from './model.js';
+import { PAGE_LABEL, VIEW_LABEL, isSaveState, nextViewLabel, saveStateLabel, textCounts } from './model.js';
 import type { SaveState } from './model.js';
 import { SaveStateItem } from './SaveStateItem.js';
 
 interface StatusBarProps {
   text: string;
   saveState: SaveState;
+  pageLabel?: string;
+  viewName?: string;
 }
 
 interface StatusCommands {
@@ -19,7 +21,7 @@ interface StatusCommands {
 // The bar is the status region. role="status" names it for Narrator.
 // aria-live="off" keeps keystrokes from reading the counts. Save-state
 // changes go out through the polite live region and do not move focus.
-export function StatusBar({ text, saveState }: StatusBarProps) {
+export function StatusBar({ text, saveState, pageLabel = PAGE_LABEL, viewName = VIEW_LABEL }: StatusBarProps) {
   // The editor publishes the active tab's text on each edit, inside the 250 ms count limit.
   const counts = textCounts(text);
   const barRef = useRef<HTMLElement>(null);
@@ -97,10 +99,10 @@ export function StatusBar({ text, saveState }: StatusBarProps) {
       tabIndex={-1}
       ref={barRef}
     >
-      <CountItems counts={counts} />
+      <CountItems counts={counts} pageLabel={pageLabel} />
       <div className="status-bar-trailing">
         <SaveStateItem state={shown} />
-        <ViewItem itemRef={setViewNode} />
+        <ViewItem itemRef={setViewNode} label={viewName} />
         <ZoomItem />
       </div>
       <LiveRegion label={saveStateLabel(shown)} />

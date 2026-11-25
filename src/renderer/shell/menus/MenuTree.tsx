@@ -195,9 +195,10 @@ export function MenuItems({
               type="button"
               className="menu-item"
               id={`menu-item-${entry.id}`}
-              role="menuitem"
+              role={entry.radio === true ? 'menuitemradio' : 'menuitem'}
               tabIndex={-1}
               aria-label={accessibleName(entry)}
+              aria-checked={entry.radio === true ? entry.checked === true : undefined}
               aria-disabled={entry.enabled ? undefined : true}
               aria-haspopup={hasSubmenu ? 'menu' : undefined}
               aria-expanded={hasSubmenu ? open : undefined}

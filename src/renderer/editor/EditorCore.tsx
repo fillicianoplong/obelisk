@@ -3,7 +3,7 @@ import { redo, undo } from 'prosemirror-history';
 import type { EditorState, Selection, Transaction } from 'prosemirror-state';
 import { TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import 'prosemirror-view/style/prosemirror.css';
 import './editor.css';
 import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
@@ -20,7 +20,17 @@ import {
 import type { TextBlockKind } from './schema.js';
 import { editorBlockSnapshot } from './schema/mapping.js';
 import { newBlockId } from './block-id.js';
-import { pageFrameStyle, pageHeaderStyle } from './layout/page.js';
+import { pageHeaderStyle } from './layout/page.js';
+import type { PageBox, PageMargins } from './layout/paginate.js';
+import { pageBoxFromMargins } from './layout/paginate.js';
+import type { PageLayoutReport, PaginationHost } from './layout/paginate-plugin.js';
+import {
+  layoutPagination,
+  paginationPlugin,
+  paginationPluginKey,
+  paginationSnapshot,
+  takeCaretAnchor,
+} from './layout/paginate-plugin.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
 import { isDoubleClickDrag, trimDoubleClickedWord } from './select-word.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
@@ -43,7 +53,10 @@ import { markCloseHistoryGroup } from './history/groups.js';
 interface EditorCoreProps {
   tabId: string;
   state: EditorState;
+  viewMode: 'pages' | 'pageless';
+  margins: PageMargins;
   onChange: (tabId: string, state: EditorState) => void;
+  onPageLabel: (label: string) => void;
 }
 
 
@@ -73,7 +86,11 @@ function selectionFromEditorDom(view: EditorView): TextSelection | null {
   }
 }
 
-function installEditorCommands(view: EditorView, placeSelection: (editorView: EditorView) => void): void {
+function installEditorCommands(
+  view: EditorView,
+  placeSelection: (editorView: EditorView) => void,
+  layoutHost: PaginationHost,
+): void {
   // Same transactions as typing, Enter, and undo. They do not need an OS key event,
   // so a window that is not in the foreground can still edit the page.
   const dispatch = view.dispatch.bind(view);
@@ -270,6 +287,12 @@ function installEditorCommands(view: EditorView, placeSelection: (editorView: Ed
     linkAddress() {
       return linkAround(view.state)?.address ?? null;
     },
+    layoutPages() {
+      return layoutPagination(view, layoutHost);
+    },
+    pageSnapshot() {
+      return paginationSnapshot(view);
+    },
     applyLink(text: string, address: string) {
       let applied = false;
       runWithSynchronousEditorUpdate(() => {
@@ -298,10 +321,39 @@ function selectionIsEdge(view: EditorView, selection: Selection): boolean {
   return selection.eq(TextSelection.atStart(doc)) || selection.eq(TextSelection.atEnd(doc));
 }
 
-export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
+export function EditorCore({
+  tabId,
+  state,
+  viewMode,
+  margins,
+  onChange,
+  onPageLabel,
+}: EditorCoreProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const onChangeRef = useRef(onChange);
+  const onPageLabelRef = useRef(onPageLabel);
+  const viewModeRef = useRef(viewMode);
+  const marginsRef = useRef(margins);
+  const viewRef = useRef<EditorView | null>(null);
   onChangeRef.current = onChange;
+  onPageLabelRef.current = onPageLabel;
+  viewModeRef.current = viewMode;
+  marginsRef.current = margins;
+  const [pageCount, setPageCount] = useState(1);
+  const [caretPage, setCaretPage] = useState(0);
+  const [keyboardFocus, setKeyboardFocus] = useState(false);
+  const layoutHostRef = useRef<PaginationHost | null>(null);
+  if (layoutHostRef.current === null) {
+    layoutHostRef.current = {
+      getMode: () => viewModeRef.current,
+      getBox: () => pageBoxFromMargins(marginsRef.current),
+      onLayout: (report: PageLayoutReport) => {
+        setPageCount((current) => (current === report.pageCount ? current : report.pageCount));
+        setCaretPage((current) => (current === report.page ? current : report.page));
+        onPageLabelRef.current(report.label);
+      },
+    };
+  }
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -355,8 +407,13 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
       publish(editorView, next);
     };
 
+    const layoutHost = layoutHostRef.current;
+    if (layoutHost === null) {
+      return undefined;
+    }
+    const plugins = state.plugins.filter((plugin) => plugin.spec.key !== paginationPluginKey());
     const viewState = state.reconfigure({
-      plugins: [...state.plugins, contextMenuEditorPlugin(ownedTabId)],
+      plugins: [...plugins, contextMenuEditorPlugin(ownedTabId), paginationPlugin(layoutHost)],
     });
     let wordClick: { x: number; y: number } | null = null;
     const view = new EditorView(host, {
@@ -473,7 +530,8 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
       },
     });
     writeReportedCaret(view);
-    installEditorCommands(view, placeSelectionInDom);
+    installEditorCommands(view, placeSelectionInDom, layoutHost);
+    viewRef.current = view;
     // Put the stored caret into the DOM even when the window is not focused.
     // selectionToDOM does nothing until the editor owns document focus.
     placeSelectionInDom(view);
@@ -503,7 +561,35 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
         })
       : () => {};
 
+    const syncKeyboardFocus = () => {
+      const keyboard = view.dom.getAttribute('data-focus-source') === 'keyboard';
+      setKeyboardFocus(keyboard);
+      const region = view.dom.closest('.page-region');
+      if (!(region instanceof HTMLElement)) {
+        return;
+      }
+      const bar = region.offsetWidth - region.clientWidth;
+      const track = region.offsetHeight - region.clientHeight;
+      region.style.setProperty('--page-scrollbar-inline', `${Math.max(0, bar)}px`);
+      region.style.setProperty('--page-scrollbar-block', `${Math.max(0, track)}px`);
+      if (viewModeRef.current === 'pageless' && keyboard) {
+        region.setAttribute('data-focus-source', 'keyboard');
+      } else {
+        region.removeAttribute('data-focus-source');
+      }
+    };
+    const focusObserver = new MutationObserver(syncKeyboardFocus);
+    focusObserver.observe(view.dom, { attributes: true, attributeFilter: ['data-focus-source'] });
+    view.dom.addEventListener('focus', syncKeyboardFocus);
+    view.dom.addEventListener('blur', syncKeyboardFocus);
+    syncKeyboardFocus();
+    layoutPagination(view, layoutHost);
+
     return () => {
+      focusObserver.disconnect();
+      view.dom.removeEventListener('focus', syncKeyboardFocus);
+      view.dom.removeEventListener('blur', syncKeyboardFocus);
+      viewRef.current = null;
       unbindPageScroll();
       unbindPageFocus();
       view.dom.ownerDocument.removeEventListener('selectionchange', onSelectionChange);
@@ -516,17 +602,62 @@ export function EditorCore({ tabId, state, onChange }: EditorCoreProps) {
     // `state` is the tab snapshot at mount. Later edits stay in the view.
   }, [tabId]);
 
+  useLayoutEffect(() => {
+    const view = viewRef.current;
+    const layoutHost = layoutHostRef.current;
+    if (view === null || view.isDestroyed || layoutHost === null) {
+      return;
+    }
+    const before = takeCaretAnchor();
+    const region = view.dom.closest('.page-region');
+    layoutPagination(view, layoutHost);
+    if (before !== null && region instanceof HTMLElement) {
+      try {
+        const after = view.coordsAtPos(view.state.selection.head).top;
+        if (Math.abs(after - before) > 0.5) {
+          region.scrollTop += after - before;
+        }
+      } catch {
+        // The caret is not on screen yet.
+      }
+    }
+    if (region instanceof HTMLElement) {
+      const keyboard = view.dom.getAttribute('data-focus-source') === 'keyboard';
+      if (viewMode === 'pageless' && keyboard) {
+        region.setAttribute('data-focus-source', 'keyboard');
+      } else {
+        region.removeAttribute('data-focus-source');
+      }
+    }
+  }, [viewMode, margins.top, margins.right, margins.bottom, margins.left]);
+
+  const box: PageBox = pageBoxFromMargins(margins);
+  const frames = viewMode === 'pages'
+    ? Array.from({ length: pageCount }, (_, index) => index)
+    : [];
+
   return (
-    <div className="page-canvas">
-      <div className="page-frame" style={pageFrameStyle()}>
-        <div ref={hostRef} className="editor-host" />
-        <div
-          className="page-header"
-          style={pageHeaderStyle()}
-          data-page-part="header"
-          aria-hidden="true"
-        />
-      </div>
+    <div className="page-canvas" data-page-view={viewMode}>
+      {viewMode === 'pages' ? (
+        <div className="page-frames" aria-hidden="true">
+          {frames.map((index) => (
+            <div
+              key={index}
+              className="page-frame"
+              data-page={index + 1}
+              data-caret-focus={keyboardFocus && index === caretPage - 1 ? 'true' : undefined}
+              style={{ top: `${index * (box.pageHeight + box.gap)}px` }}
+            >
+              <div
+                className="page-header"
+                style={pageHeaderStyle()}
+                data-page-part="header"
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <div ref={hostRef} className="editor-host" />
     </div>
   );
 }

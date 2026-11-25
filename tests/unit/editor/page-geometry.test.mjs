@@ -75,17 +75,17 @@ test('the page sheet uses the tokens and does not shrink to the window', async (
   assert.match(shellCss, /\.page-region\s*\{[^}]*overflow-anchor:\s*none/);
   assert.match(shellCss, /\.page-region\s*\{[^}]*padding:\s*var\(--page-gap\)/);
   assert.match(shellCss, /\.page-region\s*\{[^}]*background:\s*var\(--color-surface-canvas\)/);
-  assert.match(shellCss, /\.page-sheet\s*\{[^}]*background:\s*var\(--color-surface-page\)/);
-  assert.match(shellCss, /\.page-sheet\s*\{[^}]*box-shadow:\s*var\(--shadow-page\)/);
+  assert.match(pageCss, /\.page-frame\s*\{[^}]*background:\s*var\(--color-surface-page\)/);
+  assert.match(pageCss, /\.page-frame\s*\{[^}]*box-shadow:\s*var\(--shadow-page\)/);
   assert.match(shellCss, /\.page-sheet\s*\{[^}]*font-family:\s*var\(--font-page\)/);
   assert.match(shellCss, /\.page-sheet\s*\{[^}]*font-size:\s*var\(--font-size-page\)/);
-  assert.match(shellCss, /\.page-sheet\s*\{[^}]*padding:\s*var\(--page-margin\)/);
+  assert.match(shellCss, /\.page-sheet\s*\{[^}]*--page-pad-top,\s*var\(--page-margin\)/);
   assert.equal(shellCss.includes('min(var(--page-width), 100%)'), false);
   assert.equal(editorCss.includes('min(var(--page-width), 100%)'), false);
   assert.equal(pageCss.includes('min(var(--page-width), 100%)'), false);
   assert.match(
     shellCss,
-    /\.page-sheet,\s*\.menu-panel[\s\S]*border:\s*calc\(var\(--space-2xs\) \/ 2\) solid var\(--color-border-subtle\)/,
+    /\.page-frame,\s*\.menu-panel[\s\S]*border:\s*calc\(var\(--space-2xs\) \/ 2\) solid var\(--color-border-subtle\)/,
   );
 });
 

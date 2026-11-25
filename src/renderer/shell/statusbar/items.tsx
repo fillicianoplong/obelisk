@@ -1,14 +1,15 @@
-import { PAGE_LABEL, VIEW_LABEL, ZOOM_LABEL } from './model.js';
+import { ZOOM_LABEL } from './model.js';
 import type { TextCounts } from './model.js';
 
 interface CountItemsProps {
   counts: TextCounts;
+  pageLabel: string;
 }
 
-export function CountItems({ counts }: CountItemsProps) {
+export function CountItems({ counts, pageLabel }: CountItemsProps) {
   return (
     <div className="status-bar-leading" aria-live="off">
-      <span data-status-item="page">{PAGE_LABEL}</span>
+      <span data-status-item="page">{pageLabel}</span>
       <span data-status-item="words">{counts.wordsLabel}</span>
       <span data-status-item="characters">{counts.charactersLabel}</span>
     </div>
@@ -17,12 +18,13 @@ export function CountItems({ counts }: CountItemsProps) {
 
 interface ViewItemProps {
   itemRef: (node: HTMLSpanElement | null) => void;
+  label: string;
 }
 
-export function ViewItem({ itemRef }: ViewItemProps) {
+export function ViewItem({ itemRef, label }: ViewItemProps) {
   return (
     <span className="status-view" data-status-item="view" ref={itemRef}>
-      {VIEW_LABEL}
+      {label}
     </span>
   );
 }

@@ -42,6 +42,7 @@ const MEASURE = `(() => {
   const headerRect = header.getBoundingClientRect();
   const regionRect = region.getBoundingClientRect();
   const regionStyle = getComputedStyle(region);
+  const frameStyle = getComputedStyle(frame);
   const sheetStyle = getComputedStyle(sheet);
   const paragraphStyle = paragraph ? getComputedStyle(paragraph) : null;
   const probe = document.createElement('span');
@@ -126,11 +127,11 @@ const MEASURE = `(() => {
       text: paragraph ? (paragraph.textContent || '').replace(/\\u200b/g, '') : '',
     },
     edge: {
-      shadow: sheetStyle.boxShadow,
+      shadow: frameStyle.boxShadow,
       tokenShadow,
-      borderTopWidth: sheetStyle.borderTopWidth,
-      borderTopStyle: sheetStyle.borderTopStyle,
-      borderTopColor: sheetStyle.borderTopColor,
+      borderTopWidth: frameStyle.borderTopWidth,
+      borderTopStyle: frameStyle.borderTopStyle,
+      borderTopColor: frameStyle.borderTopColor,
       canvasText,
       forced: window.matchMedia('(forced-colors: active)').matches,
       theme: document.documentElement.dataset.theme || '',

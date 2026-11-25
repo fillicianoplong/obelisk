@@ -4,7 +4,7 @@ import { isAutosavePaused } from '../../autosave/model.js';
 import type { SaveState } from '../statusbar/model.js';
 import { saveStateFromChanged } from '../statusbar/model.js';
 import { documentFromEditor } from './document.js';
-import { replaceTabEditor, tabHasUnsavedChanges } from './model.js';
+import { documentView, replaceTabEditor, tabHasUnsavedChanges } from './model.js';
 import type { PageTab } from './model.js';
 
 // FR-13. The wording is the choice the SRS names: Overwrite, Save as, or Cancel.
@@ -93,6 +93,7 @@ export function applySavedTab(tab: PageTab, saved: SavedTabInput): PageTab {
     savePhase: null,
     autosavePaused: caughtUp ? false : tab.autosavePaused,
     baseDocument: caughtUp ? saved.document : tab.baseDocument,
+    savedView: caughtUp ? documentView({ baseDocument: saved.document }) : tab.savedView,
     blockIds: caughtUp ? saved.blockIds : tab.blockIds,
     savedDoc: caughtUp ? tab.editor.doc : tab.savedDoc,
   };

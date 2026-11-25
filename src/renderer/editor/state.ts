@@ -12,7 +12,7 @@ import { slashMenuKeymap, slashMenuPlugin } from './slash/slash-menu-plugin.js';
 import { editorFormatKeymap } from './format-commands.js';
 import { paragraphFormatKeymap } from './paragraph-format-commands.js';
 import { codeBlockKeymap } from './keymap/code-tab.js';
-import { editorKeysKeymap } from './keymap/editor-keys.js';
+import { backspacePageBreak, editorKeysKeymap } from './keymap/editor-keys.js';
 import { editorHistoryKeymap, editorHistoryPlugins } from './history/index.js';
 import { typedShortcutInputRulesPlugin } from './keymap/input-rules.js';
 import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-editing.js';
@@ -49,7 +49,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       keymap({
         ...softBreakKeymap(),
         Enter: chainCommands(listEnterCommand(), splitParagraphKeepingFormat()),
-        Backspace: chainCommands(backspaceUnindentAtStartCommand(), listBackspaceAtStartCommand()),
+        Backspace: chainCommands(backspacePageBreak(), backspaceUnindentAtStartCommand(), listBackspaceAtStartCommand()),
         ...editorFormatKeymap(),
         ...paragraphFormatKeymap(),
         ...editorKeysKeymap(),

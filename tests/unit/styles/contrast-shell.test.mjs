@@ -44,14 +44,14 @@ test('contrast keeps the page edge, active tab, unsaved mark, and focus ring vis
   assert.match(body, /\.tab\[aria-selected='true'\][\s\S]*border-color:\s*var\(--color-accent\)/);
   assert.match(body, /\.tab-unsaved[\s\S]*background:\s*var\(--color-text-tab\)/);
   assert.match(body, /\.tab-unsaved[\s\S]*border-color:\s*var\(--color-text-tab\)/);
-  assert.match(body, /\.page-sheet,\s*\.menu-panel[\s\S]*border:\s*calc\(var\(--space-2xs\) \/ 2\) solid var\(--color-border-subtle\)/);
+  assert.match(body, /\.page-frame,\s*\.menu-panel[\s\S]*border:\s*calc\(var\(--space-2xs\) \/ 2\) solid var\(--color-border-subtle\)/);
   assert.match(focus, /\.tab:focus-visible[\s\S]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/);
   const sharedFocus = focus.match(/\.menu-button:focus-visible[\s\S]*?\{/);
   assert.ok(sharedFocus);
   assert.equal(sharedFocus[0].includes('.page-sheet'), false);
   assert.match(
     focus,
-    /\.page-sheet\[data-focus-source='keyboard'\]:focus\s*\{[^}]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/,
+    /\.page-frame\[data-caret-focus='true'\]\s*\{[^}]*outline:\s*var\(--size-focus-ring\) solid var\(--color-focus-outer\)/,
   );
   assert.match(focus, /outline-color:\s*Highlight/);
   assert.match(css, /\.tab\[data-unsaved='true'\] \.tab-unsaved/);

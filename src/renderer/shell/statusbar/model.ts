@@ -31,10 +31,14 @@ export function tooltipDelay(trigger: TooltipTrigger): number {
   return TOOLTIP_HOVER_DELAY_MS;
 }
 
-// Page count and zoom are placeholders until layout and zoom exist.
+// Shown until the page layout reports. Zoom stays a placeholder.
 export const PAGE_LABEL = 'Page 1 of 1';
 
 export const VIEW_LABEL = 'Pages';
+
+export function statusViewLabel(view: string): string {
+  return view === 'pageless' ? 'Pageless' : 'Pages';
+}
 
 export const ZOOM_LABEL = '100%';
 

@@ -32,7 +32,9 @@ const READY = `(() => {
 function ringExpression() {
   return `(() => {
     const page = document.querySelector('.page-sheet');
-    const style = getComputedStyle(page);
+    const sheet = document.querySelector('.page-frame[data-caret-focus="true"]');
+    const ring = sheet || page;
+    const style = getComputedStyle(ring);
     const swatch = document.createElement('span');
     swatch.style.color = 'var(--color-focus-outer)';
     document.body.appendChild(swatch);

@@ -1,6 +1,6 @@
 import type { Node } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
-import type { DocumentMessage, FileStat } from '../../../shared/ipc/types.js';
+import type { DocumentMessage, DocumentView, FileStat } from '../../../shared/ipc/types.js';
 import { createTabEditorState } from '../../editor/state.js';
 import { editorDocFromDocument } from '../../editor/schema/mapping.js';
 import { createBaseDocument } from './document.js';
@@ -33,7 +33,24 @@ export interface PageTab {
   autosavePaused?: boolean;
   /** The document last opened or written. Paragraph text is filled from the editor at save. */
   baseDocument: DocumentMessage;
+  /** View at the last save, or Pages for a new tab. */
+  savedView: DocumentView;
   blockIds: string[];
+}
+
+export function documentView(tab: Pick<PageTab, 'baseDocument'>): DocumentView {
+  return tab.baseDocument.view === 'pageless' ? 'pageless' : 'pages';
+}
+
+export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
+  if (tab.kind === 'settings' || documentView(tab) === view) {
+    return tab;
+  }
+  return {
+    ...tab,
+    baseDocument: { ...tab.baseDocument, view },
+    revision: tab.revision + 1,
+  };
 }
 
 export function untitledTitle(number: number): string {
@@ -52,6 +69,7 @@ export function createTab(number: number): PageTab {
     stat: null,
     savePhase: null,
     baseDocument: base.document,
+    savedView: 'pages',
     blockIds: base.blockIds,
   };
 }
@@ -69,6 +87,7 @@ export function createSettingsTab(): PageTab {
     stat: null,
     savePhase: null,
     baseDocument: base.document,
+    savedView: 'pages',
     blockIds: base.blockIds,
   };
 }
@@ -76,6 +95,9 @@ export function createSettingsTab(): PageTab {
 export function tabHasUnsavedChanges(tab: PageTab): boolean {
   if (tab.kind === 'settings') {
     return false;
+  }
+  if (documentView(tab) !== tab.savedView) {
+    return true;
   }
   return !tab.editor.doc.eq(tab.savedDoc);
 }

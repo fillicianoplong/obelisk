@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.42.0] - 2026-11-24
+
+### Added
+
+- Pages view shows my document as separate Letter pages, 8.5 by 11 inches, with 1 inch margins and a gap between the pages. Text flows from one page to the next, and a line is never cut off by the edge of a page. Ctrl+Enter or Insert > Page break starts the text after the break at the top of the next page.
+- View > Pageless shows the same text in one column with no page edges. A page break there is a dashed row that reads Page break. Switching views keeps the caret and marks the tab unsaved, and the file opens again in the view I saved.
+- The status bar reads Page X of Y for the page the caret is on, in Pages and in Pageless, and the view name reads Pages or Pageless.
+
 ## [0.1.41.7] - 2026-11-24
 
 ### Fixed

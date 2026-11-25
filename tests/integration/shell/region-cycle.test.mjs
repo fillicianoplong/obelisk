@@ -217,7 +217,8 @@ test('F6 cycles the four regions and the page selection survives', { timeout: 60
 
 const RETURNED = `(() => {
   const page = document.querySelector('.page-sheet');
-  const style = getComputedStyle(page);
+  const frame = document.querySelector('.page-frame[data-caret-focus="true"]');
+  const style = getComputedStyle(frame || page);
   const swatch = document.createElement('span');
   swatch.style.color = 'var(--color-focus-outer)';
   document.body.appendChild(swatch);

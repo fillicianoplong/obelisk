@@ -3,6 +3,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { setSpellcheckEnabled } from '../editor/spellcheck-mode.js';
+import { marginsFromUnknown } from '../editor/layout/paginate.js';
+import { holdCaretAnchor } from '../editor/layout/paginate-plugin.js';
 import { editorText } from '../editor/state.js';
 import { rememberCorrect } from '../editor/spell/client.js';
 import { spellingSuggestionAt, spellingWordToAdd, startSpellContextListener } from './spellcheck/context.js';
@@ -23,7 +25,15 @@ import { StatusBar } from './statusbar/StatusBar.js';
 import { ClosePrompt } from './tabs/ClosePrompt.js';
 import { closeTab, firstUnsavedTabId } from './tabs/close.js';
 import type { ClosePromptChoice } from './tabs/close.js';
-import { SETTINGS_TAB_ID, createSettingsTab, createTab, tabHasUnsavedChanges } from './tabs/model.js';
+import { PAGE_LABEL, statusViewLabel } from './statusbar/model.js';
+import {
+  SETTINGS_TAB_ID,
+  createSettingsTab,
+  createTab,
+  documentView,
+  tabHasUnsavedChanges,
+  withDocumentView,
+} from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
 import { applyOpenResult } from './tabs/opened.js';
 import { startupTabsAfterLaunch } from './tabs/launch.js';
@@ -85,6 +95,7 @@ export function Shell() {
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
   const [spellingOn, setSpellingOn] = useState(true);
+  const [pageLabel, setPageLabel] = useState(PAGE_LABEL);
   const nextNumber = useRef(1);
   const opening = useRef(false);
   const saving = useRef(false);
@@ -607,6 +618,37 @@ export function Shell() {
         }
         return;
       }
+      if (command === 'view-pages' || command === 'view-pageless') {
+        const nextView = command === 'view-pageless' ? 'pageless' : 'pages';
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active === undefined || active.kind === 'settings' || documentView(active) === nextView) {
+          return;
+        }
+        const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+        const editorView = (page as HTMLElement & { editorView?: { coordsAtPos: (pos: number) => { top: number }; state: { selection: { head: number } } } } | null)?.editorView;
+        if (editorView !== undefined) {
+          try {
+            holdCaretAnchor(editorView.coordsAtPos(editorView.state.selection.head).top);
+          } catch {
+            // Keep the current scroll when the caret cannot be measured.
+          }
+        }
+        setTabs((current) => {
+          const next = current.map((tab) => {
+            if (tab.id !== active.id) {
+              return tab;
+            }
+            const updated = withDocumentView(tab, nextView);
+            if (updated !== tab) {
+              syncTabAutosave(autosaveScheduler.current, updated);
+            }
+            return updated;
+          });
+          tabsRef.current = next;
+          return next;
+        });
+        return;
+      }
       if (runActiveEditorMenuCommand(command)) {
         return;
       }
@@ -623,6 +665,7 @@ export function Shell() {
       selectionEmpty,
       editorState: editorState ?? null,
       spelling: spellingOn,
+      documentView: documentTab ? documentView(activeTab) : 'pages',
     };
   }, [activeTab, spellingOn]);
 
@@ -810,7 +853,10 @@ export function Shell() {
         tabId={activeTab.id}
         kind={activeTab.kind}
         state={activeTab.editor}
+        viewMode={documentView(activeTab)}
+        margins={marginsFromUnknown(activeTab.baseDocument.page.margins)}
         onChange={updateEditor}
+        onPageLabel={setPageLabel}
         find={activeTab.kind === 'settings' ? null : (
           <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
         )}
@@ -828,6 +874,8 @@ export function Shell() {
         <StatusBar
           text={editorText(activeTab.editor)}
           saveState={tabSaveState(activeTab)}
+          pageLabel={pageLabel}
+          viewName={statusViewLabel(documentView(activeTab))}
         />
       )}
     </div>

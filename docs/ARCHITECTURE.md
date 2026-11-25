@@ -600,7 +600,7 @@ Decisions are based on SRS 1.3. They are Proposed until accepted. ADR-010 and AD
 | Context | Blocks, typed shortcuts, undo, and schema checks are core needs (FR-32, FR-35, FR-37). |
 | Decision | Use a ProseMirror-based core with a strict schema. Each block kind is a custom node view in BlockViews. |
 | Alternatives | contenteditable from scratch: too much work for one developer. Other editor frameworks: less control over the schema. |
-| Consequences | A proven model for undo and input rules. Costs: learning curve; pagination is custom (FR-74). |
+| Consequences | A proven model for undo and input rules. Screen page breaks are calculated in `src/renderer/editor/layout/paginate.ts`, and print and PDF use that same module later (FR-74). |
 | Revisit when | Pages view layout cannot meet NFR-02. |
 
 ### ADR-005 Equations: KaTeX on screen and PDF, OMML for Word, image fallback

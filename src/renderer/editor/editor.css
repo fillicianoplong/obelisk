@@ -97,10 +97,48 @@
   border-top: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
 }
 
+/* Pageless draws the break. Pages view hides the mark and uses the gap from layout. */
 .page-sheet .page-break {
-  margin: 1em 0;
-  border-top: calc(var(--space-2xs) / 2) dashed var(--color-border-subtle);
+  align-items: center;
+  border: 0;
+  display: flex;
+  height: 1lh;
+  justify-content: center;
+  margin: 0;
+  pointer-events: none;
+  position: relative;
+  user-select: none;
+}
+
+.page-sheet .page-break::before {
+  border-top: calc(var(--space-2xs) / 2) dashed var(--color-border-control);
+  content: "";
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 50%;
+}
+
+.page-sheet .page-break::after {
+  background: var(--color-surface-page);
+  color: var(--color-text-secondary);
+  content: "Page break";
+  font-family: var(--font-ui);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  padding: 0 var(--space-s);
+  position: relative;
+}
+
+.page-canvas[data-page-view='pages'] .page-break {
+  display: block;
   height: 0;
+  overflow: hidden;
+}
+
+.page-canvas[data-page-view='pages'] .page-break::before,
+.page-canvas[data-page-view='pages'] .page-break::after {
+  content: none;
 }
 
 .page-sheet ul[data-list-style],

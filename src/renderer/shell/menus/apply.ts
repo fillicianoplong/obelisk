@@ -76,8 +76,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'file-export-pdf',
   'file-export-word',
   'file-export-markdown',
-  'view-pages',
-  'view-pageless',
   'view-zoom-in',
   'view-zoom-out',
   'view-zoom-100',
@@ -117,6 +115,7 @@ export interface LiveMenuContext {
   selectionEmpty: boolean;
   editorState: EditorState | null;
   spelling?: boolean;
+  documentView?: 'pages' | 'pageless';
 }
 
 function hasSubmenu(item: MenuItem): boolean {
@@ -183,6 +182,11 @@ function applyItem(item: MenuItem, context: LiveMenuContext): MenuItem {
   const enabled = leafEnabled(item, context);
   if (item.id === 'tools-spelling') {
     return { ...item, enabled, checked: context.spelling !== false };
+  }
+  if (item.id === 'view-pages' || item.id === 'view-pageless') {
+    const view = context.documentView === 'pageless' ? 'pageless' : 'pages';
+    const checked = item.id === 'view-pageless' ? view === 'pageless' : view === 'pages';
+    return { ...item, enabled: context.documentTab, checked };
   }
   return { ...item, enabled };
 }

@@ -131,7 +131,7 @@ test('the settings file chooses Light or Dark, and Match Windows leaves data-the
     const contrast = await evaluate(
       system.client,
       `(() => {
-        const page = document.querySelector('.page-sheet');
+        const page = document.querySelector('.page-frame');
         const tab = document.querySelector('[role="tab"][aria-selected="true"]');
         const title = document.querySelector('[data-region="title-bar"]');
         const menu = document.querySelector('.menu-button');

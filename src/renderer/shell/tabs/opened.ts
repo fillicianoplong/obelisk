@@ -2,7 +2,7 @@ import type { EditorState } from 'prosemirror-state';
 import type { DocumentMessage, FileOpenResult, FileStat } from '../../../shared/ipc/types.js';
 import { editorDocFromDocument, blockIdsFromDocument } from '../../editor/schema/mapping.js';
 import { createTabEditorState } from '../../editor/state.js';
-import { isReplaceableUntitledTab, type PageTab } from './model.js';
+import { documentView, isReplaceableUntitledTab, type PageTab } from './model.js';
 
 export function editorFromDocument(document: DocumentMessage): EditorState {
   const doc = editorDocFromDocument(document);
@@ -26,6 +26,7 @@ export function createOpenedTab(opened: {
     stat: opened.stat,
     savePhase: null,
     baseDocument: opened.document,
+    savedView: documentView({ baseDocument: opened.document }),
     blockIds: blockIdsFromDocument(opened.document),
   };
 }
