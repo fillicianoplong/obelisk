@@ -111,6 +111,7 @@ const SHELL_STYLE_FILES = [
   'src/renderer/editor/header/header.css',
   'src/renderer/styles.css',
   'src/renderer/styles/focus.css',
+  'src/renderer/styles/scrollbar.css',
   'src/renderer/editor/editor.css',
   'src/renderer/editor/layout/page.css',
 ];
@@ -216,6 +217,11 @@ test('the active tab is canvas and semibold, with a border only under forced col
   const rules = topLevelRules(contrast.rest);
   const active = declarations(ruleBody(rules, ".tab[aria-selected='true']"));
   assert.equal(active.get('background'), 'var(--color-surface-canvas)');
+  const pageless = declarations(ruleBody(
+    rules,
+    ".shell:has(.page-region[data-page-view='pageless']) .tab[aria-selected='true']",
+  ));
+  assert.equal(pageless.get('background'), 'var(--color-surface-page)');
   assert.equal(active.get('color'), 'var(--color-text-heading)');
   assert.equal(active.get('font-weight'), 'var(--font-weight-semibold)');
   assert.equal(active.has('border-top-color'), false);

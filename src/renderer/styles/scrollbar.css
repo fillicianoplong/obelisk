@@ -1,0 +1,72 @@
+/* Slim round thumb, no arrow buttons. The track is transparent so it matches
+   the surface behind it. scrollbar-color is left unset: setting it paints a
+   second native cap above the thumb. */
+
+.page-region::-webkit-scrollbar,
+.page-setup-dialog::-webkit-scrollbar,
+.slash-menu-panel::-webkit-scrollbar,
+.block-menu-list::-webkit-scrollbar {
+  height: var(--size-scrollbar);
+  width: var(--size-scrollbar);
+}
+
+.page-region::-webkit-scrollbar-button,
+.page-region::-webkit-scrollbar-button:single-button,
+.page-region::-webkit-scrollbar-button:vertical:start:decrement,
+.page-region::-webkit-scrollbar-button:vertical:end:increment,
+.page-region::-webkit-scrollbar-button:horizontal:start:decrement,
+.page-region::-webkit-scrollbar-button:horizontal:end:increment,
+.page-setup-dialog::-webkit-scrollbar-button,
+.page-setup-dialog::-webkit-scrollbar-button:single-button,
+.page-setup-dialog::-webkit-scrollbar-button:vertical:start:decrement,
+.page-setup-dialog::-webkit-scrollbar-button:vertical:end:increment,
+.page-setup-dialog::-webkit-scrollbar-button:horizontal:start:decrement,
+.page-setup-dialog::-webkit-scrollbar-button:horizontal:end:increment,
+.slash-menu-panel::-webkit-scrollbar-button,
+.slash-menu-panel::-webkit-scrollbar-button:single-button,
+.slash-menu-panel::-webkit-scrollbar-button:vertical:start:decrement,
+.slash-menu-panel::-webkit-scrollbar-button:vertical:end:increment,
+.slash-menu-panel::-webkit-scrollbar-button:horizontal:start:decrement,
+.slash-menu-panel::-webkit-scrollbar-button:horizontal:end:increment,
+.block-menu-list::-webkit-scrollbar-button,
+.block-menu-list::-webkit-scrollbar-button:single-button,
+.block-menu-list::-webkit-scrollbar-button:vertical:start:decrement,
+.block-menu-list::-webkit-scrollbar-button:vertical:end:increment,
+.block-menu-list::-webkit-scrollbar-button:horizontal:start:decrement,
+.block-menu-list::-webkit-scrollbar-button:horizontal:end:increment {
+  background: none;
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.page-region::-webkit-scrollbar-track,
+.page-region::-webkit-scrollbar-corner,
+.page-setup-dialog::-webkit-scrollbar-track,
+.page-setup-dialog::-webkit-scrollbar-corner,
+.slash-menu-panel::-webkit-scrollbar-track,
+.slash-menu-panel::-webkit-scrollbar-corner,
+.block-menu-list::-webkit-scrollbar-track,
+.block-menu-list::-webkit-scrollbar-corner {
+  background: var(--color-scrollbar-track);
+}
+
+.page-region::-webkit-scrollbar-thumb,
+.page-setup-dialog::-webkit-scrollbar-thumb,
+.slash-menu-panel::-webkit-scrollbar-thumb,
+.block-menu-list::-webkit-scrollbar-thumb {
+  background-clip: padding-box;
+  background-color: var(--color-scrollbar-thumb);
+  border: var(--size-scrollbar-inset) solid transparent;
+  border-radius: calc(var(--size-scrollbar) / 2);
+}
+
+.page-region::-webkit-scrollbar-thumb:hover,
+.page-setup-dialog::-webkit-scrollbar-thumb:hover,
+.slash-menu-panel::-webkit-scrollbar-thumb:hover,
+.block-menu-list::-webkit-scrollbar-thumb:hover {
+  background-clip: padding-box;
+  background-color: var(--color-scrollbar-thumb-hover);
+  border: var(--size-scrollbar-inset) solid transparent;
+  border-radius: calc(var(--size-scrollbar) / 2);
+}

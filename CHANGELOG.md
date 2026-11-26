@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.47.3] - 2026-11-26
+
+### Changed
+
+- The menu bar and the status bar share one hairline, and it runs the full width of the window.
+- In Pageless, the active tab uses the page color and still meets the page with no line under it.
+- Scrollbars are a slim round thumb with no arrows. The track matches the surface behind it.
+
 ## [0.1.47.2] - 2026-11-25
 
 ### Fixed

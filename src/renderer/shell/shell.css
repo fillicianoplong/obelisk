@@ -494,6 +494,12 @@
   background: var(--color-surface-canvas);
   color: var(--color-text-heading);
   font-weight: var(--font-weight-semibold);
+  transition-property: color;
+}
+
+/* Pageless has no canvas around the page. The active tab uses the page color so the join stays seamless. */
+.shell:has(.page-region[data-page-view='pageless']) .tab[aria-selected='true'] {
+  background: var(--color-surface-page);
 }
 
 .tab-trailing {

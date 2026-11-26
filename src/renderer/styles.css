@@ -1,5 +1,6 @@
 @import './styles/tokens.css';
 @import './styles/focus.css';
+@import './styles/scrollbar.css';
 
 html,
 body,
