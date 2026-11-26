@@ -265,6 +265,23 @@ test('Pages view flows text onto Letter sheets and Pageless switches from the Vi
     await sleep(50);
     chrome = await readChrome(client);
     assert.equal(chrome.viewMode, 'pageless');
+    const tabEdge = await evaluate(
+      client,
+      `(() => {
+        const strip = document.querySelector('.tab-strip');
+        const tab = document.querySelector('.tab[aria-selected="true"]');
+        const region = document.querySelector('.page-region');
+        return {
+          overflow: getComputedStyle(strip).overflowY,
+          tabBottom: tab.getBoundingClientRect().bottom,
+          stripBottom: strip.getBoundingClientRect().bottom,
+          regionTop: region.getBoundingClientRect().top,
+        };
+      })()`,
+    );
+    assert.equal(tabEdge.overflow, 'hidden');
+    assert.ok(Math.abs(tabEdge.tabBottom - tabEdge.stripBottom) < 0.5, JSON.stringify(tabEdge));
+    assert.ok(Math.abs(tabEdge.regionTop - tabEdge.stripBottom) < 0.5, JSON.stringify(tabEdge));
     assert.equal(chrome.frames.length, 0);
     assert.equal(chrome.viewLabel, 'Pageless');
     assert.equal(chrome.save, 'unsaved');

@@ -245,7 +245,7 @@ function assertRegions(state) {
   assert.equal(state.menuDrag, 'no-drag');
   assert.equal(state.tabsDrag, 'no-drag');
   assert.ok(state.regions.titleBar.height >= 30 && state.regions.titleBar.height <= 34);
-  assert.deepEqual(state.menuLabels, ['File', 'Edit', 'View', 'Insert', 'Format', 'Tools', 'Help']);
+  assert.deepEqual(state.menuLabels, ['File', 'Edit', 'Insert', 'Format', 'Tools', 'View', 'Help']);
   assert.ok(state.regions.titleBar.top < state.regions.menu.top, 'title bar is above the menu bar');
   assert.ok(state.regions.menu.top < state.regions.tabs.top, 'menu bar is above the tab strip');
   assert.ok(state.regions.tabs.top < state.regions.page.top, 'tab strip is above the page');

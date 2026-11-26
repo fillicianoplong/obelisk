@@ -297,17 +297,17 @@ test('the menu model matches the Menus reference labels', async () => {
   }
 });
 
-test('top menus use F E V I O T H, and each menu keeps its access keys unique', async () => {
+test('top menus use F E I O T V H, and each menu keeps its access keys unique', async () => {
   const { APP_MENUS, accessKeyIndex, accessibleName, isSeparator } = await menuModule();
   assert.deepEqual(
     APP_MENUS.map((menu) => [menu.label, menu.accessKey.toLowerCase()]),
     [
       ['File', 'f'],
       ['Edit', 'e'],
-      ['View', 'v'],
       ['Insert', 'i'],
       ['Format', 'o'],
       ['Tools', 't'],
+      ['View', 'v'],
       ['Help', 'h'],
     ],
   );

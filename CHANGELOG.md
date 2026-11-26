@@ -2,6 +2,17 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.47.1] - 2026-11-25
+
+### Fixed
+
+- Opening or closing a header or footer no longer moves the band, the dashed box, or the body.
+- The active tab ends at the bottom of the tab strip in Pages and Pageless.
+
+### Changed
+
+- The menu bar order is File, Edit, Insert, Format, Tools, View, Help.
+
 ## [0.1.47.0] - 2026-11-25
 
 ### Changed

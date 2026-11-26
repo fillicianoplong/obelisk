@@ -960,15 +960,15 @@ An item that needs more input before it acts ends with an ellipsis (…).
 |---|---|
 | File | New; New from template > MLA; Open…; Save; Save as…; Print…; Export > PDF…, Word…, Markdown…; Close tab; Exit |
 | Edit | Undo; Redo; Cut; Copy; Paste; Paste as plain text; Duplicate; Select all; Find; Replace |
-| View | Pages; Pageless; Zoom in; Zoom out; Zoom to 100% (presets 200%, 150%, 125%, 100%, 75%, 50%) |
 | Insert | Every block in the [*Slash menu reference*](#slash-menu-reference), in its order and groups; Date and time… replaces Date; Link… (Ctrl+K) follows it in group 5. |
 | Format | Text; Font; Font size; Paragraph…; Increase indent; Decrease indent; Clear formatting; Page setup…; Header and footer |
 | Tools | Spell check; Settings |
+| View | Pages; Pageless; Zoom in; Zoom out; Zoom to 100% (presets 200%, 150%, 125%, 100%, 75%, 50%) |
 | Help | Keyboard shortcuts; About Obelisk |
 
 ### Keyboard reference
 
-Menus also have Alt access keys. Top menus: File F, Edit E, View V, Insert I, Format O, Tools T, Help H. Inside a table, Tab and Shift+Tab move between cells.
+Menus also have Alt access keys. Top menus: File F, Edit E, Insert I, Format O, Tools T, View V, Help H. Inside a table, Tab and Shift+Tab move between cells.
 
 | Where | Keys | Action |
 |---|---|---|

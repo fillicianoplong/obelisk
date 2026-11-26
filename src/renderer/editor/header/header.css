@@ -25,11 +25,11 @@
 
 .page-band-label {
   color: var(--color-text-secondary);
-  display: none;
   font-family: var(--font-ui);
   font-size: var(--font-size-caption);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-caption);
+  visibility: hidden;
 }
 
 .page-band-header .page-band-label::before {
@@ -43,7 +43,7 @@
 .page-band:hover .page-band-label,
 .page-band[data-editing='true'] .page-band-label,
 .page-band[data-mirror='true'] .page-band-label {
-  display: inline;
+  visibility: visible;
 }
 
 .page-band-bubble {
@@ -118,6 +118,7 @@
 }
 
 .page-band-text,
+.page-band-text p,
 .page-band-editor,
 .page-band-editor p {
   font-family: var(--font-page);

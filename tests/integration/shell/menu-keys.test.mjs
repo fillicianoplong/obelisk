@@ -213,7 +213,7 @@ test('the menu bar opens File and Settings from the keyboard', { timeout: 60_000
   assert.equal(bar.barRole, 'menubar');
   assert.deepEqual(
     bar.keys.map((entry) => entry.text),
-    ['F', 'E', 'V', 'I', 'o', 'T', 'H'],
+    ['F', 'E', 'I', 'o', 'T', 'V', 'H'],
   );
   assert.equal(bar.keys.every((entry) => entry.underline === 'underline'), true, JSON.stringify(bar.keys));
   assert.equal(bar.panels.length, 0);

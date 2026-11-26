@@ -102,6 +102,36 @@ async function clickMenu(client, label) {
   await click(client, point.x, point.y);
 }
 
+function bandGeometry(part) {
+  return `(() => {
+    const sheet = document.querySelector('.page-sheet');
+    const body = sheet.querySelector('p');
+    const band = document.querySelector('[data-page-band-page="1"][data-page-part="${part}"]');
+    const hit = band.querySelector('.page-band-hit');
+    const frame = document.querySelector('.page-frame[data-page="1"]');
+    const origin = frame.getBoundingClientRect().top;
+    const box = (node) => {
+      const rect = node.getBoundingClientRect();
+      return { top: rect.top - origin, bottom: rect.bottom - origin };
+    };
+    return {
+      pad: getComputedStyle(sheet).paddingTop,
+      bodyTop: box(body).top,
+      bandTop: box(band).top,
+      bandBottom: box(band).bottom,
+      hitTop: box(hit).top,
+      hitBottom: box(hit).bottom,
+    };
+  })()`;
+}
+
+function sameGeometry(before, after, label) {
+  assert.equal(before.pad, after.pad, `${label} padding`);
+  for (const key of ['bodyTop', 'bandTop', 'bandBottom', 'hitTop', 'hitBottom']) {
+    assert.ok(Math.abs(before[key] - after[key]) < 0.5, `${label} ${key} moved from ${before[key]} to ${after[key]}`);
+  }
+}
+
 async function headerTexts(client) {
   return evaluate(
     client,
@@ -138,6 +168,7 @@ test('the same header is on every page and each page shows its own number', { ti
     assert.ok(flowed.pageCount >= 2, JSON.stringify(flowed));
     await evaluate(client, `document.querySelector('.page-region').scrollTop = 0`);
     await sleep(50);
+    const headerBefore = await evaluate(client, bandGeometry('header'));
 
     await clickSelector(client, '[data-page-band-page="1"][data-page-part="header"] .page-band-hit');
     await waitFor(
@@ -168,6 +199,7 @@ test('the same header is on every page and each page shows its own number', { ti
     assert.equal(bubble.position, 'absolute', JSON.stringify(bubble));
     assert.equal(bubble.above, true, JSON.stringify(bubble));
     assert.equal(bubble.centered, true, JSON.stringify(bubble));
+    sameGeometry(headerBefore, await evaluate(client, bandGeometry('header')), 'header open');
     await client.send('Input.insertText', { text: 'Plong ' });
     await sleep(80);
     await clickSelector(client, '[data-insert-page-number]');
@@ -183,8 +215,10 @@ test('the same header is on every page and each page shows its own number', { ti
     assert.equal(read.headers[0], 'Plong 1');
     assert.equal(read.headers[1], 'Plong 2');
 
+    const headerOpen = await evaluate(client, bandGeometry('header'));
     await clickSelector(client, '[data-insert-close]');
     await sleep(50);
+    sameGeometry(headerOpen, await evaluate(client, bandGeometry('header')), 'header closed');
     read = await headerTexts(client);
     assert.equal(read.editing, false);
     assert.equal(read.headers[0], 'Plong 1');
@@ -195,6 +229,7 @@ test('the same header is on every page and each page shows its own number', { ti
       `document.querySelector('[data-page-band-page="1"][data-page-part="footer"]').scrollIntoView({ block: 'center' })`,
     );
     await sleep(40);
+    const footerBefore = await evaluate(client, bandGeometry('footer'));
     await clickSelector(client, '[data-page-band-page="1"][data-page-part="footer"] .page-band-hit');
     await waitFor(
       session.child,
@@ -213,8 +248,10 @@ test('the same header is on every page and each page shows its own number', { ti
       })()`,
     );
     assert.equal(footerBubble.above, true, JSON.stringify(footerBubble));
+    sameGeometry(footerBefore, await evaluate(client, bandGeometry('footer')), 'footer open');
     await clickSelector(client, '[data-insert-close]');
     await sleep(40);
+    sameGeometry(footerBefore, await evaluate(client, bandGeometry('footer')), 'footer closed');
 
     await clickMenu(client, 'View');
     await sleep(30);
