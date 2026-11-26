@@ -121,7 +121,7 @@ function Band({
   const empty = !headerHasContent(paragraph);
 
   function openMenu(): void {
-    setMenu({ checked: apiRef.current?.selectedPageFormat() ?? null });
+    setMenu({ checked: apiRef.current?.selectedPageFormat() ?? 'decimal' });
   }
 
   function choose(format: PageFieldFormat): void {
@@ -150,9 +150,10 @@ function Band({
     >
       <div className="page-band-chrome">
         <span className="page-band-label" data-band-label={label} />
-        {active ? <span className="page-band-rule" aria-hidden="true" /> : null}
-        {active ? (
-          <div className="page-band-bar">
+      </div>
+      {active ? (
+        <div className="page-band-bubble" data-page-band-bubble="">
+          <div className="page-band-number">
             <button
               type="button"
               className="page-band-button"
@@ -164,28 +165,6 @@ function Band({
             >
               Page number
               <span aria-hidden="true"> ▾</span>
-            </button>
-            <button
-              type="button"
-              className="page-band-button"
-              data-insert-page-count=""
-              onMouseDown={(event) => event.stopPropagation()}
-              onClick={() => {
-                apiRef.current?.insertField('pages', 'decimal');
-                setMenu(null);
-                apiRef.current?.focus();
-              }}
-            >
-              Page count
-            </button>
-            <button
-              type="button"
-              className="page-band-button"
-              data-insert-close=""
-              onMouseDown={(event) => event.stopPropagation()}
-              onClick={() => onClose()}
-            >
-              Close
             </button>
             {menu !== null ? (
               <div
@@ -221,8 +200,31 @@ function Band({
               </div>
             ) : null}
           </div>
-        ) : null}
-      </div>
+          <button
+            type="button"
+            className="page-band-button"
+            data-insert-page-count=""
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={() => {
+              apiRef.current?.insertField('pages', 'decimal');
+              setMenu(null);
+              apiRef.current?.focus();
+            }}
+          >
+            Page count
+          </button>
+          <span className="page-band-divider" aria-hidden="true" />
+          <button
+            type="button"
+            className="page-band-button"
+            data-insert-close=""
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={() => onClose()}
+          >
+            Close
+          </button>
+        </div>
+      ) : null}
       <div className="page-band-hit">
         <div
           className="page-band-text"

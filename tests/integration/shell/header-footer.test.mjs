@@ -145,6 +145,29 @@ test('the same header is on every page and each page shows its own number', { ti
       async () => evaluate(client, `document.querySelector('[data-header-editor="true"]') ? true : null`),
       5_000,
     );
+    const bubble = await evaluate(
+      client,
+      `(() => {
+        const band = document.querySelector('[data-page-band-page="1"][data-page-part="header"]');
+        const hit = band.querySelector('.page-band-hit');
+        const tools = band.querySelector('[data-page-band-bubble]');
+        const sheet = getComputedStyle(document.querySelector('.page-sheet'));
+        const bandRect = band.getBoundingClientRect();
+        const hitRect = hit.getBoundingClientRect();
+        const toolsRect = tools.getBoundingClientRect();
+        const toolsStyle = getComputedStyle(tools);
+        return {
+          paddingTop: sheet.paddingTop,
+          position: toolsStyle.position,
+          above: toolsRect.bottom <= hitRect.top + 1,
+          centered: Math.abs((toolsRect.left + toolsRect.right) / 2 - (bandRect.left + bandRect.right) / 2) < 2,
+        };
+      })()`,
+    );
+    assert.equal(bubble.paddingTop, '96px', JSON.stringify(bubble));
+    assert.equal(bubble.position, 'absolute', JSON.stringify(bubble));
+    assert.equal(bubble.above, true, JSON.stringify(bubble));
+    assert.equal(bubble.centered, true, JSON.stringify(bubble));
     await client.send('Input.insertText', { text: 'Plong ' });
     await sleep(80);
     await clickSelector(client, '[data-insert-page-number]');
@@ -166,6 +189,32 @@ test('the same header is on every page and each page shows its own number', { ti
     assert.equal(read.editing, false);
     assert.equal(read.headers[0], 'Plong 1');
     assert.equal(read.headers[1], 'Plong 2');
+
+    await evaluate(
+      client,
+      `document.querySelector('[data-page-band-page="1"][data-page-part="footer"]').scrollIntoView({ block: 'center' })`,
+    );
+    await sleep(40);
+    await clickSelector(client, '[data-page-band-page="1"][data-page-part="footer"] .page-band-hit');
+    await waitFor(
+      session.child,
+      async () => evaluate(client, `document.querySelector('[data-header-editor="true"]') ? true : null`),
+      5_000,
+    );
+    const footerBubble = await evaluate(
+      client,
+      `(() => {
+        const band = document.querySelector('[data-page-band-page="1"][data-page-part="footer"]');
+        const hit = band.querySelector('.page-band-hit');
+        const tools = band.querySelector('[data-page-band-bubble]');
+        const hitRect = hit.getBoundingClientRect();
+        const toolsRect = tools.getBoundingClientRect();
+        return { above: toolsRect.bottom <= hitRect.top + 1 };
+      })()`,
+    );
+    assert.equal(footerBubble.above, true, JSON.stringify(footerBubble));
+    await clickSelector(client, '[data-insert-close]');
+    await sleep(40);
 
     await clickMenu(client, 'View');
     await sleep(30);
