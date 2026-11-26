@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { setSpellcheckEnabled } from '../editor/spellcheck-mode.js';
+import type { BandEdit } from '../editor/header/PageBands.js';
 import { pageSetupFromUnknown, type PageSetupValue } from './page-setup/model.js';
 import { holdAnchorForZoom, holdCaretAnchor } from '../editor/layout/paginate-plugin.js';
 import { editorText } from '../editor/state.js';
@@ -42,6 +43,7 @@ import {
   createTab,
   documentView,
   tabHasUnsavedChanges,
+  withBand,
   withDocumentView,
   withPageSetup,
 } from './tabs/model.js';
@@ -107,6 +109,9 @@ export function Shell() {
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
   const [pageSetupOpen, setPageSetupOpen] = useState(false);
+  const [bandEdit, setBandEdit] = useState<BandEdit | null>(null);
+  const bandEditRef = useRef(bandEdit);
+  bandEditRef.current = bandEdit;
   const pageSetupOpenRef = useRef(pageSetupOpen);
   pageSetupOpenRef.current = pageSetupOpen;
   const [spellingOn, setSpellingOn] = useState(true);
@@ -619,6 +624,30 @@ export function Shell() {
         setLinkDialog(draft);
         return;
       }
+      if (command === 'format-header') {
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active === undefined || active.kind === 'settings' || documentView(active) === 'pageless') {
+          return;
+        }
+        const page = document.querySelector<HTMLElement>('[data-region="page-editor"]') as HTMLElement & {
+          editorCommands?: { pageSnapshot?: () => { page: number } };
+        } | null;
+        const caretPage = page?.editorCommands?.pageSnapshot?.().page ?? 1;
+        setBandEdit({ part: 'header', page: caretPage });
+        return;
+      }
+      if (
+        command === 'insert-page-count'
+        || command === 'insert-page-number-decimal'
+        || command === 'insert-page-number-roman'
+        || command === 'insert-page-number-page-of-n'
+      ) {
+        if (bandEditRef.current === null) {
+          return;
+        }
+        runActiveEditorMenuCommand(command);
+        return;
+      }
       if (command === 'format-page-setup') {
         if (linkDialogRef.current !== null) {
           return;
@@ -672,6 +701,7 @@ export function Shell() {
         return;
       }
       if (command === 'view-pages' || command === 'view-pageless') {
+        setBandEdit(null);
         const nextView = command === 'view-pageless' ? 'pageless' : 'pages';
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
         if (active === undefined || active.kind === 'settings' || documentView(active) === nextView) {
@@ -720,8 +750,9 @@ export function Shell() {
       spelling: spellingOn,
       documentView: documentTab ? documentView(activeTab) : 'pages',
       zoom,
+      bandEditing: documentTab && documentView(activeTab) === 'pages' && bandEdit !== null,
     };
-  }, [activeTab, spellingOn, zoom]);
+  }, [activeTab, spellingOn, zoom, bandEdit]);
 
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
@@ -963,9 +994,40 @@ export function Shell() {
         viewMode={documentView(activeTab)}
         orientation={pageSetupFromUnknown(activeTab.baseDocument.page).orientation}
         margins={pageSetupFromUnknown(activeTab.baseDocument.page).margins}
+        header={activeTab.baseDocument.header}
+        footer={activeTab.baseDocument.footer}
+        bandEdit={documentView(activeTab) === 'pages' ? bandEdit : null}
         zoom={zoom}
         onChange={updateEditor}
         onPageLabel={setPageLabel}
+        onBandEdit={(part, page) => setBandEdit({ part, page })}
+        onBandClose={() => {
+          setBandEdit(null);
+          document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+        }}
+        onBandChange={(part, paragraph) => {
+          setTabs((current) => {
+            const next = current.map((tab) => {
+              if (tab.id !== activeIdRef.current) {
+                return tab;
+              }
+              const updated = withBand(tab, part, paragraph);
+              if (updated !== tab) {
+                syncTabAutosave(autosaveScheduler.current, updated);
+              }
+              return updated;
+            });
+            tabsRef.current = next;
+            return next;
+          });
+        }}
+        onBandMove={() => {
+          setBandEdit((current) => (
+            current === null
+              ? null
+              : { ...current, part: current.part === 'header' ? 'footer' : 'header' }
+          ));
+        }}
         find={activeTab.kind === 'settings' ? null : (
           <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
         )}

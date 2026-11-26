@@ -304,6 +304,13 @@ export const APP_MENUS: readonly AppMenu[] = [
       separator('insert-sep-6'),
       item({ id: 'insert-horizontal', label: 'Horizontal line', accessKey: 'h', command: 'insert-horizontal' }),
       item({ id: 'insert-page-break', label: 'Page break', accessKey: 'p', shortcut: 'Ctrl+Enter', command: 'insert-page-break' }),
+      separator('insert-sep-7'),
+      submenu('insert-page-number', 'Page number', 'r', [
+        item({ id: 'insert-page-number-decimal', label: '1, 2, 3', accessKey: '1', command: 'insert-page-number-decimal' }),
+        item({ id: 'insert-page-number-roman', label: 'i, ii, iii', accessKey: 'i', command: 'insert-page-number-roman' }),
+        item({ id: 'insert-page-number-page-of-n', label: 'Page 1 of N', accessKey: 'p', command: 'insert-page-number-page-of-n' }),
+      ]),
+      item({ id: 'insert-page-count', label: 'Page count', accessKey: 'o', command: 'insert-page-count' }),
     ],
   },
   {
@@ -320,7 +327,7 @@ export const APP_MENUS: readonly AppMenu[] = [
       formatItem({ id: 'format-clear', label: 'Clear formatting', accessKey: 'c', shortcut: 'Ctrl+Space' }),
       separator('format-sep-1'),
       item({ id: 'format-page-setup', label: 'Page setup', accessKey: 'u', ellipsis: true, command: 'format-page-setup' }),
-      item({ id: 'format-header', label: 'Header and footer', accessKey: 'h' }),
+      item({ id: 'format-header', label: 'Header and footer', accessKey: 'h', command: 'format-header' }),
     ],
   },
   {

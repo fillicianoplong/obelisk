@@ -96,6 +96,8 @@ export function applySavedTab(tab: PageTab, saved: SavedTabInput): PageTab {
     baseDocument: caughtUp ? saved.document : tab.baseDocument,
     savedView: caughtUp ? documentView({ baseDocument: saved.document }) : tab.savedView,
     savedPage: caughtUp ? pageSetupFromUnknown(saved.document.page) : tab.savedPage,
+    savedHeader: caughtUp ? saved.document.header : tab.savedHeader,
+    savedFooter: caughtUp ? saved.document.footer : tab.savedFooter,
     blockIds: caughtUp ? saved.blockIds : tab.blockIds,
     savedDoc: caughtUp ? tab.editor.doc : tab.savedDoc,
   };

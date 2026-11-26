@@ -10,7 +10,6 @@ import {
   fontSizeFromMenuId,
 } from './format/reference.js';
 import { paragraphMenuCommand } from './paragraph-format-commands.js';
-import { editorSchema } from './schema/index.js';
 
 const CHARACTER_MARK_TYPES = [
   'bold',
@@ -28,8 +27,16 @@ const CHARACTER_MARK_TYPES = [
 
 type CharacterMarkName = typeof CHARACTER_MARK_TYPES[number];
 
-function markType(name: CharacterMarkName): MarkType {
-  return editorSchema.marks[name];
+function schemaMark(state: EditorState, name: CharacterMarkName): MarkType | null {
+  return state.schema.marks[name] ?? null;
+}
+
+function markType(state: EditorState, name: CharacterMarkName): MarkType {
+  const type = schemaMark(state, name);
+  if (type === null) {
+    throw new Error(`The document has no ${name} mark.`);
+  }
+  return type;
 }
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
@@ -44,14 +51,20 @@ function applyCommand(state: EditorState, command: Command): EditorState | null 
 }
 
 function toggleNamedMark(name: CharacterMarkName): Command {
-  return toggleMark(markType(name));
+  return (state, dispatch) => {
+    const type = schemaMark(state, name);
+    if (type === null) {
+      return false;
+    }
+    return toggleMark(type)(state, dispatch);
+  };
 }
 
 function setMark(name: CharacterMarkName, attrs: Record<string, unknown>): Command {
-  const type = markType(name);
   return (state, dispatch) => {
+    const type = schemaMark(state, name);
     const { empty, from, to } = state.selection;
-    if (empty) {
+    if (type === null || empty) {
       return false;
     }
     if (dispatch) {
@@ -62,8 +75,12 @@ function setMark(name: CharacterMarkName, attrs: Record<string, unknown>): Comma
 }
 
 function removeCharacterMarks(tr: Transaction, from: number, to: number): void {
+  const marks = tr.doc.type.schema.marks;
   for (const name of CHARACTER_MARK_TYPES) {
-    tr.removeMark(from, to, markType(name));
+    const type = marks[name];
+    if (type !== undefined) {
+      tr.removeMark(from, to, type);
+    }
   }
 }
 
@@ -95,10 +112,11 @@ export function clearCharacterFormatting(state: EditorState): EditorState | null
 function stepFontSizeCommand(larger: boolean): Command {
   return (state, dispatch) => {
     const { empty, from, to } = state.selection;
-    if (empty) {
+    const type = schemaMark(state, 'fontSize');
+    if (type === null || empty) {
       return false;
     }
-    const current = markType('fontSize').isInSet(state.doc.resolve(from).marks());
+    const current = type.isInSet(state.doc.resolve(from).marks());
     const currentPt = current ? Number(current.attrs.pt) : DEFAULT_FONT_SIZE;
     let index = FONT_SIZE_PT.indexOf(currentPt as (typeof FONT_SIZE_PT)[number]);
     if (index < 0) {
@@ -110,9 +128,9 @@ function stepFontSizeCommand(larger: boolean): Command {
     }
     const next = FONT_SIZE_PT[nextIndex];
     const tr = state.tr;
-    tr.removeMark(from, to, markType('fontSize'));
+    tr.removeMark(from, to, type);
     if (next !== DEFAULT_FONT_SIZE) {
-      tr.addMark(from, to, markType('fontSize').create({ pt: next }));
+      tr.addMark(from, to, type.create({ pt: next }));
     }
     if (dispatch) {
       dispatch(tr);
@@ -179,37 +197,37 @@ export function applyCharacterMarksCommand(marks: Record<string, unknown>): Comm
     }
     const tr = state.tr;
     if (marks.bold) {
-      tr.addMark(from, to, markType('bold').create());
+      tr.addMark(from, to, markType(state, 'bold').create());
     }
     if (marks.italic) {
-      tr.addMark(from, to, markType('italic').create());
+      tr.addMark(from, to, markType(state, 'italic').create());
     }
     if (marks.underline) {
-      tr.addMark(from, to, markType('underline').create());
+      tr.addMark(from, to, markType(state, 'underline').create());
     }
     if (marks.strike) {
-      tr.addMark(from, to, markType('strike').create());
+      tr.addMark(from, to, markType(state, 'strike').create());
     }
     if (marks.code) {
-      tr.addMark(from, to, markType('code').create());
+      tr.addMark(from, to, markType(state, 'code').create());
     }
     if (marks.superscript) {
-      tr.addMark(from, to, markType('superscript').create());
+      tr.addMark(from, to, markType(state, 'superscript').create());
     }
     if (marks.subscript) {
-      tr.addMark(from, to, markType('subscript').create());
+      tr.addMark(from, to, markType(state, 'subscript').create());
     }
     if (typeof marks.font === 'string') {
-      tr.addMark(from, to, markType('fontFamily').create({ family: marks.font }));
+      tr.addMark(from, to, markType(state, 'fontFamily').create({ family: marks.font }));
     }
     if (typeof marks.size === 'number') {
-      tr.addMark(from, to, markType('fontSize').create({ pt: marks.size }));
+      tr.addMark(from, to, markType(state, 'fontSize').create({ pt: marks.size }));
     }
     if (typeof marks.color === 'string') {
-      tr.addMark(from, to, markType('textColor').create({ color: marks.color }));
+      tr.addMark(from, to, markType(state, 'textColor').create({ color: marks.color }));
     }
     if (typeof marks.highlight === 'string') {
-      tr.addMark(from, to, markType('highlight').create({ color: marks.highlight }));
+      tr.addMark(from, to, markType(state, 'highlight').create({ color: marks.highlight }));
     }
     if (dispatch) {
       dispatch(tr);

@@ -1,5 +1,6 @@
 export function runActiveEditorMenuCommand(command: string): boolean {
-  const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+  const header = document.querySelector<HTMLElement>('[data-header-editor="true"]');
+  const page = header ?? document.querySelector<HTMLElement>('[data-region="page-editor"]');
   if (page === null) {
     return false;
   }

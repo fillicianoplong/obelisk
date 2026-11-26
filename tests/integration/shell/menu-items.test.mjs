@@ -195,7 +195,7 @@ test('Shift+arrow then the Edit menu enables Cut immediately', { timeout: 60_000
   );
   const point = await evaluate(client, `(() => {
     const rect = document.querySelector('[data-region="page-editor"]').getBoundingClientRect();
-    return { x: Math.round(rect.left + 30), y: Math.round(rect.top + 16) };
+    return { x: Math.round(rect.left + 30), y: Math.round(rect.top + 140) };
   })()`);
   await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none', clickCount: 0 });
   await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });

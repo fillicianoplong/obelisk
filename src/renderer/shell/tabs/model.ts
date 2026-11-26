@@ -1,6 +1,6 @@
 import type { Node } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
-import type { DocumentMessage, DocumentView, FileStat } from '../../../shared/ipc/types.js';
+import type { DocumentMessage, DocumentView, FileStat, JsonObject } from '../../../shared/ipc/types.js';
 import {
   defaultPageSetup,
   pageSetupFromUnknown,
@@ -43,6 +43,9 @@ export interface PageTab {
   savedView: DocumentView;
   /** Page setup at the last save, or Normal portrait for a new tab. */
   savedPage: PageSetupValue;
+  /** Header and footer at the last save. */
+  savedHeader: JsonObject;
+  savedFooter: JsonObject;
   blockIds: string[];
 }
 
@@ -84,6 +87,21 @@ export function withPageSetup(tab: PageTab, page: PageSetupValue): PageTab {
   };
 }
 
+function sameJson(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+export function withBand(tab: PageTab, part: 'header' | 'footer', paragraph: JsonObject): PageTab {
+  if (tab.kind === 'settings' || sameJson(tab.baseDocument[part], paragraph)) {
+    return tab;
+  }
+  return {
+    ...tab,
+    baseDocument: { ...tab.baseDocument, [part]: paragraph },
+    revision: tab.revision + 1,
+  };
+}
+
 export function untitledTitle(number: number): string {
   return `Untitled ${number}`;
 }
@@ -102,6 +120,8 @@ export function createTab(number: number): PageTab {
     baseDocument: base.document,
     savedView: 'pages',
     savedPage: defaultPageSetup(),
+    savedHeader: base.document.header,
+    savedFooter: base.document.footer,
     blockIds: base.blockIds,
   };
 }
@@ -121,6 +141,8 @@ export function createSettingsTab(): PageTab {
     baseDocument: base.document,
     savedView: 'pages',
     savedPage: defaultPageSetup(),
+    savedHeader: base.document.header,
+    savedFooter: base.document.footer,
     blockIds: base.blockIds,
   };
 }
@@ -133,6 +155,9 @@ export function tabHasUnsavedChanges(tab: PageTab): boolean {
     return true;
   }
   if (!samePageSetup(pageSetupFromUnknown(tab.baseDocument.page), tab.savedPage)) {
+    return true;
+  }
+  if (!sameJson(tab.baseDocument.header, tab.savedHeader) || !sameJson(tab.baseDocument.footer, tab.savedFooter)) {
     return true;
   }
   return !tab.editor.doc.eq(tab.savedDoc);

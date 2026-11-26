@@ -86,7 +86,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'insert-signature',
   'insert-date-time',
   'format-paragraph',
-  'format-header',
   'help-shortcuts',
   'help-about',
 ]);
@@ -114,6 +113,7 @@ export interface LiveMenuContext {
   spelling?: boolean;
   documentView?: 'pages' | 'pageless';
   zoom?: number;
+  bandEditing?: boolean;
 }
 
 function hasSubmenu(item: MenuItem): boolean {
@@ -151,6 +151,15 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
   if (item.id === 'format-page-setup') {
     return true;
   }
+  if (item.id === 'format-header') {
+    return context.documentView !== 'pageless';
+  }
+  if (
+    item.id === 'insert-page-count'
+    || item.id.startsWith('insert-page-number-')
+  ) {
+    return context.bandEditing === true;
+  }
   try {
     return editorMenuCommandEnabled(context.editorState, item.id);
   } catch {
@@ -167,6 +176,9 @@ function submenuParentEnabled(item: MenuItem, context: LiveMenuContext): boolean
   }
   if (item.id.startsWith('format-') && hasSubmenu(item)) {
     return context.documentTab && context.editorState !== null;
+  }
+  if (item.id === 'insert-page-number') {
+    return context.bandEditing === true;
   }
   return false;
 }

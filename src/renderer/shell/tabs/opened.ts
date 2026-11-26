@@ -29,6 +29,8 @@ export function createOpenedTab(opened: {
     baseDocument: opened.document,
     savedView: documentView({ baseDocument: opened.document }),
     savedPage: pageSetupFromUnknown(opened.document.page),
+    savedHeader: opened.document.header,
+    savedFooter: opened.document.footer,
     blockIds: blockIdsFromDocument(opened.document),
   };
 }

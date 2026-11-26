@@ -1,4 +1,7 @@
 import type { JsonObject } from '../../shared/ipc/types.js';
+import { PageBands, type BandEdit } from './header/PageBands.js';
+import { reservedMarginIn } from './header/page-field.js';
+import './header/header.css';
 import { redo, undo } from 'prosemirror-history';
 import type { EditorState, Selection, Transaction } from 'prosemirror-state';
 import { TextSelection } from 'prosemirror-state';
@@ -62,9 +65,16 @@ interface EditorCoreProps {
   viewMode: 'pages' | 'pageless';
   orientation?: 'portrait' | 'landscape';
   margins: PageMargins;
+  header?: JsonObject;
+  footer?: JsonObject;
+  bandEdit?: BandEdit | null;
   zoom?: number;
   onChange: (tabId: string, state: EditorState) => void;
   onPageLabel: (label: string) => void;
+  onBandEdit?: (part: 'header' | 'footer', page: number) => void;
+  onBandClose?: () => void;
+  onBandChange?: (part: 'header' | 'footer', paragraph: JsonObject) => void;
+  onBandMove?: (direction: 1 | -1) => void;
 }
 
 
@@ -335,9 +345,16 @@ export function EditorCore({
   viewMode,
   orientation = 'portrait',
   margins,
+  header,
+  footer,
+  bandEdit = null,
   zoom = 100,
   onChange,
   onPageLabel,
+  onBandEdit,
+  onBandClose,
+  onBandChange,
+  onBandMove,
 }: EditorCoreProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const onChangeRef = useRef(onChange);
@@ -346,6 +363,8 @@ export function EditorCore({
   const orientationRef = useRef(orientation);
   const marginsRef = useRef(margins);
   const zoomRef = useRef(zoom);
+  const onBandCloseRef = useRef(onBandClose);
+  const bandEditRef = useRef(bandEdit);
   const viewRef = useRef<EditorView | null>(null);
   onChangeRef.current = onChange;
   onPageLabelRef.current = onPageLabel;
@@ -353,6 +372,11 @@ export function EditorCore({
   orientationRef.current = orientation;
   marginsRef.current = margins;
   zoomRef.current = zoom;
+  onBandCloseRef.current = onBandClose;
+  bandEditRef.current = bandEdit;
+  const [bandPx, setBandPx] = useState({ header: 0, footer: 0 });
+  const bandPxRef = useRef(bandPx);
+  bandPxRef.current = bandPx;
   const [pageCount, setPageCount] = useState(1);
   const [caretPage, setCaretPage] = useState(0);
   const [keyboardFocus, setKeyboardFocus] = useState(false);
@@ -360,10 +384,15 @@ export function EditorCore({
   if (layoutHostRef.current === null) {
     layoutHostRef.current = {
       getMode: () => viewModeRef.current,
-      getBox: () => scalePageBox(
-        pageBoxFromMargins(marginsRef.current, orientationRef.current),
-        zoomRef.current,
-      ),
+      getBox: () => {
+        const current = marginsRef.current;
+        return scalePageBox(pageBoxFromMargins({
+          top: reservedMarginIn(current.top, bandPxRef.current.header, zoomRef.current),
+          right: current.right,
+          bottom: reservedMarginIn(current.bottom, bandPxRef.current.footer, zoomRef.current),
+          left: current.left,
+        }, orientationRef.current), zoomRef.current);
+      },
       onLayout: (report: PageLayoutReport) => {
         setPageCount((current) => (current === report.pageCount ? current : report.pageCount));
         setCaretPage((current) => (current === report.page ? current : report.page));
@@ -497,6 +526,9 @@ export function EditorCore({
       },
       handleDOMEvents: {
         mousedown(_view, event) {
+          if (bandEditRef.current !== null && event.button === 0) {
+            onBandCloseRef.current?.();
+          }
           if (event.button !== 0 || event.detail !== 2 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
             wordGesture = null;
             return false;
@@ -676,9 +708,41 @@ export function EditorCore({
         region.removeAttribute('data-focus-source');
       }
     }
-  }, [viewMode, zoom, orientation, margins.top, margins.right, margins.bottom, margins.left]);
+  }, [viewMode, zoom, orientation, margins.top, margins.right, margins.bottom, margins.left, bandPx.header, bandPx.footer]);
 
-  const box: PageBox = scalePageBox(pageBoxFromMargins(margins, orientation), zoom);
+  useLayoutEffect(() => {
+    const canvas = hostRef.current?.closest('.page-canvas');
+    if (!(canvas instanceof HTMLElement)) {
+      return;
+    }
+    const measure = (part: string) => {
+      let max = 0;
+      canvas.querySelectorAll(`.page-band[data-page-part="${part}"] .page-band-text`).forEach((node) => {
+        if (!(node instanceof HTMLElement)) {
+          return;
+        }
+        if ((node.textContent ?? '').trim().length === 0) {
+          return;
+        }
+        max = Math.max(max, node.getBoundingClientRect().height);
+      });
+      return max;
+    };
+    const next = { header: measure('header'), footer: measure('footer') };
+    setBandPx((current) => (
+      Math.abs(current.header - next.header) < 1 && Math.abs(current.footer - next.footer) < 1
+        ? current
+        : next
+    ));
+  }, [header, footer, bandEdit, pageCount, zoom, orientation]);
+
+  const bodyMargins: PageMargins = {
+    top: reservedMarginIn(margins.top, bandPx.header, zoom),
+    right: margins.right,
+    bottom: reservedMarginIn(margins.bottom, bandPx.footer, zoom),
+    left: margins.left,
+  };
+  const box: PageBox = scalePageBox(pageBoxFromMargins(bodyMargins, orientation), zoom);
   const zoomStyle = pageZoomVars(zoom, orientation) as CSSProperties | undefined;
   const headerOffset = cssPixelsAt96Dpi(PAGE_HEADER_OFFSET_IN) * (zoom / 100);
   const frames = viewMode === 'pages'
@@ -686,9 +750,15 @@ export function EditorCore({
     : [];
 
   return (
-    <div className="page-canvas" data-page-view={viewMode} data-page-orientation={orientation} style={zoomStyle}>
+    <div
+      className="page-canvas"
+      data-page-view={viewMode}
+      data-page-orientation={orientation}
+      data-band-editing={bandEdit !== null ? 'true' : undefined}
+      style={zoomStyle}
+    >
       {viewMode === 'pages' ? (
-        <div className="page-frames" aria-hidden="true">
+        <div className="page-frames">
           {frames.map((index) => (
             <div
               key={index}
@@ -697,16 +767,24 @@ export function EditorCore({
               data-caret-focus={keyboardFocus && index === caretPage - 1 ? 'true' : undefined}
               style={{ top: `${index * (box.pageHeight + box.gap)}px` }}
             >
-              <div
-                className="page-header"
-                style={{
-                  top: `${headerOffset}px`,
-                  height: `${Math.max(0, box.marginTop - headerOffset)}px`,
-                  left: `${box.marginLeft}px`,
-                  right: `${box.marginRight}px`,
-                }}
-                data-page-part="header"
-              />
+              {header !== undefined && footer !== undefined ? (
+                <PageBands
+                  page={index + 1}
+                  pageCount={pageCount}
+                  header={header}
+                  footer={footer}
+                  editing={bandEdit}
+                  headerOffsetPx={headerOffset}
+                  headerGapPx={Math.max(0, box.marginTop - headerOffset)}
+                  footerGapPx={Math.max(0, box.marginBottom - headerOffset)}
+                  marginLeftPx={box.marginLeft}
+                  marginRightPx={box.marginRight}
+                  onEdit={(part, page) => onBandEdit?.(part, page)}
+                  onClose={() => onBandClose?.()}
+                  onChange={(part, paragraph) => onBandChange?.(part, paragraph)}
+                  onMove={(direction) => onBandMove?.(direction)}
+                />
+              ) : null}
             </div>
           ))}
         </div>

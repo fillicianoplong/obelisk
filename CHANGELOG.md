@@ -2,7 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
-## [0.1.45.0] - 2026-11-26
+## [0.1.46.0] - 2026-11-25
+
+### Added
+
+- Format > Header and footer, or a click on the header or footer, edits one paragraph that shows on every page. Page number and Page count insert a field, and each page shows its own number. Pageless hides the header and footer.
+
+## [0.1.45.0] - 2026-11-25
 
 ### Added
 

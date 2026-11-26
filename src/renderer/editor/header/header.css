@@ -1,0 +1,193 @@
+.page-band {
+  box-sizing: border-box;
+  pointer-events: auto;
+  position: absolute;
+}
+
+.page-band-chrome {
+  align-items: center;
+  display: flex;
+  gap: var(--space-xs);
+  height: var(--page-header-offset);
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
+.page-band-header .page-band-chrome {
+  bottom: 100%;
+}
+
+.page-band-footer .page-band-chrome {
+  top: 100%;
+}
+
+.page-band-label {
+  color: var(--color-text-secondary);
+  display: none;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-caption);
+}
+
+.page-band-header .page-band-label::before {
+  content: "Header";
+}
+
+.page-band-footer .page-band-label::before {
+  content: "Footer";
+}
+
+.page-band:hover .page-band-label,
+.page-band[data-editing='true'] .page-band-label,
+.page-band[data-mirror='true'] .page-band-label {
+  display: inline;
+}
+
+.page-band-rule {
+  border-top: calc(var(--space-2xs) / 2) dashed var(--color-border-control);
+  flex: 1 1 auto;
+  height: 0;
+}
+
+.page-band-bar {
+  display: flex;
+  gap: var(--space-xs);
+  pointer-events: auto;
+  position: relative;
+}
+
+.page-band-button {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-caption);
+  height: var(--size-control-small);
+  line-height: var(--line-height-caption);
+  padding: 0 var(--space-xs);
+}
+
+.page-band-button:hover {
+  background: var(--color-control-fill-hover);
+}
+
+.page-band-hit {
+  min-height: var(--size-control-small);
+}
+
+.page-band:hover .page-band-hit,
+.page-band[data-editing='true'] .page-band-hit,
+.page-band[data-mirror='true'] .page-band-hit {
+  outline: calc(var(--space-2xs) / 2) dashed var(--color-border-control);
+}
+
+.page-band-text,
+.page-band-editor,
+.page-band-editor p {
+  font-family: var(--font-page);
+  font-size: var(--font-size-page);
+  line-height: var(--line-height-page);
+  margin: 0;
+  min-height: 0;
+}
+
+.page-band-text[data-align='center'],
+.page-band-editor p[data-align='center'] {
+  text-align: center;
+}
+
+.page-band-text[data-align='right'],
+.page-band-editor p[data-align='right'] {
+  text-align: right;
+}
+
+.page-band-text[data-align='justify'],
+.page-band-editor p[data-align='justify'] {
+  text-align: justify;
+}
+
+.page-band-text [data-underline='true'],
+.page-band-editor [data-underline='true'] {
+  text-decoration: underline;
+}
+
+.page-field {
+  background: var(--color-surface-table-header);
+  border-radius: var(--space-2xs);
+  padding: 0 var(--space-2xs);
+}
+
+.page-field-menu {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-dialog);
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  min-width: var(--size-find-field-width);
+  padding: var(--space-xs) 0;
+  position: absolute;
+  top: 100%;
+  z-index: var(--z-index-menu);
+}
+
+.page-field-menu-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-primary);
+  display: flex;
+  font: inherit;
+  font-size: var(--font-size-body);
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-m);
+  text-align: left;
+}
+
+.page-field-menu-item:hover {
+  background: var(--color-control-fill-hover);
+}
+
+.page-field-menu-check {
+  display: inline-block;
+  width: var(--space-m);
+}
+
+.page-band-editor {
+  outline: none;
+}
+
+.page-canvas[data-band-editing='true'] .editor-host {
+  opacity: 0.45;
+}
+
+@media (forced-colors: active) {
+  .page-band-button,
+  .page-field-menu,
+  .page-field {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .page-band:hover .page-band-hit,
+  .page-band[data-editing='true'] .page-band-hit,
+  .page-band[data-mirror='true'] .page-band-hit,
+  .page-band-rule {
+    border-color: CanvasText;
+    outline-color: CanvasText;
+  }
+
+  .page-field-menu-item:hover,
+  .page-band-button:hover {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}

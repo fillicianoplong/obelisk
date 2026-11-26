@@ -27,6 +27,7 @@ const electronTestFiles = [
   path.join('tests', 'integration', 'shell', 'page-sheet.test.mjs'),
   path.join('tests', 'integration', 'shell', 'pages-view.test.mjs'),
   path.join('tests', 'integration', 'shell', 'page-setup.test.mjs'),
+  path.join('tests', 'integration', 'shell', 'header-footer.test.mjs'),
   path.join('tests', 'integration', 'shell', 'zoom.test.mjs'),
   path.join('tests', 'integration', 'shell', 'region-cycle.test.mjs'),
   path.join('tests', 'integration', 'shell', 'tab-strip.test.mjs'),

@@ -56,6 +56,8 @@ export const MENU_REFERENCE_BY_MENU: Readonly<Record<string, readonly string[]>>
     'Link…',
     'Horizontal line',
     'Page break',
+    'Page number',
+    'Page count',
   ],
   Format: [
     'Text',

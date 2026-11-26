@@ -73,7 +73,7 @@ async function clickPage(client) {
       const rect = document.querySelector('.page-sheet').getBoundingClientRect();
       return {
         x: Math.round(rect.left + rect.width / 2),
-        y: Math.round(rect.top + Math.min(48, rect.height / 2)),
+        y: Math.round(rect.top + Math.min(140, rect.height / 2)),
       };
     })()`,
   );
