@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.47.2] - 2026-11-25
+
+### Fixed
+
+- The active tab meets the page. No band, border, or rounded bottom shows under the tab strip.
+
 ## [0.1.47.1] - 2026-11-25
 
 ### Fixed

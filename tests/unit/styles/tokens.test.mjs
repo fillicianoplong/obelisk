@@ -223,9 +223,13 @@ test('the active tab is canvas and semibold, with a border only under forced col
   const tab = declarations(ruleBody(rules, '.tab'));
   assert.equal(tab.get('border-radius'), 'var(--radius-tab) var(--radius-tab) 0 0');
   assert.equal(tab.get('border'), '0');
+  assert.equal(tab.get('clip-path'), 'inset(0)');
+  const strip = declarations(ruleBody(rules, '.tab-strip'));
+  assert.equal(strip.has('box-shadow'), false);
   const contrastActive = declarations(ruleBody(topLevelRules(contrast.inner), ".tab[aria-selected='true']"));
   assert.equal(contrastActive.get('border-color'), 'var(--color-accent)');
   assert.equal(contrastActive.get('border-style'), 'solid');
+  assert.equal(contrastActive.get('border-width'), 'var(--size-focus-ring) 0 0');
 });
 
 test('the tab close hover uses the overlay token', async () => {
