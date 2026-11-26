@@ -60,6 +60,12 @@
   --size-find-padding: 6px;
   --size-control: 32px;
   --size-control-small: 24px;
+  --size-page-setup: 560px;
+  --size-page-setup-preview-width: 120px;
+  --size-page-setup-preview-height: 156px;
+  --size-page-setup-thumb-width: 28px;
+  --size-page-setup-thumb-height: 36px;
+  --size-page-setup-field: 72px;
   --size-zoom: 60px;
   --size-caption-button: 46px;
   --size-tab-min: 96px;

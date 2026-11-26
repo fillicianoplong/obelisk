@@ -20,7 +20,7 @@ import {
 import type { TextBlockKind } from './schema.js';
 import { editorBlockSnapshot } from './schema/mapping.js';
 import { newBlockId } from './block-id.js';
-import { pageHeaderStyle, pageZoomVars } from './layout/page.js';
+import { cssPixelsAt96Dpi, PAGE_HEADER_OFFSET_IN, pageZoomVars } from './layout/page.js';
 import type { PageBox, PageMargins } from './layout/paginate.js';
 import { pageBoxFromMargins, scalePageBox } from './layout/paginate.js';
 import type { PageLayoutReport, PaginationHost } from './layout/paginate-plugin.js';
@@ -60,6 +60,7 @@ interface EditorCoreProps {
   tabId: string;
   state: EditorState;
   viewMode: 'pages' | 'pageless';
+  orientation?: 'portrait' | 'landscape';
   margins: PageMargins;
   zoom?: number;
   onChange: (tabId: string, state: EditorState) => void;
@@ -332,6 +333,7 @@ export function EditorCore({
   tabId,
   state,
   viewMode,
+  orientation = 'portrait',
   margins,
   zoom = 100,
   onChange,
@@ -341,12 +343,14 @@ export function EditorCore({
   const onChangeRef = useRef(onChange);
   const onPageLabelRef = useRef(onPageLabel);
   const viewModeRef = useRef(viewMode);
+  const orientationRef = useRef(orientation);
   const marginsRef = useRef(margins);
   const zoomRef = useRef(zoom);
   const viewRef = useRef<EditorView | null>(null);
   onChangeRef.current = onChange;
   onPageLabelRef.current = onPageLabel;
   viewModeRef.current = viewMode;
+  orientationRef.current = orientation;
   marginsRef.current = margins;
   zoomRef.current = zoom;
   const [pageCount, setPageCount] = useState(1);
@@ -356,7 +360,10 @@ export function EditorCore({
   if (layoutHostRef.current === null) {
     layoutHostRef.current = {
       getMode: () => viewModeRef.current,
-      getBox: () => scalePageBox(pageBoxFromMargins(marginsRef.current), zoomRef.current),
+      getBox: () => scalePageBox(
+        pageBoxFromMargins(marginsRef.current, orientationRef.current),
+        zoomRef.current,
+      ),
       onLayout: (report: PageLayoutReport) => {
         setPageCount((current) => (current === report.pageCount ? current : report.pageCount));
         setCaretPage((current) => (current === report.page ? current : report.page));
@@ -669,16 +676,17 @@ export function EditorCore({
         region.removeAttribute('data-focus-source');
       }
     }
-  }, [viewMode, zoom, margins.top, margins.right, margins.bottom, margins.left]);
+  }, [viewMode, zoom, orientation, margins.top, margins.right, margins.bottom, margins.left]);
 
-  const box: PageBox = scalePageBox(pageBoxFromMargins(margins), zoom);
-  const zoomStyle = pageZoomVars(zoom) as CSSProperties | undefined;
+  const box: PageBox = scalePageBox(pageBoxFromMargins(margins, orientation), zoom);
+  const zoomStyle = pageZoomVars(zoom, orientation) as CSSProperties | undefined;
+  const headerOffset = cssPixelsAt96Dpi(PAGE_HEADER_OFFSET_IN) * (zoom / 100);
   const frames = viewMode === 'pages'
     ? Array.from({ length: pageCount }, (_, index) => index)
     : [];
 
   return (
-    <div className="page-canvas" data-page-view={viewMode} style={zoomStyle}>
+    <div className="page-canvas" data-page-view={viewMode} data-page-orientation={orientation} style={zoomStyle}>
       {viewMode === 'pages' ? (
         <div className="page-frames" aria-hidden="true">
           {frames.map((index) => (
@@ -691,7 +699,12 @@ export function EditorCore({
             >
               <div
                 className="page-header"
-                style={pageHeaderStyle()}
+                style={{
+                  top: `${headerOffset}px`,
+                  height: `${Math.max(0, box.marginTop - headerOffset)}px`,
+                  left: `${box.marginLeft}px`,
+                  right: `${box.marginRight}px`,
+                }}
                 data-page-part="header"
               />
             </div>

@@ -107,6 +107,7 @@ function sameProperties(left, right, label) {
 const SHELL_STYLE_FILES = [
   'src/renderer/shell/shell.css',
   'src/renderer/shell/find/find-bar.css',
+  'src/renderer/shell/page-setup/page-setup.css',
   'src/renderer/styles.css',
   'src/renderer/styles/focus.css',
   'src/renderer/editor/editor.css',

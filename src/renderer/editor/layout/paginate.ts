@@ -68,10 +68,14 @@ export function letterPageBox(margins?: Partial<PageMargins>): PageBox {
   };
 }
 
-export function pageBoxFromMargins(margins: PageMargins): PageBox {
+export function pageBoxFromMargins(
+  margins: PageMargins,
+  orientation: 'portrait' | 'landscape' = 'portrait',
+): PageBox {
+  const landscape = orientation === 'landscape';
   return {
-    pageWidth: cssPixelsAt96Dpi(PAGE_WIDTH_IN),
-    pageHeight: cssPixelsAt96Dpi(PAGE_HEIGHT_IN),
+    pageWidth: cssPixelsAt96Dpi(landscape ? PAGE_HEIGHT_IN : PAGE_WIDTH_IN),
+    pageHeight: cssPixelsAt96Dpi(landscape ? PAGE_WIDTH_IN : PAGE_HEIGHT_IN),
     marginTop: cssPixelsAt96Dpi(margins.top),
     marginRight: cssPixelsAt96Dpi(margins.right),
     marginBottom: cssPixelsAt96Dpi(margins.bottom),

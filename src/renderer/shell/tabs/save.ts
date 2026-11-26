@@ -4,6 +4,7 @@ import { isAutosavePaused } from '../../autosave/model.js';
 import type { SaveState } from '../statusbar/model.js';
 import { saveStateFromChanged } from '../statusbar/model.js';
 import { documentFromEditor } from './document.js';
+import { pageSetupFromUnknown } from '../page-setup/model.js';
 import { documentView, replaceTabEditor, tabHasUnsavedChanges } from './model.js';
 import type { PageTab } from './model.js';
 
@@ -94,6 +95,7 @@ export function applySavedTab(tab: PageTab, saved: SavedTabInput): PageTab {
     autosavePaused: caughtUp ? false : tab.autosavePaused,
     baseDocument: caughtUp ? saved.document : tab.baseDocument,
     savedView: caughtUp ? documentView({ baseDocument: saved.document }) : tab.savedView,
+    savedPage: caughtUp ? pageSetupFromUnknown(saved.document.page) : tab.savedPage,
     blockIds: caughtUp ? saved.blockIds : tab.blockIds,
     savedDoc: caughtUp ? tab.editor.doc : tab.savedDoc,
   };

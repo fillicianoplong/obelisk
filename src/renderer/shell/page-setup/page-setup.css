@@ -1,0 +1,354 @@
+.page-setup-backdrop {
+  align-items: center;
+  background: var(--color-surface-overlay);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: var(--z-index-menu);
+}
+
+.page-setup-dialog {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-dialog);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  gap: var(--space-m);
+  line-height: var(--line-height-body);
+  max-height: calc(100% - var(--space-xl));
+  max-width: calc(100% - var(--space-l));
+  overflow: auto;
+  padding: var(--space-l);
+  width: var(--size-page-setup);
+}
+
+.page-setup-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+.page-setup-body {
+  align-items: start;
+  display: grid;
+  gap: var(--space-l);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.page-setup-fields-column,
+.page-setup-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  min-width: 0;
+}
+
+.page-setup-fields-column {
+  gap: var(--space-m);
+}
+
+.page-setup-section {
+  font-size: var(--font-size-body-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-body-small);
+  margin: 0;
+}
+
+.page-setup-paper,
+.page-setup-hint,
+.page-setup-error,
+.page-setup-caption {
+  margin: 0;
+}
+
+.page-setup-orientations,
+.page-setup-presets,
+.page-setup-inches-grid {
+  display: grid;
+  gap: var(--space-s) var(--space-m);
+  grid-template-columns: 1fr 1fr;
+}
+
+.page-setup-card {
+  align-items: center;
+  background: var(--color-surface-raised);
+  border: var(--size-focus-ring) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  justify-content: center;
+  min-height: calc(var(--size-control) * 2);
+  padding: var(--space-s);
+  position: relative;
+}
+
+.page-setup-card input {
+  appearance: none;
+  height: var(--space-2xs);
+  margin: 0;
+  opacity: 0;
+  position: absolute;
+  width: var(--space-2xs);
+}
+
+.page-setup-card:hover:not(:has(:focus-visible)) {
+  background: var(--color-control-fill-hover);
+}
+
+.page-setup-card:has(input:checked) {
+  border-color: var(--color-accent);
+}
+
+.page-setup-card:has(:focus-visible) {
+  background: var(--color-surface-raised);
+  box-shadow:
+    inset 0 0 0 var(--size-focus-ring) var(--color-focus-outer),
+    inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) var(--color-focus-inner);
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+}
+
+.page-setup-thumb {
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-control);
+  box-sizing: border-box;
+  display: block;
+  height: var(--size-page-setup-thumb-height);
+  width: var(--size-page-setup-thumb-width);
+}
+
+.page-setup-thumb[data-orientation='landscape'] {
+  height: var(--size-page-setup-thumb-width);
+  width: var(--size-page-setup-thumb-height);
+}
+
+.page-setup-card-label {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+}
+
+.page-setup-preset {
+  align-items: center;
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.page-setup-preset input {
+  accent-color: var(--color-accent);
+  margin: 0;
+}
+
+.page-setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.page-setup-field-label {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+}
+
+.page-setup-field-line {
+  align-items: center;
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.page-setup-input {
+  background: var(--color-surface-input);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs);
+  width: var(--size-page-setup-field);
+}
+
+.page-setup-input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.page-setup-input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.page-setup-suffix,
+.page-setup-hint,
+.page-setup-caption {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+}
+
+.page-setup-error {
+  color: var(--color-error);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+}
+
+.page-setup-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.page-setup-well {
+  background: var(--color-surface-canvas);
+  border-radius: var(--radius-control);
+  padding: var(--space-m);
+}
+
+.page-setup-sheet {
+  background: var(--color-surface-page);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  box-sizing: border-box;
+  height: var(--size-page-setup-preview-height);
+  position: relative;
+  width: var(--size-page-setup-preview-width);
+}
+
+.page-setup-sheet[data-orientation='landscape'] {
+  height: var(--size-page-setup-preview-width);
+  width: var(--size-page-setup-preview-height);
+}
+
+.page-setup-margin {
+  border: calc(var(--space-2xs) / 2) dashed var(--color-border-control);
+  box-sizing: border-box;
+  overflow: hidden;
+  position: absolute;
+}
+
+.page-setup-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  inset: var(--space-xs);
+  justify-content: flex-start;
+  position: absolute;
+}
+
+.page-setup-lines span {
+  background: color-mix(in srgb, var(--color-text-secondary) 35%, transparent);
+  display: block;
+  height: calc(var(--space-2xs) / 2);
+}
+
+.page-setup-caption {
+  text-align: center;
+}
+
+.page-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.page-setup-button {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs) var(--space-s);
+}
+
+.page-setup-button-ok {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+.page-setup-button-ok:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.page-setup-button-ok:active:not(:disabled) {
+  background: var(--color-accent-pressed);
+  border-color: var(--color-accent-pressed);
+}
+
+.page-setup-button:hover:not(:disabled):not(.page-setup-button-ok) {
+  background: var(--color-control-fill-hover);
+}
+
+.page-setup-button-ok:disabled {
+  background: var(--color-control-fill-disabled);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-disabled);
+}
+
+@media (forced-colors: active) {
+  .page-setup-backdrop {
+    background: transparent;
+  }
+
+  .page-setup-dialog,
+  .page-setup-button,
+  .page-setup-input,
+  .page-setup-card,
+  .page-setup-sheet {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+
+  .page-setup-button-ok {
+    background: Highlight;
+    border-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .page-setup-button-ok:disabled {
+    background: Canvas;
+    border-color: GrayText;
+    color: GrayText;
+  }
+
+  .page-setup-card:has(input:checked),
+  .page-setup-input:focus,
+  .page-setup-input[aria-invalid='true'],
+  .page-setup-margin,
+  .page-setup-error {
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+
+  .page-setup-card:has(input:checked) {
+    border-color: Highlight;
+  }
+
+  .page-setup-card:has(:focus-visible) {
+    box-shadow:
+      inset 0 0 0 var(--size-focus-ring) Highlight,
+      inset 0 0 0 calc(var(--size-focus-ring) + var(--size-focus-inner)) Canvas;
+    outline-color: Highlight;
+  }
+
+  .page-setup-input:focus {
+    border-color: Highlight;
+    outline: var(--size-focus-ring) solid Highlight;
+    outline-offset: calc(var(--size-focus-ring) * -1);
+  }
+
+  .page-setup-lines span {
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+}

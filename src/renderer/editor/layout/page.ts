@@ -46,20 +46,39 @@ export function cssPixelsAt96Dpi(inches: number): number {
 }
 
 // Overrides the page tokens on the canvas only, so the 24 px region padding stays put.
-// 100% returns nothing and the root tokens are used as they are.
-export function pageZoomVars(zoomPercent: number): Record<string, string> | undefined {
-  if (!Number.isFinite(zoomPercent) || zoomPercent === 100) {
-    return undefined;
+// Portrait at 100% returns nothing and the root tokens are used as they are.
+// Landscape sets the sheet to 11 by 8.5 in even at 100%, because the root tokens are portrait.
+export function pageZoomVars(
+  zoomPercent: number,
+  orientation: 'portrait' | 'landscape' = 'portrait',
+): Record<string, string> | undefined {
+  if (!Number.isFinite(zoomPercent)) {
+    return orientation === 'landscape'
+      ? {
+          [PAGE_WIDTH_TOKEN]: cssInches(PAGE_HEIGHT_IN),
+          [PAGE_HEIGHT_TOKEN]: cssInches(PAGE_WIDTH_IN),
+        }
+      : undefined;
   }
   const factor = zoomPercent / 100;
-  return {
-    [PAGE_WIDTH_TOKEN]: `calc(${cssInches(PAGE_WIDTH_IN)} * ${factor})`,
-    [PAGE_HEIGHT_TOKEN]: `calc(${cssInches(PAGE_HEIGHT_IN)} * ${factor})`,
-    [PAGE_MARGIN_TOKEN]: `calc(${cssInches(PAGE_MARGIN_IN)} * ${factor})`,
-    [PAGE_HEADER_OFFSET_TOKEN]: `calc(${cssInches(PAGE_HEADER_OFFSET_IN)} * ${factor})`,
-    [PAGE_GAP_TOKEN]: `calc(${PAGE_GAP_PX}px * ${factor})`,
-    [PAGE_FONT_SIZE_TOKEN]: `calc(${PAGE_FONT_SIZE} * ${factor})`,
+  const zoomed = factor !== 1;
+  const landscape = orientation === 'landscape';
+  if (!zoomed && !landscape) {
+    return undefined;
+  }
+  const width = landscape ? PAGE_HEIGHT_IN : PAGE_WIDTH_IN;
+  const height = landscape ? PAGE_WIDTH_IN : PAGE_HEIGHT_IN;
+  const vars: Record<string, string> = {
+    [PAGE_WIDTH_TOKEN]: zoomed ? `calc(${cssInches(width)} * ${factor})` : cssInches(width),
+    [PAGE_HEIGHT_TOKEN]: zoomed ? `calc(${cssInches(height)} * ${factor})` : cssInches(height),
   };
+  if (zoomed) {
+    vars[PAGE_MARGIN_TOKEN] = `calc(${cssInches(PAGE_MARGIN_IN)} * ${factor})`;
+    vars[PAGE_HEADER_OFFSET_TOKEN] = `calc(${cssInches(PAGE_HEADER_OFFSET_IN)} * ${factor})`;
+    vars[PAGE_GAP_TOKEN] = `calc(${PAGE_GAP_PX}px * ${factor})`;
+    vars[PAGE_FONT_SIZE_TOKEN] = `calc(${PAGE_FONT_SIZE} * ${factor})`;
+  }
+  return vars;
 }
 
 export interface PageFrameStyle {

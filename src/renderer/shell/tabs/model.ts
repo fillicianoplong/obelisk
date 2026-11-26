@@ -1,6 +1,12 @@
 import type { Node } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
 import type { DocumentMessage, DocumentView, FileStat } from '../../../shared/ipc/types.js';
+import {
+  defaultPageSetup,
+  pageSetupFromUnknown,
+  samePageSetup,
+  type PageSetupValue,
+} from '../page-setup/model.js';
 import { createTabEditorState } from '../../editor/state.js';
 import { editorDocFromDocument } from '../../editor/schema/mapping.js';
 import { createBaseDocument } from './document.js';
@@ -35,6 +41,8 @@ export interface PageTab {
   baseDocument: DocumentMessage;
   /** View at the last save, or Pages for a new tab. */
   savedView: DocumentView;
+  /** Page setup at the last save, or Normal portrait for a new tab. */
+  savedPage: PageSetupValue;
   blockIds: string[];
 }
 
@@ -49,6 +57,29 @@ export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
   return {
     ...tab,
     baseDocument: { ...tab.baseDocument, view },
+    revision: tab.revision + 1,
+  };
+}
+
+export function withPageSetup(tab: PageTab, page: PageSetupValue): PageTab {
+  if (tab.kind === 'settings' || samePageSetup(pageSetupFromUnknown(tab.baseDocument.page), page)) {
+    return tab;
+  }
+  return {
+    ...tab,
+    baseDocument: {
+      ...tab.baseDocument,
+      page: {
+        paper: 'letter',
+        orientation: page.orientation,
+        margins: {
+          top: page.margins.top,
+          right: page.margins.right,
+          bottom: page.margins.bottom,
+          left: page.margins.left,
+        },
+      },
+    },
     revision: tab.revision + 1,
   };
 }
@@ -70,6 +101,7 @@ export function createTab(number: number): PageTab {
     savePhase: null,
     baseDocument: base.document,
     savedView: 'pages',
+    savedPage: defaultPageSetup(),
     blockIds: base.blockIds,
   };
 }
@@ -88,6 +120,7 @@ export function createSettingsTab(): PageTab {
     savePhase: null,
     baseDocument: base.document,
     savedView: 'pages',
+    savedPage: defaultPageSetup(),
     blockIds: base.blockIds,
   };
 }
@@ -97,6 +130,9 @@ export function tabHasUnsavedChanges(tab: PageTab): boolean {
     return false;
   }
   if (documentView(tab) !== tab.savedView) {
+    return true;
+  }
+  if (!samePageSetup(pageSetupFromUnknown(tab.baseDocument.page), tab.savedPage)) {
     return true;
   }
   return !tab.editor.doc.eq(tab.savedDoc);

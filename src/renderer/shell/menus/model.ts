@@ -319,7 +319,7 @@ export const APP_MENUS: readonly AppMenu[] = [
       formatItem({ id: 'format-indent-decrease', label: 'Decrease indent', accessKey: 'd', shortcut: 'Shift+Tab' }),
       formatItem({ id: 'format-clear', label: 'Clear formatting', accessKey: 'c', shortcut: 'Ctrl+Space' }),
       separator('format-sep-1'),
-      item({ id: 'format-page-setup', label: 'Page setup', accessKey: 'u', ellipsis: true }),
+      item({ id: 'format-page-setup', label: 'Page setup', accessKey: 'u', ellipsis: true, command: 'format-page-setup' }),
       item({ id: 'format-header', label: 'Header and footer', accessKey: 'h' }),
     ],
   },

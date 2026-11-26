@@ -10,6 +10,7 @@ interface PageAreaProps {
   kind?: 'document' | 'settings';
   state: EditorState;
   viewMode: 'pages' | 'pageless';
+  orientation?: 'portrait' | 'landscape';
   margins: PageMargins;
   zoom?: ZoomPreset;
   onChange: (tabId: string, state: EditorState) => void;
@@ -22,6 +23,7 @@ export function PageArea({
   kind = 'document',
   state,
   viewMode,
+  orientation = 'portrait',
   margins,
   zoom = 100,
   onChange,
@@ -62,6 +64,7 @@ export function PageArea({
           tabId={tabId}
           state={state}
           viewMode={viewMode}
+          orientation={orientation}
           margins={margins}
           zoom={zoom}
           onChange={onChange}

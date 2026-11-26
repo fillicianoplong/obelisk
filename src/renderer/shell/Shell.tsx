@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { setSpellcheckEnabled } from '../editor/spellcheck-mode.js';
-import { marginsFromUnknown } from '../editor/layout/paginate.js';
+import { pageSetupFromUnknown, type PageSetupValue } from './page-setup/model.js';
 import { holdAnchorForZoom, holdCaretAnchor } from '../editor/layout/paginate-plugin.js';
 import { editorText } from '../editor/state.js';
 import { rememberCorrect } from '../editor/spell/client.js';
@@ -17,6 +17,7 @@ import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { suppressPageFocusRing } from './page-focus.js';
 import { LinkDialog } from './link/LinkDialog.js';
+import { PageSetupDialog } from './page-setup/PageSetupDialog.js';
 import { EDITOR_SHELL_COMMAND, type EditorShellCommandDetail } from '../editor/editor-command-event.js';
 import type { LinkDraft } from '../editor/link/commands.js';
 import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
@@ -42,6 +43,7 @@ import {
   documentView,
   tabHasUnsavedChanges,
   withDocumentView,
+  withPageSetup,
 } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
 import { applyOpenResult } from './tabs/opened.js';
@@ -70,6 +72,7 @@ import { createAutosaveScheduler } from '../autosave/scheduler.js';
 import { syncTabAutosave } from '../autosave/sync.js';
 import './shell.css';
 import './find/find-bar.css';
+import './page-setup/page-setup.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -103,6 +106,9 @@ export function Shell() {
   const [linkDialog, setLinkDialog] = useState<LinkDraft | null>(null);
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
+  const [pageSetupOpen, setPageSetupOpen] = useState(false);
+  const pageSetupOpenRef = useRef(pageSetupOpen);
+  pageSetupOpenRef.current = pageSetupOpen;
   const [spellingOn, setSpellingOn] = useState(true);
   const [zoom, setZoom] = useState<ZoomPreset>(() => zoomFromSaved(window.obeliskZoom));
   const [pageLabel, setPageLabel] = useState(PAGE_LABEL);
@@ -606,8 +612,21 @@ export function Shell() {
         return;
       }
       if (command === 'insert-link' || command === 'link-edit') {
+        if (pageSetupOpenRef.current) {
+          return;
+        }
         const draft = editorPageCommands()?.linkDraft?.() ?? null;
         setLinkDialog(draft);
+        return;
+      }
+      if (command === 'format-page-setup') {
+        if (linkDialogRef.current !== null) {
+          return;
+        }
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active !== undefined && active.kind !== 'settings') {
+          setPageSetupOpen(true);
+        }
         return;
       }
       if (command === 'link-open') {
@@ -875,6 +894,34 @@ export function Shell() {
       {activeTab.kind !== 'settings' ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}
+      {pageSetupOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+        && activeTab.kind !== 'settings' ? (
+        <PageSetupDialog
+          initial={pageSetupFromUnknown(activeTab.baseDocument.page)}
+          onCancel={() => {
+            setPageSetupOpen(false);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+          onApply={(page: PageSetupValue) => {
+            setPageSetupOpen(false);
+            setTabs((current) => {
+              const next = current.map((tab) => {
+                if (tab.id !== activeIdRef.current) {
+                  return tab;
+                }
+                const updated = withPageSetup(tab, page);
+                if (updated !== tab) {
+                  syncTabAutosave(autosaveScheduler.current, updated);
+                }
+                return updated;
+              });
+              tabsRef.current = next;
+              return next;
+            });
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+        />
+      ) : null}
       {linkDialog !== null && conflict === null && closePromptTab === undefined ? (
         <LinkDialog
           draft={linkDialog}
@@ -914,7 +961,8 @@ export function Shell() {
         kind={activeTab.kind}
         state={activeTab.editor}
         viewMode={documentView(activeTab)}
-        margins={marginsFromUnknown(activeTab.baseDocument.page.margins)}
+        orientation={pageSetupFromUnknown(activeTab.baseDocument.page).orientation}
+        margins={pageSetupFromUnknown(activeTab.baseDocument.page).margins}
         zoom={zoom}
         onChange={updateEditor}
         onPageLabel={setPageLabel}

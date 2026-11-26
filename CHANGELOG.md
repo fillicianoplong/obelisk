@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.45.0] - 2026-11-26
+
+### Added
+
+- Format > Page setup sets the page to Letter, portrait or landscape, and Normal, Narrow, Wide, or custom margins. Each margin stays between 0.25 and 3 inches. OK updates the pages and keeps the setup in the file. Cancel leaves the document as it was.
+
 ## [0.1.44.0] - 2026-11-25
 
 ### Added
