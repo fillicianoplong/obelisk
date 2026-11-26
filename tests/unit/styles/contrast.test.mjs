@@ -27,6 +27,7 @@ function over(overlay, base) {
 
 const PAIRS = [
   text('Body text on page', '--color-text-primary', '--color-surface-page'),
+  text('Body text on the pageless surface', '--color-text-primary', '--color-surface-pageless'),
   text('Body text on the canvas', '--color-text-primary', '--color-surface-canvas'),
   text('Body text on a menu', '--color-text-primary', '--color-surface-raised'),
   text('Body text on a hovered menu item', '--color-text-primary', '--color-surface-raised-hover'),
@@ -37,6 +38,7 @@ const PAIRS = [
   text('Body text on a find match', '--color-find-match-text', over('--color-find-match', '--color-surface-page')),
   text('Text on the current find match', '--color-find-current-text', '--color-find-current'),
   text('Secondary text on page', '--color-text-secondary', '--color-surface-page'),
+  text('Secondary text on the pageless surface', '--color-text-secondary', '--color-surface-pageless'),
   text('Secondary text on the canvas', '--color-text-secondary', '--color-surface-canvas'),
   text('Secondary text on a menu', '--color-text-secondary', '--color-surface-raised'),
   text('Secondary text on a hovered menu item', '--color-text-secondary', '--color-surface-raised-hover'),
@@ -71,6 +73,11 @@ const PAIRS = [
     over('--color-tab-close-hover', '--color-surface-canvas'),
   ),
   text(
+    'Tab close text over the Pageless tab',
+    '--color-text-chrome',
+    over('--color-tab-close-hover', '--color-surface-pageless'),
+  ),
+  text(
     'Tab close text over a hovered tab',
     '--color-text-chrome',
     over('--color-tab-close-hover', '--color-surface-chrome-hover'),
@@ -79,6 +86,11 @@ const PAIRS = [
     'Tab close text pressed on the active tab',
     '--color-text-chrome',
     over('--color-tab-close-pressed', '--color-surface-canvas'),
+  ),
+  text(
+    'Tab close text pressed on the Pageless tab',
+    '--color-text-chrome',
+    over('--color-tab-close-pressed', '--color-surface-pageless'),
   ),
   text(
     'Tab close text pressed on a hovered tab',

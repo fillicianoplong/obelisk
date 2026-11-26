@@ -50,7 +50,7 @@
 }
 
 .page-canvas[data-page-view='pageless'] {
-  background: var(--color-surface-page);
+  background: var(--color-surface-pageless);
   min-height: 100%;
 }
 

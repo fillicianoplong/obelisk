@@ -118,8 +118,9 @@
   --color-surface-chrome: #E6EAF0;          /* title bar, menu bar, tab strip, status bar */
   --color-surface-chrome-hover: #D3D9E2;
   --color-surface-chrome-pressed: #C9D0DA;
-  --color-surface-canvas: #EDF0F4;          /* behind pages; also the active tab */
+  --color-surface-canvas: #D9DBE0;          /* behind pages; also the active tab */
   --color-surface-page: #FFFFFF;
+  --color-surface-pageless: #F5F6F8;        /* Pageless edit area; also the active tab */
   --color-surface-raised: #FFFFFF;          /* menus, dialogs, find bubble, tooltips */
   --color-surface-raised-hover: #E6EAF0;    /* menu item hover */
   --color-surface-raised-pressed: #D3D9E2;
@@ -139,7 +140,7 @@
   --color-text-link: #2B5797;
 
   --color-border-subtle: #C9D0DA;           /* region dividers, tab edges, cards */
-  --color-border-control: #7E8898;          /* input, checkbox, radio, toggle outlines (3:1) */
+  --color-border-control: #737D8D;          /* input, checkbox, radio, toggle outlines (3:1) */
   --color-border-control-hover: #5F6977;
   --color-border-disabled: #B4BBC6;
 
@@ -176,11 +177,11 @@
   --color-tab-close-hover: rgba(70, 80, 96, 0.18);    /* tab text wash; same on canvas and chrome */
   --color-tab-close-pressed: rgba(70, 80, 96, 0.32);
 
-  --color-scrollbar-thumb: #8A8A8A;
+  --color-scrollbar-thumb: #7C7C7C;
   --color-scrollbar-thumb-hover: #767676;
   --color-scrollbar-track: transparent;
 
-  --shadow-page: 0 1px 3px rgba(31, 38, 48, 0.10), 0 0 0 1px rgba(31, 38, 48, 0.06);
+  --shadow-page: 0 2px 4px rgba(31, 38, 48, 0.12), 0 8px 20px rgba(31, 38, 48, 0.14);
   --shadow-tooltip: 0 4px 8px rgba(31, 38, 48, 0.14);
   --shadow-menu: 0 8px 16px rgba(31, 38, 48, 0.14), 0 0 0 1px rgba(31, 38, 48, 0.08);
   --shadow-dialog: 0 32px 64px rgba(31, 38, 48, 0.19), 0 2px 21px rgba(31, 38, 48, 0.15), 0 0 0 1px rgba(31, 38, 48, 0.08);
@@ -196,6 +197,7 @@
     --color-surface-chrome-pressed: #3A424D;
     --color-surface-canvas: #16191E;
     --color-surface-page: #252B33;
+    --color-surface-pageless: #252B33;
     --color-surface-raised: #2B313A;
     --color-surface-raised-hover: #3A424D;
     --color-surface-raised-pressed: #444D59;
@@ -262,6 +264,7 @@
   --color-surface-chrome-pressed: #3A424D;
   --color-surface-canvas: #16191E;
   --color-surface-page: #252B33;
+  --color-surface-pageless: #252B33;
   --color-surface-raised: #2B313A;
   --color-surface-raised-hover: #3A424D;
   --color-surface-raised-pressed: #444D59;
@@ -341,6 +344,7 @@
     --color-surface-chrome-pressed: Highlight;
     --color-surface-canvas: Canvas;
     --color-surface-page: Canvas;
+    --color-surface-pageless: Canvas;
     --color-surface-raised: Canvas;
     --color-surface-raised-hover: Highlight;
     --color-surface-raised-pressed: Highlight;

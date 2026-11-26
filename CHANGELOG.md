@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.47.4] - 2026-11-26
+
+### Changed
+
+- Light theme: the canvas behind pages is slightly darker (`#D9DBE0`), page sheets keep a stronger shadow, and Pageless uses its own surface so the active tab still meets the edit area with no seam. Control borders and scrollbar thumbs are a touch darker on that canvas so they still read at 3:1.
+
 ## [0.1.47.3] - 2026-11-26
 
 ### Changed

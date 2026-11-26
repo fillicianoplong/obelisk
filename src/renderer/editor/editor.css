@@ -124,6 +124,10 @@
   top: 50%;
 }
 
+.page-canvas[data-page-view='pageless'] .page-break::after {
+  background: var(--color-surface-pageless);
+}
+
 .page-sheet .page-break::after {
   background: var(--color-surface-page);
   color: var(--color-text-secondary);

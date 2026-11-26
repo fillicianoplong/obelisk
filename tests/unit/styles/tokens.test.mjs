@@ -143,10 +143,19 @@ test('every theme token is defined for light and both dark blocks, and the dark 
 
   assert.equal(light.get('--color-surface-chrome'), '#E6EAF0');
   assert.equal(darkSystem.get('--color-surface-chrome'), '#20252C');
-  assert.equal(light.get('--color-surface-canvas'), '#EDF0F4');
+  assert.equal(light.get('--color-surface-canvas'), '#D9DBE0');
+  assert.equal(light.get('--color-border-control'), '#737D8D');
+  assert.equal(light.get('--color-scrollbar-thumb'), '#7C7C7C');
+  assert.equal(light.get('--color-scrollbar-thumb-hover'), '#767676');
   assert.equal(darkSystem.get('--color-surface-canvas'), '#16191E');
   assert.equal(light.get('--color-surface-page'), '#FFFFFF');
+  assert.equal(light.get('--color-surface-pageless'), '#F5F6F8');
   assert.equal(darkSystem.get('--color-surface-page'), '#252B33');
+  assert.equal(darkSystem.get('--color-surface-pageless'), '#252B33');
+  assert.equal(
+    light.get('--shadow-page'),
+    '0 2px 4px rgba(31, 38, 48, 0.12), 0 8px 20px rgba(31, 38, 48, 0.14)',
+  );
   assert.equal(light.get('--color-text-primary'), '#1F2630');
   assert.equal(darkSystem.get('--color-text-primary'), '#E6EAF0');
   assert.equal(light.get('--color-text-status'), '#3A4350');
@@ -221,7 +230,7 @@ test('the active tab is canvas and semibold, with a border only under forced col
     rules,
     ".shell:has(.page-region[data-page-view='pageless']) .tab[aria-selected='true']",
   ));
-  assert.equal(pageless.get('background'), 'var(--color-surface-page)');
+  assert.equal(pageless.get('background'), 'var(--color-surface-pageless)');
   assert.equal(active.get('color'), 'var(--color-text-heading)');
   assert.equal(active.get('font-weight'), 'var(--font-weight-semibold)');
   assert.equal(active.has('border-top-color'), false);
@@ -236,6 +245,19 @@ test('the active tab is canvas and semibold, with a border only under forced col
   assert.equal(contrastActive.get('border-color'), 'var(--color-accent)');
   assert.equal(contrastActive.get('border-style'), 'solid');
   assert.equal(contrastActive.get('border-width'), 'var(--size-focus-ring) 0 0');
+});
+
+test('Pageless surfaces and the active tab share the pageless token', async () => {
+  const shellCss = stripComments(await readFile(path.join(root, 'src/renderer/shell/shell.css'), 'utf8'));
+  const pageCss = stripComments(await readFile(path.join(root, 'src/renderer/editor/layout/page.css'), 'utf8'));
+  const contrastOpen = shellCss.indexOf('@media (forced-colors: active)');
+  const shell = shellCss.slice(0, contrastOpen);
+  assert.match(shell, /\.page-region\[data-page-view='pageless'\]\s*\{[^}]*background:\s*var\(--color-surface-pageless\)/);
+  assert.match(
+    shell,
+    /\.shell:has\(\.page-region\[data-page-view='pageless'\]\) \.tab\[aria-selected='true'\]\s*\{[^}]*background:\s*var\(--color-surface-pageless\)/,
+  );
+  assert.match(pageCss, /\.page-canvas\[data-page-view='pageless'\]\s*\{[^}]*background:\s*var\(--color-surface-pageless\)/);
 });
 
 test('the tab close hover uses the overlay token', async () => {

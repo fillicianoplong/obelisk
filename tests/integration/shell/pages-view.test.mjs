@@ -169,10 +169,13 @@ async function readChrome(client) {
       }
       const tab = document.querySelector('[role="tab"][aria-selected="true"]');
       const swatch = document.createElement('span');
-      swatch.style.background = 'var(--color-surface-page)';
       document.body.appendChild(swatch);
+      swatch.style.background = 'var(--color-surface-page)';
       const pageColor = getComputedStyle(swatch).backgroundColor;
+      swatch.style.background = 'var(--color-surface-pageless)';
+      const pagelessColor = getComputedStyle(swatch).backgroundColor;
       swatch.remove();
+      const tabColor = tab ? getComputedStyle(tab).backgroundColor : '';
       return {
         viewMode: region.getAttribute('data-page-view'),
         frames,
@@ -195,6 +198,8 @@ async function readChrome(client) {
         scrollLeft: region.scrollLeft,
         regionLeft: region.getBoundingClientRect().left,
         pageColor,
+        pagelessColor,
+        tabColor,
         regionColor: getComputedStyle(region).backgroundColor,
       };
     })()`,
@@ -286,7 +291,8 @@ test('Pages view flows text onto Letter sheets and Pageless switches from the Vi
     assert.equal(chrome.viewLabel, 'Pageless');
     assert.equal(chrome.save, 'unsaved');
     assert.equal(chrome.unsaved, 'true');
-    assert.equal(chrome.regionColor, chrome.pageColor);
+    assert.equal(chrome.regionColor, chrome.pagelessColor);
+    assert.equal(chrome.tabColor, chrome.pagelessColor);
     near(chrome.sheetWidth, 816, 'pageless column');
     assert.equal(chrome.zoom, '100%');
 

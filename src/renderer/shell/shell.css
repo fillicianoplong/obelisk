@@ -497,9 +497,9 @@
   transition-property: color;
 }
 
-/* Pageless has no canvas around the page. The active tab uses the page color so the join stays seamless. */
+/* Pageless has no canvas around the page. The active tab uses the pageless color so the join stays seamless. */
 .shell:has(.page-region[data-page-view='pageless']) .tab[aria-selected='true'] {
-  background: var(--color-surface-page);
+  background: var(--color-surface-pageless);
 }
 
 .tab-trailing {
@@ -630,7 +630,7 @@
 }
 
 .page-region[data-page-view='pageless'] {
-  background: var(--color-surface-page);
+  background: var(--color-surface-pageless);
 }
 
 .page-sheet {

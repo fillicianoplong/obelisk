@@ -6,7 +6,7 @@ export const SHELL_FRAME = {
   light: {
     titleBar: '#E6EAF0',
     symbol: '#1F2630',
-    window: '#EDF0F4',
+    window: '#D9DBE0',
   },
   dark: {
     titleBar: '#20252C',
