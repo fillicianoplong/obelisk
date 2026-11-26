@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseThemeSetting, type ThemeSetting } from '../shared/theme.js';
+import { zoomFromSaved, type ZoomPreset } from '../shared/zoom.js';
 
 // The file is <userData>/settings.json.
 // Theme values are "light", "dark", and "system". Anything else, including
@@ -62,6 +63,26 @@ export function readSpellingSetting(userDataDir: string): boolean {
 export function writeSpellingSetting(userDataDir: string, enabled: boolean): void {
   const record = readSettingsObject(userDataDir);
   record.spelling = enabled;
+  writeSettingsObject(userDataDir, record);
+}
+
+// Zoom is one value for the whole app. It is not stored in the document.
+// A missing file, a missing key, or a value that is not a preset is 100%.
+export function readZoomSetting(userDataDir: string): ZoomPreset {
+  const record = readSettingsObject(userDataDir);
+  if (!Object.hasOwn(record, 'zoom')) {
+    return zoomFromSaved(undefined);
+  }
+  return zoomFromSaved(record.zoom);
+}
+
+export function writeZoomSetting(userDataDir: string, zoom: number): void {
+  const record = readSettingsObject(userDataDir);
+  record.zoom = zoomFromSaved(zoom);
+  writeSettingsObject(userDataDir, record);
+}
+
+function writeSettingsObject(userDataDir: string, record: Record<string, unknown>): void {
   fs.mkdirSync(userDataDir, { recursive: true });
   fs.writeFileSync(themeSettingsPath(userDataDir), `${JSON.stringify(record)}\n`, 'utf8');
 }

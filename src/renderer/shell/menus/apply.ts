@@ -1,5 +1,6 @@
 import type { EditorState } from 'prosemirror-state';
 import { editorMenuCommandEnabled } from '../../editor/menu-commands.js';
+import { DEFAULT_ZOOM, zoomFromSaved, zoomInDisabled, zoomOutDisabled } from '../../../shared/zoom.js';
 import type { AppMenu, MenuEntry, MenuItem } from './model.js';
 import { APP_MENUS, isSeparator } from './model.js';
 
@@ -76,9 +77,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'file-export-pdf',
   'file-export-word',
   'file-export-markdown',
-  'view-zoom-in',
-  'view-zoom-out',
-  'view-zoom-100',
   'insert-columns',
   'insert-table',
   'insert-image',
@@ -116,6 +114,7 @@ export interface LiveMenuContext {
   editorState: EditorState | null;
   spelling?: boolean;
   documentView?: 'pages' | 'pageless';
+  zoom?: number;
 }
 
 function hasSubmenu(item: MenuItem): boolean {
@@ -187,6 +186,16 @@ function applyItem(item: MenuItem, context: LiveMenuContext): MenuItem {
     const view = context.documentView === 'pageless' ? 'pageless' : 'pages';
     const checked = item.id === 'view-pageless' ? view === 'pageless' : view === 'pages';
     return { ...item, enabled: context.documentTab, checked };
+  }
+  if (item.id === 'view-zoom-in' || item.id === 'view-zoom-out' || item.id === 'view-zoom-100') {
+    const zoom = zoomFromSaved(context.zoom ?? DEFAULT_ZOOM);
+    if (item.id === 'view-zoom-in') {
+      return { ...item, enabled: !zoomInDisabled(zoom) };
+    }
+    if (item.id === 'view-zoom-out') {
+      return { ...item, enabled: !zoomOutDisabled(zoom) };
+    }
+    return { ...item, enabled: true };
   }
   return { ...item, enabled };
 }

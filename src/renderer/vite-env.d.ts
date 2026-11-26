@@ -2,10 +2,12 @@
 
 import type { ObeliskApi } from '../shared/ipc/api.js';
 import type { ObeliskThemeApi } from '../shared/theme.js';
+import type { ZoomPreset } from '../shared/zoom.js';
 
 declare global {
   interface Window {
     obelisk: ObeliskApi;
     obeliskTheme: ObeliskThemeApi;
+    obeliskZoom?: ZoomPreset;
   }
 }

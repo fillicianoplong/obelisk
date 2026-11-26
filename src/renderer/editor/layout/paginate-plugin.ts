@@ -2,6 +2,7 @@ import type { Node as ProseNode } from 'prosemirror-model';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
+import { caretLineVisible } from '../../../shared/zoom.js';
 import type { FlowUnit, PageBox, PageLayout } from './paginate.js';
 import {
   letterPageBox,
@@ -54,16 +55,48 @@ const EMPTY: PaginationState = {
   label: pageCountLabel(1, 1),
 };
 
-let heldCaretTop: number | null = null;
+export type ScrollAnchor =
+  | { kind: 'caret'; top: number }
+  | { kind: 'top'; scrollTop: number; scrollHeight: number };
+
+let heldAnchor: ScrollAnchor | null = null;
 
 export function holdCaretAnchor(top: number): void {
-  heldCaretTop = top;
+  heldAnchor = { kind: 'caret', top };
 }
 
-export function takeCaretAnchor(): number | null {
-  const top = heldCaretTop;
-  heldCaretTop = null;
-  return top;
+export function holdTopLineAnchor(scrollTop: number, scrollHeight: number): void {
+  heldAnchor = { kind: 'top', scrollTop, scrollHeight };
+}
+
+export function takeScrollAnchor(): ScrollAnchor | null {
+  const anchor = heldAnchor;
+  heldAnchor = null;
+  return anchor;
+}
+
+// Keeps the caret line at the same height. If that line is off screen, the
+// line at the top of the window stays instead.
+export function holdAnchorForZoom(): void {
+  const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
+  const region = page?.closest('.page-region');
+  const editorView = (page as (HTMLElement & {
+    editorView?: { coordsAtPos: (pos: number) => { top: number; bottom: number }; state: { selection: { head: number } } };
+  }) | null)?.editorView;
+  if (editorView === undefined || !(region instanceof HTMLElement)) {
+    return;
+  }
+  try {
+    const coords = editorView.coordsAtPos(editorView.state.selection.head);
+    const bounds = region.getBoundingClientRect();
+    if (caretLineVisible(coords.top, coords.bottom, bounds.top, bounds.bottom)) {
+      holdCaretAnchor(coords.top);
+      return;
+    }
+  } catch {
+    // The caret cannot be measured. Keep the top line.
+  }
+  holdTopLineAnchor(region.scrollTop, region.scrollHeight);
 }
 
 export function paginationPlugin(host: PaginationHost): Plugin<PaginationState> {

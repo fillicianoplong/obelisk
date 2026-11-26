@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.43.0] - 2026-11-25
+
+### Added
+
+- The status bar zoom is a menu of 200%, 150%, 125%, 100%, 75%, and 50%. Ctrl+plus, Ctrl+minus, Ctrl+wheel, and View > Zoom in or Zoom out move one preset and stop at the ends. Ctrl+0 and View > Zoom to 100% return to 100%. The choice is kept for the whole app, and the window opens at that zoom.
+
 ## [0.1.42.1] - 2026-11-25
 
 ### Fixed

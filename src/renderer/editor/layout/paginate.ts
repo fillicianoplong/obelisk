@@ -80,6 +80,23 @@ export function pageBoxFromMargins(margins: PageMargins): PageBox {
   };
 }
 
+// Sheets, text, gaps, and margins grow together. 100% leaves the box unchanged.
+export function scalePageBox(box: PageBox, zoomPercent: number): PageBox {
+  const factor = zoomPercent / 100;
+  if (!Number.isFinite(factor) || factor === 1) {
+    return box;
+  }
+  return {
+    pageWidth: box.pageWidth * factor,
+    pageHeight: box.pageHeight * factor,
+    marginTop: box.marginTop * factor,
+    marginRight: box.marginRight * factor,
+    marginBottom: box.marginBottom * factor,
+    marginLeft: box.marginLeft * factor,
+    gap: box.gap * factor,
+  };
+}
+
 export function marginsFromUnknown(margins: unknown): PageMargins {
   const record = margins !== null && typeof margins === 'object'
     ? margins as Record<string, unknown>

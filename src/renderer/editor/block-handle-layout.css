@@ -12,13 +12,13 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   display: inline-flex;
-  flex: 0 0 var(--size-control-small);
-  height: var(--size-control-small);
+  flex: 0 0 calc(var(--size-control-small) * var(--page-zoom, 1));
+  height: calc(var(--size-control-small) * var(--page-zoom, 1));
   justify-content: center;
   margin: 0;
   padding: 0;
   position: relative;
-  width: var(--size-control-small);
+  width: calc(var(--size-control-small) * var(--page-zoom, 1));
 }
 
 .block-gutter-grip {
@@ -27,9 +27,9 @@
 
 .block-gutter-icon {
   display: block;
-  height: var(--space-l);
+  height: calc(var(--space-l) * var(--page-zoom, 1));
   pointer-events: none;
-  width: var(--space-l);
+  width: calc(var(--space-l) * var(--page-zoom, 1));
 }
 
 .block-handle[data-input='pointer'] .block-gutter-button:hover:not(:focus-visible) {

@@ -31,6 +31,11 @@
   width: var(--size-block-gutter);
 }
 
+.page-region .block-handle {
+  gap: calc(var(--space-xs) * var(--page-zoom, 1));
+  width: calc(var(--size-block-gutter) * var(--page-zoom, 1));
+}
+
 .block-handle-layer[data-block-drag='true'] .block-gutter-grip {
   cursor: grabbing;
 }
@@ -124,7 +129,7 @@
   color: var(--color-text-secondary);
   content: "Page break";
   font-family: var(--font-ui);
-  font-size: var(--font-size-caption);
+  font-size: calc(var(--font-size-caption) * var(--page-zoom, 1));
   line-height: var(--line-height-caption);
   padding: 0 var(--space-s);
   position: relative;

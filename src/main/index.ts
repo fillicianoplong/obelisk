@@ -17,7 +17,8 @@ import { readPackageIoRequest, runPackagedIoCheck } from './file/packageIo.js';
 import { removeStaleTempFiles } from './file/writeAtomic.js';
 import { readInUtilityProcess } from './codec/utility-host.js';
 import { installIpc } from './ipc/install.js';
-import { readThemeSetting } from './settings.js';
+import { readThemeSetting, readZoomSetting } from './settings.js';
+import { zoomLaunchArgument, type ZoomPreset } from '../shared/zoom.js';
 import { secureWebPreferences } from './security/window-options.js';
 import { readSystemCaptionColors } from './window/caption.js';
 import { installThemeIpc } from './window/install-theme-ipc.js';
@@ -63,13 +64,13 @@ function readContrastColors() {
   return readSystemCaptionColors(process.platform, (name) => systemPreferences.getColor(name));
 }
 
-function createWindow(theme: ThemeSetting): void {
+function createWindow(theme: ThemeSetting, zoom: ZoomPreset): void {
   // Before the window exists, so the first frame is already the chosen theme.
   activateThemeSource(nativeTheme, theme);
   const frame = frameForNativeTheme(nativeTheme, readContrastColors);
   const webPreferences = {
     ...secureWebPreferences(path.join(__dirname, '../preload/index.js')),
-    additionalArguments: [themeLaunchArgument(theme)],
+    additionalArguments: [themeLaunchArgument(theme), zoomLaunchArgument(zoom)],
   };
   reportSecurity(
     `OBELISK_WINDOW_OPTIONS ${JSON.stringify({
@@ -108,6 +109,14 @@ function createWindow(theme: ThemeSetting): void {
     webPreferences,
   });
   applyMinimumWindowSize(window);
+  // The document zoom is the status-bar presets. Chromium's own zoom stays at 1.
+  void window.webContents.setVisualZoomLevelLimits(1, 1);
+  window.webContents.on('zoom-changed', () => {
+    if (window.isDestroyed() || window.webContents.getZoomFactor() === 1) {
+      return;
+    }
+    window.webContents.setZoomFactor(1);
+  });
   mainWindow = window;
   window.on('closed', () => {
     if (mainWindow === window) {
@@ -172,6 +181,7 @@ function startApp(): void {
   }
 
   const theme = readThemeSetting(userData);
+  const zoom = readZoomSetting(userData);
   installContentsGuards();
   const files = installIpc();
   installThemeIpc(() => theme);
@@ -199,7 +209,7 @@ function startApp(): void {
     });
     installSpellChecker(session.defaultSession);
     installAppProtocol(path.join(__dirname, '../renderer'));
-    createWindow(theme);
+    createWindow(theme, zoom);
     const window = mainWindow;
     if (window !== null) {
       window.webContents.once('did-finish-load', () => {

@@ -775,12 +775,29 @@ export function blockHandleLayoutForBlock(
     return null;
   }
   const rootStyle = getComputedStyle(view.dom.ownerDocument.documentElement);
-  const gutterWidth = parseFloat(rootStyle.getPropertyValue('--size-block-gutter')) || 52;
+  const gutterWidth = (parseFloat(rootStyle.getPropertyValue('--size-block-gutter')) || 52) * pageZoomFactor(layer);
   return {
     top: blockRect.top - layerRect.top,
     left: blockRect.left - layerRect.left - gutterWidth,
     height: blockRect.height,
   };
+}
+
+function pageZoomFactor(element: HTMLElement): number {
+  const view = element.ownerDocument.defaultView;
+  if (view === null || typeof view.getComputedStyle !== 'function') {
+    return 1;
+  }
+  try {
+    const raw = view.getComputedStyle(element).getPropertyValue('--page-zoom');
+    const value = Number.parseFloat(raw);
+    if (!Number.isFinite(value) || value <= 0) {
+      return 1;
+    }
+    return value;
+  } catch {
+    return 1;
+  }
 }
 
 function applyBlockHandleLayout(

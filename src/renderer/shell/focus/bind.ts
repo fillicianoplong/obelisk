@@ -63,6 +63,9 @@ function elementForKey(doc: Document, key: string): HTMLElement | null {
   if (key === 'status-save') {
     return doc.querySelector<HTMLElement>('.status-save');
   }
+  if (key === 'status-zoom') {
+    return doc.querySelector<HTMLElement>('.status-zoom');
+  }
   if (key.startsWith('close:')) {
     const tabId = key.slice('close:'.length);
     return doc.querySelector<HTMLElement>(`[data-tab-id="${CSS.escape(tabId)}"] .tab-close`);

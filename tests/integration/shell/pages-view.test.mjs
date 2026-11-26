@@ -188,6 +188,7 @@ async function readChrome(client) {
         })(),
         barWidth: document.querySelector('.status-bar')?.clientWidth || 0,
         zoom: (document.querySelector('[data-status-item="zoom"]')?.textContent || '').trim(),
+        zoomButton: document.querySelector('.status-zoom')?.tagName || '',
         zoomMarks: document.querySelectorAll('.status-zoom-mark').length,
         save: (document.querySelector('[data-save-state]')?.getAttribute('data-save-state') || ''),
         unsaved: tab ? tab.getAttribute('data-unsaved') : '',
@@ -227,7 +228,8 @@ test('Pages view flows text onto Letter sheets and Pageless switches from the Vi
     assert.equal(chrome.pageLabel, 'Page 1 of 1');
     assert.equal(chrome.viewLabel, 'Pages');
     assert.equal(chrome.zoom, '100%');
-    assert.equal(chrome.zoomMarks, 2);
+    assert.equal(chrome.zoomButton, 'BUTTON');
+    assert.equal(chrome.zoomMarks, 0);
     assert.equal(chrome.save, 'saved');
     assert.equal(chrome.unsaved, 'false');
 

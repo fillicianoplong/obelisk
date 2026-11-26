@@ -60,6 +60,7 @@
   --size-find-padding: 6px;
   --size-control: 32px;
   --size-control-small: 24px;
+  --size-zoom: 60px;
   --size-caption-button: 46px;
   --size-tab-min: 96px;
   --size-tab-max: 220px;
@@ -84,6 +85,7 @@
   --size-slash-menu-max-width: 280px;
   --size-slash-menu-max-height: 360px;
   --z-index-link-bubble: 5;
+  --z-index-menu: 6;
   --size-link-tooltip-max: 480px;
 
   /* Page geometry (Page setup reference: Letter, Normal margins) */

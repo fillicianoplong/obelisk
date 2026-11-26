@@ -688,7 +688,7 @@ One use case per key user goal. Should use cases cover Should features and are m
 | Saved signature | Name, PNG image, created date; one encrypted file each | App data | Until deleted or uninstall | Sensitive |
 | Recovery copy | A format 1 .obk file, plus created time, updated time, and first line | App data | Until saved or discarded; if ignored, kept and offered at every launch | Personal |
 
-- Not stored in the document: zoom, selection, find text, scroll position, and undo history. Open tabs are kept only in the session.
+- Not stored in the document: zoom, selection, find text, scroll position, and undo history. Zoom is one app-wide preset (200%, 150%, 125%, 100%, 75%, or 50%), kept in settings.json. A saved value that is not a preset is 100%. Open tabs are kept only in the session.
 - Units: page sizes, margins, indents, and displayed image and signature widths in inches; font sizes and spacing in points; an image's own size in pixels. Image height is not stored; it follows the width and the aspect ratio.
 - Table cells: an empty cell is empty, not zero; table math counts it as 0 only inside a formula.
 - Dates in date and time items are stored as local date and time to the minute (YYYY-MM-DDTHH:MM), with no time zone, because the value never changes. The format is stored separately.
@@ -960,7 +960,7 @@ An item that needs more input before it acts ends with an ellipsis (…).
 |---|---|
 | File | New; New from template > MLA; Open…; Save; Save as…; Print…; Export > PDF…, Word…, Markdown…; Close tab; Exit |
 | Edit | Undo; Redo; Cut; Copy; Paste; Paste as plain text; Duplicate; Select all; Find; Replace |
-| View | Pages; Pageless; Zoom in; Zoom out; Zoom to 100% (50% to 200%, 10% steps) |
+| View | Pages; Pageless; Zoom in; Zoom out; Zoom to 100% (presets 200%, 150%, 125%, 100%, 75%, 50%) |
 | Insert | Every block in the [*Slash menu reference*](#slash-menu-reference), in its order and groups; Date and time… replaces Date; Link… (Ctrl+K) follows it in group 5. |
 | Format | Text; Font; Font size; Paragraph…; Increase indent; Decrease indent; Clear formatting; Page setup…; Header and footer |
 | Tools | Spell check; Settings |
@@ -980,7 +980,7 @@ Menus also have Alt access keys. Top menus: File F, Edit E, View V, Insert I, Fo
 | Anywhere | Ctrl+comma | Settings |
 | Anywhere | Ctrl+F, Ctrl+H | Find, Replace |
 | Anywhere | F6 | Move focus: menu bar, tabs, page, status bar |
-| Anywhere | Ctrl+plus, Ctrl+minus, Ctrl+0 | Zoom in, zoom out, 100% |
+| Anywhere | Ctrl+plus, Ctrl+minus, Ctrl+0, Ctrl+wheel | Zoom in, zoom out, 100%, one preset per wheel notch |
 | Editor | Ctrl+Z, Ctrl+Y | Undo, Redo (100 steps) |
 | Editor | Ctrl+B, Ctrl+I, Ctrl+U | Bold, italic, underline |
 | Editor | Ctrl+Shift+X | Strikethrough |

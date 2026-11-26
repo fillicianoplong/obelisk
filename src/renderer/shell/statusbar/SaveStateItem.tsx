@@ -84,7 +84,7 @@ export function SaveStateItem({ state }: SaveStateItemProps) {
       className="status-save"
       data-status-item="save"
       data-save-state={state}
-      tabIndex={0}
+      tabIndex={tooltip !== null ? 0 : -1}
       ref={itemRef}
       {...(tooltip !== null ? { 'aria-describedby': TOOLTIP_ID } : {})}
       onPointerEnter={() => {

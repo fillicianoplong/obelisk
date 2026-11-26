@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom';
 import { editorUpdatesAreSynchronous } from '../editor/flush.js';
 import { setSpellcheckEnabled } from '../editor/spellcheck-mode.js';
 import { marginsFromUnknown } from '../editor/layout/paginate.js';
-import { holdCaretAnchor } from '../editor/layout/paginate-plugin.js';
+import { holdAnchorForZoom, holdCaretAnchor } from '../editor/layout/paginate-plugin.js';
 import { editorText } from '../editor/state.js';
 import { rememberCorrect } from '../editor/spell/client.js';
 import { spellingSuggestionAt, spellingWordToAdd, startSpellContextListener } from './spellcheck/context.js';
@@ -20,6 +20,15 @@ import { LinkDialog } from './link/LinkDialog.js';
 import { EDITOR_SHELL_COMMAND, type EditorShellCommandDetail } from '../editor/editor-command-event.js';
 import type { LinkDraft } from '../editor/link/commands.js';
 import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
+import {
+  applyWheelSteps,
+  consumeZoomWheel,
+  zoomCommandResult,
+  zoomFromSaved,
+  zoomShortcut,
+  type ZoomCommand,
+  type ZoomPreset,
+} from '../../shared/zoom.js';
 import { FindBar } from './find/FindBar.js';
 import { StatusBar } from './statusbar/StatusBar.js';
 import { ClosePrompt } from './tabs/ClosePrompt.js';
@@ -95,6 +104,7 @@ export function Shell() {
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
   const [spellingOn, setSpellingOn] = useState(true);
+  const [zoom, setZoom] = useState<ZoomPreset>(() => zoomFromSaved(window.obeliskZoom));
   const [pageLabel, setPageLabel] = useState(PAGE_LABEL);
   const nextNumber = useRef(1);
   const opening = useRef(false);
@@ -521,6 +531,26 @@ export function Shell() {
 
   const spellingOnRef = useRef(spellingOn);
   spellingOnRef.current = spellingOn;
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const wheelAccum = useRef(0);
+
+  const applyZoom = useCallback((next: ZoomPreset) => {
+    const resolved = zoomFromSaved(next);
+    if (resolved === zoomRef.current) {
+      return;
+    }
+    holdAnchorForZoom();
+    zoomRef.current = resolved;
+    setZoom(resolved);
+    void window.obelisk['prefs:set']({ key: 'zoom', value: resolved }).catch(() => {
+      // The page keeps the chosen zoom when the preference file cannot be written.
+    });
+  }, []);
+
+  const runZoomCommand = useCallback((command: ZoomCommand) => {
+    applyZoom(zoomCommandResult(zoomRef.current, command));
+  }, [applyZoom]);
 
   const toggleSpelling = useCallback(() => {
     const next = !spellingOnRef.current;
@@ -593,6 +623,10 @@ export function Shell() {
         toggleSpelling();
         return;
       }
+      if (command === 'view-zoom-in' || command === 'view-zoom-out' || command === 'view-zoom-100') {
+        runZoomCommand(command);
+        return;
+      }
       if (command === 'spell-add') {
         const word = spellingWordToAdd();
         if (word !== null) {
@@ -653,7 +687,7 @@ export function Shell() {
         return;
       }
     },
-    [addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave, toggleSpelling],
+    [addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave, runZoomCommand, toggleSpelling],
   );
 
   const menuContext = useMemo(() => {
@@ -666,8 +700,9 @@ export function Shell() {
       editorState: editorState ?? null,
       spelling: spellingOn,
       documentView: documentTab ? documentView(activeTab) : 'pages',
+      zoom,
     };
-  }, [activeTab, spellingOn]);
+  }, [activeTab, spellingOn, zoom]);
 
   const updateEditor = useCallback((tabId: string, editor: EditorState) => {
     const apply = () => {
@@ -736,6 +771,12 @@ export function Shell() {
 
   useLayoutEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      const zoomCommand = zoomShortcut(event);
+      if (zoomCommand !== null) {
+        event.preventDefault();
+        runZoomCommand(zoomCommand);
+        return;
+      }
       const editCommand = editShellShortcut(event);
       if (editCommand !== null) {
         event.preventDefault();
@@ -778,7 +819,26 @@ export function Shell() {
       window.removeEventListener('keydown', onKeyDown);
       delete document.documentElement.dataset.shellCommands;
     };
-  }, [addTab, onMenuCommand, openDocument, openSettings, runSave]);
+  }, [addTab, onMenuCommand, openDocument, openSettings, runSave, runZoomCommand]);
+
+  useEffect(() => {
+    const onWheel = (event: WheelEvent) => {
+      if (event.altKey || !(event.ctrlKey || event.metaKey)) {
+        return;
+      }
+      event.preventDefault();
+      const turned = consumeZoomWheel(wheelAccum.current, event.deltaY, event.deltaMode);
+      wheelAccum.current = turned.accumulated;
+      if (turned.steps === 0) {
+        return;
+      }
+      applyZoom(applyWheelSteps(zoomRef.current, turned.steps));
+    };
+    window.addEventListener('wheel', onWheel, { capture: true, passive: false });
+    return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true });
+    };
+  }, [applyZoom]);
 
   useEffect(() => {
     // The slash menu's Link item and the link bubble's Edit open the same dialog as Ctrl+K.
@@ -855,6 +915,7 @@ export function Shell() {
         state={activeTab.editor}
         viewMode={documentView(activeTab)}
         margins={marginsFromUnknown(activeTab.baseDocument.page.margins)}
+        zoom={zoom}
         onChange={updateEditor}
         onPageLabel={setPageLabel}
         find={activeTab.kind === 'settings' ? null : (
@@ -876,6 +937,8 @@ export function Shell() {
           saveState={tabSaveState(activeTab)}
           pageLabel={pageLabel}
           viewName={statusViewLabel(documentView(activeTab))}
+          zoom={zoom}
+          onZoom={applyZoom}
         />
       )}
     </div>

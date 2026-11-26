@@ -1,5 +1,6 @@
 import type { IpcErrorResult, IpcTimeoutResult } from './errors.js';
 import { DOCUMENT_VIEWS, FONT_SIZES_PT } from '../schema/limits.js';
+import type { ZoomPreset } from '../zoom.js';
 
 export { DOCUMENT_VIEWS, FONT_SIZES_PT };
 
@@ -16,6 +17,7 @@ export const PREFERENCE_KEYS = [
   'defaultSize',
   'restoreTabs',
   'showPageEdges',
+  'zoom',
 ] as const;
 
 export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
@@ -57,7 +59,8 @@ export type PreferenceEntry =
   | { key: 'defaultFont'; value: string }
   | { key: 'defaultSize'; value: FontSizePt }
   | { key: 'restoreTabs'; value: boolean }
-  | { key: 'showPageEdges'; value: boolean };
+  | { key: 'showPageEdges'; value: boolean }
+  | { key: 'zoom'; value: ZoomPreset };
 
 export interface RefusedResult {
   status: 'refused';

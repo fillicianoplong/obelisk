@@ -84,6 +84,9 @@ test('the status bar shows counts, placeholders, and the passed save state', asy
   assert.match(html, /data-save-icon="not-saved"/);
   assert.match(html, /data-save-state="not-saved"/);
   assert.match(html, /Zoom 100%/);
+  assert.match(html, /aria-haspopup="menu"/);
+  assert.match(html, /Zoom \(Ctrl\+wheel\)/);
+  assert.equal(html.includes('status-zoom-mark'), false);
 });
 
 test('save state follows the changed flag, and only a new label is announced', async () => {

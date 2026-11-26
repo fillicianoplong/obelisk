@@ -45,6 +45,23 @@ export function cssPixelsAt96Dpi(inches: number): number {
   return inches * CSS_PX_PER_INCH;
 }
 
+// Overrides the page tokens on the canvas only, so the 24 px region padding stays put.
+// 100% returns nothing and the root tokens are used as they are.
+export function pageZoomVars(zoomPercent: number): Record<string, string> | undefined {
+  if (!Number.isFinite(zoomPercent) || zoomPercent === 100) {
+    return undefined;
+  }
+  const factor = zoomPercent / 100;
+  return {
+    [PAGE_WIDTH_TOKEN]: `calc(${cssInches(PAGE_WIDTH_IN)} * ${factor})`,
+    [PAGE_HEIGHT_TOKEN]: `calc(${cssInches(PAGE_HEIGHT_IN)} * ${factor})`,
+    [PAGE_MARGIN_TOKEN]: `calc(${cssInches(PAGE_MARGIN_IN)} * ${factor})`,
+    [PAGE_HEADER_OFFSET_TOKEN]: `calc(${cssInches(PAGE_HEADER_OFFSET_IN)} * ${factor})`,
+    [PAGE_GAP_TOKEN]: `calc(${PAGE_GAP_PX}px * ${factor})`,
+    [PAGE_FONT_SIZE_TOKEN]: `calc(${PAGE_FONT_SIZE} * ${factor})`,
+  };
+}
+
 export interface PageFrameStyle {
   width: string;
   height: string;

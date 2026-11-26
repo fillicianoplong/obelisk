@@ -31,7 +31,7 @@ export function tooltipDelay(trigger: TooltipTrigger): number {
   return TOOLTIP_HOVER_DELAY_MS;
 }
 
-// Shown until the page layout reports. Zoom stays a placeholder.
+// Shown until the page layout reports the caret's page.
 export const PAGE_LABEL = 'Page 1 of 1';
 
 export const VIEW_LABEL = 'Pages';
@@ -39,8 +39,6 @@ export const VIEW_LABEL = 'Pages';
 export function statusViewLabel(view: string): string {
   return view === 'pageless' ? 'Pageless' : 'Pages';
 }
-
-export const ZOOM_LABEL = '100%';
 
 // The smallest window is 640 CSS pixels wide. The view label drops first.
 export const SMALLEST_WINDOW_WIDTH = 640;

@@ -3,7 +3,7 @@ import { redo, undo } from 'prosemirror-history';
 import type { EditorState, Selection, Transaction } from 'prosemirror-state';
 import { TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import 'prosemirror-view/style/prosemirror.css';
 import './editor.css';
 import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
@@ -20,16 +20,16 @@ import {
 import type { TextBlockKind } from './schema.js';
 import { editorBlockSnapshot } from './schema/mapping.js';
 import { newBlockId } from './block-id.js';
-import { pageHeaderStyle } from './layout/page.js';
+import { pageHeaderStyle, pageZoomVars } from './layout/page.js';
 import type { PageBox, PageMargins } from './layout/paginate.js';
-import { pageBoxFromMargins } from './layout/paginate.js';
+import { pageBoxFromMargins, scalePageBox } from './layout/paginate.js';
 import type { PageLayoutReport, PaginationHost } from './layout/paginate-plugin.js';
 import {
   layoutPagination,
   paginationPlugin,
   paginationPluginKey,
   paginationSnapshot,
-  takeCaretAnchor,
+  takeScrollAnchor,
 } from './layout/paginate-plugin.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
 import {
@@ -61,6 +61,7 @@ interface EditorCoreProps {
   state: EditorState;
   viewMode: 'pages' | 'pageless';
   margins: PageMargins;
+  zoom?: number;
   onChange: (tabId: string, state: EditorState) => void;
   onPageLabel: (label: string) => void;
 }
@@ -332,6 +333,7 @@ export function EditorCore({
   state,
   viewMode,
   margins,
+  zoom = 100,
   onChange,
   onPageLabel,
 }: EditorCoreProps) {
@@ -340,11 +342,13 @@ export function EditorCore({
   const onPageLabelRef = useRef(onPageLabel);
   const viewModeRef = useRef(viewMode);
   const marginsRef = useRef(margins);
+  const zoomRef = useRef(zoom);
   const viewRef = useRef<EditorView | null>(null);
   onChangeRef.current = onChange;
   onPageLabelRef.current = onPageLabel;
   viewModeRef.current = viewMode;
   marginsRef.current = margins;
+  zoomRef.current = zoom;
   const [pageCount, setPageCount] = useState(1);
   const [caretPage, setCaretPage] = useState(0);
   const [keyboardFocus, setKeyboardFocus] = useState(false);
@@ -352,7 +356,7 @@ export function EditorCore({
   if (layoutHostRef.current === null) {
     layoutHostRef.current = {
       getMode: () => viewModeRef.current,
-      getBox: () => pageBoxFromMargins(marginsRef.current),
+      getBox: () => scalePageBox(pageBoxFromMargins(marginsRef.current), zoomRef.current),
       onLayout: (report: PageLayoutReport) => {
         setPageCount((current) => (current === report.pageCount ? current : report.pageCount));
         setCaretPage((current) => (current === report.page ? current : report.page));
@@ -640,17 +644,21 @@ export function EditorCore({
     if (view === null || view.isDestroyed || layoutHost === null) {
       return;
     }
-    const before = takeCaretAnchor();
+    const anchor = takeScrollAnchor();
     const region = view.dom.closest('.page-region');
     layoutPagination(view, layoutHost);
-    if (before !== null && region instanceof HTMLElement) {
-      try {
-        const after = view.coordsAtPos(view.state.selection.head).top;
-        if (Math.abs(after - before) > 0.5) {
-          region.scrollTop += after - before;
+    if (anchor !== null && region instanceof HTMLElement) {
+      if (anchor.kind === 'caret') {
+        try {
+          const after = view.coordsAtPos(view.state.selection.head).top;
+          if (Math.abs(after - anchor.top) > 0.5) {
+            region.scrollTop += after - anchor.top;
+          }
+        } catch {
+          // The caret is not on screen yet.
         }
-      } catch {
-        // The caret is not on screen yet.
+      } else if (anchor.scrollHeight > 0) {
+        region.scrollTop = anchor.scrollTop * (region.scrollHeight / anchor.scrollHeight);
       }
     }
     if (region instanceof HTMLElement) {
@@ -661,15 +669,16 @@ export function EditorCore({
         region.removeAttribute('data-focus-source');
       }
     }
-  }, [viewMode, margins.top, margins.right, margins.bottom, margins.left]);
+  }, [viewMode, zoom, margins.top, margins.right, margins.bottom, margins.left]);
 
-  const box: PageBox = pageBoxFromMargins(margins);
+  const box: PageBox = scalePageBox(pageBoxFromMargins(margins), zoom);
+  const zoomStyle = pageZoomVars(zoom) as CSSProperties | undefined;
   const frames = viewMode === 'pages'
     ? Array.from({ length: pageCount }, (_, index) => index)
     : [];
 
   return (
-    <div className="page-canvas" data-page-view={viewMode}>
+    <div className="page-canvas" data-page-view={viewMode} style={zoomStyle}>
       {viewMode === 'pages' ? (
         <div className="page-frames" aria-hidden="true">
           {frames.map((index) => (

@@ -7,7 +7,7 @@ import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '
 import { ipcError } from '../../shared/ipc/errors.js';
 import { openAllowedLink } from '../security/links.js';
 import { readClipboardItems } from '../clipboard/read.js';
-import { readSpellingSetting, writeSpellingSetting } from '../settings.js';
+import { readSpellingSetting, readZoomSetting, writeSpellingSetting, writeZoomSetting } from '../settings.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
 import { createIpcRegistry } from './registry.js';
@@ -117,17 +117,24 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
     openExternal: (href) => shell.openExternal(href),
   }));
   registry.setHandler('prefs:get', (request) => {
-    if (request.key !== 'spelling') {
-      return ipcError('NOT_IMPLEMENTED', 'prefs:get is not available yet.');
+    if (request.key === 'spelling') {
+      return { status: 'ok', key: 'spelling', value: readSpellingSetting(userData()) };
     }
-    return { status: 'ok', key: 'spelling', value: readSpellingSetting(userData()) };
+    if (request.key === 'zoom') {
+      return { status: 'ok', key: 'zoom', value: readZoomSetting(userData()) };
+    }
+    return ipcError('NOT_IMPLEMENTED', 'prefs:get is not available yet.');
   });
   registry.setHandler('prefs:set', (request) => {
-    if (request.key !== 'spelling') {
-      return ipcError('NOT_IMPLEMENTED', 'prefs:set is not available yet.');
+    if (request.key === 'spelling') {
+      writeSpellingSetting(userData(), request.value);
+      return { status: 'ok' };
     }
-    writeSpellingSetting(userData(), request.value);
-    return { status: 'ok' };
+    if (request.key === 'zoom') {
+      writeZoomSetting(userData(), request.value);
+      return { status: 'ok' };
+    }
+    return ipcError('NOT_IMPLEMENTED', 'prefs:set is not available yet.');
   });
   bindIpcHandlers(ipc, registry);
   return files;

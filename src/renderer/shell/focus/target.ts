@@ -15,6 +15,9 @@ export function focusTargetKey(parts: FocusTargetParts): string | null {
   if (parts.classes.includes('status-save')) {
     return 'status-save';
   }
+  if (parts.classes.includes('status-zoom')) {
+    return 'status-zoom';
+  }
   if (parts.classes.includes('tab-close') && parts.tabId !== null && parts.tabId !== '') {
     return `close:${parts.tabId}`;
   }

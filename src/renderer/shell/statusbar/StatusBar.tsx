@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { STATUS_BAR_LABEL } from '../focus/regions.js';
-import { CountItems, ViewItem, ZoomItem } from './items.js';
+import { CountItems, ViewItem } from './items.js';
+import { statusControlAfter } from './focus.js';
 import { LiveRegion } from './LiveRegion.js';
-import { PAGE_LABEL, VIEW_LABEL, isSaveState, nextViewLabel, saveStateLabel, textCounts } from './model.js';
+import { PAGE_LABEL, VIEW_LABEL, isSaveState, nextViewLabel, saveStateLabel, saveStateTooltip, textCounts } from './model.js';
 import type { SaveState } from './model.js';
 import { SaveStateItem } from './SaveStateItem.js';
+import { ZoomControl } from './ZoomControl.js';
+import { DEFAULT_ZOOM, type ZoomPreset } from '../../../shared/zoom.js';
 
 interface StatusBarProps {
   text: string;
   saveState: SaveState;
   pageLabel?: string;
   viewName?: string;
+  zoom?: ZoomPreset;
+  onZoom?: (zoom: ZoomPreset) => void;
 }
 
 interface StatusCommands {
@@ -21,7 +27,14 @@ interface StatusCommands {
 // The bar is the status region. role="status" names it for Narrator.
 // aria-live="off" keeps keystrokes from reading the counts. Save-state
 // changes go out through the polite live region and do not move focus.
-export function StatusBar({ text, saveState, pageLabel = PAGE_LABEL, viewName = VIEW_LABEL }: StatusBarProps) {
+export function StatusBar({
+  text,
+  saveState,
+  pageLabel = PAGE_LABEL,
+  viewName = VIEW_LABEL,
+  zoom = DEFAULT_ZOOM,
+  onZoom = () => {},
+}: StatusBarProps) {
   // The editor publishes the active tab's text on each edit, inside the 250 ms count limit.
   const counts = textCounts(text);
   const barRef = useRef<HTMLElement>(null);
@@ -62,6 +75,40 @@ export function StatusBar({ text, saveState, pageLabel = PAGE_LABEL, viewName = 
     };
   }, [text, shown]);
 
+  const onBarKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+    const bar = barRef.current;
+    const active = document.activeElement;
+    if (bar === null || !(active instanceof HTMLElement) || !bar.contains(active)) {
+      return;
+    }
+    if (active.closest('.status-zoom-menu') !== null) {
+      return;
+    }
+    const current = active.classList.contains('status-zoom')
+      ? 'zoom'
+      : active.classList.contains('status-save')
+        ? 'save'
+        : active === bar
+          ? 'bar'
+          : null;
+    if (current === null) {
+      return;
+    }
+    const next = statusControlAfter(current, event.key, saveStateTooltip(shown) !== null);
+    if (next === null) {
+      return;
+    }
+    event.preventDefault();
+    const selector = next === 'zoom' ? '.status-zoom' : '.status-save';
+    bar.querySelector<HTMLElement>(selector)?.focus();
+  };
+
   useEffect(() => {
     const bar = barRef.current;
     if (bar === null) {
@@ -98,12 +145,13 @@ export function StatusBar({ text, saveState, pageLabel = PAGE_LABEL, viewName = 
       aria-live="off"
       tabIndex={-1}
       ref={barRef}
+      onKeyDown={onBarKeyDown}
     >
       <CountItems counts={counts} pageLabel={pageLabel} />
       <div className="status-bar-trailing">
         <SaveStateItem state={shown} />
         <ViewItem itemRef={setViewNode} label={viewName} />
-        <ZoomItem />
+        <ZoomControl zoom={zoom} onZoom={onZoom} />
       </div>
       <LiveRegion label={saveStateLabel(shown)} />
     </footer>

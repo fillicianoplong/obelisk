@@ -139,6 +139,12 @@ test('a focus key prefers the element id, then the control, then the region mark
   assert.equal(focusTargetKey({
     id: '',
     region: null,
+    classes: ['status-zoom'],
+    tabId: null,
+  }), 'status-zoom');
+  assert.equal(focusTargetKey({
+    id: '',
+    region: null,
     classes: ['tab-new'],
     tabId: null,
   }), 'tab-new');

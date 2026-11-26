@@ -33,6 +33,7 @@ import {
   type SigSaveRequest,
   type ThemePreference,
 } from './types.js';
+import { ZOOM_PRESETS, type ZoomPreset } from '../zoom.js';
 
 const JSON_DEPTH_MAX = 40;
 const TOKEN = /^[A-Za-z0-9_-]{1,128}$/;
@@ -49,6 +50,7 @@ const PNG_BASE64_MAX_CHARS = Math.ceil(IMAGE_BYTE_MAX / 3) * 4;
 
 const FONT_SIZE_SET: ReadonlySet<number> = new Set(FONT_SIZES_PT);
 const PREFERENCE_KEY_SET: ReadonlySet<string> = new Set(PREFERENCE_KEYS);
+const ZOOM_SET: ReadonlySet<number> = new Set(ZOOM_PRESETS);
 const EXPORT_FORMAT_SET: ReadonlySet<string> = new Set(EXPORT_FORMATS);
 const THEME_SET: ReadonlySet<string> = new Set(THEME_VALUES);
 
@@ -518,6 +520,11 @@ function parsePreferenceEntry(value: Record<string, unknown>): PreferenceEntry |
       return typeof value.value === 'boolean' ? { key: 'restoreTabs', value: value.value } : null;
     case 'showPageEdges':
       return typeof value.value === 'boolean' ? { key: 'showPageEdges', value: value.value } : null;
+    case 'zoom':
+      if (typeof value.value !== 'number' || !ZOOM_SET.has(value.value)) {
+        return null;
+      }
+      return { key: 'zoom', value: value.value as ZoomPreset };
     default:
       return null;
   }
