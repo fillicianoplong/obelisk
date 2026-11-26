@@ -18,6 +18,7 @@ export const PREFERENCE_KEYS = [
   'restoreTabs',
   'showPageEdges',
   'zoom',
+  'view',
 ] as const;
 
 export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
@@ -60,7 +61,8 @@ export type PreferenceEntry =
   | { key: 'defaultSize'; value: FontSizePt }
   | { key: 'restoreTabs'; value: boolean }
   | { key: 'showPageEdges'; value: boolean }
-  | { key: 'zoom'; value: ZoomPreset };
+  | { key: 'zoom'; value: ZoomPreset }
+  | { key: 'view'; value: DocumentView };
 
 export interface RefusedResult {
   status: 'refused';

@@ -86,7 +86,8 @@ test('Header and footer is disabled in Pageless and page fields are enabled only
   }
   assert.equal(item('pages', false, 'format-header').enabled, true);
   assert.equal(item('pageless', false, 'format-header').enabled, false);
-  assert.equal(item('pageless', false, 'format-page-setup').enabled, true);
+  assert.equal(item('pageless', false, 'format-page-setup').enabled, false);
+  assert.equal(item('pages', false, 'format-page-setup').enabled, true);
   assert.equal(item('pages', false, 'insert-page-count').enabled, false);
   assert.equal(item('pages', true, 'insert-page-count').enabled, true);
   assert.equal(item('pages', true, 'insert-page-number').enabled, true);

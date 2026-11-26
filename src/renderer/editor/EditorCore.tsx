@@ -10,7 +10,7 @@ import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import 'prosemirror-view/style/prosemirror.css';
 import './editor.css';
 import { DOCUMENT_LABEL } from '../shell/focus/regions.js';
-import { bindPageFocus, pageFocusRestoresCaret } from '../shell/page-focus.js';
+import { bindPageFocus, pageFocusRestoresCaret, suppressPageFocusRing } from '../shell/page-focus.js';
 import { editorSchema } from './schema.js';
 import { runWithSynchronousEditorUpdate } from './flush.js';
 import {
@@ -36,11 +36,9 @@ import {
 } from './layout/paginate-plugin.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
 import {
-  selectDoubleClickedWord,
+  createWordClickSession,
   textblockRangeAt,
-  trimDoubleClickedWord,
   watchSelectionDrag,
-  wordRangeAt,
 } from './select-word.js';
 import { isUnpromptedEdgeSelection, paragraphCaret, paragraphPosition } from './state.js';
 import {
@@ -72,7 +70,7 @@ interface EditorCoreProps {
   onChange: (tabId: string, state: EditorState) => void;
   onPageLabel: (label: string) => void;
   onBandEdit?: (part: 'header' | 'footer', page: number) => void;
-  onBandClose?: () => void;
+  onBandClose?: (reason?: 'escape') => void;
   onBandChange?: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onBandMove?: (direction: 1 | -1) => void;
 }
@@ -166,6 +164,23 @@ function installEditorCommands(
         empty,
         text: view.state.doc.textBetween(view.state.selection.from, view.state.selection.to),
       };
+    },
+    focusEditedPage(pageNumber: number) {
+      // Esc in a header sets keyboard focus. Return to this page's body
+      // without the page ring, and keep the caret on that page.
+      suppressPageFocusRing();
+      const frame = view.dom.ownerDocument.querySelector(`.page-frame[data-page="${pageNumber}"]`);
+      if (frame instanceof HTMLElement && !caretInsideFrame(view, frame)) {
+        const pos = firstTextPosInFrame(view, frame);
+        if (pos !== null) {
+          const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(pos)));
+          tr.setMeta('pointer', true);
+          view.dispatch(tr);
+        }
+      }
+      view.focus();
+      placeSelection(view);
+      view.dom.removeAttribute('data-focus-source');
     },
     replaceText(text: string) {
       runWithSynchronousEditorUpdate(() => {
@@ -334,6 +349,40 @@ function installEditorCommands(
   });
 }
 
+function caretInsideFrame(view: EditorView, frame: HTMLElement): boolean {
+  try {
+    const coords = view.coordsAtPos(view.state.selection.head);
+    const rect = frame.getBoundingClientRect();
+    return coords.top >= rect.top && coords.bottom <= rect.bottom + 1
+      && coords.left >= rect.left && coords.left <= rect.right;
+  } catch {
+    return false;
+  }
+}
+
+function firstTextPosInFrame(view: EditorView, frame: HTMLElement): number | null {
+  const rect = frame.getBoundingClientRect();
+  let found: number | null = null;
+  view.state.doc.descendants((node, pos) => {
+    if (found !== null || !node.isText) {
+      return found === null;
+    }
+    try {
+      const coords = view.coordsAtPos(pos);
+      if (
+        coords.top >= rect.top && coords.top <= rect.bottom
+        && coords.left >= rect.left && coords.left <= rect.right
+      ) {
+        found = pos;
+      }
+    } catch {
+      // A position that is not laid out yet is not on this page.
+    }
+    return false;
+  });
+  return found;
+}
+
 function selectionIsEdge(view: EditorView, selection: Selection): boolean {
   const { doc } = view.state;
   return selection.eq(TextSelection.atStart(doc)) || selection.eq(TextSelection.atEnd(doc));
@@ -461,7 +510,7 @@ export function EditorCore({
     const viewState = state.reconfigure({
       plugins: [...plugins, contextMenuEditorPlugin(ownedTabId), paginationPlugin(layoutHost)],
     });
-    let wordGesture: { drag: boolean } | null = null;
+    const wordClicks = createWordClickSession();
     const view = new EditorView(host, {
       state: viewState,
       attributes: {
@@ -496,19 +545,7 @@ export function EditorCore({
       // paints the space after it. Returning true makes ProseMirror cancel that
       // default. The event still bubbles, so an open menu can close.
       handleDoubleClick(clickView, pos, event) {
-        if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
-          return false;
-        }
-        const range = wordRangeAt(clickView.state.doc, pos);
-        if (range === null || !selectDoubleClickedWord(clickView, pos)) {
-          return false;
-        }
-        watchSelectionDrag(clickView, event, 'word', range, () => {
-          if (wordGesture !== null) {
-            wordGesture.drag = true;
-          }
-        });
-        return true;
+        return wordClicks.onDoubleClick(clickView, pos, event);
       },
       handleTripleClick(clickView, pos, event) {
         if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
@@ -529,19 +566,11 @@ export function EditorCore({
           if (bandEditRef.current !== null && event.button === 0) {
             onBandCloseRef.current?.();
           }
-          if (event.button !== 0 || event.detail !== 2 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
-            wordGesture = null;
-            return false;
-          }
-          wordGesture = { drag: false };
+          wordClicks.onPointerDown(event);
           return false;
         },
         mouseup(upView, event) {
-          const gesture = wordGesture;
-          wordGesture = null;
-          if (gesture !== null && !gesture.drag && event.button === 0) {
-            trimDoubleClickedWord(upView);
-          }
+          wordClicks.onPointerUp(upView, event);
           return false;
         },
         click(clickView, event) {
@@ -606,11 +635,8 @@ export function EditorCore({
     placeSelectionInDom(view);
 
     const onSelectionChange = () => {
-      // The browser's word selection includes the space after the word. Drop
-      // that space in this event, before the next paint, if the double-click
-      // handler did not already select the word.
-      if (wordGesture !== null && !wordGesture.drag && !placing) {
-        trimDoubleClickedWord(view);
+      if (!placing) {
+        wordClicks.onSelectionChange(view);
       }
       // Arrow keys move the DOM caret before ProseMirror records them. After
       // the page blurs, ProseMirror drops that event, so copy it into the tab.
@@ -766,30 +792,39 @@ export function EditorCore({
               data-page={index + 1}
               data-caret-focus={keyboardFocus && index === caretPage - 1 ? 'true' : undefined}
               style={{ top: `${index * (box.pageHeight + box.gap)}px` }}
-            >
-              {header !== undefined && footer !== undefined ? (
-                <PageBands
-                  page={index + 1}
-                  pageCount={pageCount}
-                  header={header}
-                  footer={footer}
-                  editing={bandEdit}
-                  headerOffsetPx={headerOffset}
-                  headerGapPx={Math.max(0, box.marginTop - headerOffset)}
-                  footerGapPx={Math.max(0, box.marginBottom - headerOffset)}
-                  marginLeftPx={box.marginLeft}
-                  marginRightPx={box.marginRight}
-                  onEdit={(part, page) => onBandEdit?.(part, page)}
-                  onClose={() => onBandClose?.()}
-                  onChange={(part, paragraph) => onBandChange?.(part, paragraph)}
-                  onMove={(direction) => onBandMove?.(direction)}
-                />
-              ) : null}
-            </div>
+            />
           ))}
         </div>
       ) : null}
       <div ref={hostRef} className="editor-host" />
+      {viewMode === 'pages' && header !== undefined && footer !== undefined ? (
+        <div className="page-band-layer">
+          {frames.map((index) => (
+            <div
+              key={index}
+              className="page-band-slot"
+              style={{ top: `${index * (box.pageHeight + box.gap)}px` }}
+            >
+              <PageBands
+                page={index + 1}
+                pageCount={pageCount}
+                header={header}
+                footer={footer}
+                editing={bandEdit}
+                headerOffsetPx={headerOffset}
+                headerGapPx={Math.max(0, box.marginTop - headerOffset)}
+                footerGapPx={Math.max(0, box.marginBottom - headerOffset)}
+                marginLeftPx={box.marginLeft}
+                marginRightPx={box.marginRight}
+                onEdit={(part, page) => onBandEdit?.(part, page)}
+                onClose={(reason) => onBandClose?.(reason)}
+                onChange={(part, paragraph) => onBandChange?.(part, paragraph)}
+                onMove={(direction) => onBandMove?.(direction)}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

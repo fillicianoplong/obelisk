@@ -1,4 +1,5 @@
 import type { Node as ProseNode } from 'prosemirror-model';
+import type { AppDocumentView } from '../../../shared/document-view.js';
 import type { DocumentMessage, JsonObject } from '../../../shared/ipc/types.js';
 import {
   documentFromEditorDoc,
@@ -32,14 +33,17 @@ function paragraphBlock(id: string, text: string): JsonObject {
   };
 }
 
-export function createBaseDocument(mint: () => string = newBlockId): {
+export function createBaseDocument(
+  mint: () => string = newBlockId,
+  view: AppDocumentView = 'pages',
+): {
   document: DocumentMessage;
   blockIds: string[];
 } {
   const paragraph = mint();
   return {
     document: {
-      view: 'pages',
+      view,
       page: {
         paper: 'letter',
         orientation: 'portrait',

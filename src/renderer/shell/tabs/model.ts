@@ -1,5 +1,6 @@
 import type { Node } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
+import { viewFromSaved } from '../../../shared/document-view.js';
 import type { DocumentMessage, DocumentView, FileStat, JsonObject } from '../../../shared/ipc/types.js';
 import {
   defaultPageSetup,
@@ -9,7 +10,7 @@ import {
 } from '../page-setup/model.js';
 import { createTabEditorState } from '../../editor/state.js';
 import { editorDocFromDocument } from '../../editor/schema/mapping.js';
-import { createBaseDocument } from './document.js';
+import { createBaseDocument, newBlockId } from './document.js';
 
 export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
 
@@ -106,8 +107,24 @@ export function untitledTitle(number: number): string {
   return `Untitled ${number}`;
 }
 
-export function createTab(number: number): PageTab {
-  const base = createBaseDocument();
+let chosenView: DocumentView | null = null;
+
+export function rememberDocumentView(view: DocumentView): void {
+  chosenView = viewFromSaved(view);
+}
+
+export function rememberedDocumentView(): DocumentView {
+  if (chosenView !== null) {
+    return chosenView;
+  }
+  if (typeof window === 'undefined') {
+    return 'pages';
+  }
+  return viewFromSaved(window.obeliskView);
+}
+
+export function createTab(number: number, view: DocumentView = rememberedDocumentView()): PageTab {
+  const base = createBaseDocument(newBlockId, view);
   const editor = createTabEditorState(editorDocFromDocument(base.document));
   return {
     id: `untitled-${number}`,
@@ -118,7 +135,7 @@ export function createTab(number: number): PageTab {
     stat: null,
     savePhase: null,
     baseDocument: base.document,
-    savedView: 'pages',
+    savedView: view,
     savedPage: defaultPageSetup(),
     savedHeader: base.document.header,
     savedFooter: base.document.footer,

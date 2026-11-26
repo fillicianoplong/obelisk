@@ -22,7 +22,7 @@ interface PageBandsProps {
   marginLeftPx: number;
   marginRightPx: number;
   onEdit: (part: 'header' | 'footer', page: number) => void;
-  onClose: () => void;
+  onClose: (reason?: 'escape') => void;
   onChange: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onMove: (direction: 1 | -1) => void;
 }
@@ -108,7 +108,7 @@ function Band({
   editing: BandEdit | null;
   style: { top?: string; bottom?: string; left: string; right: string; minHeight?: string };
   onEdit: (part: 'header' | 'footer', page: number) => void;
-  onClose: () => void;
+  onClose: (reason?: 'escape') => void;
   onChange: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onMove: (direction: 1 | -1) => void;
 }) {
@@ -183,7 +183,7 @@ function Band({
               className="page-band-button"
               data-insert-close=""
               onMouseDown={(event) => event.stopPropagation()}
-              onClick={onClose}
+              onClick={() => onClose()}
             >
               Close
             </button>

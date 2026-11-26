@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.46.1] - 2026-11-25
+
+### Fixed
+
+- In Pages, the body text shows on the sheet. A double-click selects only the word in the body, the header, and the footer, without the space after it. Escape from a header or footer puts the caret in that page's body and does not show the page focus ring.
+- Pages or Pageless is remembered and already applied on the first paint after a restart.
+- Format > Page setup is unavailable in Pageless and available again in Pages.
+
 ## [0.1.46.0] - 2026-11-25
 
 ### Added

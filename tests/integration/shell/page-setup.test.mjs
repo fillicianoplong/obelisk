@@ -245,8 +245,32 @@ test('Page setup applies orientation and margins, and refuses a margin over 3 in
         };
       })()`,
     );
-    assert.equal(enabled.setup, null);
+    assert.equal(enabled.setup, 'true');
     assert.equal(enabled.header, 'true');
+
+    await pressKey(client, 'Escape', 'Escape', 27);
+    await sleep(30);
+    await clickMenu(client, 'View');
+    await sleep(30);
+    await clickSelector(client, '[data-item="view-pages"]');
+    await sleep(30);
+    await clickMenu(client, 'Format');
+    await sleep(30);
+    const restored = await evaluate(
+      client,
+      `(() => {
+        const setup = document.querySelector('[data-item="format-page-setup"]');
+        const header = document.querySelector('[data-item="format-header"]');
+        return {
+          setup: setup ? setup.getAttribute('aria-disabled') : 'missing',
+          header: header ? header.getAttribute('aria-disabled') : 'missing',
+          view: document.querySelector('.page-region')?.getAttribute('data-page-view') || '',
+        };
+      })()`,
+    );
+    assert.equal(restored.view, 'pages');
+    assert.equal(restored.setup, null);
+    assert.equal(restored.header, null);
   } finally {
     await finish();
   }

@@ -42,6 +42,7 @@ import {
   createSettingsTab,
   createTab,
   documentView,
+  rememberDocumentView,
   tabHasUnsavedChanges,
   withBand,
   withDocumentView,
@@ -653,7 +654,7 @@ export function Shell() {
           return;
         }
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
-        if (active !== undefined && active.kind !== 'settings') {
+        if (active !== undefined && active.kind !== 'settings' && documentView(active) !== 'pageless') {
           setPageSetupOpen(true);
         }
         return;
@@ -707,6 +708,10 @@ export function Shell() {
         if (active === undefined || active.kind === 'settings' || documentView(active) === nextView) {
           return;
         }
+        rememberDocumentView(nextView);
+        void window.obelisk['prefs:set']({ key: 'view', value: nextView }).catch(() => {
+          // The page keeps the chosen view when the preference file cannot be written.
+        });
         const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
         const editorView = (page as HTMLElement & { editorView?: { coordsAtPos: (pos: number) => { top: number }; state: { selection: { head: number } } } } | null)?.editorView;
         if (editorView !== undefined) {
@@ -1001,9 +1006,17 @@ export function Shell() {
         onChange={updateEditor}
         onPageLabel={setPageLabel}
         onBandEdit={(part, page) => setBandEdit({ part, page })}
-        onBandClose={() => {
+        onBandClose={(reason) => {
+          const editedPage = bandEditRef.current?.page ?? 1;
           setBandEdit(null);
-          document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          const page = document.querySelector<HTMLElement & {
+            editorCommands?: { focusEditedPage?: (pageNumber: number) => void };
+          }>('[data-region="page-editor"]');
+          if (reason === 'escape') {
+            page?.editorCommands?.focusEditedPage?.(editedPage);
+            return;
+          }
+          page?.focus();
         }}
         onBandChange={(part, paragraph) => {
           setTabs((current) => {

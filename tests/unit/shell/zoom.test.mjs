@@ -3,6 +3,7 @@ import test from 'node:test';
 import { loadRenderer } from '../editor/load-renderer.mjs';
 
 const zoomUrl = new URL('../../../src/shared/zoom.ts', import.meta.url);
+const viewUrl = new URL('../../../src/shared/document-view.ts', import.meta.url);
 const pageUrl = new URL('../../../src/renderer/editor/layout/page.ts', import.meta.url);
 const paginateUrl = new URL('../../../src/renderer/editor/layout/paginate.ts', import.meta.url);
 const focusUrl = new URL('../../../src/renderer/shell/statusbar/focus.ts', import.meta.url);
@@ -35,6 +36,19 @@ test('zoom steps through the six presets and stops at the ends', async () => {
   assert.equal(zoom.zoomCommandResult(125, 'view-zoom-in'), 150);
   assert.equal(zoom.zoomCommandResult(125, 'view-zoom-out'), 100);
   assert.equal(zoom.zoomCommandResult(50, 'view-zoom-100'), 100);
+});
+
+test('a saved view is Pages or Pageless and anything else is Pages', async () => {
+  const view = await loadRenderer(viewUrl);
+  assert.equal(view.viewFromSaved(undefined), 'pages');
+  assert.equal(view.viewFromSaved('pageless'), 'pageless');
+  assert.equal(view.viewFromSaved('wide'), 'pages');
+  assert.equal(view.viewLaunchArgument('pageless'), '--obelisk-view=pageless');
+  assert.equal(view.viewFromArguments(['--obelisk-zoom=150', '--obelisk-view=pageless']), 'pageless');
+  assert.equal(view.viewFromArguments(['--obelisk-view=wide']), 'pages');
+  assert.equal(view.viewFromArguments(['--obelisk-view=']), 'pages');
+  assert.equal(view.viewFromArguments([]), 'pages');
+  assert.equal(view.viewFromArguments(['--obelisk-view=pages', '--obelisk-view=pageless']), 'pageless');
 });
 
 test('ctrl plus, minus, and zero choose a zoom command', async () => {

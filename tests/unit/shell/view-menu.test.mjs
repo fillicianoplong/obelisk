@@ -43,6 +43,28 @@ test('Pages and Pageless are a checked pair and the current view is the only che
   assert.equal(viewItem(settings, 'view-pages').enabled, false);
 });
 
+test('a new tab starts in the remembered view and is not unsaved', async () => {
+  const { createTab, rememberedDocumentView, tabHasUnsavedChanges } = await loadRenderer(modelUrl);
+  assert.equal(rememberedDocumentView(), 'pages');
+  const hadWindow = Object.hasOwn(globalThis, 'window');
+  const previous = globalThis.window;
+  globalThis.window = { obeliskView: 'pageless' };
+  try {
+    const tab = createTab(2);
+    assert.equal(tab.baseDocument.view, 'pageless');
+    assert.equal(tab.savedView, 'pageless');
+    assert.equal(tabHasUnsavedChanges(tab), false);
+    globalThis.window = { obeliskView: 'wide' };
+    assert.equal(createTab(3).baseDocument.view, 'pages');
+  } finally {
+    if (hadWindow) {
+      globalThis.window = previous;
+    } else {
+      delete globalThis.window;
+    }
+  }
+});
+
 test('switching to the other view marks the tab changed and the same view does not', async () => {
   const { createTab, tabHasUnsavedChanges, withDocumentView } = await loadRenderer(modelUrl);
   const { statusViewLabel } = await loadRenderer(statusUrl);

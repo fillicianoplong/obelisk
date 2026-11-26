@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseThemeSetting, type ThemeSetting } from '../shared/theme.js';
+import { viewFromSaved, type AppDocumentView } from '../shared/document-view.js';
 import { zoomFromSaved, type ZoomPreset } from '../shared/zoom.js';
 
 // The file is <userData>/settings.json.
@@ -79,6 +80,22 @@ export function readZoomSetting(userDataDir: string): ZoomPreset {
 export function writeZoomSetting(userDataDir: string, zoom: number): void {
   const record = readSettingsObject(userDataDir);
   record.zoom = zoomFromSaved(zoom);
+  writeSettingsObject(userDataDir, record);
+}
+
+// Pages or Pageless is one value for the whole app. A new document starts there.
+// A missing file, a missing key, or any other value is Pages.
+export function readViewSetting(userDataDir: string): AppDocumentView {
+  const record = readSettingsObject(userDataDir);
+  if (!Object.hasOwn(record, 'view')) {
+    return viewFromSaved(undefined);
+  }
+  return viewFromSaved(record.view);
+}
+
+export function writeViewSetting(userDataDir: string, view: string): void {
+  const record = readSettingsObject(userDataDir);
+  record.view = viewFromSaved(view);
   writeSettingsObject(userDataDir, record);
 }
 

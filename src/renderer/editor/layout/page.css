@@ -54,12 +54,31 @@
   min-height: 100%;
 }
 
-/* Sheets sit behind the one editor. The gap between them is the canvas. */
+/* Sheets sit behind the one editor. The gap between them is the canvas.
+   Header and footer bands are a later layer so a click can reach them
+   without the sheet covering the body text. */
 .page-frames {
   inset: 0;
   pointer-events: none;
   position: absolute;
+  z-index: 0;
+}
+
+.page-band-layer {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
   z-index: 2;
+}
+
+.page-band-slot {
+  height: var(--page-height);
+  left: 0;
+  margin-inline: auto;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  width: var(--page-width);
 }
 
 .page-frame {

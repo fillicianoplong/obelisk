@@ -6,6 +6,7 @@ import {
   PREFERENCE_KEYS,
   THEME_VALUES,
   type DocumentMessage,
+  type DocumentView,
   type ExportAssets,
   type FileOpenResult,
   type FileSaveAsRequest,
@@ -33,6 +34,7 @@ import {
   type SigSaveRequest,
   type ThemePreference,
 } from './types.js';
+import { DOCUMENT_VIEW_VALUES } from '../document-view.js';
 import { ZOOM_PRESETS, type ZoomPreset } from '../zoom.js';
 
 const JSON_DEPTH_MAX = 40;
@@ -51,6 +53,7 @@ const PNG_BASE64_MAX_CHARS = Math.ceil(IMAGE_BYTE_MAX / 3) * 4;
 const FONT_SIZE_SET: ReadonlySet<number> = new Set(FONT_SIZES_PT);
 const PREFERENCE_KEY_SET: ReadonlySet<string> = new Set(PREFERENCE_KEYS);
 const ZOOM_SET: ReadonlySet<number> = new Set(ZOOM_PRESETS);
+const VIEW_SET: ReadonlySet<string> = new Set(DOCUMENT_VIEW_VALUES);
 const EXPORT_FORMAT_SET: ReadonlySet<string> = new Set(EXPORT_FORMATS);
 const THEME_SET: ReadonlySet<string> = new Set(THEME_VALUES);
 
@@ -525,6 +528,11 @@ function parsePreferenceEntry(value: Record<string, unknown>): PreferenceEntry |
         return null;
       }
       return { key: 'zoom', value: value.value as ZoomPreset };
+    case 'view':
+      if (typeof value.value !== 'string' || !VIEW_SET.has(value.value)) {
+        return null;
+      }
+      return { key: 'view', value: value.value as DocumentView };
     default:
       return null;
   }

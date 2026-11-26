@@ -107,7 +107,7 @@ test('OK stores the setup and marks the tab changed; the same setup does not', a
   assert.equal(tabHasUnsavedChanges(back), false);
 });
 
-test('Format > Page setup stays enabled in Pageless and on a document tab', async () => {
+test('Format > Page setup is enabled in Pages and disabled in Pageless', async () => {
   const { liveMenus } = await loadRenderer(applyUrl);
   const { createTabEditorState } = await loadRenderer(stateUrl);
   const state = createTabEditorState();
@@ -123,7 +123,7 @@ test('Format > Page setup stays enabled in Pageless and on a document tab', asyn
   }
   assert.equal(item('pages').enabled, true);
   assert.equal(item('pages').command, 'format-page-setup');
-  assert.equal(item('pageless').enabled, true);
+  assert.equal(item('pageless').enabled, false);
   const settings = liveMenus({
     documentTab: false,
     selectionEmpty: true,

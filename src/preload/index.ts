@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { exposeObeliskApi } from './bridge.js';
 import { installThemeBridge } from './theme.js';
+import { installViewBridge } from './view.js';
 import { installZoomBridge } from './zoom.js';
 
 declare function require(moduleName: string): unknown;
@@ -25,6 +26,7 @@ const themeRoot = (globalThis as { document?: { documentElement?: { dataset: { t
   ?.documentElement;
 installThemeBridge(contextBridge, ipcRenderer, process.argv, themeRoot ?? null);
 installZoomBridge(contextBridge, process.argv);
+installViewBridge(contextBridge, process.argv);
 
 const preloadProcess = process as NodeJS.Process & PreloadProcess;
 

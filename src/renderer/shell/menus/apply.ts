@@ -149,7 +149,7 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
     return false;
   }
   if (item.id === 'format-page-setup') {
-    return true;
+    return context.documentView !== 'pageless';
   }
   if (item.id === 'format-header') {
     return context.documentView !== 'pageless';

@@ -189,6 +189,90 @@ export function selectDoubleClickedWord(view: EditorView, pos: number): boolean 
 
 let stopDrag: (() => void) | null = null;
 
+export interface WordClickSession {
+  onPointerDown(event: MouseEvent): void;
+  onDoubleClick(view: EditorView, pos: number, event: MouseEvent): boolean;
+  onPointerUp(view: EditorView, event: MouseEvent): void;
+  /** Trim a double-clicked word before paint. Returns whether a trim ran. */
+  onSelectionChange(view: EditorView): boolean;
+}
+
+/** One double-click path for the body, the header, and the footer. */
+export function createWordClickSession(): WordClickSession {
+  let gesture: { drag: boolean; range: { from: number; to: number } | null } | null = null;
+  let restoreToken = 0;
+  const restoreWord = (view: EditorView, range: { from: number; to: number }) => {
+    if (view.isDestroyed) {
+      return;
+    }
+    const selection = view.state.selection;
+    if (
+      selection instanceof TextSelection
+      && selection.from === range.from
+      && selection.to === range.to
+    ) {
+      return;
+    }
+    applyRange(view, range.from, range.to);
+  };
+  return {
+    onPointerDown(event) {
+      restoreToken += 1;
+      if (event.button !== 0 || event.detail !== 2 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+        gesture = null;
+        return;
+      }
+      gesture = { drag: false, range: null };
+    },
+    onDoubleClick(view, pos, event) {
+      if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+        return false;
+      }
+      const range = wordRangeAt(view.state.doc, pos);
+      if (range === null || !selectDoubleClickedWord(view, pos)) {
+        return false;
+      }
+      if (gesture !== null) {
+        gesture.range = range;
+      }
+      watchSelectionDrag(view, event, 'word', range, () => {
+        if (gesture !== null) {
+          gesture.drag = true;
+        }
+      });
+      return true;
+    },
+    onPointerUp(view, event) {
+      const current = gesture;
+      gesture = null;
+      if (current === null || current.drag || event.button !== 0 || current.range === null) {
+        return;
+      }
+      const range = current.range;
+      const token = restoreToken;
+      // A second press on a word already selected can collapse the DOM caret
+      // after this handler. Put the word back once that flush has run.
+      // A later press, such as the third click of a triple-click, cancels it.
+      const restore = () => {
+        if (token !== restoreToken) {
+          return;
+        }
+        restoreWord(view, range);
+      };
+      restore();
+      const win = view.dom.ownerDocument.defaultView;
+      win?.queueMicrotask(restore);
+      win?.requestAnimationFrame(restore);
+    },
+    onSelectionChange(view) {
+      if (gesture === null || gesture.drag) {
+        return false;
+      }
+      return trimDoubleClickedWord(view);
+    },
+  };
+}
+
 /**
  * While the button stays down after a double-click or a triple-click, follow
  * the pointer. A double-click grows by character. A triple-click grows by

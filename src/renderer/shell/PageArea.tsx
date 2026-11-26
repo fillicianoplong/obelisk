@@ -21,7 +21,7 @@ interface PageAreaProps {
   onChange: (tabId: string, state: EditorState) => void;
   onPageLabel: (label: string) => void;
   onBandEdit?: (part: 'header' | 'footer', page: number) => void;
-  onBandClose?: () => void;
+  onBandClose?: (reason?: 'escape') => void;
   onBandChange?: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onBandMove?: (direction: 1 | -1) => void;
   find?: ReactNode;

@@ -17,7 +17,8 @@ import { readPackageIoRequest, runPackagedIoCheck } from './file/packageIo.js';
 import { removeStaleTempFiles } from './file/writeAtomic.js';
 import { readInUtilityProcess } from './codec/utility-host.js';
 import { installIpc } from './ipc/install.js';
-import { readThemeSetting, readZoomSetting } from './settings.js';
+import { readThemeSetting, readViewSetting, readZoomSetting } from './settings.js';
+import { viewLaunchArgument, type AppDocumentView } from '../shared/document-view.js';
 import { zoomLaunchArgument, type ZoomPreset } from '../shared/zoom.js';
 import { secureWebPreferences } from './security/window-options.js';
 import { readSystemCaptionColors } from './window/caption.js';
@@ -64,13 +65,13 @@ function readContrastColors() {
   return readSystemCaptionColors(process.platform, (name) => systemPreferences.getColor(name));
 }
 
-function createWindow(theme: ThemeSetting, zoom: ZoomPreset): void {
+function createWindow(theme: ThemeSetting, zoom: ZoomPreset, view: AppDocumentView): void {
   // Before the window exists, so the first frame is already the chosen theme.
   activateThemeSource(nativeTheme, theme);
   const frame = frameForNativeTheme(nativeTheme, readContrastColors);
   const webPreferences = {
     ...secureWebPreferences(path.join(__dirname, '../preload/index.js')),
-    additionalArguments: [themeLaunchArgument(theme), zoomLaunchArgument(zoom)],
+    additionalArguments: [themeLaunchArgument(theme), zoomLaunchArgument(zoom), viewLaunchArgument(view)],
   };
   reportSecurity(
     `OBELISK_WINDOW_OPTIONS ${JSON.stringify({
@@ -182,6 +183,7 @@ function startApp(): void {
 
   const theme = readThemeSetting(userData);
   const zoom = readZoomSetting(userData);
+  const view = readViewSetting(userData);
   installContentsGuards();
   const files = installIpc();
   installThemeIpc(() => theme);
@@ -209,7 +211,7 @@ function startApp(): void {
     });
     installSpellChecker(session.defaultSession);
     installAppProtocol(path.join(__dirname, '../renderer'));
-    createWindow(theme, zoom);
+    createWindow(theme, zoom, view);
     const window = mainWindow;
     if (window !== null) {
       window.webContents.once('did-finish-load', () => {

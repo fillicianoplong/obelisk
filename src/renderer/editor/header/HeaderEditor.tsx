@@ -7,6 +7,7 @@ import { EditorView } from 'prosemirror-view';
 import { useLayoutEffect, useRef } from 'react';
 import type { JsonObject } from '../../../shared/ipc/types.js';
 import { editorMenuCommand } from '../menu-commands.js';
+import { createWordClickSession } from '../select-word.js';
 import { headerDocFromParagraph, paragraphFromHeaderDoc } from './mapping.js';
 import { pageFieldText, type PageFieldFormat, type PageFieldKind } from './page-field.js';
 import { headerSchema } from './schema.js';
@@ -22,7 +23,7 @@ interface HeaderEditorProps {
   page: number;
   pageCount: number;
   onChange: (paragraph: JsonObject) => void;
-  onClose: () => void;
+  onClose: (reason?: 'escape') => void;
   onMove: (direction: 1 | -1) => void;
   onFieldMenu: (anchor: HTMLElement) => void;
   apiRef: { current: HeaderEditorApi | null };
@@ -118,18 +119,32 @@ export function HeaderEditor({
             return true;
           },
           Escape: () => {
-            onCloseRef.current();
+            onCloseRef.current('escape');
             return true;
           },
         }),
       ],
     });
+    const wordClicks = createWordClickSession();
     const view = new EditorView(host, {
       state,
       attributes: {
         class: 'page-band-editor',
         'data-header-editor': 'true',
         'aria-label': 'Header and footer',
+      },
+      handleDoubleClick(clickView, pos, event) {
+        return wordClicks.onDoubleClick(clickView, pos, event);
+      },
+      handleDOMEvents: {
+        mousedown(_clickView, event) {
+          wordClicks.onPointerDown(event);
+          return false;
+        },
+        mouseup(upView, event) {
+          wordClicks.onPointerUp(upView, event);
+          return false;
+        },
       },
       dispatchTransaction(transaction) {
         const next = view.state.apply(transaction);
@@ -228,7 +243,12 @@ export function HeaderEditor({
     });
     view.focus();
     paintFields(view);
+    const onSelectionChange = () => {
+      wordClicks.onSelectionChange(view);
+    };
+    view.dom.ownerDocument.addEventListener('selectionchange', onSelectionChange);
     return () => {
+      view.dom.ownerDocument.removeEventListener('selectionchange', onSelectionChange);
       apiRef.current = null;
       view.destroy();
     };
