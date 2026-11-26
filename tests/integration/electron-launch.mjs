@@ -12,6 +12,15 @@ const DEVTOOLS_TIMEOUT_MS = 8_000;
 
 export const STEP_TIMEOUT_MS = 8_000;
 
+// A locked session or a window that is not in front suspends the renderer.
+// DevTools calls then sit until they time out. These switches keep it awake.
+const FOREGROUND_ARGS = [
+  '--disable-renderer-backgrounding',
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-features=CalculateNativeWinOcclusion',
+];
+
 const liveChildren = new Set();
 const closingApps = new Map();
 
@@ -399,6 +408,16 @@ export function openCdp(wsUrl, timeoutMs = DEVTOOLS_TIMEOUT_MS) {
   };
 }
 
+/** Bring the page forward before a pointer or keyboard gesture. */
+export async function focusPage(client) {
+  try {
+    await client.send('Page.bringToFront');
+  } catch {
+    // A target that has no page focus method still gets window.focus() below.
+  }
+  await evaluate(client, `(() => { window.focus(); return document.hasFocus(); })()`);
+}
+
 export async function evaluate(client, expression) {
   const result = await client.send('Runtime.evaluate', {
     expression,
@@ -448,7 +467,8 @@ export async function waitFor(child, check, timeoutMs) {
 }
 
 export async function launchWithSandboxFallback({ binary, args, env, ready }) {
-  let child = launch(binary, args, env);
+  const launchArgs = [...args, ...FOREGROUND_ARGS];
+  let child = launch(binary, launchArgs, env);
   try {
     await ready(child);
     return child;
@@ -461,7 +481,7 @@ export async function launchWithSandboxFallback({ binary, args, env, ready }) {
     }
   }
 
-  child = launch(binary, [...args, '--no-sandbox'], env);
+  child = launch(binary, [...launchArgs, '--no-sandbox'], env);
   try {
     await ready(child);
     return child;

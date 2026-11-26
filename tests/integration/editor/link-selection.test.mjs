@@ -8,6 +8,7 @@ import {
   debuggerTargets,
   electronBinary,
   evaluate,
+  focusPage,
   freePort,
   launchWithSandboxFallback,
   openCdp,
@@ -111,18 +112,37 @@ async function launchApp(t) {
   });
   const client = await openPage();
   await evaluate(client, SETUP);
+  await evaluate(client, `document.fonts.ready.then(() => true)`);
+  await focusPage(client);
   await sleep(150);
   return { client };
 }
 
-function mouse(client, type, point, button = 'none', modifiers = 0) {
+function buttonFlag(button) {
+  if (button === 'left') {
+    return 1;
+  }
+  if (button === 'right') {
+    return 2;
+  }
+  if (button === 'middle') {
+    return 4;
+  }
+  return 0;
+}
+
+function mouse(client, type, point, button = 'none', modifiers = 0, clickCount) {
+  const flag = buttonFlag(button);
+  const held = type === 'mousePressed' || (type === 'mouseMoved' && flag !== 0);
+  const count = clickCount ?? (type === 'mousePressed' || type === 'mouseReleased' ? 1 : 0);
   return client.send('Input.dispatchMouseEvent', {
     type,
     x: point.x,
     y: point.y,
-    button,
+    button: type === 'mouseMoved' && flag === 0 ? 'none' : button,
+    buttons: held ? flag : 0,
     modifiers,
-    clickCount: button === 'none' ? 0 : 1,
+    clickCount: count,
   });
 }
 
@@ -179,11 +199,21 @@ function pointAt(client, line, offset) {
     range.setStart(node, left);
     range.setEnd(node, left);
     const rect = range.getBoundingClientRect();
-    return { x: Math.round(rect.left), y: Math.round(rect.top + rect.height / 2) };
+    const edge = block.getBoundingClientRect().left;
+    let x = rect.left;
+    const y = rect.top + Math.max(rect.height, block.getBoundingClientRect().height, 1) / 2;
+    // The grip ends on the line's left edge. A rounded point there is a text
+    // click, but the contextmenu event is aimed at the grip, which selects the
+    // block. Paste then inserts a paragraph under that block. Step into the line.
+    if (x <= edge + 0.5) {
+      x = edge + 2;
+    }
+    return { x: Math.round(x), y: Math.round(y) };
   })()`);
 }
 
 async function dragSelect(client, line, from, to) {
+  await focusPage(client);
   const a = await pointAt(client, line, from);
   const b = await pointAt(client, line, to);
   await mouse(client, 'mouseMoved', a);
@@ -192,6 +222,51 @@ async function dragSelect(client, line, from, to) {
   await mouse(client, 'mouseReleased', b, 'left');
   await sleep(200);
   return { a, b };
+}
+
+async function selectionLength(client, length, label) {
+  const deadline = Date.now() + 1_500;
+  let last = null;
+  while (Date.now() < deadline) {
+    last = await evaluate(client, STATE);
+    if (last.selection.to - last.selection.from === length) {
+      return last;
+    }
+    await sleep(30);
+  }
+  throw new Error(`${label}: ${JSON.stringify(last)}`);
+}
+
+async function dragUntilSelected(client, line, from, to, length, label) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const points = await dragSelect(client, line, from, to);
+      await selectionLength(client, length, label);
+      return points;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
+async function placeTextCaret(client, line, offset) {
+  let last = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await focusPage(client);
+    const caret = await pointAt(client, line, offset);
+    await click(client, caret);
+    const deadline = Date.now() + 1_000;
+    while (Date.now() < deadline) {
+      last = await evaluate(client, STATE);
+      if (last.selection.from === last.selection.to) {
+        return caret;
+      }
+      await sleep(30);
+    }
+  }
+  throw new Error(`caret is in the paragraph: ${JSON.stringify(last)}`);
 }
 
 async function typeAddressAndOk(client, address) {
@@ -293,19 +368,81 @@ test('with no selection, Ctrl+K still inserts a new link at the caret', { timeou
   assert.equal(done.lines[1], 'Download it site and run it.');
 });
 
-function menuItemBox(client, id) {
-  return evaluate(client, `(() => {
-    const node = document.querySelector('[data-region="context-menu"] [data-item="${id}"]');
-    if (!node) {
+async function menuItemBox(client, id) {
+  const expression = `(() => {
+    const host = document.querySelector('[data-region="context-menu"]');
+    const node = host && host.querySelector(${JSON.stringify(`[data-item="${id}"]`)});
+    if (!host || !node) {
       return null;
     }
     const rect = node.getBoundingClientRect();
+    const x = Math.round(rect.left + rect.width / 2);
+    const y = Math.round(rect.top + rect.height / 2);
+    const hit = document.elementFromPoint(x, y);
     return {
-      x: Math.round(rect.left + rect.width / 2),
-      y: Math.round(rect.top + rect.height / 2),
+      x,
+      y,
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
       disabled: node.getAttribute('aria-disabled'),
+      placed: host.style.getPropertyValue('--context-menu-left') !== '',
+      onItem: hit === node || (hit instanceof Node && node.contains(hit)),
     };
-  })()`);
+  })()`;
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let last = null;
+  let previous = '';
+  let stable = 0;
+  while (Date.now() < deadline) {
+    last = await evaluate(client, expression);
+    const key = last && last.placed && last.onItem && last.width > 0 && last.height > 0
+      ? `${last.x}:${last.y}:${last.width}:${last.height}`
+      : '';
+    if (key !== '' && key === previous) {
+      stable += 1;
+      if (stable >= 2) {
+        return last;
+      }
+    } else {
+      stable = 0;
+    }
+    previous = key;
+    await sleep(16);
+  }
+  throw new Error(`menu item ${id} was not ready: ${JSON.stringify(last)}`);
+}
+
+async function rootMenuLabels(client) {
+  const expression = `(() => {
+    const host = document.querySelector('[data-region="context-menu"]');
+    if (!host) {
+      return null;
+    }
+    const labels = [...host.querySelectorAll('.menu-panel--root .menu-label')].map((node) => node.textContent);
+    return {
+      placed: host.style.getPropertyValue('--context-menu-left') !== '',
+      labels,
+    };
+  })()`;
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let last = null;
+  let previous = '';
+  let stable = 0;
+  while (Date.now() < deadline) {
+    last = await evaluate(client, expression);
+    const key = last && last.placed && last.labels.length > 0 ? JSON.stringify(last.labels) : '';
+    if (key !== '' && key === previous) {
+      stable += 1;
+      if (stable >= 2) {
+        return last.labels;
+      }
+    } else {
+      stable = 0;
+    }
+    previous = key;
+    await sleep(16);
+  }
+  throw new Error(`text menu was not ready: ${JSON.stringify(last)}`);
 }
 
 async function rememberClipboard(client) {
@@ -383,18 +520,10 @@ async function dragSelectFast(client, line, from, to) {
 
 async function doubleClick(client, point) {
   await mouse(client, 'mouseMoved', point);
-  await client.send('Input.dispatchMouseEvent', {
-    type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1,
-  });
-  await client.send('Input.dispatchMouseEvent', {
-    type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1,
-  });
-  await client.send('Input.dispatchMouseEvent', {
-    type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 2,
-  });
-  await client.send('Input.dispatchMouseEvent', {
-    type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 2,
-  });
+  await mouse(client, 'mousePressed', point, 'left', 0, 1);
+  await mouse(client, 'mouseReleased', point, 'left', 0, 1);
+  await mouse(client, 'mousePressed', point, 'left', 0, 2);
+  await mouse(client, 'mouseReleased', point, 'left', 0, 2);
 }
 
 test('a drag then an immediate right-click keeps Cut and Copy enabled', { timeout: 60_000 }, async (t) => {
@@ -423,7 +552,7 @@ test('a double-click then an immediate right-click keeps Cut and Copy enabled', 
 
 test('Copy from the menu and Paste from the menu round-trip the text', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
-  const { a, b } = await dragSelect(client, 0, 8, 13);
+  const { a, b } = await dragUntilSelected(client, 0, 8, 13, 5, 'drag selects notes');
   const mid = { x: Math.round((a.x + b.x) / 2), y: a.y };
   await rightClick(client, mid);
   await waitState(client, (state) => state.contextOpen, 'copy menu open');
@@ -431,8 +560,7 @@ test('Copy from the menu and Paste from the menu round-trip the text', { timeout
   assert.equal(copyItem.disabled, null);
   await click(client, copyItem);
   await waitState(client, (state) => state.contextOpen === false, 'copy menu closed');
-  const caret = await pointAt(client, 2, 0);
-  await click(client, caret);
+  const caret = await placeTextCaret(client, 2, 0);
   await rightClick(client, caret);
   await waitState(client, (state) => state.contextOpen, 'paste menu open');
   const pasteItem = await menuItemBox(client, 'edit-paste');
@@ -448,22 +576,19 @@ test('Copy from the menu and Paste from the menu round-trip the text', { timeout
 
 test('the text menu offers Paste as plain text under Paste', { timeout: 60_000 }, async (t) => {
   const { client } = await launchApp(t);
-  const { a, b } = await dragSelect(client, 0, 0, 7);
+  const { a, b } = await dragUntilSelected(client, 0, 0, 7, 7, 'drag selects Install');
   const mid = { x: Math.round((a.x + b.x) / 2), y: a.y };
   await rightClick(client, mid);
   await waitState(client, (state) => state.contextOpen, 'text menu open');
-  const labels = await evaluate(client, `(() => {
-    return [...document.querySelectorAll('[data-region="context-menu"] .menu-panel--root .menu-label')]
-      .map((node) => node.textContent);
-  })()`);
+  const labels = await rootMenuLabels(client);
   const pasteAt = labels.indexOf('Paste');
   assert.ok(pasteAt >= 0, 'Paste is in the text menu');
   assert.equal(labels[pasteAt + 1], 'Paste as plain text');
   const copyItem = await menuItemBox(client, 'edit-copy');
+  assert.equal(copyItem.disabled, null);
   await click(client, copyItem);
   await waitState(client, (state) => state.contextOpen === false, 'copy closes');
-  const caret = await pointAt(client, 2, 0);
-  await click(client, caret);
+  const caret = await placeTextCaret(client, 2, 0);
   await rightClick(client, caret);
   await waitState(client, (state) => state.contextOpen, 'paste menu open');
   const plain = await menuItemBox(client, 'edit-paste-plain');
