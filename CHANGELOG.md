@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.44.0] - 2026-11-25
+
+### Added
+
+- A table cell that starts with = is a formula. =B2+B3*2, =(B2-B3)/2, =B2^2, and =[B2+B3]**2 follow the table math reference. A formula that cannot be computed shows #DIV/0!, #REF!, or #CYCLE!. One that does not parse stays as text with an underline. Inserting or deleting a row or column rewrites the references.
+
 ## [0.1.43.0] - 2026-11-25
 
 ### Added
