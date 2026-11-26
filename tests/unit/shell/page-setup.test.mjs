@@ -30,9 +30,10 @@ test('presets are Normal, Narrow, and Wide, and a mismatch is Custom', async () 
   assert.equal(setup.presetForMargins(setup.WIDE_MARGINS), 'wide');
   assert.equal(setup.presetForMargins({ top: 1, right: 1, bottom: 1, left: 0.75 }), 'custom');
   assert.equal(setup.PAPER_LABEL, 'Letter (8.5 × 11 in)');
-  assert.equal(setup.pageSetupSummary('portrait', 'normal'), 'Portrait · 1 in on every side');
-  assert.equal(setup.pageSetupSummary('landscape', 'wide'), 'Landscape · 1.5 in left and right');
-  assert.equal(setup.pageSetupSummary('portrait', 'custom'), 'Portrait · Custom');
+  assert.equal(setup.PAGE_SETUP_HINT, '0.25 to 3 in');
+  assert.equal(setup.pageSetupSummary('portrait', 'normal'), 'Letter · Portrait · Normal');
+  assert.equal(setup.pageSetupSummary('landscape', 'wide'), 'Letter · Landscape · Wide');
+  assert.equal(setup.pageSetupSummary('portrait', 'custom'), 'Letter · Portrait · Custom');
 });
 
 test('a margin outside 0.25 to 3 inches is refused and OK would stay disabled', async () => {

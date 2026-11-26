@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.47.0] - 2026-11-25
+
+### Changed
+
+- Header and footer tools float in a bubble above the band. The page padding stays the same.
+- Page setup puts Paper on one row, shows "0.25 to 3 in", uses a one-line preview caption, and places OK and Cancel at the bottom right.
+
 ## [0.1.46.1] - 2026-11-25
 
 ### Fixed

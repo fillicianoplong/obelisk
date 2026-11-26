@@ -15,7 +15,7 @@ export const MARGIN_ERROR = 'A margin must be between 0.25 and 3 inches.';
 export const TEXT_WIDTH_ERROR = 'The text area must be at least 2 inches wide.';
 export const TEXT_HEIGHT_ERROR = 'The text area must be at least 2 inches tall.';
 export const PAPER_LABEL = 'Letter (8.5 × 11 in)';
-export const PAGE_SETUP_HINT = '0.25 to 3 in on each side. The text area must be at least 2 in wide and 2 in tall.';
+export const PAGE_SETUP_HINT = '0.25 to 3 in';
 export const MARGIN_STEP_IN = 0.25;
 
 export type Orientation = 'portrait' | 'landscape';
@@ -188,16 +188,11 @@ export function stepMargin(text: string, delta: number): string {
 
 export function pageSetupSummary(orientation: Orientation, preset: MarginPreset): string {
   const facing = orientation === 'landscape' ? 'Landscape' : 'Portrait';
-  if (preset === 'normal') {
-    return `${facing} · 1 in on every side`;
-  }
-  if (preset === 'narrow') {
-    return `${facing} · 0.5 in on every side`;
-  }
-  if (preset === 'wide') {
-    return `${facing} · 1.5 in left and right`;
-  }
-  return `${facing} · Custom`;
+  const name = preset === 'normal' ? 'Normal'
+    : preset === 'narrow' ? 'Narrow'
+      : preset === 'wide' ? 'Wide'
+        : 'Custom';
+  return `Letter · ${facing} · ${name}`;
 }
 
 export function previewMargins(draft: MarginDraft): MarginsIn {

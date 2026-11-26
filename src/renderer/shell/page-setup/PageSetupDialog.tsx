@@ -108,10 +108,10 @@ export function PageSetupDialog({ initial, onCancel, onApply }: PageSetupDialogP
         <h2 id={titleId} className="page-setup-title">Page setup</h2>
         <div className="page-setup-body">
           <div className="page-setup-fields-column">
-            <div className="page-setup-block">
-              <h3 className="page-setup-section">Paper</h3>
-              <p className="page-setup-paper" data-page-paper="">{PAPER_LABEL}</p>
-            </div>
+            <p className="page-setup-paper-row">
+              <span className="page-setup-section">Paper</span>
+              <span className="page-setup-paper" data-page-paper="">{PAPER_LABEL}</span>
+            </p>
             <div className="page-setup-block">
               <h3 className="page-setup-section" id="page-setup-orientation">Orientation</h3>
               <div className="page-setup-orientations" role="radiogroup" aria-labelledby="page-setup-orientation">
@@ -301,11 +301,7 @@ function Preview({
           </div>
         </div>
       </div>
-      <p className="page-setup-caption">
-        Letter
-        <br />
-        {pageSetupSummary(orientation, preset)}
-      </p>
+      <p className="page-setup-caption">{pageSetupSummary(orientation, preset)}</p>
     </div>
   );
 }

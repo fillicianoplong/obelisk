@@ -148,8 +148,26 @@ async function readLayout(client) {
         dialog: dialog !== null,
         valid: dialog ? dialog.getAttribute('data-page-setup-valid') : '',
         message: document.querySelector('[data-page-setup-message]')?.textContent || '',
+        caption: (document.querySelector('.page-setup-caption')?.textContent || '').replace(/\\s+/g, ' ').trim(),
         okDisabled: document.querySelector('[data-page-ok]')?.disabled ?? null,
         paper: document.querySelector('[data-page-paper]')?.textContent || '',
+        paperRow: (() => {
+          const row = document.querySelector('.page-setup-paper-row');
+          const label = row?.querySelector('.page-setup-section');
+          const value = row?.querySelector('[data-page-paper]');
+          if (!label || !value) return false;
+          const labelRect = label.getBoundingClientRect();
+          const valueRect = value.getBoundingClientRect();
+          return Math.abs(labelRect.top - valueRect.top) < 8 && valueRect.left > labelRect.right;
+        })(),
+        actionsAtEnd: (() => {
+          const dialog = document.querySelector('[data-page-setup]');
+          const cancel = document.querySelector('[data-page-cancel]');
+          if (!dialog || !cancel) return false;
+          const dialogRect = dialog.getBoundingClientRect();
+          const cancelRect = cancel.getBoundingClientRect();
+          return dialogRect.right - cancelRect.right < 24 && cancelRect.left > dialogRect.left + dialogRect.width / 2;
+        })(),
       };
     })()`,
   );
@@ -183,7 +201,10 @@ test('Page setup applies orientation and margins, and refuses a margin over 3 in
     layout = await openPageSetup(client);
     assert.equal(layout.paper, 'Letter (8.5 × 11 in)');
     assert.equal(layout.valid, 'true');
-    assert.match(layout.message, /0\.25 to 3 in/);
+    assert.equal(layout.message, '0.25 to 3 in');
+    assert.equal(layout.caption, 'Letter · Portrait · Normal');
+    assert.equal(layout.paperRow, true);
+    assert.equal(layout.actionsAtEnd, true);
     assert.equal(layout.okDisabled, false);
 
     await clickSelector(client, '[data-orientation-choice="landscape"]');
