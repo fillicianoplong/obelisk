@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.47.5] - 2026-11-26
+
+### Fixed
+
+- Keyboard navigation in the slash menu keeps the highlighted row in view, including wrap-around and filter changes. Moving the pointer over options no longer jumps the list.
+
 ## [0.1.47.4] - 2026-11-26
 
 ### Changed

@@ -358,6 +358,43 @@ function optionId(entryIndex: number, itemId: string): string {
   return `slash-menu-option-${entryIndex}-${itemId}`;
 }
 
+function slashMenuOptionTop(panel: HTMLElement, option: HTMLElement): number {
+  let top = 0;
+  let node: HTMLElement | null = option;
+  while (node !== null && node !== panel) {
+    top += typeof node.offsetTop === 'number' ? node.offsetTop : 0;
+    const parent = node.offsetParent;
+    if (parent === null || parent === panel) {
+      break;
+    }
+    if (typeof parent !== 'object' || !('offsetTop' in parent)) {
+      break;
+    }
+    node = parent as HTMLElement;
+  }
+  return top;
+}
+
+/** Keep the keyboard-selected row inside the scrollable panel (minimal motion). */
+export function scrollSlashMenuActiveOption(panel: HTMLElement): void {
+  if (!panel.isConnected) {
+    return;
+  }
+  const selected = panel.querySelector<HTMLElement>('.slash-menu-option[aria-selected="true"]');
+  if (selected === null || !selected.isConnected) {
+    return;
+  }
+  const optionTop = slashMenuOptionTop(panel, selected);
+  const optionBottom = optionTop + selected.offsetHeight;
+  const viewTop = panel.scrollTop;
+  const viewBottom = viewTop + panel.clientHeight;
+  if (optionTop < viewTop) {
+    panel.scrollTop = optionTop;
+  } else if (optionBottom > viewBottom) {
+    panel.scrollTop = optionBottom - panel.clientHeight;
+  }
+}
+
 function renderSlashMenu(
   view: EditorView,
   root: HTMLElement,
@@ -365,6 +402,8 @@ function renderSlashMenu(
   list: HTMLUListElement,
   menu: SlashMenuState,
   positionSheet: CSSStyleSheet | null,
+  scrollActiveOption: boolean,
+  scheduleActiveScroll: (() => void) | undefined,
 ): void {
   const open = menu.open;
   root.dataset.open = open ? 'true' : 'false';
@@ -425,6 +464,9 @@ function renderSlashMenu(
   }
   list.replaceChildren(fragment);
   positionSlashMenu(view, panel, menu, positionSheet);
+  if (scrollActiveOption) {
+    scheduleActiveScroll?.();
+  }
 }
 
 function positionSlashMenu(
@@ -598,6 +640,7 @@ export function slashMenuPlugin(): Plugin {
         if (!menu.open || menu.activeIndex === flatIndex) {
           return;
         }
+        suppressActiveScrollFromHover = true;
         editorView.dispatch(editorView.state.tr.setMeta(slashMenuPluginKey, { ...menu, activeIndex: flatIndex }));
       });
 
@@ -627,16 +670,34 @@ export function slashMenuPlugin(): Plugin {
       };
       doc.addEventListener('keydown', onKey, true);
 
-      const update = () => {
-        const menu = slashMenuState(editorView.state);
-        renderSlashMenu(editorView, root, panel, list, menu, positionSheet);
+      let suppressActiveScrollFromHover = false;
+      let activeScrollVersion = 0;
+
+      const scheduleActiveScroll = (): void => {
+        activeScrollVersion += 1;
+        const version = activeScrollVersion;
+        queueMicrotask(() => {
+          if (version !== activeScrollVersion || !panel.isConnected) {
+            return;
+          }
+          scrollSlashMenuActiveOption(panel);
+        });
       };
-      update();
+
+      const update = (scrollActiveOption: boolean) => {
+        const menu = slashMenuState(editorView.state);
+        renderSlashMenu(editorView, root, panel, list, menu, positionSheet, scrollActiveOption, scheduleActiveScroll);
+      };
+      update(false);
 
       return {
         update(view, prevState) {
           const was = slashMenuState(prevState);
           const now = slashMenuState(view.state);
+          const scrollActiveOption = now.open
+            && !suppressActiveScrollFromHover
+            && (was.activeIndex !== now.activeIndex
+              || (was.open && view.state.doc !== prevState.doc));
           if (was.open && !now.open && !was.typed) {
             // The + controls stay on their block only while the menu they opened is open.
             // Release after this update so the gutter's own dispatch is not nested in it.
@@ -652,12 +713,14 @@ export function slashMenuPlugin(): Plugin {
             || was.slashPos !== now.slashPos
             || view.state.doc !== prevState.doc
           ) {
-            update();
+            update(scrollActiveOption);
           } else if (now.open && view.state.selection !== prevState.selection) {
             positionSlashMenu(view, panel, now, positionSheet);
           }
+          suppressActiveScrollFromHover = false;
         },
         destroy() {
+          activeScrollVersion += 1;
           stopOutsidePress();
           doc.removeEventListener('keydown', onKey, true);
           root.remove();

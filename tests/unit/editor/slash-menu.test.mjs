@@ -73,6 +73,57 @@ function menuLabels(view) {
   return [...view.dom.parentElement.querySelectorAll('.slash-menu-option')].map((node) => node.textContent);
 }
 
+/** Mock slash-menu geometry so overflow scrolling is observable in linkedom. */
+function mockScrollableSlashMenu(view, { visibleHeight, itemHeight }) {
+  const panel = view.dom.parentElement.querySelector('.slash-menu-panel');
+  assert.ok(panel, 'slash menu panel');
+  let scrollTop = 0;
+  const layoutOptions = () => {
+    const list = panel.querySelector('.slash-menu-list');
+    assert.ok(list);
+    for (const [index, option] of [...panel.querySelectorAll('.slash-menu-option')].entries()) {
+      Object.defineProperty(option, 'offsetTop', { value: index * itemHeight, configurable: true });
+      Object.defineProperty(option, 'offsetHeight', { value: itemHeight, configurable: true });
+      Object.defineProperty(option, 'offsetParent', { value: list, configurable: true });
+    }
+    Object.defineProperty(list, 'offsetTop', { value: 0, configurable: true });
+    Object.defineProperty(list, 'offsetParent', { value: panel, configurable: true });
+  };
+  Object.defineProperty(panel, 'clientHeight', { value: visibleHeight, configurable: true });
+  Object.defineProperty(panel, 'scrollTop', {
+    get() {
+      return scrollTop;
+    },
+    set(value) {
+      scrollTop = value;
+    },
+    configurable: true,
+  });
+  layoutOptions();
+  return { panel, layoutOptions, get scrollTop() { return scrollTop; } };
+}
+
+async function drainSlashMenuScrollTurns(turns = 8) {
+  for (let step = 0; step < turns; step += 1) {
+    await Promise.resolve();
+  }
+}
+
+function activeOptionInView(panel) {
+  const selected = panel.querySelector('.slash-menu-option[aria-selected="true"]');
+  assert.ok(selected, 'highlighted slash menu option');
+  let optionTop = 0;
+  let node = selected;
+  while (node !== null && node !== panel) {
+    optionTop += node.offsetTop;
+    node = node.offsetParent;
+  }
+  const viewTop = panel.scrollTop;
+  const viewBottom = viewTop + panel.clientHeight;
+  const optionBottom = optionTop + selected.offsetHeight;
+  return optionTop >= viewTop && optionBottom <= viewBottom;
+}
+
 test('typing / on an empty line opens the slash menu with reference items', async () => {
   const { slashMenuState } = await loadRenderer(slashUrl);
   const { SLASH_MENU_ITEM_LABELS } = await loadRenderer(referenceUrl);
@@ -184,6 +235,76 @@ test('ArrowDown moves the highlighted slash menu option', async () => {
     const before = slashMenuState(view.state).activeIndex;
     dispatchEditorKeyDown(view, 'ArrowDown');
     assert.equal(slashMenuState(view.state).activeIndex, before + 1);
+    await drainSlashMenuScrollTurns();
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('ArrowDown scrolls the slash menu highlight into view', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    const scrollable = mockScrollableSlashMenu(view, { visibleHeight: 100, itemHeight: 40 });
+    for (let step = 0; step < 8; step += 1) {
+      dispatchEditorKeyDown(view, 'ArrowDown');
+      scrollable.layoutOptions();
+      await Promise.resolve();
+    }
+    assert.equal(activeOptionInView(scrollable.panel), true);
+    assert.ok(scrollable.scrollTop > 0, 'the list scrolls after keyboard navigation');
+    assert.ok(slashMenuState(view.state).activeIndex > 2);
+    await drainSlashMenuScrollTurns();
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('ArrowUp wrapping from the first item scrolls the last item into view', async () => {
+  const { slashMenuState } = await loadRenderer(slashUrl);
+  const { view, restore } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    assert.equal(slashMenuState(view.state).activeIndex, 0);
+    const scrollable = mockScrollableSlashMenu(view, { visibleHeight: 100, itemHeight: 40 });
+    dispatchEditorKeyDown(view, 'ArrowUp');
+    scrollable.layoutOptions();
+    await Promise.resolve();
+    assert.ok(slashMenuState(view.state).activeIndex > 0, 'wrap selects the last enabled item');
+    assert.ok(scrollable.scrollTop > 0, 'wrap-around scrolls to the end of the list');
+    assert.equal(activeOptionInView(scrollable.panel), true);
+    await drainSlashMenuScrollTurns();
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('mouse hover on a slash menu option does not scroll the list', async () => {
+  const { view, restore, document } = await editorViewFromBlocks([paragraph()]);
+  try {
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)));
+    dispatchEditorTextInput(view, '/');
+    const scrollable = mockScrollableSlashMenu(view, { visibleHeight: 100, itemHeight: 40 });
+    scrollable.panel.scrollTop = 80;
+    assert.equal(scrollable.scrollTop, 80);
+    const quote = scrollable.panel.querySelector('.slash-menu-option[data-item-id="quote"]');
+    assert.ok(quote);
+    const Ctor = document.defaultView?.MouseEvent ?? MouseEvent;
+    quote.dispatchEvent(new Ctor('mouseover', { bubbles: true }));
+    await Promise.resolve();
+    scrollable.layoutOptions();
+    assert.equal(scrollable.scrollTop, 80, 'hover keeps the scroll offset');
+    assert.equal(
+      scrollable.panel.querySelector('.slash-menu-option[data-item-id="quote"]')?.getAttribute('aria-selected'),
+      'true',
+    );
+    await drainSlashMenuScrollTurns();
   } finally {
     view.destroy();
     restore();
