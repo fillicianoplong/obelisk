@@ -2,6 +2,7 @@ import { Schema } from 'prosemirror-model';
 import { codeBlockSpec } from './code.js';
 import { dividerSpec } from './divider.js';
 import { foreignBlockSpec } from './foreign.js';
+import { structuredBlockSpec } from '../../blocks/structured/schema.js';
 import { headingSpec } from './heading.js';
 import { inlineSpecs } from './inline.js';
 import { listNodeSpecs } from './lists.js';
@@ -21,6 +22,7 @@ const blockTypes = [
   'horizontal_rule',
   'page_break',
   'foreign_block',
+  'structured_block',
 ].join(' | ');
 
 export const editorSchema = new Schema({
@@ -36,6 +38,7 @@ export const editorSchema = new Schema({
     horizontal_rule: dividerSpec,
     page_break: pageBreakSpec,
     foreign_block: foreignBlockSpec,
+    structured_block: structuredBlockSpec,
     ...inlineSpecs,
   },
   marks: markSpecs,

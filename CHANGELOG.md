@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.49.0] - 2026-11-27
+
+### Added
+
+- Insert > Table and /table insert a 3×4 table with a header row. Cells hold text or formulas, show computed values, and Tab moves across the grid.
+- Table context menu and structure commands add or delete rows and columns, sort by the active column while the header row stays put, and toggle the bold header row.
+
 ## [0.1.47.5] - 2026-11-26
 
 ### Fixed
