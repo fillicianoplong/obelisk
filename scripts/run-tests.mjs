@@ -125,9 +125,10 @@ const coverageArgs = [
   '--enable-source-maps',
   '--test',
   '--experimental-test-coverage',
-  '--test-reporter=spec',
-  '--test-reporter=lcov',
+  // spec plus lcov breaks the lcov file in Node 22; tap shows progress on stdout.
+  '--test-reporter=tap',
   '--test-reporter-destination=stdout',
+  '--test-reporter=lcov',
   '--test-coverage-exclude=**/node_modules/**',
   '--test-coverage-exclude=**/tests/**',
   '--test-coverage-exclude=**/*test.mjs',
@@ -135,9 +136,6 @@ const coverageArgs = [
   '--test-coverage-exclude=**/coverage/**',
   '--test-coverage-exclude=**/docs/**',
   '--test-coverage-exclude=**/dist/renderer/**',
-  // Node's coverage tree stores a leaf on a property named "file". A directory
-  // with that name makes the report throw and the run exit 1.
-  '--test-coverage-exclude=**/main/file/**',
   '--test-coverage-exclude=**/eslint.config.mjs',
   '--test-coverage-exclude=**/vite.config.mts',
   '--test-coverage-exclude=**/vite.preload.config.mts',
@@ -168,7 +166,11 @@ if (extra.length > 0) {
   const electronCode = exitCode(
     runTests(electronLcov, ['--test-concurrency=1', ...electronTestFiles]),
   );
-  const unitCode = exitCode(runTests(unitLcov, [...unitFiles, ...nodeIntegrationFiles]));
+  // One test file at a time so Node coverage keeps dist→src attribution
+  // (parallel unit files could drop modules such as src/main/file/writeAtomic.ts).
+  const unitCode = exitCode(
+    runTests(unitLcov, ['--test-concurrency=1', ...unitFiles, ...nodeIntegrationFiles]),
+  );
   testCode = electronCode !== 0 ? electronCode : unitCode;
   lcovText = `${readLcov(electronLcov)}${readLcov(unitLcov)}`;
 }

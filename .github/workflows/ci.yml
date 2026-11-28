@@ -45,7 +45,7 @@ jobs:
       - name: Install Electron
         run: node node_modules/electron/install.js
 
-      - name: Test and coverage
+      - name: Test, coverage, and NFR-23 threshold
         run: npm test
 
       - name: Scale and smallest window

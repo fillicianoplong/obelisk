@@ -1,6 +1,6 @@
 {
   "name": "obelisk",
-  "version": "0.1.52.0",
+  "version": "0.1.69.0",
   "private": true,
   "description": "Obelisk is a Windows document editor.",
   "main": "dist/main/index.js",
@@ -11,7 +11,9 @@
     "typecheck": "node scripts/typecheck.mjs",
     "lint": "eslint .",
     "start": "npm run build && electron .",
-    "test": "node scripts/run-tests.mjs",
+    "test": "node scripts/run-tests.mjs && npm run coverage:check",
+    "coverage": "node scripts/run-tests.mjs",
+    "coverage:check": "node tests/coverage/check-threshold.mjs",
     "package:msix": "node scripts/package-msix.mjs",
     "check:fuses": "node scripts/check-fuses.mjs"
   },
