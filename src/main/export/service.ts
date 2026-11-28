@@ -15,11 +15,14 @@ import {
   EXPORT_NAME_MESSAGE,
   EXPORT_NOT_A_FILE_MESSAGE,
   EXPORT_REPLACE_FAILED_MESSAGE,
+  EXPORT_REPLACE_WITH_IMAGES_MESSAGE,
   EXPORT_TIMEOUT_MESSAGE,
   EXPORT_TIMEOUT_MS,
 } from './constants.js';
+import { writeExportCompanions } from './companion-write.js';
 import { exportDialogOptions } from './dialog.js';
 import { exportDocument } from './index.js';
+import { markdownImagesFolderPath } from './markdown/folder.js';
 import { defaultExportPath, ensureExportName, exportNameFromPath } from './path.js';
 
 export interface ExportServiceDeps {
@@ -125,7 +128,20 @@ export function createExportService(deps: ExportServiceDeps): ExportService {
     );
   }
 
-  async function confirmReplace(target: string, pickedPath: string): Promise<boolean | 'cancelled' | IpcErrorResult> {
+  async function imagesFolderExists(mdPath: string): Promise<boolean> {
+    try {
+      const info = await stat(markdownImagesFolderPath(mdPath));
+      return info.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
+  async function confirmReplace(
+    target: string,
+    pickedPath: string,
+    format: ExportRunRequest['format'],
+  ): Promise<boolean | 'cancelled' | IpcErrorResult> {
     const windowsConfirmed = platform === 'win32' && target === pickedPath;
     if (windowsConfirmed) {
       return true;
@@ -134,7 +150,12 @@ export function createExportService(deps: ExportServiceDeps): ExportService {
       return ipcError('EACCES', EXPORT_REPLACE_FAILED_MESSAGE);
     }
     try {
-      const replace = await deps.confirmReplace(replacePromptOptions());
+      const withImages = format === 'markdown' && await imagesFolderExists(target);
+      const options = replacePromptOptions();
+      const replace = await deps.confirmReplace({
+        ...options,
+        message: withImages ? EXPORT_REPLACE_WITH_IMAGES_MESSAGE : options.message,
+      });
       if (!replace) {
         return 'cancelled';
       }
@@ -176,7 +197,7 @@ export function createExportService(deps: ExportServiceDeps): ExportService {
         return ipcError('EACCES', EXPORT_NOT_A_FILE_MESSAGE);
       }
       if (inspected.kind === 'file') {
-        const confirmed = await confirmReplace(target, picked.filePath);
+        const confirmed = await confirmReplace(target, picked.filePath, request.format);
         if (confirmed === 'cancelled') {
           return { status: 'cancelled' };
         }
@@ -198,6 +219,33 @@ export function createExportService(deps: ExportServiceDeps): ExportService {
           return ipcTimeout(EXPORT_TIMEOUT_MESSAGE);
         }
         return ipcError('EACCES', EXPORT_DENIED_MESSAGE);
+      }
+
+      const companions = produced.companions ?? [];
+      if (companions.length > 0) {
+        let folderWritten;
+        try {
+          folderWritten = await withExportDeadline(
+            writeExportCompanions(target, companions, {
+              ...deps.atomic,
+              kind: 'record',
+              privateAppData: deps.privateAppData ?? [],
+              timeoutMs: Math.max(0, deadline - now()),
+              now,
+              sleep,
+            }),
+            deadline,
+            now,
+          );
+        } catch (error) {
+          if (error instanceof ExportTimeout) {
+            return ipcTimeout(EXPORT_TIMEOUT_MESSAGE);
+          }
+          return ipcError('EACCES', EXPORT_DENIED_MESSAGE);
+        }
+        if (folderWritten.status !== 'ok') {
+          return folderWritten;
+        }
       }
 
       let written;

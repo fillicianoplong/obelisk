@@ -375,16 +375,17 @@ function parseStringArray(value: unknown, maxChars: number | null): string[] | n
 }
 
 function parseAssets(value: unknown): ExportAssets | null {
-  if (!isPlainRecord(value) || !hasExactKeys(value, ['mathml', 'formulaPngs', 'firstFramePngs'])) {
+  if (!isPlainRecord(value) || !hasExactKeys(value, ['mathml', 'formulaPngs', 'firstFramePngs', 'images'])) {
     return null;
   }
   const mathml = parseStringArray(value.mathml, null);
   const formulaPngs = parseStringArray(value.formulaPngs, PNG_BASE64_MAX_CHARS);
   const firstFramePngs = parseStringArray(value.firstFramePngs, PNG_BASE64_MAX_CHARS);
-  if (mathml === null || formulaPngs === null || firstFramePngs === null) {
+  const images = parseStringArray(value.images, PNG_BASE64_MAX_CHARS);
+  if (mathml === null || formulaPngs === null || firstFramePngs === null || images === null) {
     return null;
   }
-  return { mathml, formulaPngs, firstFramePngs };
+  return { mathml, formulaPngs, firstFramePngs, images };
 }
 
 function parseFileSave(args: readonly unknown[]): FileSaveRequest | null {

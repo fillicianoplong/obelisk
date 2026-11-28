@@ -10,7 +10,7 @@ test('exportDocument is the architecture export(format, document, assets, target
     footer: {},
     blocks: [],
   };
-  const assets = { mathml: [], formulaPngs: [], firstFramePngs: [] };
+  const assets = { mathml: [], formulaPngs: [], firstFramePngs: [], images: [] };
   const result = await exportDocument('markdown', document, assets, { filePath: '/tmp/out.md' });
   assert.equal(typeof result.bytes, 'object');
   assert.equal(result.bytes.byteLength > 0, true);

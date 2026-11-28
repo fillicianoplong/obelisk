@@ -273,7 +273,7 @@ test('a handle main did not issue returns PATH_NOT_ALLOWED and touches nothing',
         format: 'pdf',
         handle: 'not-issued-by-main',
         document: documentMessage(),
-        assets: { mathml: [], formulaPngs: [], firstFramePngs: [] },
+        assets: { mathml: [], formulaPngs: [], firstFramePngs: [], images: [] },
       }],
     });
     assert.equal(exported.code, 'PATH_NOT_ALLOWED');

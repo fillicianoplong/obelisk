@@ -1,14 +1,14 @@
 import type { DocumentMessage, ExportAssets } from '../../../shared/ipc/types.js';
-import type { ExportWriter, ExportWriterResult } from './types.js';
-
-// OBL-69 adds the real Markdown exporter behind this registration point.
-const PLACEHOLDER = '# Obelisk Markdown export placeholder\n';
+import { buildMarkdownExport } from '../markdown/write.js';
+import type { ExportTarget, ExportWriter, ExportWriterResult } from './types.js';
 
 export const markdownExportWriter: ExportWriter = {
-  write(_document: DocumentMessage, _assets: ExportAssets): ExportWriterResult {
+  write(document: DocumentMessage, assets: ExportAssets, target: ExportTarget): ExportWriterResult {
+    const built = buildMarkdownExport(document, assets, target.filePath);
     return {
-      bytes: new TextEncoder().encode(PLACEHOLDER),
+      bytes: new TextEncoder().encode(built.markdown),
       formulasAsImages: false,
+      companions: built.companions,
     };
   },
 };

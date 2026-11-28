@@ -16,7 +16,7 @@ const DOCUMENT = {
   blocks: [],
 };
 
-const ASSETS = { mathml: [], formulaPngs: [], firstFramePngs: [] };
+const ASSETS = { mathml: [], formulaPngs: [], firstFramePngs: [], images: [] };
 
 async function withDir(run) {
   const directory = await mkdtemp(path.join(tmpdir(), 'obelisk-export-'));

@@ -52,6 +52,7 @@ export interface ExportAssets {
   mathml: string[];
   formulaPngs: string[];
   firstFramePngs: string[];
+  images: string[];
 }
 
 export type PreferenceEntry =

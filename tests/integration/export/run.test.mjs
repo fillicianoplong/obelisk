@@ -113,7 +113,7 @@ test('export dialog options name each format and export leaves the .obk unchange
         format: 'pdf',
         handle: opened.handle,
         document: documentMessage(),
-        assets: { mathml: [], formulaPngs: [], firstFramePngs: [] },
+        assets: { mathml: [], formulaPngs: [], firstFramePngs: [], images: [] },
       }],
     });
     assert.equal(exported.status, 'ok');
@@ -147,7 +147,7 @@ test('Cancel at export replace leaves the existing file unchanged', async () => 
         format: 'pdf',
         handle: opened.handle,
         document: documentMessage(),
-        assets: { mathml: [], formulaPngs: [], firstFramePngs: [] },
+        assets: { mathml: [], formulaPngs: [], firstFramePngs: [], images: [] },
       }],
     });
     assert.equal(exported.status, 'cancelled');

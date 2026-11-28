@@ -4,6 +4,9 @@ export const EXPORT_DIALOG_FAILED_MESSAGE = 'The Export dialog could not be show
 
 export const EXPORT_REPLACE_FAILED_MESSAGE = 'The replace prompt could not be shown, so nothing was exported.';
 
+export const EXPORT_REPLACE_WITH_IMAGES_MESSAGE =
+  'A file with that name exists. An images folder with the same name exists too.';
+
 export const EXPORT_DENIED_MESSAGE = 'The export was denied, so nothing was written.';
 
 export const EXPORT_NOT_A_FILE_MESSAGE = 'This path is not a file, so nothing was exported.';

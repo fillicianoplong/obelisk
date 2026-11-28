@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.62.0] - 2026-11-28
+
+### Added
+
+- Markdown export maps document blocks to GitHub Flavored Markdown per the SRS export reference, writes images beside the `.md` file under a matching `_images` folder with relative links, keeps animated GIFs as GIFs, and escapes hostile text in body, alt, and link text.
+- Export assets accept original image bytes for Markdown and Word; the export service writes companion image files before the `.md` atomically and mentions an existing images folder in the replace prompt.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

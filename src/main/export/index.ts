@@ -14,7 +14,7 @@ export async function exportDocument(
   target: ExportTarget,
 ): Promise<ExportWriterResult> {
   const writer = exportWriter(format);
-  const result = await Promise.resolve(writer.write(document, assets));
+  const result = await Promise.resolve(writer.write(document, assets, target));
   if (!(result.bytes instanceof Uint8Array) || !Number.isFinite(result.bytes.byteLength)) {
     throw new Error(`Export writer for ${format} did not return bytes.`);
   }
