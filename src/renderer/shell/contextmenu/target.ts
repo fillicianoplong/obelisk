@@ -34,6 +34,7 @@ const FOREIGN_KIND: Record<string, ContextTargetKind> = {
   image: 'image',
   equation: 'equation-block',
   column: 'column-row',
+  columns: 'column-row',
   drawing: 'drawing-pad',
   diagram: 'diagram',
   signature: 'signature',

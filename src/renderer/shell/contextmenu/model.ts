@@ -108,9 +108,9 @@ const EQUATION_BLOCK_OWN: readonly MenuEntry[] = [
 ];
 
 const COLUMN_OWN: readonly MenuEntry[] = [
-  item({ id: 'column-add', label: 'Add column', accessKey: 'a' }),
-  item({ id: 'column-remove', label: 'Remove column', accessKey: 'r' }),
-  item({ id: 'column-even-widths', label: 'Even widths', accessKey: 'e' }),
+  item({ id: 'column-add', label: 'Add column', accessKey: 'a', command: 'column-add' }),
+  item({ id: 'column-remove', label: 'Remove column', accessKey: 'r', command: 'column-remove' }),
+  item({ id: 'column-even-widths', label: 'Even widths', accessKey: 'e', command: 'column-even-widths' }),
 ];
 
 const DRAWING_OWN: readonly MenuEntry[] = [

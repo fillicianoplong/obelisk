@@ -22,6 +22,7 @@ import { closeFindOnEscape, findPlugin } from './find/find-plugin.js';
 import { editorPastePlugin } from '../clipboard/editor-paste.js';
 import { linkBubbleKeymap, linkBubblePlugin } from './link/link-bubble-plugin.js';
 import { tableSelectionPlugin } from '../blocks/table/selection.js';
+import { columnsEdgeDropPlugin } from '../blocks/columns/edge-drop-plugin.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -65,6 +66,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       editorPastePlugin(),
       linkBubblePlugin(),
       tableSelectionPlugin(),
+      columnsEdgeDropPlugin(),
     ],
   });
 }

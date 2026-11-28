@@ -7,6 +7,7 @@ import { setCellText } from './model.js';
 import { blockStartPos } from './position.js';
 import { setTableSelection } from './selection.js';
 import { stringifyPayload } from '../structured/payload.js';
+import { ColumnsBlockView } from '../columns/view.js';
 
 export class TableBlockView implements NodeView {
   dom: HTMLElement;
@@ -208,10 +209,17 @@ export class TableBlockView implements NodeView {
 }
 
 export function tableNodeViews(): Record<string, (node: ProseNode, view: EditorView, getPos: () => number | undefined) => NodeView> {
+  return structuredNodeViews();
+}
+
+export function structuredNodeViews(): Record<string, (node: ProseNode, view: EditorView, getPos: () => number | undefined) => NodeView> {
   return {
     structured_block(node, view, getPos) {
       if (node.attrs.blockType === 'table') {
         return new TableBlockView(node, view, getPos);
+      }
+      if (node.attrs.blockType === 'columns') {
+        return new ColumnsBlockView(node, view, getPos);
       }
       return new (class implements NodeView {
         dom = document.createElement('div');

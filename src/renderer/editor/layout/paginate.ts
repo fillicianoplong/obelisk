@@ -201,3 +201,18 @@ export function pageIndexAt(
 }
 
 export const PAGE_PX_PER_INCH = CSS_PX_PER_INCH;
+
+/** Split a column row taller than one page into segment heights (FR-74). */
+export function columnRowSegmentHeights(rowHeight: number, pageLimit: number): number[] {
+  if (rowHeight <= pageLimit) {
+    return [rowHeight];
+  }
+  const segments: number[] = [];
+  let remain = rowHeight;
+  while (remain > TEXT_SLACK_PX) {
+    const slice = Math.min(pageLimit, remain);
+    segments.push(slice);
+    remain -= slice;
+  }
+  return segments.length > 0 ? segments : [rowHeight];
+}

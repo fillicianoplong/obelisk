@@ -5,11 +5,13 @@ import type { EditorView } from 'prosemirror-view';
 import { caretLineVisible } from '../../../shared/zoom.js';
 import type { FlowUnit, PageBox, PageLayout } from './paginate.js';
 import {
+  columnRowSegmentHeights,
   letterPageBox,
   pageCountLabel,
   pageIndexAt,
   paginateFlow,
   sheetStackHeight,
+  textAreaHeight,
 } from './paginate.js';
 
 export interface PageLayoutReport {
@@ -373,9 +375,34 @@ function collectRaw(view: EditorView): RawUnit[] {
   return raw;
 }
 
+function measureColumnRowBlock(_view: EditorView, dom: HTMLElement, pos: number, raw: RawUnit[]): void {
+  const box = dom.getBoundingClientRect();
+  if (box.height <= 0) {
+    return;
+  }
+  const limit = textAreaHeight(letterPageBox());
+  const segments = columnRowSegmentHeights(box.height, limit);
+  let top = box.top;
+  segments.forEach((height, index) => {
+    raw.push({
+      kind: 'line',
+      pos,
+      blockPos: pos,
+      top,
+      bottom: top + height,
+      startsBlock: index === 0,
+    });
+    top += height;
+  });
+}
+
 function measureBlock(view: EditorView, node: ProseNode, pos: number, raw: RawUnit[]): void {
   const dom = view.nodeDOM(pos);
   if (!(dom instanceof HTMLElement)) {
+    return;
+  }
+  if (dom.classList.contains('columns-block')) {
+    measureColumnRowBlock(view, dom, pos, raw);
     return;
   }
   const contentStart = pos + 1;

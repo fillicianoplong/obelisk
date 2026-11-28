@@ -1,7 +1,7 @@
 import type { NodeSpec } from 'prosemirror-model';
 import { blockIdAttr } from '../../editor/schema/attrs.js';
 
-export const STRUCTURED_BLOCK_TYPES = new Set(['table']);
+export const STRUCTURED_BLOCK_TYPES = new Set(['table', 'columns']);
 
 export const structuredBlockAttrs = {
   blockId: blockIdAttr,

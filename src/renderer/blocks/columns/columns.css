@@ -1,0 +1,114 @@
+.columns-block {
+  margin: 0.35rem 0;
+}
+
+.columns-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.column-shell {
+  min-width: 0;
+}
+
+.column-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.column-resize-gutter {
+  flex: 0 0 6px;
+  margin: 0 -3px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  z-index: 1;
+}
+
+.column-resize-gutter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--obk-color-border-subtle, #c8c8c8);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.columns-block:hover .column-resize-gutter::after,
+.column-resize-gutter:focus-visible::after {
+  opacity: 1;
+}
+
+.columns-nested-block {
+  min-height: 1.25rem;
+}
+
+.columns-nested-editable {
+  outline: none;
+  min-height: 1.25rem;
+}
+
+.columns-nested-h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0.15rem 0;
+}
+
+.columns-nested-h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.1rem 0;
+}
+
+.columns-nested-h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.1rem 0;
+}
+
+.columns-nested-quote {
+  border-left: 3px solid var(--obk-color-border, #999);
+  padding-left: 0.65rem;
+  color: var(--obk-color-text-muted, #555);
+}
+
+.columns-nested-code {
+  font-family: var(--obk-font-mono, ui-monospace, monospace);
+  font-size: 0.92rem;
+  background: var(--obk-color-surface-muted, #f3f3f3);
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  white-space: pre-wrap;
+}
+
+.columns-nested-divider {
+  border: none;
+  border-top: 1px solid var(--obk-color-border, #bbb);
+  margin: 0.25rem 0;
+}
+
+.columns-nested-chip {
+  font-size: 0.85rem;
+  color: var(--obk-color-text-muted, #666);
+  padding: 0.35rem 0.5rem;
+  border: 1px dashed var(--obk-color-border-subtle, #ccc);
+  border-radius: 4px;
+}
+
+.columns-block.ProseMirror-selectednode {
+  outline: 2px solid var(--obk-color-focus-ring, #4a90d9);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.page-measuring .columns-block {
+  break-inside: avoid;
+}

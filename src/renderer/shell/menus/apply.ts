@@ -43,9 +43,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
   'image-replace',
   'equation-edit-latex',
   'equation-copy-latex',
-  'column-add',
-  'column-remove',
-  'column-even-widths',
   'drawing-clear',
   'drawing-reset-size',
   'diagram-edit-source',
@@ -64,7 +61,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
 
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'file-print',
-  'insert-columns',
   'insert-image',
   'insert-equation',
   'insert-diagram',

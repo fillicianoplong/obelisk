@@ -17,6 +17,7 @@ import { linkMenuCommand } from './link/commands.js';
 import { copyMenuCommand } from '../clipboard/editor-copy.js';
 import { pasteMenuCommand } from '../clipboard/editor-paste.js';
 import { tableCommandEnabled, tableMenuCommand } from '../blocks/table/commands.js';
+import { columnsCommandEnabled, columnsMenuCommand } from '../blocks/columns/commands.js';
 
 const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null> = {
   'insert-text': { kind: 'paragraph' },
@@ -40,6 +41,10 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
 };
 
 export function editorMenuCommand(menuId: string): Command | null {
+  const columnsCommand = columnsMenuCommand(menuId);
+  if (columnsCommand !== null) {
+    return columnsCommand;
+  }
   const tableCommand = tableMenuCommand(menuId);
   if (tableCommand !== null) {
     return tableCommand;
@@ -90,6 +95,9 @@ export function editorMenuCommand(menuId: string): Command | null {
   if (menuId === 'insert-page-break') {
     return insertPageBreakCommand();
   }
+  if (menuId === 'insert-columns') {
+    return columnsMenuCommand('insert-columns');
+  }
   const insert = INSERT_KIND[menuId];
   if (insert !== undefined) {
     if (insert === null) {
@@ -111,6 +119,9 @@ export function editorMenuCommand(menuId: string): Command | null {
 }
 
 export function editorMenuCommandEnabled(state: EditorState, menuId: string): boolean {
+  if (columnsCommandEnabled(state, menuId)) {
+    return true;
+  }
   if (tableCommandEnabled(state, menuId)) {
     return true;
   }

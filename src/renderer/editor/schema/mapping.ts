@@ -10,6 +10,8 @@ import {
 } from './inline-json.js';
 import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
 import { createTableNode, tableBlockJsonFromAttrs } from '../../blocks/table/commands.js';
+import { columnsBlockJsonFromAttrs, createColumnsNode } from '../../blocks/columns/commands.js';
+import { columnsPayloadFromBlock } from '../../blocks/columns/document.js';
 import { payloadEqual } from '../../blocks/structured/payload.js';
 import { tablePayloadFromBlock } from '../../blocks/table/document.js';
 
@@ -150,6 +152,9 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
   }
   if (type === 'table') {
     return createTableNode(schema, block, blockId);
+  }
+  if (type === 'columns') {
+    return createColumnsNode(schema, block, blockId);
   }
   if (typeof type === 'string') {
     return schema.nodes.foreign_block.create({ blockId, blockType: type });
@@ -328,7 +333,7 @@ function atomBlockJson(type: string, node: ProseNode, base: JsonObject | null, m
   return { type, id: blockId };
 }
 
-function blockJsonFromNode(
+export function blockJsonFromNode(
   node: ProseNode,
   base: JsonObject | null,
   mint: () => string,
@@ -359,6 +364,15 @@ function blockJsonFromNode(
         const basePayload = base && base.type === 'table' ? tablePayloadFromBlock(base) : null;
         const nextPayload = tablePayloadFromBlock(next);
         if (base && base.type === 'table' && base.id === blockId && payloadEqual(basePayload, nextPayload)) {
+          return base;
+        }
+        return next;
+      }
+      if (node.attrs.blockType === 'columns') {
+        const next = columnsBlockJsonFromAttrs(blockId, node.attrs);
+        const basePayload = base && base.type === 'columns' ? columnsPayloadFromBlock(base) : null;
+        const nextPayload = columnsPayloadFromBlock(next);
+        if (base && base.type === 'columns' && base.id === blockId && payloadEqual(basePayload, nextPayload)) {
           return base;
         }
         return next;
