@@ -12,6 +12,7 @@ const lcovPath = path.join(coverageDir, 'lcov.info');
 // Node integration tests. Electron launch files stay in electronTestFiles.
 const nodeIntegrationFiles = [
   path.join('tests', 'integration', 'file', 'kill-during-save.test.mjs'),
+  path.join('tests', 'integration', 'file', 'activation.test.mjs'),
   path.join('tests', 'integration', 'file', 'open.test.mjs'),
   path.join('tests', 'integration', 'file', 'save.test.mjs'),
   path.join('tests', 'integration', 'export', 'run.test.mjs'),
@@ -20,6 +21,7 @@ const nodeIntegrationFiles = [
 
 const electronTestFiles = [
   path.join('tests', 'integration', 'codec', 'archive-utility.test.mjs'),
+  path.join('tests', 'integration', 'file', 'explorer-open.test.mjs'),
   path.join('tests', 'integration', 'smoke', 'opens-window.test.mjs'),
   path.join('tests', 'integration', 'security', 'window-baseline.test.mjs'),
   path.join('tests', 'integration', 'shell', 'window-shell.test.mjs'),

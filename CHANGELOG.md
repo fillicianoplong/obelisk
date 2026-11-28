@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.64.0] - 2026-11-28
+
+### Added
+
+- Double-clicking or choosing Open with on an `.obk` file in File Explorer opens it in Obelisk; a second file opens as a new tab in the same window when the app is already running.
+- The MSIX package registers the `.obk` file type. Command-line launches ignore non-`.obk` arguments and open at most twenty files per launch.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added
