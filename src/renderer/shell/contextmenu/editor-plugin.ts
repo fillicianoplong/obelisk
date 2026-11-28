@@ -18,7 +18,28 @@ import {
   dispatchContextMenuRequest,
   type ContextMenuRestoreDetail,
 } from './events.js';
+import { setTableSelection } from '../../blocks/table/selection.js';
 import { proseBlockType, resolveContextTarget } from './target.js';
+
+function armTableCellSelection(
+  view: EditorView,
+  domTarget: EventTarget | null,
+  blockIndex: number | null,
+): void {
+  if (blockIndex === null || !(domTarget instanceof HTMLElement)) {
+    return;
+  }
+  const cell = domTarget.closest('[data-table-cell]');
+  if (!(cell instanceof HTMLElement)) {
+    return;
+  }
+  const row = Number(cell.dataset.row);
+  const col = Number(cell.dataset.col);
+  if (!Number.isInteger(row) || !Number.isInteger(col)) {
+    return;
+  }
+  view.dispatch(setTableSelection(view.state.tr, { blockIndex, row, col }));
+}
 
 export async function publishContextMenu(
   view: EditorView,
@@ -173,6 +194,9 @@ export function contextMenuEditorPlugin(tabId: string) {
       ): void {
         try {
           const target = resolveContextTarget(view, clientX, clientY, domTarget, false);
+          if (target.kind === 'table-cell') {
+            armTableCellSelection(view, domTarget, target.blockIndex);
+          }
           lockGutterForBlockMenu(view, target);
           void publishContextMenu(view, { tabId, ...target });
         } catch {
@@ -221,6 +245,9 @@ export function contextMenuEditorPlugin(tabId: string) {
           }
           try {
             const target = resolveContextTarget(view, event.clientX, event.clientY, event.target, false);
+            if (target.kind === 'table-cell') {
+              armTableCellSelection(view, event.target, target.blockIndex);
+            }
             lockGutterForBlockMenu(view, target);
             void publishContextMenu(view, { tabId, ...target });
           } catch {

@@ -78,17 +78,17 @@ export function blockHandleEntries(options: { omitTurnInto?: boolean } = {}): Me
 }
 
 const TABLE_OWN: readonly MenuEntry[] = [
-  item({ id: 'table-insert-row-above', label: 'Insert row above', accessKey: 'a' }),
-  item({ id: 'table-insert-row-below', label: 'Insert row below', accessKey: 'b' }),
-  item({ id: 'table-insert-column-left', label: 'Insert column left', accessKey: 'l' }),
-  item({ id: 'table-insert-column-right', label: 'Insert column right', accessKey: 'r' }),
+  item({ id: 'table-insert-row-above', label: 'Insert row above', accessKey: 'a', command: 'table-insert-row-above' }),
+  item({ id: 'table-insert-row-below', label: 'Insert row below', accessKey: 'b', command: 'table-insert-row-below' }),
+  item({ id: 'table-insert-column-left', label: 'Insert column left', accessKey: 'l', command: 'table-insert-column-left' }),
+  item({ id: 'table-insert-column-right', label: 'Insert column right', accessKey: 'r', command: 'table-insert-column-right' }),
   separator('table-sep-1'),
-  item({ id: 'table-delete-row', label: 'Delete row', accessKey: 'd' }),
-  item({ id: 'table-delete-column', label: 'Delete column', accessKey: 'e' }),
+  item({ id: 'table-delete-row', label: 'Delete row', accessKey: 'd', command: 'table-delete-row' }),
+  item({ id: 'table-delete-column', label: 'Delete column', accessKey: 'e', command: 'table-delete-column' }),
   separator('table-sep-2'),
-  item({ id: 'table-sort-ascending', label: 'Sort ascending', accessKey: 's' }),
-  item({ id: 'table-sort-descending', label: 'Sort descending', accessKey: 'o' }),
-  item({ id: 'table-header-row', label: 'Header row', accessKey: 'h' }),
+  item({ id: 'table-sort-ascending', label: 'Sort ascending', accessKey: 's', command: 'table-sort-ascending' }),
+  item({ id: 'table-sort-descending', label: 'Sort descending', accessKey: 'o', command: 'table-sort-descending' }),
+  item({ id: 'table-header-row', label: 'Header row', accessKey: 'h', command: 'table-header-row' }),
 ];
 
 const IMAGE_OWN: readonly MenuEntry[] = [
