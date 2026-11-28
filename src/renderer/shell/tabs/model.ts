@@ -10,6 +10,7 @@ import {
 } from '../page-setup/model.js';
 import { createTabEditorState } from '../../editor/state.js';
 import { editorDocFromDocument } from '../../editor/schema/mapping.js';
+import { createMlaDocument } from '../../../templates/mla/document.js';
 import { createBaseDocument, newBlockId } from './document.js';
 
 export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
@@ -125,10 +126,25 @@ export function rememberedDocumentView(): DocumentView {
 
 export function createTab(number: number, view: DocumentView = rememberedDocumentView()): PageTab {
   const base = createBaseDocument(newBlockId, view);
+  return tabFromDocument(number, untitledTitle(number), base);
+}
+
+export function createMlaTab(number: number): PageTab {
+  const base = createMlaDocument(newBlockId);
+  return tabFromDocument(number, untitledTitle(number), base);
+}
+
+function tabFromDocument(
+  number: number,
+  title: string,
+  base: { document: DocumentMessage; blockIds: string[] },
+): PageTab {
+  const view = base.document.view === 'pageless' ? 'pageless' : 'pages';
   const editor = createTabEditorState(editorDocFromDocument(base.document));
+  const page = pageSetupFromUnknown(base.document.page);
   return {
     id: `untitled-${number}`,
-    title: untitledTitle(number),
+    title,
     editor,
     savedDoc: editor.doc,
     revision: 0,
@@ -136,7 +152,7 @@ export function createTab(number: number, view: DocumentView = rememberedDocumen
     savePhase: null,
     baseDocument: base.document,
     savedView: view,
-    savedPage: defaultPageSetup(),
+    savedPage: page,
     savedHeader: base.document.header,
     savedFooter: base.document.footer,
     blockIds: base.blockIds,

@@ -25,7 +25,7 @@ export async function load(url, context, nextLoad) {
 
 export async function resolve(specifier, context, nextResolve) {
   const parent = context.parentURL ?? '';
-  const fromRenderer = parent.includes('/src/renderer/');
+  const fromRenderer = parent.includes('/src/renderer/') || parent.includes('/src/templates/');
   if (
     fromRenderer
     && (specifier.startsWith('./') || specifier.startsWith('../'))

@@ -72,7 +72,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
 ]);
 
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
-  'file-template-mla',
   'file-print',
   'file-export-pdf',
   'file-export-word',
@@ -92,6 +91,7 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
 
 const SHELL_ALWAYS = new Set([
   'file-new',
+  'file-template-mla',
   'file-open',
   'file-save',
   'file-save-as',

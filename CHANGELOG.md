@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.48.0] - 2026-11-27
+
+### Added
+
+- File > New from template > MLA creates a letter-size document with 1 in margins, Liberation Serif 12 pt, double spacing with no extra space before or after, a right-aligned header with last name and page number, heading placeholders, a centered title, a body paragraph with a 0.5 in first-line indent, and a Works Cited page with a centered title and hanging indent.
+
 ## [0.1.47.5] - 2026-11-26
 
 ### Fixed
