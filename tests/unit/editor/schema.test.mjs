@@ -23,6 +23,7 @@ test('the editor schema includes every text block node', async () => {
       'ordered_list',
       'page_break',
       'paragraph',
+      'structured_block',
       'text',
     ].sort(),
   );
