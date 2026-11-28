@@ -79,6 +79,14 @@ export function blockTypeLabel(node: ProseNode): string {
       return 'Horizontal line';
     case 'page_break':
       return 'Page break';
+    case 'structured_block':
+      if (node.attrs.blockType === 'table') {
+        return 'Table';
+      }
+      if (node.attrs.blockType === 'drawing') {
+        return 'Drawing';
+      }
+      return 'Block';
     default:
       return 'Block';
   }

@@ -16,6 +16,7 @@ import { insertPageBreakCommand } from './keymap/editor-keys.js';
 import { linkMenuCommand } from './link/commands.js';
 import { copyMenuCommand } from '../clipboard/editor-copy.js';
 import { pasteMenuCommand } from '../clipboard/editor-paste.js';
+import { drawingCommandEnabled, drawingMenuCommand } from '../blocks/drawing/commands.js';
 import { tableCommandEnabled, tableMenuCommand } from '../blocks/table/commands.js';
 
 const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null> = {
@@ -34,12 +35,15 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
   'insert-image': null,
   'insert-equation': null,
   'insert-diagram': null,
-  'insert-drawing': null,
   'insert-signature': null,
   'insert-date-time': null,
 };
 
 export function editorMenuCommand(menuId: string): Command | null {
+  const drawingCommand = drawingMenuCommand(menuId);
+  if (drawingCommand !== null) {
+    return drawingCommand;
+  }
   const tableCommand = tableMenuCommand(menuId);
   if (tableCommand !== null) {
     return tableCommand;
@@ -111,6 +115,9 @@ export function editorMenuCommand(menuId: string): Command | null {
 }
 
 export function editorMenuCommandEnabled(state: EditorState, menuId: string): boolean {
+  if (drawingCommandEnabled(state, menuId)) {
+    return true;
+  }
   if (tableCommandEnabled(state, menuId)) {
     return true;
   }

@@ -7,6 +7,7 @@ import { setCellText } from './model.js';
 import { blockStartPos } from './position.js';
 import { setTableSelection } from './selection.js';
 import { stringifyPayload } from '../structured/payload.js';
+import { DrawingBlockView } from '../drawing/view.js';
 
 export class TableBlockView implements NodeView {
   dom: HTMLElement;
@@ -212,6 +213,9 @@ export function tableNodeViews(): Record<string, (node: ProseNode, view: EditorV
     structured_block(node, view, getPos) {
       if (node.attrs.blockType === 'table') {
         return new TableBlockView(node, view, getPos);
+      }
+      if (node.attrs.blockType === 'drawing') {
+        return new DrawingBlockView(node, view, getPos);
       }
       return new (class implements NodeView {
         dom = document.createElement('div');

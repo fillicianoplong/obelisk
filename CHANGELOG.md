@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.74.0] - 2026-11-28
+
+### Added
+
+- Insert > Drawing and /drawing add a drawing pad block with pen, highlighter, line, and eraser tools, colour and width controls, undo, redo, and clear.
+- Strokes are stored as vector data in the `.obk` file and drawn with SVG so they stay sharp when zoomed; default black ink appears light in dark mode on screen.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

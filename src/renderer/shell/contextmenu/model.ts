@@ -114,8 +114,8 @@ const COLUMN_OWN: readonly MenuEntry[] = [
 ];
 
 const DRAWING_OWN: readonly MenuEntry[] = [
-  item({ id: 'drawing-clear', label: 'Clear drawing', accessKey: 'c' }),
-  item({ id: 'drawing-reset-size', label: 'Reset size', accessKey: 's' }),
+  item({ id: 'drawing-clear', label: 'Clear drawing', accessKey: 'c', command: 'drawing-clear' }),
+  item({ id: 'drawing-reset-size', label: 'Reset size', accessKey: 's', command: 'drawing-reset-size' }),
 ];
 
 const DIAGRAM_OWN: readonly MenuEntry[] = [

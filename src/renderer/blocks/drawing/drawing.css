@@ -1,0 +1,100 @@
+@import '../../styles/tokens.css';
+
+.drawing-block {
+  margin: var(--space-s) 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-page);
+  overflow: hidden;
+}
+
+.drawing-block.ProseMirror-selectednode {
+  outline: var(--size-focus-ring) solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.drawing-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-s);
+  background: var(--color-surface-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.drawing-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.drawing-tool-button,
+.drawing-width-button,
+.drawing-action-button {
+  min-width: var(--size-control-small);
+  height: var(--size-control-small);
+  padding: 0 var(--space-xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: var(--font-weight-regular) var(--font-size-caption) / var(--line-height-caption) var(--font-ui);
+  cursor: pointer;
+}
+
+.drawing-tool-button[aria-pressed='true'],
+.drawing-width-button[aria-pressed='true'] {
+  border-color: var(--color-border-control);
+  background: var(--color-control-fill);
+  color: var(--color-text-primary);
+}
+
+.drawing-tool-button:hover:not(:disabled),
+.drawing-width-button:hover:not(:disabled),
+.drawing-action-button:hover:not(:disabled) {
+  background: var(--color-subtle-fill-hover);
+}
+
+.drawing-tool-button:focus-visible,
+.drawing-width-button:focus-visible,
+.drawing-action-button:focus-visible,
+.drawing-swatch:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: 1px;
+}
+
+.drawing-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-round);
+  cursor: pointer;
+}
+
+.drawing-swatch[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.drawing-surface {
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.drawing-surface[data-tool='eraser'] {
+  cursor: cell;
+}
+
+.drawing-surface svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
+
+.drawing-live-stroke {
+  pointer-events: none;
+}
