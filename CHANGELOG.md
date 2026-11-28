@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.52.0] - 2026-11-27
+
+### Added
+
+- Help > About Obelisk opens an About tab with the app version, the open-source notices from the SRS license reference, and bundled font licenses.
+- OFL LibreOffice Latin fonts plus Dancing Script ship under `assets/fonts/` with license files; `scripts/check-licenses` runs before tests.
+- Third-party notices live under `resources/licenses/` and copy into the renderer build for the About page.
+
 ## [0.1.51.0] - 2026-11-27
 
 ### Added

@@ -73,7 +73,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'insert-date-time',
   'format-paragraph',
   'help-shortcuts',
-  'help-about',
 ]);
 
 const SHELL_ALWAYS = new Set([
@@ -86,6 +85,7 @@ const SHELL_ALWAYS = new Set([
   'file-exit',
   'tools-settings',
   'tools-spelling',
+  'help-about',
 ]);
 
 const SHELL_DOCUMENT = new Set([

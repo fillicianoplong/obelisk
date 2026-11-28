@@ -104,7 +104,7 @@ export function applySavedTab(tab: PageTab, saved: SavedTabInput): PageTab {
 }
 
 export function tabSaveState(tab: PageTab): SaveState {
-  if (tab.kind === 'settings') {
+  if (tab.kind === 'settings' || tab.kind === 'about') {
     return 'saved';
   }
   if (tab.savePhase === 'saving') {
