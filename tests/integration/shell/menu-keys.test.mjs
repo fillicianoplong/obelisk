@@ -294,10 +294,10 @@ test('the menu bar opens File and Settings from the keyboard', { timeout: 60_000
     client,
     (state) =>
       state.panels.some((panel) => panel.id === 'menu-panel-file-export') &&
-      state.activeId === 'menu-panel-file-export',
+      state.exportItem.expanded === 'true',
     'Right opens the Export submenu',
   );
-  assert.equal(submenu.pdf.disabled, 'true');
+  assert.equal(submenu.pdf.disabled, null);
   assert.equal(submenu.pdf.label, 'PDF…');
 
   await pressKey(client, 'ArrowLeft', 'ArrowLeft', 37);

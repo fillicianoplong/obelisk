@@ -16,6 +16,7 @@ import {
   replacePromptOptions,
   saveDialogOptions,
 } from '../../../dist/main/file/saveDialog.js';
+import { createExportService } from '../../../dist/main/export/service.js';
 import { createFileService } from '../../../dist/main/file/service.js';
 import { createAppHandlers } from '../../../dist/main/ipc/handlers.js';
 import { createIpcRegistry } from '../../../dist/main/ipc/registry.js';
@@ -103,12 +104,25 @@ async function openFile(files, file) {
   return opened;
 }
 
-function registry(files) {
-  return createIpcRegistry(createAppHandlers(files));
+function exportService(files, directory, extras = {}) {
+  return createExportService({
+    showExportDialog: extras.showExportDialog ?? (async () => ({ canceled: true, filePath: '' })),
+    confirmReplace: extras.confirmReplace ?? (async () => false),
+    lookupHandle: (handle) => files.handles.lookup(handle),
+    documentsDirectory: () => directory,
+    platform: extras.platform ?? 'linux',
+    atomic: extras.atomic,
+    now: extras.now,
+    sleep: extras.sleep,
+  });
 }
 
-async function dispatch(files, channel, args) {
-  return registry(files).dispatch({
+function registry(files, directory, extras = {}) {
+  return createIpcRegistry(createAppHandlers(files, exportService(files, directory, extras)));
+}
+
+async function dispatch(files, directory, channel, args, extras = {}) {
+  return registry(files, directory, extras).dispatch({
     senderUrl: APP_PAGE_URL,
     channel,
     args,
@@ -167,12 +181,12 @@ test('a saved tab writes on Save and reopens with the same content', async () =>
     const { files } = service(directory);
     const opened = await openFile(files, file);
     const next = document('Lab notes and a diagram');
-    const saved = await dispatch(files, 'file:save', [saveBody(opened.handle, next, opened.stat)]);
+    const saved = await dispatch(files, directory, 'file:save', [saveBody(opened.handle, next, opened.stat)]);
     assert.equal(saved.status, 'ok');
     assert.equal(saved.revision, 4);
     assert.equal(JSON.stringify(saved).includes(directory), false);
 
-    const again = await dispatch(files, 'file:save', [saveBody(opened.handle, next, saved.stat)]);
+    const again = await dispatch(files, directory, 'file:save', [saveBody(opened.handle, next, saved.stat)]);
     assert.equal(again.status, 'ok');
 
     const reopened = await files.openPath(file);
@@ -197,7 +211,7 @@ test('the first Save asks for a folder and a name', async () => {
         return { canceled: false, filePath: target };
       },
     });
-    const saved = await dispatch(files, 'file:saveAs', [{
+    const saved = await dispatch(files, directory, 'file:saveAs', [{
       handle: null,
       document: document('first save'),
       revision: 2,
@@ -230,7 +244,7 @@ test('Save as to a new name leaves the old file untouched', async () => {
       saveDialog: () => ({ canceled: false, filePath: copy }),
     });
     const opened = await openFile(files, original);
-    const saved = await dispatch(files, 'file:saveAs', [{
+    const saved = await dispatch(files, directory, 'file:saveAs', [{
       handle: opened.handle,
       document: document('the copy'),
       revision: 4,
@@ -262,7 +276,7 @@ test('Cancel at the replace prompt leaves the existing file unchanged', async ()
     const cancelled = service(directory, {
       saveDialog: () => ({ canceled: true, filePath: '' }),
     });
-    const fromDialog = await dispatch(cancelled.files, 'file:saveAs', [{
+    const fromDialog = await dispatch(cancelled.files, directory, 'file:saveAs', [{
       handle: null,
       document: document('should not land'),
       revision: 1,
@@ -277,7 +291,7 @@ test('Cancel at the replace prompt leaves the existing file unchanged', async ()
       saveDialog: () => ({ canceled: false, filePath: existing }),
       replace: () => false,
     });
-    const fromPrompt = await dispatch(prompted.files, 'file:saveAs', [{
+    const fromPrompt = await dispatch(prompted.files, directory, 'file:saveAs', [{
       handle: null,
       document: document('should not land'),
       revision: 1,
@@ -302,7 +316,7 @@ test('Windows uses the Save dialog as the replace prompt and does not ask again'
         throw new Error('Windows asked a second time.');
       },
     });
-    const saved = await dispatch(files, 'file:saveAs', [{
+    const saved = await dispatch(files, directory, 'file:saveAs', [{
       handle: null,
       document: document('replaced'),
       revision: 3,
@@ -327,14 +341,14 @@ test('a file changed in another program asks before anything is written', async 
     const changed = await snapshot(file);
     const names = await readdir(directory);
 
-    const saved = await dispatch(files, 'file:save', [saveBody(opened.handle, document('obelisk again'), opened.stat)]);
+    const saved = await dispatch(files, directory, 'file:save', [saveBody(opened.handle, document('obelisk again'), opened.stat)]);
     assert.equal(saved.status, 'conflict');
     assert.equal(saved.stat.size, changed.size);
     assert.equal(saved.stat.modifiedMs, Math.trunc(changed.mtimeMs));
     assertUnchanged(changed, await snapshot(file), 'conflict wrote nothing');
     assert.deepEqual(await readdir(directory), names);
 
-    const overwrite = await dispatch(files, 'file:save', [
+    const overwrite = await dispatch(files, directory, 'file:save', [
       saveBody(opened.handle, document('obelisk again'), saved.stat, true),
     ]);
     assert.equal(overwrite.status, 'ok');
@@ -373,7 +387,7 @@ test('a save that does not finish within 5 seconds leaves the file unchanged', a
       },
     });
     const opened = await openFile(files, file);
-    const saved = await dispatch(files, 'file:save', [saveBody(opened.handle, document('too late'), opened.stat)]);
+    const saved = await dispatch(files, directory, 'file:save', [saveBody(opened.handle, document('too late'), opened.stat)]);
     assert.equal(saved.status, 'timeout');
     assert.equal(saved.code, 'TIMEOUT');
     assert.equal(saved.message, TIMEOUT_MESSAGE);
@@ -399,10 +413,10 @@ test('an unknown handle returns PATH_NOT_ALLOWED and touches nothing', async () 
         return { canceled: true };
       },
     });
-    const saved = await dispatch(files, 'file:save', [saveBody('not-issued-by-main', document('no'), null)]);
+    const saved = await dispatch(files, directory, 'file:save', [saveBody('not-issued-by-main', document('no'), null)]);
     assert.equal(saved.code, 'PATH_NOT_ALLOWED');
     assert.equal(saved.message, PATH_NOT_ALLOWED_MESSAGE);
-    const saveAs = await dispatch(files, 'file:saveAs', [{
+    const saveAs = await dispatch(files, directory, 'file:saveAs', [{
       handle: 'not-issued-by-main',
       document: document('no'),
       revision: 1,
@@ -420,7 +434,7 @@ test('a name without .obk is saved as .obk, and a relative path is refused', asy
     const { files } = service(directory, {
       saveDialog: () => ({ canceled: false, filePath: stem }),
     });
-    const saved = await dispatch(files, 'file:saveAs', [{
+    const saved = await dispatch(files, directory, 'file:saveAs', [{
       handle: null,
       document: document('named'),
       revision: 1,
@@ -434,7 +448,7 @@ test('a name without .obk is saved as .obk, and a relative path is refused', asy
     const relative = service(directory, {
       saveDialog: () => ({ canceled: false, filePath: 'notes.obk' }),
     });
-    const refused = await dispatch(relative.files, 'file:saveAs', [{
+    const refused = await dispatch(relative.files, directory, 'file:saveAs', [{
       handle: null,
       document: document('no'),
       revision: 1,
