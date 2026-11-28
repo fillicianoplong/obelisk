@@ -305,6 +305,14 @@ test('an empty block shows a slash hint until text is typed', async () => {
   }
 });
 
+test('empty block hint styles follow paragraph text inset', async () => {
+  const layoutCss = await readFile(path.join(root, 'src/renderer/editor/block-handle-layout.css'), 'utf8');
+  const hintRule = layoutCss.match(/\.block-empty-hint::after\s*\{[^}]*\}/);
+  assert.ok(hintRule);
+  assert.match(hintRule[0], /text-indent:\s*inherit/);
+  assert.match(hintRule[0], /padding-inline-start:\s*inherit/);
+});
+
 test('an empty code block does not show the slash hint', async () => {
   const { view, restore } = await editorViewFromBlocks([
     { type: 'code', id: id(8), text: '' },

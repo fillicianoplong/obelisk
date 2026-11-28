@@ -8,6 +8,14 @@ import { blockStartPos } from './position.js';
 import { setTableSelection } from './selection.js';
 import { stringifyPayload } from '../structured/payload.js';
 
+function columnWidthPercent(columnWidths: number[], col: number): string {
+  const total = columnWidths.reduce((sum, width) => sum + (width > 0 ? width : 0), 0);
+  const basis = total > 0 ? total : columnWidths.length;
+  const part = columnWidths[col];
+  const unit = typeof part === 'number' && part > 0 ? part : 1;
+  return `${(unit / basis) * 100}%`;
+}
+
 export class TableBlockView implements NodeView {
   dom: HTMLElement;
 
@@ -95,16 +103,8 @@ export class TableBlockView implements NodeView {
     const grid = table.rows.map((row) => row.cells);
     const evaluated = evaluateTable(grid);
     this.table.replaceChildren();
-    if (table.headerRow) {
-      this.table.classList.add('has-header-row');
-    } else {
-      this.table.classList.remove('has-header-row');
-    }
     for (let row = 0; row < grid.length; row += 1) {
       const tr = document.createElement('tr');
-      if (table.headerRow && row === 0) {
-        tr.className = 'table-header-row';
-      }
       const rowCells = grid[row] ?? [];
       for (let col = 0; col < rowCells.length; col += 1) {
         const td = document.createElement('td');
@@ -171,7 +171,7 @@ export class TableBlockView implements NodeView {
           }
         });
         td.append(input);
-        td.style.width = `${(table.columnWidths[col] ?? 1) * 96}px`;
+        td.style.width = columnWidthPercent(table.columnWidths, col);
         tr.append(td);
       }
       this.table.append(tr);

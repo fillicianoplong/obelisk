@@ -1,2 +1,2 @@
 /** Matches package.json; scripts/check-licenses.mjs enforces this stays in sync. */
-export const APP_VERSION = '0.1.52.0';
+export const APP_VERSION = '0.1.59.0';

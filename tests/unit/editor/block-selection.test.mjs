@@ -617,6 +617,52 @@ test('block hover stays on the content box, not sheet margins', async () => {
   }
 });
 
+test('structured table blocks resolve hover layout from the block root', async () => {
+  const tableDocUrl = new URL('../../../src/renderer/blocks/table/document.ts', import.meta.url);
+  const { defaultTableBody } = await loadRenderer(tableDocUrl);
+  const { blockHandleLayoutForBlock, blockHandlePluginKey, blockPosAtIndex, emptyBlockHandleState } = blockHandleModule;
+  const { view, restore } = await editorViewFromBlocks([
+    paragraph('Above'),
+    {
+      type: 'table',
+      id: id(30),
+      ...defaultTableBody(),
+    },
+  ]);
+  try {
+    const blockPos = blockPosAtIndex(view.state.doc, 1);
+    const tableDom = view.nodeDOM(blockPos);
+    assert.ok(tableDom instanceof view.dom.ownerDocument.defaultView.HTMLElement);
+    const layoutRect = {
+      top: 80,
+      left: 220,
+      right: 520,
+      bottom: 200,
+      width: 300,
+      height: 120,
+      x: 220,
+      y: 80,
+    };
+    tableDom.getBoundingClientRect = () => layoutRect;
+    const layout = blockHandleLayoutForBlock(view, 1);
+    assert.ok(layout);
+    assert.equal(layout.height, 120);
+    view.dispatch(view.state.tr.setMeta(blockHandlePluginKey, {
+      ...emptyBlockHandleState(),
+      hoverBlock: 1,
+    }));
+    const highlighted = view.dom.querySelector('[data-block-hovered="true"]');
+    assert.ok(highlighted instanceof view.dom.ownerDocument.defaultView.HTMLElement);
+    assert.equal(highlighted, tableDom);
+    const handle = handleElement(view, 1);
+    assert.equal(handle.hidden, false);
+    assert.equal(handle.getAttribute('data-block-kind'), 'table');
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
 test('clicking empty page space clears block selection to a text caret', async () => {
   const { clearBlockSelectionForPointerClick, selectedBlockCount } = await loadRenderer(blockHandleUrl);
   const { view, restore } = await editorViewFromBlocks([

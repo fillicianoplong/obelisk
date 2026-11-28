@@ -2,6 +2,16 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.59.0] - 2026-11-28
+
+### Fixed
+
+- Table blocks draw cell borders with `--color-border-strong` in light, dark, and high-contrast themes; the default header row uses plain cell styling so users format it themselves.
+- Default inserted tables use percentage column widths so they fit the text column without a horizontal scrollbar.
+- Table block hover shows the same inset hover band as text blocks, including in dark theme.
+- Hovering a table block shows the gutter handle and the same hover band as other blocks by resolving the block root DOM for atom blocks.
+- The “Press / to insert blocks” hint on empty blocks lines up with the caret using an inline widget at the text position.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

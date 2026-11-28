@@ -114,10 +114,30 @@ test('toggling the header row flips the flag', () => {
   assert.equal(model.toggleHeaderRow(off).headerRow, true);
 });
 
-test('the table view styles the first row when headerRow is true', async () => {
+test('the table stylesheet does not give the header row a default tint or bold', async () => {
   const css = await readFile(path.join(root, 'src/renderer/blocks/table/table.css'), 'utf8');
-  assert.match(css, /\.table-header-row/);
-  assert.match(css, /font-weight:\s*700/);
+  const viewSource = await readFile(path.join(root, 'src/renderer/blocks/table/view.ts'), 'utf8');
+  assert.doesNotMatch(css, /\.table-header-row/);
+  assert.doesNotMatch(css, /--color-surface-table-header/);
+  assert.doesNotMatch(css, /font-weight:\s*700/);
+  assert.doesNotMatch(viewSource, /table-header-row/);
+});
+
+test('table cell borders use a defined theme token', async () => {
+  const css = await readFile(path.join(root, 'src/renderer/blocks/table/table.css'), 'utf8');
+  const tokens = await readFile(path.join(root, 'src/renderer/styles/tokens.css'), 'utf8');
+  assert.match(css, /border:\s*1px solid var\(--color-border-strong\)/);
+  assert.match(tokens, /--color-border-strong:/);
+  assert.match(tokens, /@media \(forced-colors: active\)[\s\S]*--color-border-strong:/);
+});
+
+test('the table view sizes columns as percentages of the block width', async () => {
+  const viewSource = await readFile(path.join(root, 'src/renderer/blocks/table/view.ts'), 'utf8');
+  assert.doesNotMatch(viewSource, /\*\s*96\)px/);
+  assert.match(viewSource, /columnWidthPercent/);
+  const css = await readFile(path.join(root, 'src/renderer/blocks/table/table.css'), 'utf8');
+  assert.match(css, /\.table-block\.block-is-hovered/);
+  assert.match(css, /\.table-block\.block-is-hovered \.obelisk-table/);
 });
 
 test('sort descending keeps row 1 and orders body rows', () => {

@@ -360,6 +360,9 @@ export function blockHandleKindForNode(node: ProseNode): string {
   if (node.type.name === 'paragraph') {
     return 'paragraph';
   }
+  if (node.type.name === 'structured_block' && typeof node.attrs.blockType === 'string' && node.attrs.blockType.length > 0) {
+    return node.attrs.blockType;
+  }
   return node.type.name;
 }
 
@@ -408,7 +411,15 @@ const BLOCK_CONTENT_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, p
 const DRAG_START_PX = 4;
 
 function blockContentElement(view: EditorView, blockIndex: number): HTMLElement | null {
-  const pos = blockPosAtIndex(view.state.doc, blockIndex) + 1;
+  const blockPos = blockPosAtIndex(view.state.doc, blockIndex);
+  const node = view.state.doc.child(blockIndex);
+  if (node.isAtom) {
+    const blockDom = view.nodeDOM(blockPos);
+    if (blockDom instanceof HTMLElement) {
+      return blockDom;
+    }
+  }
+  const pos = blockPos + 1;
   const dom = view.nodeDOM(pos);
   if (dom instanceof HTMLElement) {
     return dom;

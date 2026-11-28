@@ -140,6 +140,7 @@
   --color-text-link: #2B5797;
 
   --color-border-subtle: #C9D0DA;           /* region dividers, tab edges, cards */
+  --color-border-strong: #737D8D;           /* table grids, strong dividers (3:1) */
   --color-border-control: #737D8D;          /* input, checkbox, radio, toggle outlines (3:1) */
   --color-border-control-hover: #5F6977;
   --color-border-disabled: #B4BBC6;
@@ -215,6 +216,7 @@
     --color-text-on-accent: #1B1F25;
     --color-text-link: #9CC0F0;
     --color-border-subtle: #3A424D;
+    --color-border-strong: #9AA4B2;
     --color-border-control: #7D8796;
     --color-border-control-hover: #9AA4B2;
     --color-border-disabled: #4A5361;
@@ -282,6 +284,7 @@
   --color-text-on-accent: #1B1F25;
   --color-text-link: #9CC0F0;
   --color-border-subtle: #3A424D;
+  --color-border-strong: #9AA4B2;
   --color-border-control: #7D8796;
   --color-border-control-hover: #9AA4B2;
   --color-border-disabled: #4A5361;
@@ -362,6 +365,7 @@
     --color-text-on-accent: HighlightText;
     --color-text-link: LinkText;
     --color-border-subtle: CanvasText;
+    --color-border-strong: ButtonText;
     --color-border-control: ButtonText;
     --color-border-control-hover: Highlight;
     --color-border-disabled: GrayText;

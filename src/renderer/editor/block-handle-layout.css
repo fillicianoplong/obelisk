@@ -100,14 +100,21 @@
 }
 
 .block-empty-hint::after {
+  box-sizing: border-box;
   color: var(--color-text-disabled);
   content: attr(data-empty-hint);
   inset-block-start: 0;
   inset-inline-start: 0;
+  line-height: inherit;
+  padding-inline-end: inherit;
+  padding-inline-start: inherit;
   pointer-events: none;
   position: absolute;
+  text-align: inherit;
+  text-indent: inherit;
   user-select: none;
   white-space: nowrap;
+  width: 100%;
 }
 
 .block-menu {
