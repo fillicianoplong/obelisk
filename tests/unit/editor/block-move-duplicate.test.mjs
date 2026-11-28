@@ -33,7 +33,8 @@ function id(n) {
   return `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 }
 
-function paragraph(text, blockId = id(3)) {
+let paragraphIdSeq = 300;
+function paragraph(text, blockId = id(paragraphIdSeq++)) {
   return {
     type: 'paragraph',
     id: blockId,

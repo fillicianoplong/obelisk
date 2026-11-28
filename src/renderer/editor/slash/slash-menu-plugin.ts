@@ -1,7 +1,7 @@
-import { NodeSelection, Plugin, PluginKey, TextSelection } from 'prosemirror-state';
+import { Plugin, PluginKey, TextSelection } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import { blockHandleState, lockBlockMenuGutter } from '../block-handle-plugin.js';
+import { blockSelectionIsActive, lockBlockMenuGutter } from '../block-handle-plugin.js';
 import { watchOutsidePress } from '../../shell/outside-press.js';
 import {
   applySlashMenuItem,
@@ -56,13 +56,6 @@ function selectableEntries(): SlashMenuRow[] {
 
 function rowByFlatIndex(index: number): SlashMenuRow | undefined {
   return selectableEntries()[index];
-}
-
-function blockSelectionIsActive(state: EditorState): boolean {
-  if (blockHandleState(state).from !== null) {
-    return true;
-  }
-  return state.selection instanceof NodeSelection && state.selection.$anchor.depth === 0;
 }
 
 function parentIsCodeBlock($pos: EditorState['selection']['$from']): boolean {

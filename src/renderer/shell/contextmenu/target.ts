@@ -1,8 +1,12 @@
 import type { Node as ProseNode } from 'prosemirror-model';
 import type { EditorState } from 'prosemirror-state';
-import { NodeSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
-import { blockHandleState, blockIndexAtPos, dropIndexFromClientY } from '../../editor/block-handle-plugin.js';
+import {
+  blockHandleState,
+  blockIndexAtPos,
+  blockSelectionIsActive,
+  dropIndexFromClientY,
+} from '../../editor/block-handle-plugin.js';
 import { linkAround } from '../../editor/link/commands.js';
 import type { ContextTargetKind } from './model.js';
 
@@ -109,10 +113,6 @@ export function proseBlockType(node: ProseNode): ContextBlockType {
   }
 }
 
-function blockSelectionActive(state: EditorState): boolean {
-  return state.selection instanceof NodeSelection && state.selection.$anchor.depth === 0;
-}
-
 function clampTopLevelBlockIndex(doc: ProseNode, index: number): number {
   if (doc.childCount === 0) {
     return 0;
@@ -170,7 +170,7 @@ export function resolveMenuKind(
   keyboard = false,
 ): ContextTargetKind {
   if (keyboard) {
-    if (blockSelectionActive(state)) {
+    if (blockSelectionIsActive(state)) {
       return 'block';
     }
     return linkAround(state) !== null ? 'link' : 'text';
@@ -178,7 +178,7 @@ export function resolveMenuKind(
   if (pointerOpensBlockMenu(domTarget)) {
     return 'block';
   }
-  if (blockSelectionActive(state)) {
+  if (blockSelectionIsActive(state)) {
     return 'block';
   }
   const inline = inlineKindFromDom(domTarget);
@@ -200,7 +200,7 @@ export function resolveContextTarget(
 ): ContextMenuTarget {
   const selection = selectionBounds(view.state);
   const blockIndex = keyboard
-    ? (blockSelectionActive(view.state)
+    ? (blockSelectionIsActive(view.state)
       ? view.state.selection.$anchor.index(0)
       : blockIndexAtPointer(view, clientX, clientY))
     : blockIndexAtPointer(view, clientX, clientY);

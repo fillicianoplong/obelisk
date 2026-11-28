@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.75.0] - 2026-11-28
+
+### Added
+
+- Ctrl+click a block handle to add or remove blocks from a non-contiguous block selection; Shift+click still extends a range, Escape clears block selection, and Ctrl+Space on the grip toggles the focused block.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

@@ -383,7 +383,6 @@ test('Shift+Enter inserts a soft line break in a paragraph', async () => {
 
 test('Editor keyboard keys run without a mouse', async () => {
   const { FONT_SIZE_PT, DEFAULT_FONT_SIZE } = await loadRenderer(formatUrl);
-  const { selectedBlockRange } = await loadRenderer(blockHandleUrl);
   const { view, restore } = await editorViewFromBlocks([
     paragraph([{ type: 'text', text: 'Format me' }]),
     paragraph([{ type: 'text', text: 'Two' }]),
@@ -426,9 +425,6 @@ test('Editor keyboard keys run without a mouse', async () => {
     caretAtStart(view);
     dispatchEditorKeyDown(view, 'Tab');
     assert.equal(topBlock(view).attrs.indentFirst, 0.5);
-
-    dispatchEditorKeyDown(view, 'Escape');
-    assert.deepEqual(selectedBlockRange(view.state), { from: 0, to: 0 });
   } finally {
     view.destroy();
     restore();

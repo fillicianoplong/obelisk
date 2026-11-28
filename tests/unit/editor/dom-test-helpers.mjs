@@ -111,6 +111,9 @@ export function installDomGlobals(document, window) {
       constructor(type, init = {}) {
         super(type, init);
         this.shiftKey = init.shiftKey ?? false;
+        this.altKey = init.altKey ?? false;
+        this.ctrlKey = init.ctrlKey ?? false;
+        this.metaKey = init.metaKey ?? false;
         this.button = init.button ?? 0;
       }
     }
@@ -177,13 +180,22 @@ export function syntheticKeyDown(key, extra = {}) {
 /** Minimal MouseEvent shape for block-handle clicks in linkedom. */
 export function syntheticMouseDown(extra = {}) {
   const Ctor = globalThis.MouseEvent ?? Event;
-  return new Ctor('mousedown', {
+  const event = new Ctor('mousedown', {
     bubbles: true,
     cancelable: true,
     button: 0,
     shiftKey: false,
+    altKey: false,
+    ctrlKey: false,
+    metaKey: false,
     ...extra,
   });
+  for (const key of ['shiftKey', 'altKey', 'ctrlKey', 'metaKey']) {
+    if (extra[key] === true) {
+      Object.defineProperty(event, key, { value: true, configurable: true });
+    }
+  }
+  return event;
 }
 
 export function syntheticMouseMove(extra = {}) {

@@ -1,10 +1,11 @@
+import { chainCommands } from 'prosemirror-commands';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
 import type { Node as ProseNode } from 'prosemirror-model';
 import { NodeSelection, Selection, TextSelection } from 'prosemirror-state';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
-import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
+import { blockMoveKeymap, moveSelectedBlocksToDropCommand } from './block-move-commands.js';
 import { resetPageFocusToPointer } from '../shell/page-focus.js';
 import { watchOutsidePress } from '../shell/outside-press.js';
 import {
@@ -21,16 +22,19 @@ import {
 } from './block-gutter.js';
 
 export interface BlockDragState {
-  sourceFrom: number;
-  sourceTo: number;
+  /** Top-level block indices being dragged, in document order. */
+  sourceIndices: number[];
   dropIndex: number | null;
 }
 
 export interface BlockHandleState {
   /** Block index for Shift+click range anchor. */
   anchor: number | null;
+  /** Contiguous range bounds when the selection is one uninterrupted span. */
   from: number | null;
   to: number | null;
+  /** Selected blocks in document order, by stable block id. */
+  selectedIds: string[] | null;
   drag: BlockDragState | null;
   /** Top-level block index showing the hover handle, if any. */
   hoverBlock: number | null;
@@ -41,7 +45,114 @@ export interface BlockHandleState {
 export const blockHandlePluginKey = new PluginKey<BlockHandleState>('blockHandle');
 
 export function emptyBlockHandleState(): BlockHandleState {
-  return { anchor: null, from: null, to: null, drag: null, hoverBlock: null, hoverPinned: false };
+  return {
+    anchor: null,
+    from: null,
+    to: null,
+    selectedIds: null,
+    drag: null,
+    hoverBlock: null,
+    hoverPinned: false,
+  };
+}
+
+function blockIdForNode(node: ProseNode): string | null {
+  const raw = node.attrs.blockId;
+  return typeof raw === 'string' && raw.length > 0 ? raw : null;
+}
+
+export function blockIdAtIndex(doc: ProseNode, blockIndex: number): string | null {
+  if (blockIndex < 0 || blockIndex >= doc.childCount) {
+    return null;
+  }
+  return blockIdForNode(doc.child(blockIndex));
+}
+
+function indicesForIds(doc: ProseNode, ids: readonly string[]): number[] {
+  const want = new Set(ids);
+  const found: number[] = [];
+  for (let index = 0; index < doc.childCount; index += 1) {
+    const id = blockIdForNode(doc.child(index));
+    if (id !== null && want.has(id)) {
+      found.push(index);
+    }
+  }
+  return found;
+}
+
+function orderedIdsForIndices(doc: ProseNode, indices: readonly number[]): string[] {
+  const sorted = [...indices].sort((left, right) => left - right);
+  const ids: string[] = [];
+  for (const index of sorted) {
+    const id = blockIdForNode(doc.child(index));
+    if (id !== null) {
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+function idsForIndexRange(doc: ProseNode, from: number, to: number): string[] {
+  const start = Math.max(0, Math.min(from, to));
+  const end = Math.min(doc.childCount - 1, Math.max(from, to));
+  const ids: string[] = [];
+  for (let index = start; index <= end; index += 1) {
+    const id = blockIdForNode(doc.child(index));
+    if (id !== null) {
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+function contiguousBounds(indices: readonly number[]): { from: number; to: number } | null {
+  if (indices.length === 0) {
+    return null;
+  }
+  const sorted = [...indices].sort((left, right) => left - right);
+  for (let index = 1; index < sorted.length; index += 1) {
+    if (sorted[index] !== sorted[index - 1] + 1) {
+      return null;
+    }
+  }
+  return { from: sorted[0], to: sorted[sorted.length - 1] };
+}
+
+function selectionBoundsFromIds(
+  doc: ProseNode,
+  ids: readonly string[],
+): Pick<BlockHandleState, 'from' | 'to' | 'selectedIds'> {
+  const indices = indicesForIds(doc, ids);
+  const ordered = orderedIdsForIndices(doc, indices);
+  if (ordered.length === 0) {
+    return { from: null, to: null, selectedIds: null };
+  }
+  const range = contiguousBounds(indices);
+  return {
+    from: range?.from ?? null,
+    to: range?.to ?? null,
+    selectedIds: ordered,
+  };
+}
+
+export function selectedBlockIds(state: EditorState): string[] {
+  const plugin = blockHandleState(state);
+  if (plugin.selectedIds !== null && plugin.selectedIds.length > 0) {
+    return [...plugin.selectedIds];
+  }
+  const range = selectedBlockRange(state);
+  if (range === null) {
+    return [];
+  }
+  return idsForIndexRange(state.doc, range.from, range.to);
+}
+
+export function selectedBlockIndices(state: EditorState): number[] {
+  const ids = selectedBlockIds(state);
+  if (ids.length === 0) {
+    return [];
+  }
+  return indicesForIds(state.doc, ids);
 }
 
 export function blockHoverIndex(state: EditorState): number | null {
@@ -81,11 +192,7 @@ export function selectedBlockRange(state: EditorState): { from: number; to: numb
 }
 
 export function selectedBlockCount(state: EditorState): number {
-  const range = selectedBlockRange(state);
-  if (range === null) {
-    return 0;
-  }
-  return range.to - range.from + 1;
+  return selectedBlockIds(state).length;
 }
 
 function setBlockHandleState(
@@ -265,36 +372,72 @@ function blockIndexFromPointer(view: EditorView, event: MouseEvent): number | nu
   return drop >= doc.childCount ? doc.childCount - 1 : drop;
 }
 
-function selectBlocks(
+function applyBlockSelection(
   tr: Transaction,
-  from: number,
-  to: number,
+  ids: readonly string[],
   anchor: number,
   prior: BlockHandleState,
 ): Transaction {
   const doc = tr.doc;
-  const start = Math.max(0, Math.min(from, to));
-  const end = Math.min(doc.childCount - 1, Math.max(from, to));
-  const nodePos = blockPosAtIndex(doc, start);
+  const bounds = selectionBoundsFromIds(doc, ids);
+  if (bounds.selectedIds === null || bounds.selectedIds.length === 0) {
+    return setBlockHandleState(tr, { ...prior, ...emptyBlockHandleState() });
+  }
+  const indices = indicesForIds(doc, bounds.selectedIds);
+  const nodePos = blockPosAtIndex(doc, indices[0]);
   return setBlockHandleState(
     tr.setSelection(NodeSelection.create(doc, nodePos)).setMeta('blockHandleKeep', true),
-    { ...prior, anchor, from: start, to: end, drag: null },
+    {
+      ...prior,
+      anchor,
+      from: bounds.from,
+      to: bounds.to,
+      selectedIds: bounds.selectedIds,
+      drag: null,
+    },
   );
+}
+
+export interface SelectBlockOptions {
+  extend?: boolean;
+  toggle?: boolean;
 }
 
 export function selectBlockByIndex(
   state: EditorState,
   blockIndex: number,
-  extend: boolean,
+  extendOrOptions: boolean | SelectBlockOptions = false,
 ): Transaction | null {
   if (blockIndex < 0 || blockIndex >= state.doc.childCount) {
     return null;
   }
+  const options: SelectBlockOptions = typeof extendOrOptions === 'boolean'
+    ? { extend: extendOrOptions }
+    : extendOrOptions;
   const current = blockHandleState(state);
-  if (extend && current.anchor !== null) {
-    return selectBlocks(state.tr, current.anchor, blockIndex, current.anchor, current);
+  const id = blockIdForNode(state.doc.child(blockIndex));
+  if (id === null) {
+    return null;
   }
-  return selectBlocks(state.tr, blockIndex, blockIndex, blockIndex, current);
+  if (options.toggle === true) {
+    const active = current.selectedIds ?? [];
+    const next = active.includes(id)
+      ? active.filter((entry) => entry !== id)
+      : orderedIdsForIndices(state.doc, [...indicesForIds(state.doc, active), blockIndex]);
+    if (next.length === 0) {
+      let tr = setBlockHandleState(state.tr, emptyBlockHandleState());
+      const caret = blockPosAtIndex(state.doc, blockIndex) + 1;
+      tr = tr.setSelection(TextSelection.create(state.doc, caret));
+      return tr;
+    }
+    const anchor = current.anchor ?? blockIndex;
+    return applyBlockSelection(state.tr, next, anchor, current);
+  }
+  if (options.extend === true && current.anchor !== null) {
+    const ids = idsForIndexRange(state.doc, current.anchor, blockIndex);
+    return applyBlockSelection(state.tr, ids, current.anchor, current);
+  }
+  return applyBlockSelection(state.tr, [id], blockIndex, current);
 }
 
 function editorContentHasFocus(view: EditorView): boolean {
@@ -344,7 +487,11 @@ export function selectCaretBlockCommand(): Command {
   };
 }
 
-function blockIsSelected(state: BlockHandleState, index: number): boolean {
+function blockIsSelected(state: BlockHandleState, doc: ProseNode, index: number): boolean {
+  if (state.selectedIds !== null && state.selectedIds.length > 0) {
+    const id = blockIdForNode(doc.child(index));
+    return id !== null && state.selectedIds.includes(id);
+  }
   if (state.from === null || state.to === null) {
     return false;
   }
@@ -378,11 +525,35 @@ function applyHandleBlockAttrs(gutter: HTMLElement, node: ProseNode): void {
   }
 }
 
-function blockSelectionIsActive(state: EditorState): boolean {
-  if (blockHandleState(state).from !== null) {
+export function blockSelectionIsActive(state: EditorState): boolean {
+  const plugin = blockHandleState(state);
+  if (plugin.selectedIds !== null && plugin.selectedIds.length > 0) {
     return true;
   }
   return state.selection instanceof NodeSelection && state.selection.$anchor.depth === 0;
+}
+
+export function clearBlockSelectionCommand(): Command {
+  return (state, dispatch) => {
+    const ids = selectedBlockIds(state);
+    if (ids.length === 0) {
+      return false;
+    }
+    const indices = selectedBlockIndices(state);
+    const focusIndex = indices[0] ?? caretBlockIndex(state);
+    let tr = setBlockHandleState(state.tr, emptyBlockHandleState());
+    const inner = blockPosAtIndex(tr.doc, focusIndex) + 1;
+    try {
+      tr = tr.setSelection(TextSelection.create(tr.doc, inner));
+    } catch {
+      const pos = Math.max(0, Math.min(inner, tr.doc.content.size));
+      tr = tr.setSelection(TextSelection.near(tr.doc.resolve(pos), -1));
+    }
+    if (dispatch) {
+      dispatch(tr);
+    }
+    return true;
+  };
 }
 
 function selectionFromEditorGeometry(
@@ -507,8 +678,7 @@ function endBlockDrag(view: EditorView, drag: BlockDragState | null): void {
 
 function startBlockDragListeners(
   view: EditorView,
-  sourceFrom: number,
-  sourceTo: number,
+  sourceIndices: number[],
   startX: number,
   startY: number,
   onClick: (() => void) | null,
@@ -545,11 +715,11 @@ function startBlockDragListeners(
       }
       dragging = true;
       view.dom.setAttribute('data-block-drag', 'true');
-      dragState = { sourceFrom, sourceTo, dropIndex: null };
+      dragState = { sourceIndices, dropIndex: null };
       dispatchHover(view, null, false);
     }
     const dropIndex = dropIndexFromClientY(view, pointerY);
-    dragState = { sourceFrom, sourceTo, dropIndex };
+    dragState = { sourceIndices, dropIndex };
     setBlockDragState(view, dragState);
   }
 
@@ -562,9 +732,8 @@ function startBlockDragListeners(
       }
       return;
     }
-    const command = moveBlockRangeToDropCommand(
-      dragState.sourceFrom,
-      dragState.sourceTo,
+    const command = moveSelectedBlocksToDropCommand(
+      dragState.sourceIndices,
       dragState.dropIndex,
     );
     endBlockDrag(view, dragState);
@@ -673,16 +842,20 @@ function blockHandleMouseDown(
   event.preventDefault();
   event.stopPropagation();
   dispatchHover(view, blockIndex, true);
-  const tr = selectBlockByIndex(view.state, blockIndex, event.shiftKey);
+  const tr = selectBlockByIndex(view.state, blockIndex, {
+    extend: event.shiftKey,
+    toggle: !event.shiftKey && (event.ctrlKey || event.metaKey),
+  });
   if (tr === null) {
     return;
   }
   view.dispatch(tr.setMeta('pointer', true));
   view.focus();
-  const range = selectedBlockRange(view.state);
-  const from = range?.from ?? blockIndex;
-  const to = range?.to ?? blockIndex;
-  startBlockDragListeners(view, from, to, event.clientX, event.clientY, onClick);
+  const sourceIndices = selectedBlockIndices(view.state);
+  if (sourceIndices.length === 0) {
+    sourceIndices.push(blockIndex);
+  }
+  startBlockDragListeners(view, sourceIndices, event.clientX, event.clientY, onClick);
 }
 
 export function activeBlockHandleIndex(state: EditorState): number | null {
@@ -712,7 +885,7 @@ function blockDecorations(state: EditorState): DecorationSet {
         }),
       );
     }
-    if (blockIsSelected(pluginState, index)) {
+    if (blockIsSelected(pluginState, state.doc, index)) {
       decorations.push(
         Decoration.node(blockStart, blockStart + node.nodeSize, {
           class: 'block-is-selected',
@@ -987,7 +1160,13 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
         const node = view.state.doc.child(blockIndex);
         const caret = Selection.near(view.state.doc.resolve(Math.min(pos + 1, pos + node.nodeSize - 1)));
         let tr = view.state.tr.setSelection(caret);
-        tr = setBlockHandleState(tr, { ...blockHandleState(view.state), anchor: null, from: null, to: null });
+        tr = setBlockHandleState(tr, {
+          ...blockHandleState(view.state),
+          anchor: null,
+          from: null,
+          to: null,
+          selectedIds: null,
+        });
         view.dispatch(tr);
       }
     }
@@ -1131,7 +1310,11 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     if (menuOpen) {
       closeMenu(false);
     }
-    const openOnClick = !event.shiftKey && onGrip && !toggleClose;
+    const openOnClick = !event.shiftKey
+      && !event.ctrlKey
+      && !event.metaKey
+      && onGrip
+      && !toggleClose;
     blockHandleMouseDown(
       view,
       event,
@@ -1155,6 +1338,22 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     showTooltip(true);
   });
   grip.addEventListener('blur', hideTooltip);
+  grip.addEventListener('keydown', (event) => {
+    if (event.key !== ' ' || !(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) {
+      return;
+    }
+    const blockIndex = Number(gutter.getAttribute('data-block-index'));
+    if (!Number.isInteger(blockIndex)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const tr = selectBlockByIndex(view.state, blockIndex, { toggle: true });
+    if (tr !== null) {
+      view.dispatch(tr);
+      view.focus();
+    }
+  });
 
   menu.search.addEventListener('input', () => {
     const blockIndex = Number(menu.root.dataset.blockIndex);
@@ -1337,7 +1536,7 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
 
 export function blockHandleKeymap(): Record<string, Command> {
   return {
-    Escape: selectCaretBlockCommand(),
+    Escape: chainCommands(clearBlockSelectionCommand(), selectCaretBlockCommand()),
     ...blockMoveKeymap(),
   };
 }
@@ -1357,6 +1556,20 @@ export function blockHandlePlugin(): Plugin {
         }
         if (tr.docChanged) {
           const drag = value.drag;
+          if (value.selectedIds !== null && value.selectedIds.length > 0) {
+            const present = value.selectedIds.filter((id) => indicesForIds(tr.doc, [id]).length > 0);
+            if (present.length > 0) {
+              const bounds = selectionBoundsFromIds(tr.doc, present);
+              return {
+                ...emptyBlockHandleState(),
+                anchor: value.anchor,
+                from: bounds.from,
+                to: bounds.to,
+                selectedIds: bounds.selectedIds,
+                drag,
+              };
+            }
+          }
           return {
             ...emptyBlockHandleState(),
             drag,
@@ -1368,6 +1581,7 @@ export function blockHandlePlugin(): Plugin {
             anchor: null,
             from: null,
             to: null,
+            selectedIds: null,
             drag: null,
           };
         }

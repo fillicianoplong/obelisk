@@ -31,7 +31,8 @@ function id(n) {
   return `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 }
 
-function paragraph(text, blockId = id(3)) {
+let paragraphIdSeq = 200;
+function paragraph(text, blockId = id(paragraphIdSeq++)) {
   return {
     type: 'paragraph',
     id: blockId,
@@ -659,6 +660,91 @@ test('clicking empty page space clears block selection to a text caret', async (
     assert.equal(selectedBlockCount(view.state), 0);
     assert.ok(view.state.selection instanceof TextSelection);
     assert.equal(view.state.selection.from, 1);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Ctrl+click on handles builds a non-contiguous selection in document order', async () => {
+  const { selectedBlockIds, selectedBlockRange, selectedBlockCount } = await loadRenderer(blockHandleUrl);
+  const a = id(70);
+  const b = id(71);
+  const c = id(72);
+  const d = id(73);
+  const e = id(74);
+  const { view, restore } = await editorViewFromBlocks([
+    paragraph('A', a),
+    paragraph('B', b),
+    paragraph('C', c),
+    paragraph('D', d),
+    paragraph('E', e),
+  ]);
+  try {
+    dispatchHandleMouseDown(view, 0);
+    dispatchHandleMouseDown(view, 2, { ctrlKey: true });
+    dispatchHandleMouseDown(view, 4, { ctrlKey: true });
+    assert.equal(selectedBlockCount(view.state), 3);
+    assert.deepEqual(selectedBlockIds(view.state), [a, c, e]);
+    assert.equal(selectedBlockRange(view.state), null);
+    assert.equal(view.dom.querySelectorAll('[data-block-selected="true"]').length, 3);
+    dispatchHandleMouseDown(view, 2, { ctrlKey: true });
+    assert.equal(selectedBlockCount(view.state), 2);
+    assert.deepEqual(selectedBlockIds(view.state), [a, e]);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Escape clears an active block selection to a text caret', async () => {
+  const { selectedBlockCount } = await loadRenderer(blockHandleUrl);
+  const { view, restore } = await editorViewFromBlocks([
+    paragraph('One'),
+    paragraph('Two'),
+    paragraph('Three'),
+  ]);
+  try {
+    dispatchHandleMouseDown(view, 0);
+    dispatchHandleMouseDown(view, 2, { ctrlKey: true });
+    assert.equal(selectedBlockCount(view.state), 2);
+    dispatchEditorKeyDown(view, 'Escape');
+    assert.equal(selectedBlockCount(view.state), 0);
+    assert.ok(view.state.selection instanceof TextSelection);
+    assert.equal(view.state.selection.empty, true);
+  } finally {
+    view.destroy();
+    restore();
+  }
+});
+
+test('Ctrl+Space on the grip toggles that block in the selection', async () => {
+  const { selectedBlockIds, selectedBlockCount } = await loadRenderer(blockHandleUrl);
+  const one = id(80);
+  const two = id(81);
+  const { view, restore } = await editorViewFromBlocks([
+    paragraph('One', one),
+    paragraph('Two', two),
+  ]);
+  try {
+    const grip = handleElement(view, 1).querySelector('.block-gutter-grip');
+    assert.ok(grip instanceof view.dom.ownerDocument.defaultView.HTMLElement);
+    grip.focus();
+    grip.dispatchEvent(new view.dom.ownerDocument.defaultView.KeyboardEvent('keydown', {
+      key: ' ',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    }));
+    assert.equal(selectedBlockCount(view.state), 1);
+    assert.deepEqual(selectedBlockIds(view.state), [two]);
+    grip.dispatchEvent(new view.dom.ownerDocument.defaultView.KeyboardEvent('keydown', {
+      key: ' ',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    }));
+    assert.equal(selectedBlockCount(view.state), 0);
   } finally {
     view.destroy();
     restore();
