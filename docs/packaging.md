@@ -74,8 +74,8 @@ npm run check:fuses -- dist/msix/Obelisk-Dev.msix
 ## Settings for now
 
 - [Settings (#60)](https://github.com/fillicianoplong/obelisk/issues/60) will replace this file.
-- Until then, the theme is `%APPDATA%\Obelisk\settings.json`.
-- Inside the dev MSIX that path is the redirect above: `%LOCALAPPDATA%\Packages\<package family>\LocalCache\Roaming\Obelisk\settings.json`.
+- Preferences live in `%APPDATA%\Obelisk\preferences.json`. An older `settings.json` is migrated on first launch.
+- Inside the dev MSIX that path is the redirect above: `%LOCALAPPDATA%\Packages\<package family>\LocalCache\Roaming\Obelisk\preferences.json`.
 - `<package family>` is `PackageFamilyName` from `Get-AppxPackage -Name Obelisk.Dev`.
 
 The file looks like this:

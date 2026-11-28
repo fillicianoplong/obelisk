@@ -17,7 +17,8 @@ import { readPackageIoRequest, runPackagedIoCheck } from './file/packageIo.js';
 import { removeStaleTempFiles } from './file/writeAtomic.js';
 import { readInUtilityProcess } from './codec/utility-host.js';
 import { installIpc } from './ipc/install.js';
-import { readThemeSetting, readViewSetting, readZoomSetting } from './settings.js';
+import { preferencesStore } from './preferences/store.js';
+import { applyThemeToApp } from './theme-apply.js';
 import { viewLaunchArgument, type AppDocumentView } from '../shared/document-view.js';
 import { zoomLaunchArgument, type ZoomPreset } from '../shared/zoom.js';
 import { secureWebPreferences } from './security/window-options.js';
@@ -181,12 +182,17 @@ function startApp(): void {
     return;
   }
 
-  const theme = readThemeSetting(userData);
-  const zoom = readZoomSetting(userData);
-  const view = readViewSetting(userData);
+  const store = preferencesStore(userData);
+  const theme = store.readThemeSetting();
+  const zoom = store.readZoom();
+  const view = store.readView();
   installContentsGuards();
-  const files = installIpc();
-  installThemeIpc(() => theme);
+  const files = installIpc(undefined, {
+    onThemeChanged: (next) => {
+      applyThemeToApp(nativeTheme, next, process.platform);
+    },
+  });
+  installThemeIpc(() => preferencesStore(userData).readThemeSetting());
   const coldLaunchPaths = launchPathsFromArgv(process.argv);
 
   app.on('second-instance', (_event, argv) => {

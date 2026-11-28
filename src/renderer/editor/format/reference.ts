@@ -24,21 +24,9 @@ export const DEFAULT_FONT_SIZE = DEFAULT_FONT_SIZE_PT;
 export const DEFAULT_TEXT_COLOR = '#B3261E';
 export const DEFAULT_HIGHLIGHT_COLOR = '#F3E3A1';
 
-export const BUNDLED_FONT_FAMILIES: readonly string[] = [
-  'Liberation Serif',
-  'Liberation Sans',
-  'Liberation Mono',
-  'Caladea',
-  'Carlito',
-  'DejaVu Serif',
-  'DejaVu Sans',
-  'DejaVu Sans Mono',
-  'Linux Libertine G',
-  'Linux Biolinum G',
-  'Noto Serif',
-  'Noto Sans',
-  'Dancing Script',
-];
+import { BUNDLED_FONT_FAMILIES as SHARED_BUNDLED_FONTS } from '../../../shared/fonts.js';
+
+export const BUNDLED_FONT_FAMILIES: readonly string[] = SHARED_BUNDLED_FONTS;
 
 const FONT_BY_MENU_ID: Record<string, string> = {
   'format-font-liberation-serif': 'Liberation Serif',

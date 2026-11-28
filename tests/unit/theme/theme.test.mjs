@@ -18,11 +18,11 @@ import {
   themeSourceFor,
 } from '../../../dist/shared/theme.js';
 import {
-  THEME_SETTINGS_FILE,
   readThemeSetting,
   themeSettingFromJson,
   themeSettingsPath,
 } from '../../../dist/main/settings.js';
+import { LEGACY_SETTINGS_FILE, PREFERENCES_FILE } from '../../../dist/main/preferences/constants.js';
 import { frameColorsFor, shellFrameColors } from '../../../dist/main/shell-theme.js';
 import {
   CONTRAST_CAPTION_BACKGROUND,
@@ -70,7 +70,7 @@ test('a theme setting maps to themeSource and data-theme', () => {
   assert.equal(IPC_CHANNELS.includes(THEME_CHANGED_CHANNEL), false);
 });
 
-test('settings.json is the only theme file, and a bad file means system', async () => {
+test('preferences.json holds the theme, and a bad file means system', async () => {
   assert.equal(themeSettingFromJson('{ "theme": "dark", "spelling": true }\n'), 'dark');
   assert.equal(themeSettingFromJson('\uFEFF{ "theme": "light" }'), 'light');
   assert.equal(themeSettingFromJson('{ "theme": "system" }'), 'system');
@@ -80,12 +80,13 @@ test('settings.json is the only theme file, and a bad file means system', async 
   assert.equal(themeSettingFromJson('not json'), 'system');
   assert.equal(themeSettingFromJson('[]'), 'system');
 
+  const { clearPreferencesStoreCache } = await import('../../../dist/main/preferences/store.js');
   const directory = await mkdtemp(path.join(tmpdir(), 'obelisk-theme-'));
-  assert.equal(themeSettingsPath(directory), path.join(directory, THEME_SETTINGS_FILE));
-  assert.equal(readThemeSetting(directory), 'system');
-  await writeFile(path.join(directory, THEME_SETTINGS_FILE), '{ "theme": "light" }\n');
+  assert.equal(themeSettingsPath(directory), path.join(directory, PREFERENCES_FILE));
+  await writeFile(path.join(directory, LEGACY_SETTINGS_FILE), '{ "theme": "light" }\n');
   assert.equal(readThemeSetting(directory), 'light');
-  await writeFile(path.join(directory, THEME_SETTINGS_FILE), '{');
+  await writeFile(path.join(directory, PREFERENCES_FILE), '{');
+  clearPreferencesStoreCache();
   assert.equal(readThemeSetting(directory), 'system');
 });
 

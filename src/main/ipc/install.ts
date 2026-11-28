@@ -7,14 +7,7 @@ import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '
 import { ipcError } from '../../shared/ipc/errors.js';
 import { openAllowedLink } from '../security/links.js';
 import { readClipboardItems } from '../clipboard/read.js';
-import {
-  readSpellingSetting,
-  readViewSetting,
-  readZoomSetting,
-  writeSpellingSetting,
-  writeViewSetting,
-  writeZoomSetting,
-} from '../settings.js';
+import { handlePrefsGet, handlePrefsSet, type PrefsHandlerOptions } from './prefs.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
 import { createIpcRegistry } from './registry.js';
@@ -72,7 +65,10 @@ async function confirmReplace(options: ReplacePromptOptions): Promise<boolean> {
   return result.response === 0;
 }
 
-export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof createFileService> {
+export function installIpc(
+  ipc: IpcMainLike = wrapIpcMain(),
+  prefsOptions?: Pick<PrefsHandlerOptions, 'onThemeChanged'>,
+): ReturnType<typeof createFileService> {
   const files = createFileService({
     showOpenDialog,
     showSaveDialog,
@@ -123,33 +119,12 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
   registry.setHandler('link:open', (request) => openAllowedLink(request.address, {
     openExternal: (href) => shell.openExternal(href),
   }));
-  registry.setHandler('prefs:get', (request) => {
-    if (request.key === 'spelling') {
-      return { status: 'ok', key: 'spelling', value: readSpellingSetting(userData()) };
-    }
-    if (request.key === 'zoom') {
-      return { status: 'ok', key: 'zoom', value: readZoomSetting(userData()) };
-    }
-    if (request.key === 'view') {
-      return { status: 'ok', key: 'view', value: readViewSetting(userData()) };
-    }
-    return ipcError('NOT_IMPLEMENTED', 'prefs:get is not available yet.');
-  });
-  registry.setHandler('prefs:set', (request) => {
-    if (request.key === 'spelling') {
-      writeSpellingSetting(userData(), request.value);
-      return { status: 'ok' };
-    }
-    if (request.key === 'zoom') {
-      writeZoomSetting(userData(), request.value);
-      return { status: 'ok' };
-    }
-    if (request.key === 'view') {
-      writeViewSetting(userData(), request.value);
-      return { status: 'ok' };
-    }
-    return ipcError('NOT_IMPLEMENTED', 'prefs:set is not available yet.');
-  });
+  const prefs: PrefsHandlerOptions = {
+    userData,
+    onThemeChanged: prefsOptions?.onThemeChanged,
+  };
+  registry.setHandler('prefs:get', (request) => handlePrefsGet(request, prefs));
+  registry.setHandler('prefs:set', (request) => handlePrefsSet(request, prefs));
   bindIpcHandlers(ipc, registry);
   return files;
 }
