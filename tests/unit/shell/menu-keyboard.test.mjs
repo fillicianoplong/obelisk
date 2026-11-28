@@ -215,14 +215,10 @@ test('Esc closes one level and then returns focus', async () => {
   assert.equal(parent.restoreFocus, false);
   assert.deepEqual(parent.session.panels, ['file-template']);
   assert.equal(parent.session.keyboard, true);
-  const bar = reduceMenuKey(APP_MENUS, parent.session, keydown('Escape'));
-  assert.equal(bar.restoreFocus, false);
-  assert.deepEqual(bar.session.panels, []);
-  assert.equal(bar.session.keyboard, true);
-  assert.equal(bar.session.menuId, 'file');
-  const left = reduceMenuKey(APP_MENUS, bar.session, keydown('Escape'));
-  assert.equal(left.restoreFocus, true);
-  assert.equal(left.session.keyboard, false);
+  const closedFromFile = reduceMenuKey(APP_MENUS, parent.session, keydown('Escape'));
+  assert.equal(closedFromFile.restoreFocus, true);
+  assert.equal(closedFromFile.session.keyboard, false);
+  assert.equal(closedFromFile.session.menuId, null);
 
   const direct = play(
     reduceMenuKey,

@@ -476,6 +476,70 @@ function assertKeyboardRing(state, id) {
   assert.notEqual(row.before, row.accent, JSON.stringify(row));
 }
 
+test('clicking outside closes a pointer-open menu, and hover does not open with none open', { timeout: 60_000 }, async (t) => {
+  const client = await launchMenu(t);
+  await clickPage(client);
+
+  await hoverSelector(client, '[data-menu="edit"]');
+  const noHoverOpen = await waitForMenu(
+    client,
+    (state) => state.panels.length === 0,
+    'hovering Edit leaves menus closed',
+  );
+  assert.equal(noHoverOpen.panels.length, 0);
+
+  await evaluate(client, `document.querySelector('[data-menu="file"]').click()`);
+  const opened = await waitForMenu(
+    client,
+    (state) => state.panels.some((panel) => panel.id === 'menu-panel-file'),
+    'File opens on click',
+  );
+  assert.equal(opened.panels.length, 1);
+
+  await clickPage(client);
+  await waitForMenu(client, (state) => state.panels.length === 0, 'click in the page closes File');
+
+  await evaluate(client, `document.querySelector('[data-menu="file"]').click()`);
+  await waitForMenu(
+    client,
+    (state) => state.panels.some((panel) => panel.id === 'menu-panel-file'),
+    'File reopens',
+  );
+  await hoverSelector(client, '[data-menu="edit"]');
+  const switched = await waitForMenu(
+    client,
+    (state) => state.panels.some((panel) => panel.id === 'menu-panel-edit'),
+    'hovering Edit switches while File was open',
+  );
+  assert.equal(switched.panels.length, 1);
+
+  await pressKey(client, 'Escape', 'Escape', 27);
+  await waitForMenu(
+    client,
+    (state) => state.panels.length === 0 && state.activeRegion === 'page-editor',
+    'Escape from a top menu closes and returns focus',
+  );
+});
+
+test('a pointer-open submenu still closes from a page click', { timeout: 60_000 }, async (t) => {
+  const client = await launchMenu(t);
+  await clickPage(client);
+  await evaluate(client, `document.querySelector('[data-menu="file"]').click()`);
+  await waitForMenu(
+    client,
+    (state) => state.panels.some((panel) => panel.id === 'menu-panel-file'),
+    'File is open',
+  );
+  await hoverSelector(client, '[data-item="file-export"]');
+  await waitForMenu(
+    client,
+    (state) => state.panels.some((panel) => panel.id === 'menu-panel-file-export'),
+    'Export submenu is open',
+  );
+  await clickPage(client);
+  await waitForMenu(client, (state) => state.panels.length === 0, 'page click closes the submenu');
+});
+
 test('pointer hover does not show the focus ring, and only one item stays highlighted', { timeout: 60_000 }, async (t) => {
   const client = await launchMenu(t);
   await evaluate(client, `document.querySelector('[data-menu="file"]').click()`);

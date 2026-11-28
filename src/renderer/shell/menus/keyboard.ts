@@ -291,8 +291,8 @@ function onEscape(session: MenuSession): MenuResult {
   if (session.panels.length > 1) {
     return accept({ ...session, keyboard: true, panels: session.panels.slice(0, -1) });
   }
-  if (session.panels.length === 1 && session.escToBar) {
-    return accept({ ...session, keyboard: true, panels: [] });
+  if (session.panels.length === 1) {
+    return closeSession(session, null, true);
   }
   return closeSession(session, null, true);
 }

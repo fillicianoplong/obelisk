@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.61.0] - 2026-11-28
+
+### Fixed
+
+- The menu bar closes on an outside press in the capture phase, so a click in the document or elsewhere dismisses an open menu even when the editor stops the event.
+- Escape from a top-level open menu closes it and returns focus in one press, matching Word.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added
