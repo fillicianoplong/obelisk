@@ -180,7 +180,7 @@ export const APP_MENUS: readonly AppMenu[] = [
     entries: [
       item({ id: 'file-new', label: 'New', accessKey: 'n', shortcut: 'Ctrl+N', enabled: true, command: 'new' }),
       submenu('file-template', 'New from template', 't', [
-        item({ id: 'file-template-mla', label: 'MLA', accessKey: 'm' }),
+        item({ id: 'file-template-mla', label: 'MLA', accessKey: 'm', command: 'new-mla' }),
       ]),
       item({
         id: 'file-open',

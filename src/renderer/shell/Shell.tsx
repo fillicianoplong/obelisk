@@ -39,6 +39,7 @@ import type { ClosePromptChoice } from './tabs/close.js';
 import { PAGE_LABEL, statusViewLabel } from './statusbar/model.js';
 import {
   SETTINGS_TAB_ID,
+  createMlaTab,
   createSettingsTab,
   createTab,
   documentView,
@@ -156,6 +157,14 @@ export function Shell() {
     const number = nextNumber.current;
     nextNumber.current += 1;
     const tab = createTab(number);
+    setTabs((current) => [...current, tab]);
+    setActiveId(tab.id);
+  }, []);
+
+  const addMlaTab = useCallback(() => {
+    const number = nextNumber.current;
+    nextNumber.current += 1;
+    const tab = createMlaTab(number);
     setTabs((current) => [...current, tab]);
     setActiveId(tab.id);
   }, []);
@@ -585,6 +594,10 @@ export function Shell() {
         addTab();
         return;
       }
+      if (command === 'new-mla') {
+        addMlaTab();
+        return;
+      }
       if (command === 'open') {
         openDocument();
         return;
@@ -741,7 +754,7 @@ export function Shell() {
         return;
       }
     },
-    [addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave, runZoomCommand, toggleSpelling],
+    [addMlaTab, addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave, runZoomCommand, toggleSpelling],
   );
 
   const menuContext = useMemo(() => {
