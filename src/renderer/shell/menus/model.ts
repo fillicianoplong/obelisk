@@ -213,10 +213,10 @@ export const APP_MENUS: readonly AppMenu[] = [
       separator('file-sep-2'),
       item({ id: 'file-print', label: 'Print', accessKey: 'p', shortcut: 'Ctrl+P', ellipsis: true }),
       submenu('file-export', 'Export', 'e', [
-        item({ id: 'file-export-pdf', label: 'PDF', accessKey: 'p', ellipsis: true }),
-        item({ id: 'file-export-word', label: 'Word', accessKey: 'w', ellipsis: true }),
-        item({ id: 'file-export-markdown', label: 'Markdown', accessKey: 'm', ellipsis: true }),
-      ], { shortcut: 'Ctrl+Shift+E' }),
+        item({ id: 'file-export-pdf', label: 'PDF', accessKey: 'p', ellipsis: true, command: 'export-pdf' }),
+        item({ id: 'file-export-word', label: 'Word', accessKey: 'w', ellipsis: true, command: 'export-word' }),
+        item({ id: 'file-export-markdown', label: 'Markdown', accessKey: 'm', ellipsis: true, command: 'export-markdown' }),
+      ], { shortcut: 'Ctrl+Shift+E', command: 'export' }),
       separator('file-sep-3'),
       item({
         id: 'file-close',

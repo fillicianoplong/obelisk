@@ -1,6 +1,7 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron';
 import { SpellHost } from '../spell/utility-host.js';
 import { readInUtilityProcess } from '../codec/utility-host.js';
+import { createExportService } from '../export/service.js';
 import { createFileService } from '../file/service.js';
 import { pickOpenDialogOwner, type OpenDialogOptions } from '../file/openDialog.js';
 import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '../file/saveDialog.js';
@@ -82,7 +83,16 @@ export function installIpc(ipc: IpcMainLike = wrapIpcMain()): ReturnType<typeof 
     writer: app.getVersion(),
     privateAppData: [app.getPath('userData')],
   });
-  const registry = createIpcRegistry(createAppHandlers(files));
+  const userDataPath = app.getPath('userData');
+  const exports = createExportService({
+    showExportDialog: showSaveDialog,
+    confirmReplace,
+    lookupHandle: (handle) => files.handles.lookup(handle),
+    documentsDirectory: () => app.getPath('documents'),
+    privateAppData: [userDataPath],
+    platform: process.platform,
+  });
+  const registry = createIpcRegistry(createAppHandlers(files, exports));
   const userData = () => app.getPath('userData');
   const spell = new SpellHost(userData, () => app.getAppPath());
   registry.setHandler('spell:add', async (request) => {

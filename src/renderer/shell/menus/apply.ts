@@ -74,9 +74,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'file-template-mla',
   'file-print',
-  'file-export-pdf',
-  'file-export-word',
-  'file-export-markdown',
   'insert-columns',
   'insert-table',
   'insert-image',
@@ -104,6 +101,9 @@ const SHELL_ALWAYS = new Set([
 const SHELL_DOCUMENT = new Set([
   'edit-find',
   'edit-replace',
+  'file-export-pdf',
+  'file-export-word',
+  'file-export-markdown',
 ]);
 
 export interface LiveMenuContext {
@@ -168,7 +168,10 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
 }
 
 function submenuParentEnabled(item: MenuItem, context: LiveMenuContext): boolean {
-  if (item.id === 'file-export' || item.id === 'file-template') {
+  if (item.id === 'file-export') {
+    return context.documentTab;
+  }
+  if (item.id === 'file-template') {
     return true;
   }
   if (item.id === 'block-turn-into') {

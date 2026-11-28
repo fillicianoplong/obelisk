@@ -1,4 +1,4 @@
-export type ShellShortcut = 'new' | 'open' | 'settings' | 'save' | 'save-as';
+export type ShellShortcut = 'new' | 'open' | 'settings' | 'save' | 'save-as' | 'export';
 
 export type EditShellShortcut = 'edit-find' | 'edit-replace';
 
@@ -19,6 +19,9 @@ export function shellShortcut(event: ShortcutKey): ShellShortcut | null {
   const key = event.key.toLowerCase();
   if (key === 's' && event.shiftKey) {
     return 'save-as';
+  }
+  if (key === 'e' && event.shiftKey) {
+    return 'export';
   }
   if (event.shiftKey) {
     return null;
