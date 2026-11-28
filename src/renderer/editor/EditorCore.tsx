@@ -56,7 +56,16 @@ import { AllSelection } from 'prosemirror-state';
 import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
 import { findCommands } from './find/find-plugin.js';
 import { markCloseHistoryGroup } from './history/groups.js';
-import { tableNodeViews } from '../blocks/table/view.js';
+import '../blocks/signature/signature.css';
+import { activeSignatureStore, assetFromRawBytes, setActiveSignatureTabId } from '../blocks/signature/assets.js';
+import {
+  insertSignatureAssetCommand,
+  replaceSignatureImage,
+  signatureBlockIndex,
+  updateSignatureBlock,
+} from '../blocks/signature/commands.js';
+import { parseSignaturePayload } from '../blocks/signature/document.js';
+import { structuredNodeViews } from '../blocks/signature/node-views.js';
 
 interface EditorCoreProps {
   tabId: string;
@@ -334,6 +343,57 @@ function installEditorCommands(
       });
       return applied;
     },
+    async insertSignaturePng(bytes: Uint8Array, replace = false) {
+      const asset = await assetFromRawBytes(bytes);
+      if (asset === null) {
+        return false;
+      }
+      activeSignatureStore().put(asset);
+      let applied = false;
+      runWithSynchronousEditorUpdate(() => {
+        if (replace) {
+          const blockIndex = signatureBlockIndex(view.state);
+          if (blockIndex === null) {
+            return;
+          }
+          const tr = replaceSignatureImage(view.state, blockIndex, asset);
+          if (tr !== null) {
+            dispatch(tr);
+            applied = true;
+          }
+          return;
+        }
+        applied = insertSignatureAssetCommand(asset)(view.state, dispatch, view);
+      });
+      return applied;
+    },
+    signatureLabelsDraft() {
+      const blockIndex = signatureBlockIndex(view.state);
+      if (blockIndex === null) {
+        return null;
+      }
+      const node = view.state.doc.child(blockIndex);
+      const block = parseSignaturePayload(node.attrs as Record<string, unknown>);
+      if (block === null) {
+        return null;
+      }
+      return { labels: block.labels, line: block.line };
+    },
+    applySignatureLabels(labels: string[], line: boolean) {
+      let applied = false;
+      runWithSynchronousEditorUpdate(() => {
+        const blockIndex = signatureBlockIndex(view.state);
+        if (blockIndex === null) {
+          return;
+        }
+        const tr = updateSignatureBlock(view.state, blockIndex, { labels, line });
+        if (tr !== null) {
+          dispatch(tr);
+          applied = true;
+        }
+      });
+      return applied;
+    },
     removeLink() {
       runWithSynchronousEditorUpdate(() => {
         removeLinkCommand()(view.state, dispatch);
@@ -452,6 +512,7 @@ export function EditorCore({
   }
 
   useLayoutEffect(() => {
+    setActiveSignatureTabId(tabId);
     const host = hostRef.current;
     if (host === null) {
       return undefined;
@@ -514,7 +575,7 @@ export function EditorCore({
     const wordClicks = createWordClickSession();
     const view = new EditorView(host, {
       state: viewState,
-      nodeViews: tableNodeViews(),
+      nodeViews: structuredNodeViews(),
       attributes: {
         'aria-label': DOCUMENT_LABEL,
         class: 'page-sheet',

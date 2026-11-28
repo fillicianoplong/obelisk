@@ -124,10 +124,10 @@ const DIAGRAM_OWN: readonly MenuEntry[] = [
 ];
 
 const SIGNATURE_OWN: readonly MenuEntry[] = [
-  item({ id: 'signature-change', label: 'Change signature', accessKey: 'c', ellipsis: true }),
-  item({ id: 'signature-edit-labels', label: 'Edit line and labels', accessKey: 'e', ellipsis: true }),
-  item({ id: 'signature-blank-mode', label: 'Blank mode', accessKey: 'b' }),
-  item({ id: 'signature-reset-size', label: 'Reset size', accessKey: 's' }),
+  item({ id: 'signature-change', label: 'Change signature', accessKey: 'c', ellipsis: true, command: 'signature-change' }),
+  item({ id: 'signature-edit-labels', label: 'Edit line and labels', accessKey: 'e', ellipsis: true, command: 'signature-edit-labels' }),
+  item({ id: 'signature-blank-mode', label: 'Blank mode', accessKey: 'b', command: 'signature-blank-mode' }),
+  item({ id: 'signature-reset-size', label: 'Reset size', accessKey: 's', command: 'signature-reset-size' }),
 ];
 
 const LINK_OWN: readonly MenuEntry[] = [

@@ -91,6 +91,8 @@ import './find/find-bar.css';
 import './page-setup/page-setup.css';
 import './preferences/preferences.css';
 import './export/export-dialog.css';
+import '../blocks/signature/signature-dialog.css';
+import { SignatureDialog, type SignatureDialogMode } from '../blocks/signature/SignatureDialog.js';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -98,6 +100,9 @@ function editorPageCommands(): {
   linkDraft?: () => LinkDraft | null;
   linkAddress?: () => string | null;
   applyLink?: (text: string, address: string) => boolean;
+  insertSignaturePng?: (bytes: Uint8Array, replace?: boolean) => Promise<boolean>;
+  signatureLabelsDraft?: () => { labels: string[]; line: boolean } | null;
+  applySignatureLabels?: (labels: string[], line: boolean) => boolean;
 } | null {
   const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
   if (page === null) {
@@ -108,6 +113,9 @@ function editorPageCommands(): {
       linkDraft?: () => LinkDraft | null;
       linkAddress?: () => string | null;
       applyLink?: (text: string, address: string) => boolean;
+      insertSignaturePng?: (bytes: Uint8Array, replace?: boolean) => Promise<boolean>;
+      signatureLabelsDraft?: () => { labels: string[]; line: boolean } | null;
+      applySignatureLabels?: (labels: string[], line: boolean) => boolean;
     };
   }).editorCommands;
   return commands ?? null;
@@ -122,6 +130,7 @@ export function Shell() {
   const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
   const [findBarOpen, setFindBarOpen] = useState(false);
   const [linkDialog, setLinkDialog] = useState<LinkDraft | null>(null);
+  const [signatureDialog, setSignatureDialog] = useState<SignatureDialogMode | null>(null);
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
   const [pageSetupOpen, setPageSetupOpen] = useState(false);
@@ -714,6 +723,28 @@ export function Shell() {
         setLinkDialog(draft);
         return;
       }
+      if (command === 'insert-signature' || command === 'signature-change') {
+        if (linkDialogRef.current !== null || pageSetupOpenRef.current) {
+          return;
+        }
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active === undefined || isShellTab(active)) {
+          return;
+        }
+        setSignatureDialog(command === 'insert-signature' ? 'insert' : 'change');
+        return;
+      }
+      if (command === 'signature-edit-labels') {
+        if (linkDialogRef.current !== null || pageSetupOpenRef.current) {
+          return;
+        }
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active === undefined || isShellTab(active)) {
+          return;
+        }
+        setSignatureDialog('labels');
+        return;
+      }
       if (command === 'format-header') {
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
         if (active === undefined || isShellTab(active) || documentView(active) === 'pageless') {
@@ -1000,7 +1031,17 @@ export function Shell() {
         });
         return;
       }
+      if (command === 'image-notice' && typeof detail?.address === 'string' && detail.address.length > 0) {
+        setOpenMessage(detail.address);
+        return;
+      }
       if ((command === 'insert-link' || command === 'link-edit') && linkDialogRef.current === null) {
+        onMenuCommand(command);
+      }
+      if (
+        (command === 'insert-signature' || command === 'signature-change' || command === 'signature-edit-labels')
+        && linkDialogRef.current === null
+      ) {
         onMenuCommand(command);
       }
     }
@@ -1060,6 +1101,30 @@ export function Shell() {
           }}
           onChoose={(format) => {
             void runExport(format);
+          }}
+        />
+      ) : null}
+      {signatureDialog !== null && linkDialog === null && conflict === null && closePromptTab === undefined
+        && !isShellTab(activeTab) ? (
+        <SignatureDialog
+          mode={signatureDialog}
+          initialLabels={editorPageCommands()?.signatureLabelsDraft?.()?.labels ?? []}
+          initialLine={editorPageCommands()?.signatureLabelsDraft?.()?.line ?? true}
+          onCancel={() => {
+            setSignatureDialog(null);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+          onInsert={(bytes) => {
+            const replace = signatureDialog === 'change';
+            void editorPageCommands()?.insertSignaturePng?.(bytes, replace).then(() => {
+              setSignatureDialog(null);
+              document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+            });
+          }}
+          onUpdateLabels={(labels, line) => {
+            editorPageCommands()?.applySignatureLabels?.(labels, line);
+            setSignatureDialog(null);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
           }}
         />
       ) : null}

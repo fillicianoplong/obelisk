@@ -32,6 +32,7 @@ function saveArgs(handle: string): unknown[] {
   return [{
     handle,
     document: emptyDocument(),
+    images: [],
     revision: 1,
     expectedStat: null,
     replaceConfirmed: false,

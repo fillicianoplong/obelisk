@@ -1,0 +1,37 @@
+.signature-block {
+  margin: var(--space-3, 12px) 0;
+}
+
+.signature-block-wrap {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.signature-block-figure {
+  margin: 0;
+}
+
+.signature-block-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: transparent;
+}
+
+html[data-theme='dark'] .signature-block-img {
+  filter: invert(1);
+}
+
+.signature-block-line {
+  margin-top: var(--space-1, 4px);
+  border-bottom: 1px solid var(--color-text-primary);
+}
+
+.signature-block-labels {
+  margin-top: var(--space-1, 4px);
+  font: var(--font-body-sm);
+}
+
+.signature-block-label + .signature-block-label {
+  margin-top: var(--space-1, 4px);
+}

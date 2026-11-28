@@ -9,6 +9,12 @@ import { ipcError } from '../../shared/ipc/errors.js';
 import { openAllowedLink } from '../security/links.js';
 import { readClipboardItems } from '../clipboard/read.js';
 import { handlePrefsGet, handlePrefsSet, type PrefsHandlerOptions } from './prefs.js';
+import {
+  handleSigDelete,
+  handleSigGet,
+  handleSigList,
+  handleSigSave,
+} from './sig.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
 import { createIpcRegistry } from './registry.js';
@@ -99,6 +105,10 @@ export function installIpc(
       return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
     }
   });
+  registry.setHandler('sig:list', () => handleSigList({ userData }));
+  registry.setHandler('sig:get', (request) => handleSigGet(request, { userData }));
+  registry.setHandler('sig:save', (request) => handleSigSave(request, { userData }));
+  registry.setHandler('sig:delete', (request) => handleSigDelete(request, { userData }));
   registry.setHandler('spell:check', async (request) => {
     try {
       const misspelled = await spell.check(request.words);

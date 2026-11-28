@@ -2,6 +2,7 @@ import type { Node as ProseNode } from 'prosemirror-model';
 import type { EditorState, Transaction } from 'prosemirror-state';
 import { TextSelection } from 'prosemirror-state';
 import { blockIndexAtPos } from '../block-handle-plugin.js';
+import { requestShellCommand } from '../editor-command-event.js';
 import { createTableNode } from '../../blocks/table/commands.js';
 import { defaultTableBody } from '../../blocks/table/document.js';
 import { caretInsideBlock, createTextBlockNode } from '../block-commands.js';
@@ -118,6 +119,10 @@ const EXACT_SLASH_IDS: Readonly<Record<string, string>> = {
   table: 'table',
   grid: 'table',
   tab: 'table',
+  image: 'image',
+  img: 'image',
+  picture: 'image',
+  photo: 'image',
 };
 
 function slashItemById(itemId: string): SlashMenuItem | null {
@@ -163,6 +168,8 @@ function blockRefToKind(ref: SlashMenuBlockRef): { kind: TextBlockKind; level?: 
       return { kind: 'page-break' };
     case 'table':
       return { kind: 'paragraph' };
+    case 'signature':
+      return { kind: 'paragraph' };
     default:
       return { kind: 'paragraph' };
   }
@@ -191,7 +198,12 @@ function replaceTopLevelBlock(tr: Transaction, blockIndex: number, ref: SlashMen
   return replaced.setSelection(selection);
 }
 
-export function applySlashMenuItem(state: EditorState, slashPos: number, item: SlashMenuItem): Transaction | null {
+export function applySlashMenuItem(
+  state: EditorState,
+  slashPos: number,
+  item: SlashMenuItem,
+  view?: import('prosemirror-view').EditorView,
+): Transaction | null {
   if (item.block === null) {
     if (item.command === undefined) {
       return null;
@@ -201,6 +213,14 @@ export function applySlashMenuItem(state: EditorState, slashPos: number, item: S
   }
   const head = state.selection.head;
   const tr = state.tr.delete(slashPos, head);
+  if (item.block.kind === 'signature') {
+    if (view) {
+      queueMicrotask(() => {
+        requestShellCommand('insert-signature', view.dom.ownerDocument.defaultView);
+      });
+    }
+    return tr;
+  }
   const blockIndex = blockIndexAtPos(tr.doc, slashPos);
   return replaceTopLevelBlock(tr, blockIndex, item.block, newBlockId);
 }
