@@ -110,7 +110,7 @@ async function savedPages(directory) {
   let last = '';
   while (Date.now() < deadline) {
     try {
-      last = await readFile(path.join(directory, 'settings.json'), 'utf8');
+      last = await readFile(path.join(directory, 'preferences.json'), 'utf8');
       const parsed = JSON.parse(last);
       if (parsed.view === 'pages') {
         return parsed;
@@ -120,7 +120,7 @@ async function savedPages(directory) {
     }
     await sleep(40);
   }
-  assert.fail(`settings.json did not record Pages: ${last}`);
+  assert.fail(`preferences.json did not record Pages: ${last}`);
 }
 
 test('a saved Pages or Pageless view is restored before the first paint', { timeout: 120_000 }, async (t) => {
@@ -138,7 +138,7 @@ test('a saved Pages or Pageless view is restored before the first paint', { time
     assert.equal(surface.status, 'Pageless', JSON.stringify(surface));
     assert.equal(surface.frames, 0, JSON.stringify(surface));
     assert.equal(surface.zoom, '125%', JSON.stringify(surface));
-    const kept = JSON.parse(await readFile(path.join(userDataDir, 'settings.json'), 'utf8'));
+    const kept = JSON.parse(await readFile(path.join(userDataDir, 'preferences.json'), 'utf8'));
     assert.equal(kept.theme, 'dark');
     assert.equal(kept.zoom, 125);
     assert.equal(kept.view, 'pageless');
@@ -172,7 +172,7 @@ test('a saved Pages or Pageless view is restored before the first paint', { time
     try {
       const restarted = await launchApp(again, await freePort());
       const surface = await readSurface(restarted);
-      const file = JSON.parse(await readFile(path.join(userDataDir, 'settings.json'), 'utf8'));
+      const file = JSON.parse(await readFile(path.join(userDataDir, 'preferences.json'), 'utf8'));
       assert.equal(surface.view, 'pages', JSON.stringify({ surface, file }));
       assert.equal(surface.status, 'Pages', JSON.stringify({ surface, file }));
       assert.ok(surface.frames >= 1, JSON.stringify({ surface, file }));

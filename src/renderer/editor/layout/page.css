@@ -81,6 +81,10 @@
   width: var(--page-width);
 }
 
+.shell[data-show-page-edges='false'] .page-frame {
+  box-shadow: none;
+}
+
 .page-frame {
   background: var(--color-surface-page);
   box-shadow: var(--shadow-page);

@@ -164,7 +164,7 @@ async function savedZoom(directory) {
   let last = '';
   while (Date.now() < deadline) {
     try {
-      last = await readFile(path.join(directory, 'settings.json'), 'utf8');
+      last = await readFile(path.join(directory, 'preferences.json'), 'utf8');
       const parsed = JSON.parse(last);
       if (Object.hasOwn(parsed, 'zoom')) {
         return parsed.zoom;
@@ -174,7 +174,7 @@ async function savedZoom(directory) {
     }
     await sleep(40);
   }
-  assert.fail(`settings.json did not record zoom: ${last}`);
+  assert.fail(`preferences.json did not record zoom: ${last}`);
 }
 
 test('the zoom menu, shortcuts, and wheel step through presets and keep the caret', { timeout: 90_000 }, async (t) => {
@@ -364,7 +364,7 @@ test('a saved zoom preset is restored and a non-preset falls back to 100%', { ti
     const zoom = await readZoom(client);
     assert.equal(zoom.label, '150%', 'the first paint already uses the saved zoom');
     near(zoom.frameWidth, 1224, 'restored 150% sheet');
-    const kept = JSON.parse(await readFile(path.join(userDataDir, 'settings.json'), 'utf8'));
+    const kept = JSON.parse(await readFile(path.join(userDataDir, 'preferences.json'), 'utf8'));
     assert.equal(kept.theme, 'dark');
     assert.equal(kept.zoom, 150);
   } finally {
