@@ -1,5 +1,5 @@
 import type { Node as ProseNode } from 'prosemirror-model';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey, TextSelection, type Selection } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
 import { caretLineVisible } from '../../../shared/zoom.js';
@@ -123,6 +123,11 @@ export function paginationPlugin(host: PaginationHost): Plugin<PaginationState> 
     props: {
       decorations(state) {
         return paginationKey.getState(state)?.decorations ?? DecorationSet.empty;
+      },
+      handleDOMEvents: {
+        mousedown(view, event) {
+          return handlePagePointerMousedown(view, host, event);
+        },
       },
     },
     view(editorView) {
@@ -471,4 +476,211 @@ function lineStart(view: EditorView, rect: DOMRect, fallback: number): number {
 
 export function defaultPageBox(): PageBox {
   return letterPageBox();
+}
+
+const PAGE_BLOCK_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, hr';
+
+function blockPosAtIndex(doc: ProseNode, blockIndex: number): number {
+  let pos = 0;
+  for (let index = 0; index < blockIndex; index += 1) {
+    pos += doc.child(index).nodeSize;
+  }
+  return pos;
+}
+
+function blockDomAtIndex(view: EditorView, blockIndex: number): HTMLElement | null {
+  let seen = 0;
+  for (const child of view.dom.children) {
+    if (!(child instanceof HTMLElement)) {
+      continue;
+    }
+    if (seen === blockIndex) {
+      return child;
+    }
+    seen += 1;
+  }
+  return null;
+}
+
+function frameIndexAtPointer(view: EditorView, clientX: number, clientY: number): number | null {
+  const canvas = view.dom.closest('.page-canvas');
+  if (!(canvas instanceof HTMLElement) || canvas.getAttribute('data-page-view') !== 'pages') {
+    return null;
+  }
+  const frames = canvas.querySelectorAll('.page-frame');
+  for (let index = 0; index < frames.length; index += 1) {
+    const frame = frames.item(index);
+    if (!(frame instanceof HTMLElement)) {
+      continue;
+    }
+    const rect = frame.getBoundingClientRect();
+    if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+      return index;
+    }
+  }
+  return null;
+}
+
+function pointerOverBlockContent(view: EditorView, clientX: number, clientY: number): boolean {
+  const doc = view.dom.ownerDocument;
+  const target = doc.elementFromPoint(clientX, clientY);
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  const block = target.closest(PAGE_BLOCK_SELECTOR);
+  if (block === null || !view.dom.contains(block)) {
+    return false;
+  }
+  const rect = block.getBoundingClientRect();
+  return clientX >= rect.left
+    && clientX <= rect.right
+    && clientY >= rect.top
+    && clientY <= rect.bottom;
+}
+
+function paginationUnitsForView(view: EditorView, host: PaginationHost): FlowUnit[] | null {
+  const width = Math.round(view.dom.clientWidth);
+  if (width < 1) {
+    return null;
+  }
+  const box = host.getBox();
+  const boxKey = `${box.pageWidth}:${box.pageHeight}:${box.marginTop}:${box.marginRight}:${box.marginBottom}:${box.marginLeft}:${box.gap}`;
+  const cached = caches.get(view);
+  if (
+    cached !== undefined
+    && cached.doc.eq(view.state.doc)
+    && cached.width === width
+    && cached.boxKey === boxKey
+  ) {
+    return cached.units;
+  }
+  const units = measureFlow(view);
+  caches.set(view, { doc: view.state.doc, width, boxKey, units });
+  return units;
+}
+
+function documentPageAt(view: EditorView, host: PaginationHost, pos: number): number | null {
+  const units = paginationUnitsForView(view, host);
+  if (units === null) {
+    return null;
+  }
+  const layout = paginateFlow(units, host.getBox());
+  return pageIndexAt(units, layout.unitPage, pos);
+}
+
+function blockIndicesOnPage(view: EditorView, host: PaginationHost, pageIndex: number): number[] {
+  const indices: number[] = [];
+  const { doc } = view.state;
+  for (let index = 0; index < doc.childCount; index += 1) {
+    const node = doc.child(index);
+    if (node.type.name === 'page_break') {
+      continue;
+    }
+    const innerPos = blockPosAtIndex(doc, index) + 1;
+    const page = documentPageAt(view, host, innerPos);
+    if (page === pageIndex) {
+      indices.push(index);
+    }
+  }
+  return indices;
+}
+
+function textSelectionAtBlock(view: EditorView, blockIndex: number, atEnd: boolean): Selection {
+  const { doc } = view.state;
+  const blockPos = blockPosAtIndex(doc, blockIndex);
+  const node = doc.child(blockIndex);
+  const pos = atEnd ? blockPos + node.nodeSize - 1 : blockPos + 1;
+  try {
+    const near = TextSelection.near(doc.resolve(pos), atEnd ? -1 : 1);
+    return near instanceof TextSelection ? near : TextSelection.atEnd(doc);
+  } catch {
+    return atEnd ? TextSelection.atEnd(doc) : TextSelection.atStart(doc);
+  }
+}
+
+export function pagePointerSelection(
+  view: EditorView,
+  host: PaginationHost,
+  pageIndex: number,
+  clientY: number,
+): Selection | null {
+  const indices = blockIndicesOnPage(view, host, pageIndex);
+  if (indices.length === 0) {
+    return null;
+  }
+  const lastIndex = indices[indices.length - 1];
+  const lastEl = lastIndex === undefined ? null : blockDomAtIndex(view, lastIndex);
+  if (lastEl !== null) {
+    const lastRect = lastEl.getBoundingClientRect();
+    if (clientY > lastRect.bottom + 1) {
+      return textSelectionAtBlock(view, lastIndex, true);
+    }
+  }
+  let bestIndex = indices[0] ?? 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const index of indices) {
+    const el = blockDomAtIndex(view, index);
+    if (el === null) {
+      continue;
+    }
+    const rect = el.getBoundingClientRect();
+    const centerY = (rect.top + rect.bottom) / 2;
+    const distance = Math.abs(clientY - centerY);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = index;
+    }
+  }
+  const bestEl = blockDomAtIndex(view, bestIndex);
+  const bestRect = bestEl?.getBoundingClientRect();
+  const atEnd = bestRect !== undefined && clientY >= (bestRect.top + bestRect.height) / 2;
+  return textSelectionAtBlock(view, bestIndex, atEnd);
+}
+
+function pointerResolvesAcrossPage(
+  view: EditorView,
+  host: PaginationHost,
+  pageIndex: number,
+  clientX: number,
+  clientY: number,
+): boolean {
+  try {
+    const hit = view.posAtCoords({ left: clientX, top: clientY });
+    if (hit === null) {
+      return true;
+    }
+    const hitPage = documentPageAt(view, host, hit.pos);
+    return hitPage !== null && hitPage !== pageIndex;
+  } catch {
+    return true;
+  }
+}
+
+function handlePagePointerMousedown(
+  view: EditorView,
+  host: PaginationHost,
+  event: MouseEvent,
+): boolean {
+  if (host.getMode() !== 'pages' || event.button !== 0) {
+    return false;
+  }
+  if (!(event.target instanceof Node) || !view.dom.contains(event.target)) {
+    return false;
+  }
+  const pageIndex = frameIndexAtPointer(view, event.clientX, event.clientY);
+  if (pageIndex === null) {
+    return false;
+  }
+  const overContent = pointerOverBlockContent(view, event.clientX, event.clientY);
+  const crossPage = pointerResolvesAcrossPage(view, host, pageIndex, event.clientX, event.clientY);
+  if (overContent && !crossPage) {
+    return false;
+  }
+  const selection = pagePointerSelection(view, host, pageIndex, event.clientY);
+  if (selection === null) {
+    return false;
+  }
+  view.dispatch(view.state.tr.setSelection(selection).setMeta('pointer', true));
+  event.preventDefault();
+  return true;
 }

@@ -144,6 +144,7 @@
   display: block;
   height: 0;
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .page-canvas[data-page-view='pages'] .page-break::before,

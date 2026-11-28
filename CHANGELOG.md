@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.58.0] - 2026-11-28
+
+### Fixed
+
+- In Pages view, clicking empty space on a page—including below the MLA template Title—places the caret in a block on that page instead of jumping across an inflated page break to the next page.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added
