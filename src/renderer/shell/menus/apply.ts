@@ -1,4 +1,5 @@
 import type { EditorState } from 'prosemirror-state';
+import type { PagelessWidth } from '../../../shared/pageless-width.js';
 import { editorMenuCommandEnabled } from '../../editor/menu-commands.js';
 import { DEFAULT_ZOOM, zoomFromSaved, zoomInDisabled, zoomOutDisabled } from '../../../shared/zoom.js';
 import type { AppMenu, MenuEntry, MenuItem } from './model.js';
@@ -102,6 +103,7 @@ export interface LiveMenuContext {
   editorState: EditorState | null;
   spelling?: boolean;
   documentView?: 'pages' | 'pageless';
+  pagelessWidth?: PagelessWidth;
   zoom?: number;
   bandEditing?: boolean;
 }
@@ -193,6 +195,16 @@ function applyItem(item: MenuItem, context: LiveMenuContext): MenuItem {
     const view = context.documentView === 'pageless' ? 'pageless' : 'pages';
     const checked = item.id === 'view-pageless' ? view === 'pageless' : view === 'pages';
     return { ...item, enabled: context.documentTab, checked };
+  }
+  if (item.id.startsWith('view-pageless-width-')) {
+    const width = context.pagelessWidth ?? 'medium';
+    const commandWidth = item.id.slice('view-pageless-width-'.length) as PagelessWidth;
+    const pageless = context.documentView === 'pageless';
+    return {
+      ...item,
+      enabled: context.documentTab && pageless,
+      checked: width === commandWidth,
+    };
   }
   if (item.id === 'view-zoom-in' || item.id === 'view-zoom-out' || item.id === 'view-zoom-100') {
     const zoom = zoomFromSaved(context.zoom ?? DEFAULT_ZOOM);

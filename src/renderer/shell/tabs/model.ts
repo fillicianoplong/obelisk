@@ -3,6 +3,10 @@ import type { EditorState } from 'prosemirror-state';
 import { viewFromSaved } from '../../../shared/document-view.js';
 import type { DocumentMessage, DocumentView, FileStat, JsonObject } from '../../../shared/ipc/types.js';
 import {
+  pagelessWidthFromUnknown,
+  type PagelessWidth,
+} from '../../../shared/pageless-width.js';
+import {
   defaultPageSetup,
   pageSetupFromUnknown,
   samePageSetup,
@@ -47,6 +51,8 @@ export interface PageTab {
   baseDocument: DocumentMessage;
   /** View at the last save, or Pages for a new tab. */
   savedView: DocumentView;
+  /** Pageless column width at the last save, or medium for a new tab. */
+  savedPagelessWidth: PagelessWidth;
   /** Page setup at the last save, or Normal portrait for a new tab. */
   savedPage: PageSetupValue;
   /** Header and footer at the last save. */
@@ -63,6 +69,10 @@ export function documentView(tab: Pick<PageTab, 'baseDocument'>): DocumentView {
   return tab.baseDocument.view === 'pageless' ? 'pageless' : 'pages';
 }
 
+export function documentPagelessWidth(tab: Pick<PageTab, 'baseDocument'>): PagelessWidth {
+  return pagelessWidthFromUnknown(tab.baseDocument.pagelessWidth);
+}
+
 export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
   if (isShellTab(tab) || documentView(tab) === view) {
     return tab;
@@ -70,6 +80,18 @@ export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
   return {
     ...tab,
     baseDocument: { ...tab.baseDocument, view },
+    revision: tab.revision + 1,
+  };
+}
+
+export function withPagelessWidth(tab: PageTab, width: PagelessWidth): PageTab {
+  if (isShellTab(tab) || documentPagelessWidth(tab) === width) {
+    return tab;
+  }
+  const next: DocumentMessage = { ...tab.baseDocument, pagelessWidth: width };
+  return {
+    ...tab,
+    baseDocument: next,
     revision: tab.revision + 1,
   };
 }
@@ -148,6 +170,7 @@ function tabFromDocument(
   base: { document: DocumentMessage; blockIds: string[] },
 ): PageTab {
   const view = base.document.view === 'pageless' ? 'pageless' : 'pages';
+  const pagelessWidth = pagelessWidthFromUnknown(base.document.pagelessWidth);
   const editor = createTabEditorState(editorDocFromDocument(base.document));
   const page = pageSetupFromUnknown(base.document.page);
   return {
@@ -160,6 +183,7 @@ function tabFromDocument(
     savePhase: null,
     baseDocument: base.document,
     savedView: view,
+    savedPagelessWidth: pagelessWidth,
     savedPage: page,
     savedHeader: base.document.header,
     savedFooter: base.document.footer,
@@ -181,6 +205,7 @@ export function createSettingsTab(): PageTab {
     savePhase: null,
     baseDocument: base.document,
     savedView: 'pages',
+    savedPagelessWidth: 'medium',
     savedPage: defaultPageSetup(),
     savedHeader: base.document.header,
     savedFooter: base.document.footer,
@@ -202,6 +227,7 @@ export function createAboutTab(): PageTab {
     savePhase: null,
     baseDocument: base.document,
     savedView: 'pages',
+    savedPagelessWidth: 'medium',
     savedPage: defaultPageSetup(),
     savedHeader: base.document.header,
     savedFooter: base.document.footer,
@@ -214,6 +240,9 @@ export function tabHasUnsavedChanges(tab: PageTab): boolean {
     return false;
   }
   if (documentView(tab) !== tab.savedView) {
+    return true;
+  }
+  if (documentPagelessWidth(tab) !== tab.savedPagelessWidth) {
     return true;
   }
   if (!samePageSetup(pageSetupFromUnknown(tab.baseDocument.page), tab.savedPage)) {

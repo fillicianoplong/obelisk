@@ -23,9 +23,11 @@ import {
 import type { TextBlockKind } from './schema.js';
 import { editorBlockSnapshot } from './schema/mapping.js';
 import { newBlockId } from './block-id.js';
-import { cssPixelsAt96Dpi, PAGE_HEADER_OFFSET_IN, pageZoomVars } from './layout/page.js';
+import type { PagelessWidth } from '../../shared/pageless-width.js';
+import { pagelessColumnIn } from '../../shared/pageless-width.js';
+import { cssInches, cssPixelsAt96Dpi, PAGE_HEADER_OFFSET_IN, PAGE_WIDTH_TOKEN, pageZoomVars } from './layout/page.js';
 import type { PageBox, PageMargins } from './layout/paginate.js';
-import { pageBoxFromMargins, scalePageBox } from './layout/paginate.js';
+import { pageBoxForPageless, pageBoxFromMargins, scalePageBox } from './layout/paginate.js';
 import type { PageLayoutReport, PaginationHost } from './layout/paginate-plugin.js';
 import {
   layoutPagination,
@@ -62,6 +64,7 @@ interface EditorCoreProps {
   tabId: string;
   state: EditorState;
   viewMode: 'pages' | 'pageless';
+  pagelessWidth?: PagelessWidth;
   orientation?: 'portrait' | 'landscape';
   margins: PageMargins;
   header?: JsonObject;
@@ -393,6 +396,7 @@ export function EditorCore({
   tabId,
   state,
   viewMode,
+  pagelessWidth = 'medium',
   orientation = 'portrait',
   margins,
   header,
@@ -410,6 +414,7 @@ export function EditorCore({
   const onChangeRef = useRef(onChange);
   const onPageLabelRef = useRef(onPageLabel);
   const viewModeRef = useRef(viewMode);
+  const pagelessWidthRef = useRef(pagelessWidth);
   const orientationRef = useRef(orientation);
   const marginsRef = useRef(margins);
   const zoomRef = useRef(zoom);
@@ -419,6 +424,7 @@ export function EditorCore({
   onChangeRef.current = onChange;
   onPageLabelRef.current = onPageLabel;
   viewModeRef.current = viewMode;
+  pagelessWidthRef.current = pagelessWidth;
   orientationRef.current = orientation;
   marginsRef.current = margins;
   zoomRef.current = zoom;
@@ -436,6 +442,12 @@ export function EditorCore({
       getMode: () => viewModeRef.current,
       getBox: () => {
         const current = marginsRef.current;
+        if (viewModeRef.current === 'pageless') {
+          return scalePageBox(pageBoxForPageless(pagelessWidthRef.current, {
+            top: current.top,
+            bottom: current.bottom,
+          }, orientationRef.current), zoomRef.current);
+        }
         return scalePageBox(pageBoxFromMargins({
           top: reservedMarginIn(current.top, bandPxRef.current.header, zoomRef.current),
           right: current.right,
@@ -736,7 +748,7 @@ export function EditorCore({
         region.removeAttribute('data-focus-source');
       }
     }
-  }, [viewMode, zoom, orientation, margins.top, margins.right, margins.bottom, margins.left, bandPx.header, bandPx.footer]);
+  }, [viewMode, pagelessWidth, zoom, orientation, margins.top, margins.right, margins.bottom, margins.left, bandPx.header, bandPx.footer]);
 
   useLayoutEffect(() => {
     const canvas = hostRef.current?.closest('.page-canvas');
@@ -770,8 +782,19 @@ export function EditorCore({
     bottom: reservedMarginIn(margins.bottom, bandPx.footer, zoom),
     left: margins.left,
   };
-  const box: PageBox = scalePageBox(pageBoxFromMargins(bodyMargins, orientation), zoom);
-  const zoomStyle = pageZoomVars(zoom, orientation) as CSSProperties | undefined;
+  const box: PageBox = viewMode === 'pageless'
+    ? scalePageBox(pageBoxForPageless(pagelessWidth, {
+        top: margins.top,
+        bottom: margins.bottom,
+      }, orientation), zoom)
+    : scalePageBox(pageBoxFromMargins(bodyMargins, orientation), zoom);
+  const pagelessColumnStyle = viewMode === 'pageless'
+    ? { [PAGE_WIDTH_TOKEN]: cssInches(pagelessColumnIn(pagelessWidth)) }
+    : undefined;
+  const zoomStyle = {
+    ...pageZoomVars(zoom, orientation),
+    ...pagelessColumnStyle,
+  } as CSSProperties | undefined;
   const headerOffset = cssPixelsAt96Dpi(PAGE_HEADER_OFFSET_IN) * (zoom / 100);
   const frames = viewMode === 'pages'
     ? Array.from({ length: pageCount }, (_, index) => index)
@@ -781,6 +804,7 @@ export function EditorCore({
     <div
       className="page-canvas"
       data-page-view={viewMode}
+      data-pageless-width={viewMode === 'pageless' ? pagelessWidth : undefined}
       data-page-orientation={orientation}
       data-band-editing={bandEdit !== null ? 'true' : undefined}
       style={zoomStyle}

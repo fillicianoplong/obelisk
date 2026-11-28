@@ -99,6 +99,9 @@
   --page-margin: 1in;
   --page-header-offset: 0.5in;
   --page-gap: 24px;
+  --pageless-width-narrow: 5in;
+  --pageless-width-medium: 6.5in;
+  --pageless-width-wide: 7.5in;
 
   /* Motion (Fluent-like) */
   --duration-instant: 0ms;

@@ -26,6 +26,9 @@ export const documentSchema: JsonSchema = {
             "pageless"
           ]
         },
+        "pagelessWidth": {
+          "$ref": "#/$defs/pagelessWidth"
+        },
         "page": {
           "$ref": "#/$defs/pageSetup"
         },
@@ -43,6 +46,14 @@ export const documentSchema: JsonSchema = {
           }
         }
       }
+    },
+    "pagelessWidth": {
+      "title": "PagelessWidth",
+      "enum": [
+        "narrow",
+        "medium",
+        "wide"
+      ]
     },
     "pageSetup": {
       "title": "PageSetup",

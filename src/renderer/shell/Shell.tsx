@@ -54,11 +54,13 @@ import {
   createSettingsTab,
   isShellTab,
   createTab,
+  documentPagelessWidth,
   documentView,
   rememberDocumentView,
   tabHasUnsavedChanges,
   withBand,
   withDocumentView,
+  withPagelessWidth,
   withPageSetup,
 } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
@@ -826,6 +828,34 @@ export function Shell() {
         });
         return;
       }
+      if (command.startsWith('view-pageless-width-')) {
+        const nextWidth = command.slice('view-pageless-width-'.length);
+        if (nextWidth !== 'narrow' && nextWidth !== 'medium' && nextWidth !== 'wide') {
+          return;
+        }
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active === undefined || isShellTab(active) || documentView(active) !== 'pageless') {
+          return;
+        }
+        if (documentPagelessWidth(active) === nextWidth) {
+          return;
+        }
+        setTabs((current) => {
+          const next = current.map((tab) => {
+            if (tab.id !== active.id) {
+              return tab;
+            }
+            const updated = withPagelessWidth(tab, nextWidth);
+            if (updated !== tab) {
+              syncTabAutosave(autosaveScheduler.current, updated);
+            }
+            return updated;
+          });
+          tabsRef.current = next;
+          return next;
+        });
+        return;
+      }
       if (runActiveEditorMenuCommand(command)) {
         return;
       }
@@ -843,6 +873,7 @@ export function Shell() {
       editorState: editorState ?? null,
       spelling: spellingOn,
       documentView: documentTab ? documentView(activeTab) : 'pages',
+      pagelessWidth: documentTab ? documentPagelessWidth(activeTab) : 'medium',
       zoom,
       bandEditing: documentTab && documentView(activeTab) === 'pages' && bandEdit !== null,
     };
@@ -1102,6 +1133,7 @@ export function Shell() {
         kind={activeTab.kind}
         state={activeTab.editor}
         viewMode={documentView(activeTab)}
+        pagelessWidth={documentPagelessWidth(activeTab)}
         orientation={pageSetupFromUnknown(activeTab.baseDocument.page).orientation}
         margins={pageSetupFromUnknown(activeTab.baseDocument.page).margins}
         header={activeTab.baseDocument.header}

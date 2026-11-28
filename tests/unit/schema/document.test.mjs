@@ -224,6 +224,14 @@ test('a valid format 1 document passes', () => {
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.equal(result.value.view, view);
   }
+  for (const width of ['narrow', 'medium', 'wide']) {
+    const doc = minimal('pageless');
+    doc.pagelessWidth = width;
+    assert.equal(checkDocument(doc).ok, true, width);
+  }
+  const invalidWidth = minimal('pageless');
+  invalidWidth.pagelessWidth = 'full';
+  assert.equal(checkDocument(invalidWidth).ok, false);
   const wide = minimal();
   wide.page.margins = margins(3);
   assert.equal(checkDocument(wide).ok, true);

@@ -75,6 +75,13 @@ export const COLUMN_GAP_IN = 0.25;
 export const COLUMN_SHARE_SUM_TOLERANCE = 0.001;
 
 export const DOCUMENT_VIEWS = ['pages', 'pageless'] as const;
+export const PAGELESS_WIDTHS = ['narrow', 'medium', 'wide'] as const;
+export const DEFAULT_PAGELESS_WIDTH = 'medium';
+export const PAGELESS_COLUMN_IN = {
+  narrow: 5,
+  medium: 6.5,
+  wide: 7.5,
+} as const;
 export const ORIENTATIONS = ['portrait', 'landscape'] as const;
 export const ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
 export const LINE_SPACINGS = ['single', '1.15', '1.5', 'double'] as const;

@@ -337,6 +337,28 @@ export const APP_MENUS: readonly AppMenu[] = [
     entries: [
       item({ id: 'view-pages', label: 'Pages', accessKey: 'p', command: 'view-pages', radio: true }),
       item({ id: 'view-pageless', label: 'Pageless', accessKey: 'g', command: 'view-pageless', radio: true }),
+      separator('view-pageless-width-sep'),
+      item({
+        id: 'view-pageless-width-narrow',
+        label: 'Narrow',
+        accessKey: 'a',
+        command: 'view-pageless-width-narrow',
+        radio: true,
+      }),
+      item({
+        id: 'view-pageless-width-medium',
+        label: 'Medium',
+        accessKey: 'e',
+        command: 'view-pageless-width-medium',
+        radio: true,
+      }),
+      item({
+        id: 'view-pageless-width-wide',
+        label: 'Wide',
+        accessKey: 'w',
+        command: 'view-pageless-width-wide',
+        radio: true,
+      }),
       separator('view-sep-1'),
       item({ id: 'view-zoom-in', label: 'Zoom in', accessKey: 'i', shortcut: 'Ctrl++', command: 'view-zoom-in' }),
       item({ id: 'view-zoom-out', label: 'Zoom out', accessKey: 'o', accessOccurrence: 2, shortcut: 'Ctrl+-', command: 'view-zoom-out' }),

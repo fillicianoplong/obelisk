@@ -293,7 +293,7 @@ test('Pages view flows text onto Letter sheets and Pageless switches from the Vi
     assert.equal(chrome.unsaved, 'true');
     assert.equal(chrome.regionColor, chrome.pagelessColor);
     assert.equal(chrome.tabColor, chrome.pagelessColor);
-    near(chrome.sheetWidth, 816, 'pageless column');
+    near(chrome.sheetWidth, 624, 'pageless column');
     assert.equal(chrome.zoom, '100%');
 
     await clickMenu(client, 'View');

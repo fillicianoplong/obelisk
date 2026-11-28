@@ -1,3 +1,5 @@
+import type { PagelessWidth } from '../../../shared/pageless-width.js';
+import { pagelessColumnIn } from '../../../shared/pageless-width.js';
 import {
   CSS_PX_PER_INCH,
   PAGE_GAP_PX,
@@ -64,6 +66,24 @@ export function letterPageBox(margins?: Partial<PageMargins>): PageBox {
     marginRight: margins?.right ?? margin,
     marginBottom: margins?.bottom ?? margin,
     marginLeft: margins?.left ?? margin,
+    gap: PAGE_GAP_PX,
+  };
+}
+
+export function pageBoxForPageless(
+  width: PagelessWidth,
+  verticalMargins: Pick<PageMargins, 'top' | 'bottom'>,
+  orientation: 'portrait' | 'landscape' = 'portrait',
+): PageBox {
+  const columnIn = pagelessColumnIn(width);
+  const landscape = orientation === 'landscape';
+  return {
+    pageWidth: cssPixelsAt96Dpi(columnIn),
+    pageHeight: cssPixelsAt96Dpi(landscape ? PAGE_WIDTH_IN : PAGE_HEIGHT_IN),
+    marginTop: cssPixelsAt96Dpi(verticalMargins.top),
+    marginRight: 0,
+    marginBottom: cssPixelsAt96Dpi(verticalMargins.bottom),
+    marginLeft: 0,
     gap: PAGE_GAP_PX,
   };
 }

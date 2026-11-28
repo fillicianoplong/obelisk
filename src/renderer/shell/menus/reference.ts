@@ -34,7 +34,7 @@ export const MENU_REFERENCE_BY_MENU: Readonly<Record<string, readonly string[]>>
     'Find',
     'Replace',
   ],
-  View: ['Pages', 'Pageless', 'Zoom in', 'Zoom out', 'Zoom to 100%'],
+  View: ['Pages', 'Pageless', 'Narrow', 'Medium', 'Wide', 'Zoom in', 'Zoom out', 'Zoom to 100%'],
   Insert: [
     'Text',
     'Heading 1',

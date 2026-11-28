@@ -281,9 +281,15 @@ function applySheetBox(view: EditorView, mode: 'pages' | 'pageless', box: PageBo
   const canvas = sheet.closest('.page-canvas');
   if (canvas instanceof HTMLElement) {
     canvas.style.setProperty('--page-pad-top', `${box.marginTop}px`);
-    canvas.style.setProperty('--page-pad-right', `${box.marginRight}px`);
+    canvas.style.setProperty(
+      '--page-pad-right',
+      mode === 'pageless' ? '0px' : `${box.marginRight}px`,
+    );
     canvas.style.setProperty('--page-pad-bottom', `${box.marginBottom}px`);
-    canvas.style.setProperty('--page-pad-left', `${box.marginLeft}px`);
+    canvas.style.setProperty(
+      '--page-pad-left',
+      mode === 'pageless' ? '0px' : `${box.marginLeft}px`,
+    );
     if (mode === 'pages') {
       canvas.style.setProperty('--page-stack-height', `${sheetStackHeight(pageCount, box)}px`);
     } else {

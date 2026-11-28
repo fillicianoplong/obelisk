@@ -416,14 +416,18 @@ export function documentFromEditorDoc(
   if (unchanged) {
     return { document: base, blockIds: blockIdsFromDocument(base), unchanged: true };
   }
+  const document: DocumentMessage = {
+    view: base.view,
+    page: base.page,
+    header: base.header,
+    footer: base.footer,
+    blocks,
+  };
+  if (base.pagelessWidth !== undefined) {
+    document.pagelessWidth = base.pagelessWidth;
+  }
   return {
-    document: {
-      view: base.view,
-      page: base.page,
-      header: base.header,
-      footer: base.footer,
-      blocks,
-    },
+    document,
     blockIds: ids,
     unchanged: false,
   };

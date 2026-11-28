@@ -333,11 +333,28 @@ function parseJsonObject(value: unknown): JsonObject | null {
   return parsedJson.value;
 }
 
+const DOCUMENT_KEYS = ['view', 'page', 'header', 'footer', 'blocks'] as const;
+const DOCUMENT_OPTIONAL_KEYS = ['pagelessWidth'] as const;
+const PAGELESS_WIDTH_SET = new Set(['narrow', 'medium', 'wide']);
+
+function hasDocumentKeys(value: Record<string, unknown>): boolean {
+  const present = Object.keys(value);
+  if (!DOCUMENT_KEYS.every((key) => Object.hasOwn(value, key))) {
+    return false;
+  }
+  return present.every((key) =>
+    (DOCUMENT_KEYS as readonly string[]).includes(key)
+    || (DOCUMENT_OPTIONAL_KEYS as readonly string[]).includes(key));
+}
+
 function parseDocument(value: unknown): DocumentMessage | null {
-  if (!isPlainRecord(value) || !hasExactKeys(value, ['view', 'page', 'header', 'footer', 'blocks'])) {
+  if (!isPlainRecord(value) || !hasDocumentKeys(value)) {
     return null;
   }
   if (value.view !== 'pages' && value.view !== 'pageless') {
+    return null;
+  }
+  if (value.pagelessWidth !== undefined && !PAGELESS_WIDTH_SET.has(String(value.pagelessWidth))) {
     return null;
   }
   const page = parseJsonObject(value.page);
@@ -354,7 +371,11 @@ function parseDocument(value: unknown): DocumentMessage | null {
     }
     blocks.push(parsedBlock);
   }
-  return { view: value.view, page, header, footer, blocks };
+  const document: DocumentMessage = { view: value.view, page, header, footer, blocks };
+  if (value.pagelessWidth !== undefined) {
+    document.pagelessWidth = value.pagelessWidth as DocumentMessage['pagelessWidth'];
+  }
+  return document;
 }
 
 function parseStringArray(value: unknown, maxChars: number | null): string[] | null {

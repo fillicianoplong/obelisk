@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.53.0] - 2026-11-28
+
+### Added
+
+- View > Narrow, Medium, and Wide set the Pageless body column width. The choice is stored in the document file, stays when I switch to Pages and back, and does not follow page margin changes.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

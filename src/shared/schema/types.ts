@@ -2,11 +2,14 @@
 
 export interface Document {
   view: "pages" | "pageless";
+  pagelessWidth?: PagelessWidth;
   page: PageSetup;
   header: HeaderParagraph;
   footer: HeaderParagraph;
   blocks: Block[];
 }
+
+export type PagelessWidth = "narrow" | "medium" | "wide";
 
 export interface PageSetup {
   paper: "letter";

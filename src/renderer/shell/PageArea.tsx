@@ -4,6 +4,7 @@ import type { JsonObject } from '../../shared/ipc/types.js';
 import { EditorCore } from '../editor/EditorCore.js';
 import type { BandEdit } from '../editor/header/PageBands.js';
 import type { PageMargins } from '../editor/layout/paginate.js';
+import type { PagelessWidth } from '../../shared/pageless-width.js';
 import { AboutView } from './about/AboutView.js';
 import { DOCUMENT_LABEL } from './focus/regions.js';
 import type { ZoomPreset } from '../../shared/zoom.js';
@@ -14,6 +15,7 @@ interface PageAreaProps {
   kind?: 'document' | 'settings' | 'about';
   state: EditorState;
   viewMode: 'pages' | 'pageless';
+  pagelessWidth?: PagelessWidth;
   orientation?: 'portrait' | 'landscape';
   margins: PageMargins;
   header?: JsonObject;
@@ -36,6 +38,7 @@ export function PageArea({
   kind = 'document',
   state,
   viewMode,
+  pagelessWidth = 'medium',
   orientation = 'portrait',
   margins,
   header,
@@ -97,6 +100,7 @@ export function PageArea({
       <div
         className="page-region"
         data-page-view={viewMode}
+        data-pageless-width={viewMode === 'pageless' ? pagelessWidth : undefined}
         style={{ '--page-zoom': String(zoom / 100) } as CSSProperties}
       >
         <EditorCore
@@ -104,6 +108,7 @@ export function PageArea({
           tabId={tabId}
           state={state}
           viewMode={viewMode}
+          pagelessWidth={pagelessWidth}
           orientation={orientation}
           margins={margins}
           header={header}

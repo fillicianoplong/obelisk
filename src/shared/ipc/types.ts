@@ -35,8 +35,11 @@ export interface JsonObject {
   [key: string]: JsonValue;
 }
 
+export type PagelessWidthPreference = 'narrow' | 'medium' | 'wide';
+
 export interface DocumentMessage {
   view: DocumentView;
+  pagelessWidth?: PagelessWidthPreference;
   page: JsonObject;
   header: JsonObject;
   footer: JsonObject;

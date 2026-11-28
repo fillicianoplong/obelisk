@@ -128,10 +128,13 @@ test('each limit matches the File format reference and the schema', async () => 
   assert.equal(limits.FORMAT_NAME, 'obelisk');
   assert.equal(limits.FORMAT_VERSION, 1);
   assert.deepEqual(limits.DOCUMENT_VIEWS, ['pages', 'pageless']);
+  assert.deepEqual(limits.PAGELESS_WIDTHS, ['narrow', 'medium', 'wide']);
+  assert.equal(limits.DEFAULT_PAGELESS_WIDTH, 'medium');
 
   const defs = documentSchema.$defs;
   assert.equal(defs.document.properties.blocks.maxItems, limits.BLOCK_MAX);
   assert.deepEqual(defs.document.properties.view.enum, [...limits.DOCUMENT_VIEWS]);
+  assert.deepEqual(defs.pagelessWidth.enum, [...limits.PAGELESS_WIDTHS]);
   assert.equal(defs.pageSetup.properties.paper.const, limits.PAPER_LETTER);
   assert.equal(defs.marginInches.minimum, limits.MARGIN_MIN_IN);
   assert.equal(defs.marginInches.maximum, limits.MARGIN_MAX_IN);

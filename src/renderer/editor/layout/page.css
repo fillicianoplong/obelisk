@@ -17,8 +17,13 @@
 }
 
 .page-canvas[data-page-view='pageless'] {
+  align-items: center;
   background: var(--color-surface-pageless);
   min-height: 100%;
+}
+
+.page-canvas[data-page-view='pageless'] .editor-host {
+  width: var(--page-width);
 }
 
 /* Sheets sit behind the one editor. The gap between them is the canvas.
