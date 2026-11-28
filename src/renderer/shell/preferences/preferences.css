@@ -1,0 +1,111 @@
+.preferences-panel {
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  margin-inline: auto;
+  max-width: 32rem;
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+}
+
+.preferences-title {
+  color: var(--color-text-heading);
+  font-family: var(--font-ui-display);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-title);
+  margin: 0 0 var(--space-lg);
+}
+
+.preferences-hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  margin: 0;
+}
+
+.preferences-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.preferences-fieldset {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.preferences-legend {
+  color: var(--color-text-heading);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-xs);
+  padding: 0;
+}
+
+.preferences-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.preferences-option {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-xs);
+  min-height: var(--size-control-height);
+}
+
+.preferences-option input {
+  accent-color: var(--color-accent);
+}
+
+.preferences-row {
+  align-items: center;
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: 1fr minmax(8rem, auto);
+}
+
+.preferences-label {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body);
+}
+
+.preferences-select {
+  background: var(--color-control-fill);
+  border: var(--size-focus-ring) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  min-height: var(--size-control-height);
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.preferences-select:focus-visible {
+  outline: var(--size-focus-ring) solid var(--color-focus-outer);
+  outline-offset: calc(var(--size-focus-ring) * -1);
+}
+
+.preferences-toggle {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: var(--space-xs);
+  justify-self: end;
+  min-height: var(--size-control-height);
+}
+
+.preferences-toggle input {
+  accent-color: var(--color-accent);
+}
+
+@media (forced-colors: active) {
+  .preferences-select:focus-visible {
+    outline: var(--size-focus-ring) solid Highlight;
+    outline-offset: calc(var(--size-focus-ring) * -1);
+  }
+}

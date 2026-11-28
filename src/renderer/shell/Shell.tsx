@@ -76,6 +76,7 @@ import { syncTabAutosave } from '../autosave/sync.js';
 import './shell.css';
 import './find/find-bar.css';
 import './page-setup/page-setup.css';
+import './preferences/preferences.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -116,6 +117,7 @@ export function Shell() {
   const pageSetupOpenRef = useRef(pageSetupOpen);
   pageSetupOpenRef.current = pageSetupOpen;
   const [spellingOn, setSpellingOn] = useState(true);
+  const [showPageEdges, setShowPageEdges] = useState(true);
   const [zoom, setZoom] = useState<ZoomPreset>(() => zoomFromSaved(window.obeliskZoom));
   const [pageLabel, setPageLabel] = useState(PAGE_LABEL);
   const nextNumber = useRef(1);
@@ -527,12 +529,20 @@ export function Shell() {
   useEffect(() => {
     startSpellContextListener();
     let current = true;
-    void window.obelisk['prefs:get']({ key: 'spelling' }).then((result) => {
-      if (!current || result.status !== 'ok' || result.key !== 'spelling') {
+    void Promise.all([
+      window.obelisk['prefs:get']({ key: 'spelling' }),
+      window.obelisk['prefs:get']({ key: 'showPageEdges' }),
+    ]).then(([spelling, edges]) => {
+      if (!current) {
         return;
       }
-      setSpellingOn(result.value);
-      setSpellcheckEnabled(result.value);
+      if (spelling.status === 'ok' && spelling.key === 'spelling') {
+        setSpellingOn(spelling.value);
+        setSpellcheckEnabled(spelling.value);
+      }
+      if (edges.status === 'ok' && edges.key === 'showPageEdges') {
+        setShowPageEdges(edges.value);
+      }
     }).catch(() => {
       // Spell check stays on when settings cannot be read.
     });
@@ -922,7 +932,7 @@ export function Shell() {
   }
 
   return (
-    <div className="shell">
+    <div className="shell" data-show-page-edges={showPageEdges ? 'true' : 'false'}>
       <ThemeSync />
       <FocusCycle />
       <TitleBar />
@@ -1040,6 +1050,11 @@ export function Shell() {
               ? null
               : { ...current, part: current.part === 'header' ? 'footer' : 'header' }
           ));
+        }}
+        onShowPageEdgesChange={setShowPageEdges}
+        onSpellingPrefChange={(enabled) => {
+          setSpellingOn(enabled);
+          setSpellcheckEnabled(enabled);
         }}
         find={activeTab.kind === 'settings' ? null : (
           <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />

@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.50.0] - 2026-11-27
+
+### Added
+
+- Tools > Settings opens a real preferences tab: theme, spelling, default font and size, restore tabs on launch, and show page edges in Pages view.
+- App data keeps `preferences.json` with validation, defaults, migration from the old `settings.json`, and atomic writes. Corrupt values fall back without deleting the file.
+
 ## [0.1.47.5] - 2026-11-26
 
 ### Fixed

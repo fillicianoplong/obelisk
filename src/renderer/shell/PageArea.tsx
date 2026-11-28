@@ -6,6 +6,7 @@ import type { BandEdit } from '../editor/header/PageBands.js';
 import type { PageMargins } from '../editor/layout/paginate.js';
 import { DOCUMENT_LABEL } from './focus/regions.js';
 import type { ZoomPreset } from '../../shared/zoom.js';
+import { PreferencesPanel } from './preferences/PreferencesPanel.js';
 
 interface PageAreaProps {
   tabId: string;
@@ -25,6 +26,8 @@ interface PageAreaProps {
   onBandChange?: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onBandMove?: (direction: 1 | -1) => void;
   find?: ReactNode;
+  onShowPageEdgesChange?: (enabled: boolean) => void;
+  onSpellingPrefChange?: (enabled: boolean) => void;
 }
 
 export function PageArea({
@@ -45,6 +48,8 @@ export function PageArea({
   onBandChange,
   onBandMove,
   find = null,
+  onShowPageEdgesChange,
+  onSpellingPrefChange,
 }: PageAreaProps) {
   if (kind === 'settings') {
     return (
@@ -57,7 +62,10 @@ export function PageArea({
         aria-label={DOCUMENT_LABEL}
         tabIndex={-1}
       >
-        <h1 className="settings-title">Settings</h1>
+        <PreferencesPanel
+          onShowPageEdgesChange={onShowPageEdgesChange}
+          onSpellingChange={onSpellingPrefChange}
+        />
       </section>
     );
   }

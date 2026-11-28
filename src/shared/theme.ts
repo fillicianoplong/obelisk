@@ -9,6 +9,9 @@ export const DEFAULT_THEME_SETTING: ThemeSetting = 'system';
 const THEME_SETTING_SET: ReadonlySet<string> = new Set(THEME_SETTINGS);
 
 export function parseThemeSetting(value: unknown): ThemeSetting {
+  if (typeof value === 'string' && value === 'match-windows') {
+    return 'system';
+  }
   if (typeof value === 'string' && THEME_SETTING_SET.has(value)) {
     return value as ThemeSetting;
   }

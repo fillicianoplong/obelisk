@@ -1,16 +1,14 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { preferencesStore, LEGACY_SETTINGS_FILE, preferencesFilePath } from './preferences/index.js';
 import { parseThemeSetting, type ThemeSetting } from '../shared/theme.js';
 import { viewFromSaved, type AppDocumentView } from '../shared/document-view.js';
 import { zoomFromSaved, type ZoomPreset } from '../shared/zoom.js';
+import { themeSettingFromStoredTheme } from './preferences/theme-pref.js';
 
-// The file is <userData>/settings.json.
-// Theme values are "light", "dark", and "system". Anything else, including
-// a missing file, is Match Windows. Spell check is on unless the file says false.
-export const THEME_SETTINGS_FILE = 'settings.json';
+// Legacy name kept for tests that still mention settings.json paths.
+export const THEME_SETTINGS_FILE = LEGACY_SETTINGS_FILE;
 
 export function themeSettingsPath(userDataDir: string): string {
-  return path.join(userDataDir, THEME_SETTINGS_FILE);
+  return preferencesFilePath(userDataDir);
 }
 
 export function themeSettingFromJson(text: string): ThemeSetting {
@@ -28,78 +26,33 @@ export function themeSettingFromJson(text: string): ThemeSetting {
   if (!Object.hasOwn(record, 'theme')) {
     return parseThemeSetting(undefined);
   }
-  return parseThemeSetting(record.theme);
+  return themeSettingFromStoredTheme(record.theme);
 }
 
 export function readThemeSetting(userDataDir: string): ThemeSetting {
-  try {
-    return themeSettingFromJson(fs.readFileSync(themeSettingsPath(userDataDir), 'utf8'));
-  } catch {
-    return parseThemeSetting(undefined);
-  }
-}
-
-function readSettingsObject(userDataDir: string): Record<string, unknown> {
-  try {
-    const text = fs.readFileSync(themeSettingsPath(userDataDir), 'utf8');
-    const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-    const parsed: unknown = JSON.parse(source);
-    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-      return { ...(parsed as Record<string, unknown>) };
-    }
-  } catch {
-    // A missing or unreadable file keeps the defaults.
-  }
-  return {};
+  return preferencesStore(userDataDir).readThemeSetting();
 }
 
 export function readSpellingSetting(userDataDir: string): boolean {
-  const record = readSettingsObject(userDataDir);
-  if (!Object.hasOwn(record, 'spelling')) {
-    return true;
-  }
-  return record.spelling !== false;
+  return preferencesStore(userDataDir).readSpelling();
 }
 
-export function writeSpellingSetting(userDataDir: string, enabled: boolean): void {
-  const record = readSettingsObject(userDataDir);
-  record.spelling = enabled;
-  writeSettingsObject(userDataDir, record);
+export async function writeSpellingSetting(userDataDir: string, enabled: boolean): Promise<void> {
+  await preferencesStore(userDataDir).applyEntry({ key: 'spelling', value: enabled });
 }
 
-// Zoom is one value for the whole app. It is not stored in the document.
-// A missing file, a missing key, or a value that is not a preset is 100%.
 export function readZoomSetting(userDataDir: string): ZoomPreset {
-  const record = readSettingsObject(userDataDir);
-  if (!Object.hasOwn(record, 'zoom')) {
-    return zoomFromSaved(undefined);
-  }
-  return zoomFromSaved(record.zoom);
+  return preferencesStore(userDataDir).readZoom();
 }
 
-export function writeZoomSetting(userDataDir: string, zoom: number): void {
-  const record = readSettingsObject(userDataDir);
-  record.zoom = zoomFromSaved(zoom);
-  writeSettingsObject(userDataDir, record);
+export async function writeZoomSetting(userDataDir: string, zoom: number): Promise<void> {
+  await preferencesStore(userDataDir).applyEntry({ key: 'zoom', value: zoomFromSaved(zoom) });
 }
 
-// Pages or Pageless is one value for the whole app. A new document starts there.
-// A missing file, a missing key, or any other value is Pages.
 export function readViewSetting(userDataDir: string): AppDocumentView {
-  const record = readSettingsObject(userDataDir);
-  if (!Object.hasOwn(record, 'view')) {
-    return viewFromSaved(undefined);
-  }
-  return viewFromSaved(record.view);
+  return preferencesStore(userDataDir).readView();
 }
 
-export function writeViewSetting(userDataDir: string, view: string): void {
-  const record = readSettingsObject(userDataDir);
-  record.view = viewFromSaved(view);
-  writeSettingsObject(userDataDir, record);
-}
-
-function writeSettingsObject(userDataDir: string, record: Record<string, unknown>): void {
-  fs.mkdirSync(userDataDir, { recursive: true });
-  fs.writeFileSync(themeSettingsPath(userDataDir), `${JSON.stringify(record)}\n`, 'utf8');
+export async function writeViewSetting(userDataDir: string, view: string): Promise<void> {
+  await preferencesStore(userDataDir).applyEntry({ key: 'view', value: viewFromSaved(view) });
 }
