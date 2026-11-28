@@ -273,7 +273,7 @@ Spike S-05 also tried an existing `.obk` name with a Word `.docx` filter. Window
 | `sig:get` | R to M | Signature ID | ok with the PNG; unavailable; notFound |
 | `sig:save` | R to M | Name, PNG | ok with the new ID; unavailable; limitReached; refused with reason; error |
 | `sig:delete` | R to M | Signature ID | ok; notFound |
-| `recovery:put` | R to M | Recovery ID or none, document, first line | ok with the recovery ID; error |
+| `recovery:put` | R to M | Recovery ID or none, document, first line, and images[] | ok with the recovery ID; error |
 | `recovery:list` | R to M | None | IDs, first lines, and times, from the metadata records only |
 | `recovery:restore` | R to M | Recovery ID | file:open results, as a never-saved tab; refused offers Discard only |
 | `recovery:drop` | R to M | Recovery ID | ok; notFound |
@@ -282,7 +282,8 @@ Spike S-05 also tried an existing `.obk` name with a Word `.docx` filter. Window
 | `spell:check` | R to M | Words | ok with the misspelled words from the bundled dictionary |
 | `spell:suggest` | R to M | Word | ok with whether it is misspelled and up to five suggestions |
 | `spell:context` | M to R | Misspelled word and its suggestions from the context-menu event. The text menu waits for this event before it opens | None |
-| `clipboard:read` | R to M | None | ok with the clipboard text and HTML. Menu Paste runs that through the same sanitizer as Ctrl+V |
+| `clipboard:read` | R to M | None | ok with the clipboard text, HTML, and an optional inspected image. Menu Paste runs that through the same sanitizer as Ctrl+V |
+| `image:pick` | R to M | None | ok with image bytes and metadata; cancelled; refused with reason and message |
 
 R to M: renderer to main. M to R: main to renderer. Every error carries a code, a message, and retryable. Handles and IDs are made by main and looked up in its own lists; the renderer never sends a path.
 

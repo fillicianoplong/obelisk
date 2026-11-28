@@ -1000,6 +1000,10 @@ export function Shell() {
         });
         return;
       }
+      if (command === 'image-notice' && typeof detail?.address === 'string' && detail.address.length > 0) {
+        setOpenMessage(detail.address);
+        return;
+      }
       if ((command === 'insert-link' || command === 'link-edit') && linkDialogRef.current === null) {
         onMenuCommand(command);
       }

@@ -1,5 +1,6 @@
 import type { EditorState } from 'prosemirror-state';
-import type { DocumentMessage, FileOpenResult, FileStat } from '../../../shared/ipc/types.js';
+import { assetFromPicked, imageStoreForTab } from '../../blocks/image/assets.js';
+import type { DocumentMessage, FileOpenResult, FileStat, IpcImagePayload } from '../../../shared/ipc/types.js';
 import { editorDocFromDocument, blockIdsFromDocument } from '../../editor/schema/mapping.js';
 import { createTabEditorState } from '../../editor/state.js';
 import { pageSetupFromUnknown } from '../page-setup/model.js';
@@ -14,9 +15,14 @@ export function createOpenedTab(opened: {
   handle: string;
   name: string;
   document: DocumentMessage;
+  images: IpcImagePayload[];
   stat: FileStat;
 }): PageTab {
   const editor = editorFromDocument(opened.document);
+  const store = imageStoreForTab(opened.handle);
+  for (const image of opened.images) {
+    store.put(assetFromPicked(image));
+  }
   return {
     id: opened.handle,
     title: opened.name,
@@ -59,7 +65,13 @@ export function applyOpenResult(
         message: null,
       };
     }
-    const tab = createOpenedTab(result);
+    const tab = createOpenedTab({
+      handle: result.handle,
+      name: result.name,
+      document: result.document,
+      images: result.images,
+      stat: result.stat,
+    });
     if (tabs.length === 0 || (tabs.length === 1 && isReplaceableUntitledTab(tabs[0]))) {
       return { tabs: [tab], activeId: tab.id, message: null };
     }

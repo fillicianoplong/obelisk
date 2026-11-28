@@ -8,9 +8,11 @@ import type { ReplacePromptOptions, SaveDialogOptions, SaveDialogResult } from '
 import { ipcError } from '../../shared/ipc/errors.js';
 import { openAllowedLink } from '../security/links.js';
 import { readClipboardItems } from '../clipboard/read.js';
+import { createRecoveryService } from '../recoveryStore/service.js';
 import { handlePrefsGet, handlePrefsSet, type PrefsHandlerOptions } from './prefs.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
+import { imageOpenDialogOptions, pickImageFile } from '../images/pick.js';
 import { createIpcRegistry } from './registry.js';
 
 function dialogOwner(): { window: BrowserWindow } | null {
@@ -90,6 +92,12 @@ export function installIpc(
   });
   const registry = createIpcRegistry(createAppHandlers(files, exports));
   const userData = () => app.getPath('userData');
+  const recovery = createRecoveryService({
+    userData,
+    writer: app.getVersion(),
+    readObk: (filePath) => readInUtilityProcess(filePath),
+    privateAppData: [userData()],
+  });
   const spell = new SpellHost(userData, () => app.getAppPath());
   registry.setHandler('spell:add', async (request) => {
     try {
@@ -107,13 +115,32 @@ export function installIpc(
       return ipcError('NOT_IMPLEMENTED', 'The spelling dictionary is not available.');
     }
   });
+  registry.setHandler('image:pick', async () => pickImageFile({
+    pickPath: async () => showOpenDialog(imageOpenDialogOptions()),
+  }));
+  registry.setHandler('recovery:put', (request) => recovery.put(request));
+  registry.setHandler('recovery:list', () => recovery.list());
+  registry.setHandler('recovery:restore', (request) => recovery.restore(request));
+  registry.setHandler('recovery:drop', (request) => recovery.drop(request));
   registry.setHandler('clipboard:read', async () => {
     try {
-      const [plain, items] = await Promise.all([
+      const [plain, items, native] = await Promise.all([
         clipboard.readText().catch(() => ''),
         clipboard.read().catch(() => []),
+        Promise.resolve().then(() => {
+          const readBitmap = (clipboard as { readImage?: () => Electron.NativeImage }).readImage;
+          if (typeof readBitmap !== 'function') {
+            return null;
+          }
+          const image = readBitmap.call(clipboard);
+          if (image.isEmpty()) {
+            return null;
+          }
+          const png = image.toPNG();
+          return new Uint8Array(png.buffer, png.byteOffset, png.byteLength);
+        }).catch(() => null),
       ]);
-      return { status: 'ok', ...(await readClipboardItems(items, plain)) };
+      return { status: 'ok', ...(await readClipboardItems(items, plain, native)) };
     } catch {
       return ipcError('EACCES', 'The clipboard could not be read.');
     }

@@ -288,7 +288,7 @@ function installClipboard({ html, text }) {
   const previous = host.window;
   host.window = {
     obelisk: {
-      'clipboard:read': () => Promise.resolve({ status: 'ok', html, text }),
+      'clipboard:read': () => Promise.resolve({ status: 'ok', html, text, image: null }),
     },
   };
   return () => {

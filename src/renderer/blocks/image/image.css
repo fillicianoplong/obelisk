@@ -1,0 +1,21 @@
+.image-block {
+  margin: 0.25in 0;
+  user-select: none;
+}
+
+.image-block-figure {
+  margin: 0;
+  line-height: 0;
+}
+
+.image-block-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-block-animated .image-block-img {
+    animation: none;
+  }
+}

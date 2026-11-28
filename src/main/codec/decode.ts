@@ -1,6 +1,6 @@
 import type { Document, Manifest } from '../../shared/schema/index.js';
 import { readArchivePayload, type ArchiveResult } from './archive/index.js';
-import { checkImageEntries } from './images/index.js';
+import { checkImageEntries, type ImageEntryBytes } from './images/check.js';
 import { jsonFileMessage, parseJson, type JsonReason } from './json/index.js';
 import { migrateOpened } from './migrate/index.js';
 import { validateOpened, type JsonEntry } from './validate/index.js';
@@ -28,6 +28,11 @@ export interface DecodeFailure extends DecodeCounts {
   entry: string;
 }
 
+export interface PackedImage {
+  sha256: string;
+  bytes: Uint8Array;
+}
+
 export interface DecodeSuccess extends DecodeCounts {
   ok: true;
   stage: 'document';
@@ -37,6 +42,7 @@ export interface DecodeSuccess extends DecodeCounts {
   entry: '';
   document: Document;
   manifest: Manifest;
+  packedImages: PackedImage[];
 }
 
 export type DecodeResult = DecodeSuccess | DecodeFailure;
@@ -116,7 +122,8 @@ export async function decodeObk(filePath: string): Promise<DecodeResult> {
     };
   }
 
-  const images = checkImageEntries(checked.manifest, opened.images);
+  const imageEntries = opened.images as ImageEntryBytes[];
+  const images = checkImageEntries(checked.manifest, imageEntries);
   if (!images.ok) {
     return {
       ok: false,
@@ -129,6 +136,12 @@ export async function decodeObk(filePath: string): Promise<DecodeResult> {
     };
   }
 
+  const packedImages: PackedImage[] = imageEntries.map((entry) => {
+    const match = /^images\/([0-9a-f]{64})\.(png|jpg|gif|webp)$/.exec(entry.name);
+    const sha256 = match?.[1] ?? '';
+    return { sha256, bytes: new Uint8Array(entry.bytes) };
+  });
+
   return {
     ok: true,
     stage: 'document',
@@ -138,6 +151,7 @@ export async function decodeObk(filePath: string): Promise<DecodeResult> {
     entry: '',
     document: checked.document,
     manifest: checked.manifest,
+    packedImages,
     ...countsOf(opened.result),
   };
 }

@@ -37,6 +37,7 @@ export function createStubHandlers(): IpcHandlerMap {
     'spell:check': (_request) => notReady('spell:check'),
     'spell:suggest': (_request) => notReady('spell:suggest'),
     'clipboard:read': () => notReady('clipboard:read'),
+    'image:pick': () => notReady('image:pick'),
   };
 }
 

@@ -56,7 +56,9 @@ import { AllSelection } from 'prosemirror-state';
 import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
 import { findCommands } from './find/find-plugin.js';
 import { markCloseHistoryGroup } from './history/groups.js';
-import { tableNodeViews } from '../blocks/table/view.js';
+import '../blocks/image/image.css';
+import { setActiveImageTabId } from '../blocks/image/assets.js';
+import { structuredNodeViews } from '../blocks/image/view.js';
 
 interface EditorCoreProps {
   tabId: string;
@@ -452,6 +454,7 @@ export function EditorCore({
   }
 
   useLayoutEffect(() => {
+    setActiveImageTabId(tabId);
     const host = hostRef.current;
     if (host === null) {
       return undefined;
@@ -514,7 +517,7 @@ export function EditorCore({
     const wordClicks = createWordClickSession();
     const view = new EditorView(host, {
       state: viewState,
-      nodeViews: tableNodeViews(),
+      nodeViews: structuredNodeViews(),
       attributes: {
         'aria-label': DOCUMENT_LABEL,
         class: 'page-sheet',

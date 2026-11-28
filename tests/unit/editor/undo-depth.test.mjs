@@ -116,6 +116,7 @@ test('a reopened tab has no undo history (FR-37)', async () => {
       handle: 'file-1',
       name: 'Notes.obk',
       document: saved.document,
+      images: [],
       stat: { size: 10, modifiedMs: 2 },
     });
     assert.equal(reopened.editor.doc.textContent, 'Notes');

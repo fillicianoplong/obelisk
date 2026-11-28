@@ -1,8 +1,9 @@
 import path from 'node:path';
 import { stat } from 'node:fs/promises';
 import { archiveMessage } from '../codec/archive/result.js';
-import { encodeObk } from '../codec/encode/index.js';
 import type { DecodeResult } from '../codec/decode.js';
+import { encodeDocumentMessage } from '../document/encodeMessage.js';
+import { ipcImagesFromDecoded, toDocumentMessage } from '../document/ipcImages.js';
 import { ipcError, type IpcErrorResult } from '../../shared/ipc/errors.js';
 import type {
   DocumentMessage,
@@ -12,10 +13,9 @@ import type {
   FileSaveRequest,
   FileSaveResult,
   FileStat,
+  IpcImagePayload,
   SessionSetResult,
 } from '../../shared/ipc/types.js';
-import { FORMAT_NAME, FORMAT_VERSION } from '../../shared/schema/index.js';
-import type { Document } from '../../shared/schema/index.js';
 import { createHandleMap, pathNotAllowed, type HandleMap, type IssuedFile } from './handles.js';
 import { openDialogOptions, type OpenDialogOptions } from './openDialog.js';
 import {
@@ -34,7 +34,6 @@ import { defaultDocumentDirectory, writeAtomic, type WriteAtomicOptions } from '
 
 const FILE_NAME_MAX = 255;
 
-const ENCODE_FAILED_MESSAGE = 'This document is not valid, so it was not saved.';
 const SAVE_DIALOG_FAILED_MESSAGE = 'The Save dialog could not be shown.';
 const REPLACE_PROMPT_FAILED_MESSAGE = 'The replace prompt could not be shown, so it was not saved.';
 const NOT_A_FILE_MESSAGE = 'This path is not a file, so it was not saved.';
@@ -96,17 +95,6 @@ function fileNameOf(filePath: string): string | null {
     }
   }
   return name;
-}
-
-function toDocumentMessage(document: Document): DocumentMessage {
-  const copy = structuredClone(document);
-  return {
-    view: copy.view,
-    page: copy.page as unknown as DocumentMessage['page'],
-    header: copy.header as unknown as DocumentMessage['header'],
-    footer: copy.footer as unknown as DocumentMessage['footer'],
-    blocks: copy.blocks as unknown as DocumentMessage['blocks'],
-  };
 }
 
 function nodeCode(error: unknown): string | null {
@@ -223,6 +211,7 @@ export function createFileService(deps: FileServiceDeps): FileService {
       handle,
       name,
       document: toDocumentMessage(decoded.document),
+      images: ipcImagesFromDecoded(decoded.manifest, decoded.packedImages),
       stat: inspected.stat,
     };
   }
@@ -250,27 +239,10 @@ export function createFileService(deps: FileServiceDeps): FileService {
     return path.join(directory.directory, UNTITLED_FILE_NAME);
   }
 
-  async function encodeDocument(document: DocumentMessage): Promise<{ ok: true; bytes: Buffer } | IpcErrorResult> {
-    let encoded;
-    try {
-      encoded = await encodeObk(document, {
-        format: FORMAT_NAME,
-        formatVersion: FORMAT_VERSION,
-        writer,
-        images: [],
-      });
-    } catch {
-      return ipcError('ENCODE_FAILED', ENCODE_FAILED_MESSAGE);
-    }
-    if (!encoded.ok) {
-      return ipcError('ENCODE_FAILED', ENCODE_FAILED_MESSAGE);
-    }
-    return { ok: true, bytes: encoded.bytes };
-  }
-
   async function commit(
     filePath: string,
     document: DocumentMessage,
+    images: readonly IpcImagePayload[],
     revision: number,
     recorded: FileStat | null,
     expectedStat: FileStat | null,
@@ -280,7 +252,7 @@ export function createFileService(deps: FileServiceDeps): FileService {
     if (gate.status !== 'ready') {
       return gate;
     }
-    const encoded = await encodeDocument(document);
+    const encoded = await encodeDocumentMessage(document, images, writer);
     if (!('bytes' in encoded)) {
       return encoded;
     }
@@ -345,6 +317,7 @@ export function createFileService(deps: FileServiceDeps): FileService {
       const written = await commit(
         issued.filePath,
         request.document,
+        request.images,
         request.revision,
         issued.stat,
         request.expectedStat,
@@ -413,7 +386,7 @@ export function createFileService(deps: FileServiceDeps): FileService {
           replaceConfirmed = true;
         }
       }
-      const written = await commit(target, request.document, request.revision, null, null, replaceConfirmed);
+      const written = await commit(target, request.document, request.images, request.revision, null, null, replaceConfirmed);
       if (written.status !== 'ok') {
         return written;
       }

@@ -100,6 +100,7 @@ export function parseInvokeRequest(channel: InvokeChannel, args: readonly unknow
     case 'spell:suggest':
       return parsed(parseSpellSuggest(args));
     case 'clipboard:read':
+    case 'image:pick':
       return args.length === 0 ? { ok: true, request: undefined } : { ok: false };
     default: {
       const neverChannel: never = channel;
@@ -128,17 +129,18 @@ export function parseFileOpenResult(value: unknown): FileOpenResult | null {
   if (value.status === 'error') {
     return parseErrorResult(value);
   }
-  if (value.status !== 'ok' || !hasExactKeys(value, ['status', 'handle', 'name', 'document', 'stat'])) {
+  if (value.status !== 'ok' || !hasExactKeys(value, ['status', 'handle', 'name', 'document', 'images', 'stat'])) {
     return null;
   }
   const handle = parseToken(value.handle);
   const name = parseFileName(value.name);
   const document = parseDocument(value.document);
+  const images = parseImagePayloads(value.images);
   const stat = parseFileStat(value.stat);
-  if (handle === null || name === null || document === null || stat === null) {
+  if (handle === null || name === null || document === null || images === null || stat === null) {
     return null;
   }
-  return { status: 'ok', handle, name, document, stat };
+  return { status: 'ok', handle, name, document, images, stat };
 }
 
 function parsed<T>(value: T | null): ParsedInvoke {
@@ -387,39 +389,99 @@ function parseAssets(value: unknown): ExportAssets | null {
   return { mathml, formulaPngs, firstFramePngs };
 }
 
+function parseSha256Hex(value: unknown): string | null {
+  if (typeof value !== 'string' || !/^[0-9a-f]{64}$/.test(value)) {
+    return null;
+  }
+  return value;
+}
+
+function parseImagePayload(value: unknown) {
+  if (!isPlainRecord(value)
+    || !hasExactKeys(value, ['sha256', 'data', 'type', 'pixelWidth', 'pixelHeight', 'frames'])) {
+    return null;
+  }
+  const sha256 = parseSha256Hex(value.sha256);
+  const type = value.type;
+  if (sha256 === null
+    || (type !== 'png' && type !== 'jpeg' && type !== 'gif' && type !== 'webp')
+    || typeof value.data !== 'string'
+    || value.data.length < 1
+    || value.data.length > PNG_BASE64_MAX_CHARS
+    || value.data.includes('\0')
+    || typeof value.pixelWidth !== 'number'
+    || typeof value.pixelHeight !== 'number'
+    || typeof value.frames !== 'number'
+    || !Number.isInteger(value.pixelWidth)
+    || !Number.isInteger(value.pixelHeight)
+    || !Number.isInteger(value.frames)
+    || value.pixelWidth < 1
+    || value.pixelHeight < 1
+    || value.frames < 1) {
+    return null;
+  }
+  return {
+    sha256,
+    data: value.data,
+    type: type as 'png' | 'jpeg' | 'gif' | 'webp',
+    pixelWidth: value.pixelWidth,
+    pixelHeight: value.pixelHeight,
+    frames: value.frames,
+  };
+}
+
+function parseImagePayloads(value: unknown) {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const images = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    const image = parseImagePayload(item);
+    if (image === null || seen.has(image.sha256)) {
+      return null;
+    }
+    seen.add(image.sha256);
+    images.push(image);
+  }
+  return images;
+}
+
 function parseFileSave(args: readonly unknown[]): FileSaveRequest | null {
   const value = oneObject(args);
-  if (value === null || !hasExactKeys(value, ['handle', 'document', 'revision', 'expectedStat', 'replaceConfirmed'])) {
+  if (value === null || !hasExactKeys(value, ['handle', 'document', 'images', 'revision', 'expectedStat', 'replaceConfirmed'])) {
     return null;
   }
   const handle = parseToken(value.handle);
   const document = parseDocument(value.document);
+  const images = parseImagePayloads(value.images);
   const revision = parseRevision(value.revision);
-  if (handle === null || document === null || revision === null || typeof value.replaceConfirmed !== 'boolean') {
+  if (handle === null || document === null || images === null || revision === null || typeof value.replaceConfirmed !== 'boolean') {
     return null;
   }
   if (value.expectedStat === null) {
-    return { handle, document, revision, expectedStat: null, replaceConfirmed: value.replaceConfirmed };
+    return { handle, document, images, revision, expectedStat: null, replaceConfirmed: value.replaceConfirmed };
   }
   const expectedStat = parseFileStat(value.expectedStat);
   if (expectedStat === null) {
     return null;
   }
-  return { handle, document, revision, expectedStat, replaceConfirmed: value.replaceConfirmed };
+  return { handle, document, images, revision, expectedStat, replaceConfirmed: value.replaceConfirmed };
 }
 
 function parseFileSaveAs(args: readonly unknown[]): FileSaveAsRequest | null {
   const value = oneObject(args);
-  if (value === null || !hasExactKeys(value, ['handle', 'document', 'revision'])) {
+  if (value === null || !hasExactKeys(value, ['handle', 'document', 'images', 'revision'])) {
     return null;
   }
   const handle = parseNullableToken(value.handle);
   const document = parseDocument(value.document);
+  const images = parseImagePayloads(value.images);
   const revision = parseRevision(value.revision);
-  if (handle === undefined || document === null || revision === null) {
+  if (handle === undefined || document === null || images === null || revision === null) {
     return null;
   }
-  return { handle, document, revision };
+  return { handle, document, images, revision };
 }
 
 function parseSessionSet(args: readonly unknown[]): SessionSetRequest | null {
@@ -577,21 +639,23 @@ function parseSigSave(args: readonly unknown[]): SigSaveRequest | null {
 
 function parseRecoveryPut(args: readonly unknown[]): RecoveryPutRequest | null {
   const value = oneObject(args);
-  if (value === null || !hasExactKeys(value, ['recoveryId', 'document', 'firstLine'])) {
+  if (value === null || !hasExactKeys(value, ['recoveryId', 'document', 'firstLine', 'images'])) {
     return null;
   }
   const recoveryId = parseNullableToken(value.recoveryId);
   const document = parseDocument(value.document);
+  const images = parseImagePayloads(value.images);
   if (
     recoveryId === undefined ||
     document === null ||
+    images === null ||
     typeof value.firstLine !== 'string' ||
     value.firstLine.length > FIRST_LINE_MAX ||
     hasNullOrLineBreak(value.firstLine)
   ) {
     return null;
   }
-  return { recoveryId, document, firstLine: value.firstLine };
+  return { recoveryId, document, firstLine: value.firstLine, images };
 }
 
 function parseRecoveryId(args: readonly unknown[]): RecoveryRestoreRequest & RecoveryDropRequest | null {

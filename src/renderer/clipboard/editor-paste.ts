@@ -5,6 +5,7 @@ import type { ClipboardReadResult, JsonObject } from '../../shared/ipc/types.js'
 import type { Block, BodyInline } from '../../shared/schema/types.js';
 import { newBlockId } from '../editor/block-id.js';
 import { blockNodeFromJson } from '../editor/schema/mapping.js';
+import { activeImageStore } from '../blocks/image/assets.js';
 import { parseDetachedHtml, sanitizePaste } from './sanitize.js';
 import type { PasteInput } from './types.js';
 
@@ -83,9 +84,7 @@ function nodesFromBlocks(blocks: readonly Block[], schema: EditorView['state']['
   };
   for (const block of blocks) {
     if (block.type === 'image') {
-      if (block.alt.length > 0) {
-        push(paragraphJson(block.id, [{ type: 'text', text: block.alt }]));
-      }
+      push(block as unknown as JsonObject);
       continue;
     }
     if (block.type === 'table') {
@@ -193,6 +192,9 @@ export async function applySanitizedPaste(
     );
     return;
   }
+  if (result.images.length > 0) {
+    activeImageStore().rememberAllPasted(result.images);
+  }
   const nodes = nodesFromBlocks(result.blocks, view.state.schema);
   if (nodes.length === 0) {
     return;
@@ -259,9 +261,13 @@ export function pasteMenuCommand(plain: boolean): Command {
         return;
       }
       target.focus();
+      const image = typeof result.image === 'string' && result.image.length > 0
+        ? Uint8Array.from(atob(result.image), (char) => char.charCodeAt(0))
+        : undefined;
       void applySanitizedPaste(target, {
         html: result.html,
         text: result.text,
+        image,
         plain,
       }, belowBlock);
     }).catch(() => {

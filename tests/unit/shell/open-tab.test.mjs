@@ -22,6 +22,7 @@ function openedFile(blocks, name = 'Lab notes.obk') {
     handle: 'abc123',
     name,
     document: document(blocks),
+    images: [],
     stat: { size: 40, modifiedMs: 1 },
   };
 }

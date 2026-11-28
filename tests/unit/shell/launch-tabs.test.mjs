@@ -24,6 +24,7 @@ function openedFile(name = 'Lab notes.obk') {
     document: document([
       { type: 'paragraph', id: 'p', content: [{ type: 'text', text: 'Lab notes' }] },
     ]),
+    images: [],
     stat: { size: 40, modifiedMs: 1 },
   };
 }

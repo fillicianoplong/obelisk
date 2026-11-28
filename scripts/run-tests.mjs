@@ -47,6 +47,7 @@ const electronTestFiles = [
   path.join('tests', 'integration', 'shell', 'find-escape.test.mjs'),
   path.join('tests', 'integration', 'editor', 'tab-editor.test.mjs'),
   path.join('tests', 'integration', 'editor', 'text-blocks.test.mjs'),
+  path.join('tests', 'integration', 'editor', 'image-insert.test.mjs'),
   path.join('tests', 'integration', 'editor', 'format-colors.test.mjs'),
   path.join('tests', 'integration', 'editor', 'paragraph-indent.test.mjs'),
   path.join('tests', 'integration', 'editor', 'spellcheck.test.mjs'),

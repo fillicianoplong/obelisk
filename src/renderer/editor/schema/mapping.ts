@@ -9,6 +9,7 @@ import {
   mergeAdjacentRuns,
 } from './inline-json.js';
 import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
+import { createImageNode, imageBlockJsonFromAttrs } from '../../blocks/image/commands.js';
 import { createTableNode, tableBlockJsonFromAttrs } from '../../blocks/table/commands.js';
 import { payloadEqual } from '../../blocks/structured/payload.js';
 import { tablePayloadFromBlock } from '../../blocks/table/document.js';
@@ -150,6 +151,9 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
   }
   if (type === 'table') {
     return createTableNode(schema, block, blockId);
+  }
+  if (type === 'image') {
+    return createImageNode(schema, block, blockId);
   }
   if (typeof type === 'string') {
     return schema.nodes.foreign_block.create({ blockId, blockType: type });
@@ -359,6 +363,13 @@ function blockJsonFromNode(
         const basePayload = base && base.type === 'table' ? tablePayloadFromBlock(base) : null;
         const nextPayload = tablePayloadFromBlock(next);
         if (base && base.type === 'table' && base.id === blockId && payloadEqual(basePayload, nextPayload)) {
+          return base;
+        }
+        return next;
+      }
+      if (node.attrs.blockType === 'image') {
+        const next = imageBlockJsonFromAttrs(blockId, node.attrs);
+        if (base && base.type === 'image' && base.id === blockId && JSON.stringify(base) === JSON.stringify(next)) {
           return base;
         }
         return next;

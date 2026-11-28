@@ -65,7 +65,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'file-print',
   'insert-columns',
-  'insert-image',
   'insert-equation',
   'insert-diagram',
   'insert-drawing',

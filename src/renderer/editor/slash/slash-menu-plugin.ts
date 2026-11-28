@@ -188,7 +188,7 @@ function confirmSlashMenuItem(): Command {
       return true;
     }
     if (dispatch !== undefined) {
-      const applied = applySlashMenuItem(state, menu.slashPos, row.item);
+      const applied = applySlashMenuItem(state, menu.slashPos, row.item, view);
       if (applied === null) {
         dispatch(closeSlashMenu(state.tr));
       } else {
@@ -201,14 +201,14 @@ function confirmSlashMenuItem(): Command {
   };
 }
 
-function applyExactSlashCommand(state: EditorState, menu: SlashMenuState): Transaction | null {
+function applyExactSlashCommand(state: EditorState, menu: SlashMenuState, view?: EditorView): Transaction | null {
   const { slashPos } = menu;
   const item = exactSlashCommandItem(state, slashPos, menu.typed);
   if (item === null || item.block === null) {
     // Command items like Link run from the menu or /link plus Space or Enter.
     return null;
   }
-  return applySlashMenuItem(state, slashPos, item);
+  return applySlashMenuItem(state, slashPos, item, view);
 }
 
 function tryExactSlashOnBoundary(eventKey: string): Command {
@@ -240,7 +240,7 @@ function tryExactSlashOnBoundary(eventKey: string): Command {
       return false;
     }
     if (dispatch !== undefined) {
-      const applied = applySlashMenuItem(state, absoluteSlash, item);
+      const applied = applySlashMenuItem(state, absoluteSlash, item, view);
       if (applied !== null) {
         dispatch(applied);
         view?.focus();
@@ -536,7 +536,7 @@ export function slashMenuPlugin(): Plugin {
         const menu = slashMenuState(view.state);
         if (menu.open) {
           if (text === ' ') {
-            const applied = applyExactSlashCommand(view.state, menu);
+            const applied = applyExactSlashCommand(view.state, menu, view);
             if (applied !== null) {
               view.dispatch(closeSlashMenu(applied));
               view.focus();

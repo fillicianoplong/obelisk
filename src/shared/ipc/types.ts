@@ -43,6 +43,26 @@ export interface DocumentMessage {
   blocks: JsonObject[];
 }
 
+export interface IpcImagePayload {
+  sha256: string;
+  data: string;
+  type: 'png' | 'jpeg' | 'gif' | 'webp';
+  pixelWidth: number;
+  pixelHeight: number;
+  frames: number;
+}
+
+export type ImagePickOk = {
+  status: 'ok';
+  image: IpcImagePayload;
+};
+
+export type ImagePickResult =
+  | ImagePickOk
+  | { status: 'cancelled' }
+  | RefusedResult
+  | IpcErrorResult;
+
 export interface FileStat {
   size: number;
   modifiedMs: number;
@@ -76,6 +96,7 @@ export type FileOpenResult =
       handle: string;
       name: string;
       document: DocumentMessage;
+      images: IpcImagePayload[];
       stat: FileStat;
     }
   | { status: 'cancelled' }
@@ -86,6 +107,7 @@ export type FileOpenResult =
 export interface FileSaveRequest {
   handle: string;
   document: DocumentMessage;
+  images: IpcImagePayload[];
   revision: number;
   expectedStat: FileStat | null;
   // Architecture 6.1. The section 6.3 row names the other fields only.
@@ -102,6 +124,7 @@ export type FileSaveResult =
 export interface FileSaveAsRequest {
   handle: string | null;
   document: DocumentMessage;
+  images: IpcImagePayload[];
   revision: number;
 }
 
@@ -192,6 +215,7 @@ export interface RecoveryPutRequest {
   recoveryId: string | null;
   document: DocumentMessage;
   firstLine: string;
+  images: IpcImagePayload[];
 }
 
 export type RecoveryPutResult = { status: 'ok'; recoveryId: string } | IpcErrorResult;
@@ -246,7 +270,7 @@ export interface SpellContextEvent {
 }
 
 export type ClipboardReadResult =
-  | { status: 'ok'; text: string; html: string }
+  | { status: 'ok'; text: string; html: string; image: string | null }
   | IpcErrorResult;
 
 export interface RequestMap {
@@ -271,6 +295,7 @@ export interface RequestMap {
   'spell:check': SpellCheckRequest;
   'spell:suggest': SpellSuggestRequest;
   'clipboard:read': void;
+  'image:pick': void;
 }
 
 export interface ResultMap {
@@ -295,6 +320,7 @@ export interface ResultMap {
   'spell:check': SpellCheckResult;
   'spell:suggest': SpellSuggestResult;
   'clipboard:read': ClipboardReadResult;
+  'image:pick': ImagePickResult;
 }
 
 export type IpcDispatchResult = ResultMap[keyof ResultMap];

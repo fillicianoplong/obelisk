@@ -16,6 +16,7 @@ import { insertPageBreakCommand } from './keymap/editor-keys.js';
 import { linkMenuCommand } from './link/commands.js';
 import { copyMenuCommand } from '../clipboard/editor-copy.js';
 import { pasteMenuCommand } from '../clipboard/editor-paste.js';
+import { imageCommandEnabled, imageMenuCommand } from '../blocks/image/commands.js';
 import { tableCommandEnabled, tableMenuCommand } from '../blocks/table/commands.js';
 
 const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null> = {
@@ -31,7 +32,6 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
   'insert-horizontal': { kind: 'divider' },
   'insert-page-break': { kind: 'page-break' },
   'insert-columns': null,
-  'insert-image': null,
   'insert-equation': null,
   'insert-diagram': null,
   'insert-drawing': null,
@@ -40,6 +40,10 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
 };
 
 export function editorMenuCommand(menuId: string): Command | null {
+  const imageCommand = imageMenuCommand(menuId);
+  if (imageCommand !== null) {
+    return imageCommand;
+  }
   const tableCommand = tableMenuCommand(menuId);
   if (tableCommand !== null) {
     return tableCommand;
@@ -111,6 +115,9 @@ export function editorMenuCommand(menuId: string): Command | null {
 }
 
 export function editorMenuCommandEnabled(state: EditorState, menuId: string): boolean {
+  if (imageCommandEnabled(state, menuId)) {
+    return true;
+  }
   if (tableCommandEnabled(state, menuId)) {
     return true;
   }

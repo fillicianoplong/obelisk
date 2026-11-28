@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.56.0] - 2026-11-28
+
+### Added
+
+- Insert > Image and /image open an image file through `image:pick`, check PNG, JPEG, GIF, and WebP headers, and insert a structured image block in the editor.
+- Clipboard image paste keeps the image block and stores bytes in a per-tab asset map keyed by SHA-256. Save passes those bytes through `file:save` and `file:saveAs`; open returns them with the document.
+- Animated GIF and WebP play in the editor and show the first frame when Windows animation effects are off.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

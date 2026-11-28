@@ -3,6 +3,7 @@ import type { DocumentMessage, FileSaveAsRequest, FileSaveRequest, FileStat } fr
 import { isAutosavePaused } from '../../autosave/model.js';
 import type { SaveState } from '../statusbar/model.js';
 import { saveStateFromChanged } from '../statusbar/model.js';
+import { imagesForTab } from '../../blocks/image/assets.js';
 import { documentFromEditor } from './document.js';
 import { pageSetupFromUnknown } from '../page-setup/model.js';
 import { documentView, replaceTabEditor, tabHasUnsavedChanges } from './model.js';
@@ -44,6 +45,7 @@ export function saveRequest(tab: PageTab, document: DocumentMessage, expectedSta
   return {
     handle: tab.handle,
     document,
+    images: imagesForTab(tab.id),
     revision: tab.revision,
     expectedStat,
     replaceConfirmed,
@@ -54,6 +56,7 @@ export function saveAsRequest(tab: PageTab, document: DocumentMessage): FileSave
   return {
     handle: tab.handle ?? null,
     document,
+    images: imagesForTab(tab.id),
     revision: tab.revision,
   };
 }

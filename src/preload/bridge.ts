@@ -120,6 +120,7 @@ export function createObeliskApi(ipc: PreloadIpc): ObeliskApi {
     'spell:check': (request) => ipc.invoke('spell:check', request) as Promise<SpellCheckResult>,
     'spell:suggest': (request) => ipc.invoke('spell:suggest', request) as Promise<SpellSuggestResult>,
     'clipboard:read': () => ipc.invoke('clipboard:read') as Promise<ClipboardReadResult>,
+    'image:pick': () => ipc.invoke('image:pick') as Promise<import('../shared/ipc/types.js').ImagePickResult>,
     'file:activated': createFileActivatedApi(ipc),
     'spell:context': createSpellContextApi(ipc),
   };
