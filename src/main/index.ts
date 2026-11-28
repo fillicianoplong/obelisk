@@ -4,6 +4,7 @@ import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
 import { THEME_CHANGED_CHANNEL, themeLaunchArgument, type ThemeSetting } from '../shared/theme.js';
 import { openLaunchPaths, sendFileActivated } from './file/activation.js';
+import { sessionPathsForLaunch } from './ipc/session.js';
 import { launchPathsFromArgv } from './file/launchPaths.js';
 import type { FileService } from './file/service.js';
 import { SMOKE_MARKER_FILE } from './security/app-data.js';
@@ -221,7 +222,11 @@ function startApp(): void {
     const window = mainWindow;
     if (window !== null) {
       window.webContents.once('did-finish-load', () => {
-        deliverLaunchPaths(files, coldLaunchPaths);
+        const sessionPaths = sessionPathsForLaunch(userData);
+        const launchPaths = sessionPaths.length === 0
+          ? coldLaunchPaths
+          : [...sessionPaths, ...coldLaunchPaths.filter((entry) => !sessionPaths.includes(entry))];
+        deliverLaunchPaths(files, launchPaths);
       });
     }
   }).catch((error: unknown) => {

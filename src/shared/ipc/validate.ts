@@ -424,7 +424,15 @@ function parseFileSaveAs(args: readonly unknown[]): FileSaveAsRequest | null {
 
 function parseSessionSet(args: readonly unknown[]): SessionSetRequest | null {
   const value = oneObject(args);
-  if (value === null || !hasExactKeys(value, ['handles', 'activeHandle'])) {
+  if (value === null) {
+    return null;
+  }
+  const keys = Object.keys(value);
+  const allowed = new Set(['handles', 'activeHandle', 'flush']);
+  if (!keys.every((key) => allowed.has(key)) || !Object.hasOwn(value, 'handles') || !Object.hasOwn(value, 'activeHandle')) {
+    return null;
+  }
+  if (value.flush !== undefined && typeof value.flush !== 'boolean') {
     return null;
   }
   if (!Array.isArray(value.handles)) {
@@ -440,14 +448,15 @@ function parseSessionSet(args: readonly unknown[]): SessionSetRequest | null {
     seen.add(handle);
     handles.push(handle);
   }
+  const flush = value.flush === true;
   if (value.activeHandle === null) {
-    return { handles, activeHandle: null };
+    return flush ? { handles, activeHandle: null, flush } : { handles, activeHandle: null };
   }
   const activeHandle = parseToken(value.activeHandle);
   if (activeHandle === null || !seen.has(activeHandle)) {
     return null;
   }
-  return { handles, activeHandle };
+  return flush ? { handles, activeHandle, flush } : { handles, activeHandle };
 }
 
 function parseExportRun(args: readonly unknown[]): ExportRunRequest | null {

@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.63.0] - 2026-11-28
+
+### Added
+
+- Restore tabs on launch keeps open `.obk` paths in `session.json` and reopens them through the usual file checks after a restart.
+- The session updates on tab changes and on exit, with debounced atomic writes. A missing file is named in one message; a damaged `session.json` is left on disk and defaults are used.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

@@ -88,8 +88,9 @@ export function installIpc(
     privateAppData: [userDataPath],
     platform: process.platform,
   });
-  const registry = createIpcRegistry(createAppHandlers(files, exports));
   const userData = () => app.getPath('userData');
+  const sessionOptions = { userData, files };
+  const registry = createIpcRegistry(createAppHandlers(files, exports, sessionOptions));
   const spell = new SpellHost(userData, () => app.getAppPath());
   registry.setHandler('spell:add', async (request) => {
     try {

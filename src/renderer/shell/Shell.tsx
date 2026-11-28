@@ -78,6 +78,7 @@ import {
   sessionHandles,
   tabSaveState,
 } from './tabs/save.js';
+import { createSessionSync } from './tabs/session-sync.js';
 import type { ConflictChoice } from './tabs/save.js';
 import { TabStrip } from './tabs/TabStrip.js';
 import { ThemeSync } from './theme/ThemeSync.js';
@@ -143,6 +144,7 @@ export function Shell() {
   const conflictRef = useRef<{ tabId: string; stat: FileStat } | null>(null);
   const quittingRef = useRef(false);
   const allowUnloadRef = useRef(false);
+  const sessionSync = useRef(createSessionSync());
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeIdRef = useRef(activeId);
@@ -300,9 +302,12 @@ export function Shell() {
   );
 
   const finishQuit = useCallback(() => {
-    quittingRef.current = false;
-    allowUnloadRef.current = true;
-    window.close();
+    void (async () => {
+      await sessionSync.current.push(sessionHandles(tabsRef.current, activeIdRef.current), true);
+      quittingRef.current = false;
+      allowUnloadRef.current = true;
+      window.close();
+    })();
   }, []);
 
   const continueQuitIfNeeded = useCallback(() => {
@@ -889,8 +894,16 @@ export function Shell() {
   useEffect(() => {
     return () => {
       autosaveScheduler.current.cancelAll();
+      sessionSync.current.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    if (!shellReady) {
+      return;
+    }
+    void sessionSync.current.push(sessionHandles(tabs, activeId));
+  }, [tabs, activeId, shellReady]);
 
   useEffect(() => {
     function onBeforeUnload(event: BeforeUnloadEvent) {

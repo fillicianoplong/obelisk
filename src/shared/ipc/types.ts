@@ -116,6 +116,7 @@ export type FileSaveAsResult =
 export interface SessionSetRequest {
   handles: string[];
   activeHandle: string | null;
+  flush?: boolean;
 }
 
 export type SessionSetResult = { status: 'ok' } | IpcErrorResult;

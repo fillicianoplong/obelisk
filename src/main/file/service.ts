@@ -183,10 +183,19 @@ export function createFileService(deps: FileServiceDeps): FileService {
   const platform = deps.platform ?? process.platform;
   const writer = deps.writer ?? '0.1.24.0';
 
+  function missingOpenMessage(filePath: string): FileOpenResult {
+    const name = fileNameOf(filePath) ?? path.basename(filePath);
+    return refused('missing', `${name} could not be found, so it was not opened.`);
+  }
+
   async function openPath(filePath: string): Promise<FileOpenResult> {
     // A relative path is not resolved against the working directory.
     if (!path.isAbsolute(filePath)) {
       return refused('not-a-file', archiveMessage('not-a-file'));
+    }
+    const disk = await inspectFile(filePath);
+    if (disk.kind === 'missing') {
+      return missingOpenMessage(filePath);
     }
     const openAlready = handles.handleForPath(filePath);
     if (openAlready !== null) {
@@ -208,10 +217,10 @@ export function createFileService(deps: FileServiceDeps): FileService {
     if (name === null) {
       return refused('invalid', 'This file name cannot be shown, so it was not opened.');
     }
-    const inspected = await inspectFile(filePath);
-    if (inspected.kind !== 'file') {
+    if (disk.kind !== 'file') {
       return refused('unreadable', archiveMessage('unreadable'));
     }
+    const inspected = disk;
 
     const again = handles.handleForPath(filePath);
     if (again !== null) {

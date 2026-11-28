@@ -3,6 +3,8 @@ import { ipcError, type IpcErrorResult } from '../../shared/ipc/errors.js';
 import type { RequestMap, ResultMap } from '../../shared/ipc/types.js';
 import type { ExportService } from '../export/service.js';
 import type { FileService } from '../file/service.js';
+import type { SessionHandlerOptions } from './session.js';
+import { handleSessionSet } from './session.js';
 
 export type IpcHandler<C extends InvokeChannel> = (
   request: RequestMap[C],
@@ -42,13 +44,22 @@ export function createStubHandlers(): IpcHandlerMap {
 
 // file:open shows the dialog and decodes. file:save and file:saveAs write.
 // A handle main did not issue is refused before anything is read or written.
-export function createAppHandlers(files: FileService, exports: ExportService): IpcHandlerMap {
+export function createAppHandlers(
+  files: FileService,
+  exports: ExportService,
+  session?: SessionHandlerOptions,
+): IpcHandlerMap {
   return {
     ...createStubHandlers(),
     'file:open': () => files.openFromDialog(),
     'file:save': (request) => files.save(request),
     'file:saveAs': (request) => files.saveAs(request),
-    'session:set': (request) => files.retainOpenHandles(request.handles),
+    'session:set': (request) => {
+      if (session === undefined) {
+        return files.retainOpenHandles(request.handles);
+      }
+      return handleSessionSet(request, session, request.flush === true);
+    },
     'export:run': (request) => {
       if (request.handle !== null) {
         const blocked = files.guardHandle(request.handle);

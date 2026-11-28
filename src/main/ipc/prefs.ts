@@ -2,6 +2,7 @@ import type { PreferenceEntry, PreferenceKey, PrefsGetRequest, PrefsGetResult, P
 import { ipcError } from '../../shared/ipc/errors.js';
 import type { ThemeSetting } from '../../shared/theme.js';
 import { preferencesStore } from '../preferences/store.js';
+import { sessionStore } from '../session/store.js';
 import { themeSettingFromPreference } from '../preferences/theme-pref.js';
 
 export interface PrefsHandlerOptions {
@@ -31,6 +32,13 @@ export async function handlePrefsSet(entry: PreferenceEntry, options: PrefsHandl
     const theme = themeSettingFromPreference(entry.value);
     if (theme !== beforeTheme) {
       options.onThemeChanged?.(theme);
+    }
+  }
+  if (entry.key === 'restoreTabs' && entry.value === false) {
+    try {
+      await sessionStore(options.userData()).clear();
+    } catch {
+      return ipcError('EBUSY_EXHAUSTED', 'The session could not be cleared.');
     }
   }
   return { status: 'ok' };
