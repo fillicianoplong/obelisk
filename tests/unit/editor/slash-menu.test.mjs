@@ -295,8 +295,9 @@ test('mouse hover on a slash menu option does not scroll the list', async () => 
     assert.equal(scrollable.scrollTop, 80);
     const quote = scrollable.panel.querySelector('.slash-menu-option[data-item-id="quote"]');
     assert.ok(quote);
-    const Ctor = document.defaultView?.MouseEvent ?? MouseEvent;
-    quote.dispatchEvent(new Ctor('mouseover', { bubbles: true }));
+    const win = document.defaultView ?? view.dom.ownerDocument.defaultView;
+    assert.ok(win?.MouseEvent, 'editor defaultView exposes MouseEvent');
+    quote.dispatchEvent(new win.MouseEvent('mouseover', { bubbles: true }));
     await Promise.resolve();
     scrollable.layoutOptions();
     assert.equal(scrollable.scrollTop, 80, 'hover keeps the scroll offset');
