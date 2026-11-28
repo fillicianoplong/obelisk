@@ -17,7 +17,7 @@ export interface SlashMenuItem {
   label: string;
   block: SlashMenuBlockRef | null;
   /** A shell command the item runs instead of inserting a block, such as the Link dialog. */
-  command?: 'insert-link';
+  command?: 'insert-link' | 'insert-date-time';
 }
 
 export interface SlashMenuRow {
@@ -49,7 +49,7 @@ const EXISTING: SlashMenuItem[] = [
   { id: 'diagram', label: 'Diagram', block: null },
   { id: 'drawing', label: 'Drawing', block: null },
   { id: 'signature', label: 'Signature', block: null },
-  { id: 'date', label: 'Date', block: null },
+  { id: 'date', label: 'Date', block: null, command: 'insert-date-time' },
   { id: 'link', label: 'Link', block: null, command: 'insert-link' },
   { id: 'horizontal-line', label: 'Horizontal line', block: { kind: 'divider' } },
   { id: 'page-break', label: 'Page break', block: { kind: 'page-break' } },

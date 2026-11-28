@@ -1,3 +1,4 @@
+import { isRealDateTime } from '../date-time/format.js';
 import { classifyLinkAddress, linkRefusalMessage } from '../links/address.js';
 import {
   ANIMATION_PIXEL_MAX,
@@ -28,7 +29,6 @@ import type {
 import { characterLength } from './validate.js';
 
 const STILL_IMAGE_SET: ReadonlySet<string> = new Set(STILL_IMAGE_TYPES);
-const MONTH_LENGTHS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 function hasDecimalPlaces(value: number, places: number): boolean {
   const factor = 10 ** places;
@@ -74,27 +74,6 @@ function textAreaIssue(page: PageSetup): SchemaFailure | null {
     }
   }
   return null;
-}
-
-function isLeapYear(year: number): boolean {
-  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-}
-
-function isRealDateTime(value: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
-  if (!match) {
-    return false;
-  }
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const hour = Number(match[4]);
-  const minute = Number(match[5]);
-  if (month < 1 || month > 12 || day < 1 || hour > 23 || minute > 59) {
-    return false;
-  }
-  const length = month === 2 && isLeapYear(year) ? 29 : MONTH_LENGTHS[month] ?? 0;
-  return day <= length;
 }
 
 function linkIssue(address: string, path: string): SchemaFailure | null {

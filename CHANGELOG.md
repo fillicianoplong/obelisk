@@ -2,6 +2,14 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.65.0] - 2026-11-28
+
+### Added
+
+- Date and time inline items: Insert > Date and time, the slash /Date entry, and a calendar-and-clock dialog to set or edit the stored value.
+- Each item keeps a fixed `YYYY-MM-DDTHH:MM` value and displays one of the SRS date formats (Windows short date by default).
+- Context menu commands edit the value, change format, convert to text, or remove the chip.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

@@ -45,6 +45,13 @@ import {
   applyCharacterMarksCommand,
   formatMenuCommand,
 } from './format-commands.js';
+import type { DateChipFormat } from '../../shared/date-time/format.js';
+import {
+  applyDateTimeChipCommand,
+  dateTimeDraftFromState,
+  dateTimeFormatDraftFromState,
+  type DateTimeDraft,
+} from './date-time/commands.js';
 import { applyLinkCommand, linkAround, linkDraftFromState, removeLinkCommand } from './link/commands.js';
 import { eventTargetsLink, linkClickAction } from './link/open-on-click.js';
 import { openLinkBubble } from './link/link-bubble-plugin.js';
@@ -331,6 +338,19 @@ function installEditorCommands(
       let applied = false;
       runWithSynchronousEditorUpdate(() => {
         applied = applyLinkCommand(text, address)(view.state, dispatch);
+      });
+      return applied;
+    },
+    dateTimeDraft() {
+      return dateTimeDraftFromState(view.state);
+    },
+    dateTimeFormatDraft() {
+      return dateTimeFormatDraftFromState(view.state);
+    },
+    applyDateTime(dateTime: string, format: DateChipFormat, mode: DateTimeDraft['mode']) {
+      let applied = false;
+      runWithSynchronousEditorUpdate(() => {
+        applied = applyDateTimeChipCommand(dateTime, format, mode)(view.state, dispatch);
       });
       return applied;
     },

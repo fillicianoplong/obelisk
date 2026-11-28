@@ -13,6 +13,7 @@ import {
 } from './block-move-commands.js';
 import { formatMenuCommand } from './format-commands.js';
 import { insertPageBreakCommand } from './keymap/editor-keys.js';
+import { dateTimeMenuCommand } from './date-time/commands.js';
 import { linkMenuCommand } from './link/commands.js';
 import { copyMenuCommand } from '../clipboard/editor-copy.js';
 import { pasteMenuCommand } from '../clipboard/editor-paste.js';
@@ -36,7 +37,6 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
   'insert-diagram': null,
   'insert-drawing': null,
   'insert-signature': null,
-  'insert-date-time': null,
 };
 
 export function editorMenuCommand(menuId: string): Command | null {
@@ -47,6 +47,10 @@ export function editorMenuCommand(menuId: string): Command | null {
   const linkCommand = linkMenuCommand(menuId);
   if (linkCommand !== null) {
     return linkCommand;
+  }
+  const dateTimeCommand = dateTimeMenuCommand(menuId);
+  if (dateTimeCommand !== null) {
+    return dateTimeCommand;
   }
   if (menuId === 'edit-undo') {
     return undo;

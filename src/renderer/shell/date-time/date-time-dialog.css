@@ -1,0 +1,129 @@
+.date-time-dialog-backdrop {
+  align-items: center;
+  background: var(--color-surface-overlay);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: var(--z-index-menu);
+}
+
+.date-time-dialog {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-dialog);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: var(--space-s);
+  max-width: min(22rem, calc(100% - var(--space-l)));
+  padding: var(--space-m);
+  width: fit-content;
+}
+
+.date-time-dialog-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+.date-time-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.date-time-dialog-label {
+  font-size: var(--font-size-body-small);
+}
+
+.date-time-dialog-input {
+  background: var(--color-surface-input);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs);
+  width: 100%;
+}
+
+.date-time-dialog-input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.date-time-dialog-select {
+  appearance: auto;
+}
+
+.date-time-dialog-preview {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-small);
+  margin: 0;
+}
+
+.date-time-dialog-error {
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.date-time-dialog-actions {
+  border-top: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+  margin: 0;
+  padding-top: var(--space-s);
+}
+
+.date-time-dialog-button {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs) var(--space-s);
+}
+
+.date-time-dialog-button-ok {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+.date-time-dialog-button-ok:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.date-time-dialog-button:hover:not(:disabled):not(.date-time-dialog-button-ok) {
+  background: var(--color-control-fill-hover);
+}
+
+@media (forced-colors: active) {
+  .date-time-dialog-backdrop {
+    background: transparent;
+  }
+
+  .date-time-dialog,
+  .date-time-dialog-button,
+  .date-time-dialog-input {
+    forced-color-adjust: none;
+  }
+
+  .date-time-dialog-input:focus {
+    outline: 1px solid Highlight;
+  }
+
+  .date-time-dialog-button-ok {
+    background: ButtonFace;
+    border-color: ButtonText;
+    color: ButtonText;
+  }
+}

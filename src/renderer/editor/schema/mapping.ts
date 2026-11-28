@@ -1,4 +1,6 @@
 import type { Node as ProseNode, Schema } from 'prosemirror-model';
+import { formattedInlineText } from '../../../shared/date-time/format.js';
+import type { BodyInline } from '../../../shared/schema/types.js';
 import type { JsonObject, JsonValue } from '../../../shared/ipc/types.js';
 import type { DocumentMessage } from '../../../shared/ipc/types.js';
 import { editorSchema } from './index.js';
@@ -31,17 +33,14 @@ function inlineText(content: JsonValue | undefined): string {
   if (!Array.isArray(content)) {
     return '';
   }
-  let text = '';
+  const parts: BodyInline[] = [];
   for (const part of content) {
     if (typeof part !== 'object' || part === null || Array.isArray(part)) {
       continue;
     }
-    const record = part as { type?: JsonValue; text?: JsonValue };
-    if ((record.type === 'text' || record.type === 'link') && typeof record.text === 'string') {
-      text += record.text;
-    }
+    parts.push(part as unknown as BodyInline);
   }
-  return text;
+  return formattedInlineText(parts);
 }
 
 function inlineContent(content: JsonValue | undefined, schema: Schema = editorSchema) {

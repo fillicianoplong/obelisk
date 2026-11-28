@@ -1,6 +1,8 @@
 import type { Mark, Node as ProseNode, Schema } from 'prosemirror-model';
 import type { JsonObject, JsonValue } from '../../../shared/ipc/types.js';
 import { classifyLinkAddress } from '../../../shared/links/address.js';
+import type { DateChipFormat } from '../../../shared/date-time/format.js';
+import { DATE_CHIP_FORMATS } from '../../../shared/schema/limits.js';
 import type { TextMarks } from '../../../shared/schema/types.js';
 import {
   DEFAULT_FONT_FAMILY,
@@ -129,9 +131,23 @@ function runFromTextNode(node: ProseNode): JsonObject {
   return run;
 }
 
+function dateChipFormat(value: string): DateChipFormat {
+  return DATE_CHIP_FORMATS.includes(value as DateChipFormat)
+    ? value as DateChipFormat
+    : 'windows-short';
+}
+
 export function inlineRunsFromFragment(fragment: ProseNode['content']): JsonObject[] {
   const runs: JsonObject[] = [];
   fragment.forEach((child) => {
+    if (child.type.name === 'date_chip') {
+      runs.push({
+        type: 'dateChip',
+        dateTime: child.attrs.dateTime,
+        format: dateChipFormat(String(child.attrs.format)),
+      });
+      return;
+    }
     if (child.type.name === 'hard_break') {
       runs.push({ type: 'text', text: '\n' });
       return;
@@ -195,6 +211,19 @@ export function inlineContentFromJson(content: JsonValue | undefined, schema: Sc
       } else {
         nodes.push(schema.text(record.text));
       }
+    }
+    if (
+      record.type === 'dateChip'
+      && typeof record.dateTime === 'string'
+      && schema.nodes.date_chip !== undefined
+    ) {
+      const format = typeof record.format === 'string'
+        ? dateChipFormat(record.format)
+        : 'windows-short';
+      nodes.push(schema.nodes.date_chip.create({
+        dateTime: record.dateTime,
+        format,
+      }));
     }
   }
   return nodes;

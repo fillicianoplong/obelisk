@@ -4,6 +4,7 @@ import { dividerSpec } from './divider.js';
 import { foreignBlockSpec } from './foreign.js';
 import { structuredBlockSpec } from '../../blocks/structured/schema.js';
 import { headingSpec } from './heading.js';
+import { dateChipSpec } from './date-chip.js';
 import { inlineSpecs } from './inline.js';
 import { listNodeSpecs } from './lists.js';
 import { pageBreakSpec } from './page-break.js';
@@ -39,6 +40,7 @@ export const editorSchema = new Schema({
     page_break: pageBreakSpec,
     foreign_block: foreignBlockSpec,
     structured_block: structuredBlockSpec,
+    date_chip: dateChipSpec,
     ...inlineSpecs,
   },
   marks: markSpecs,

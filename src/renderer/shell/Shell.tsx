@@ -24,12 +24,15 @@ import { PageArea } from './PageArea.js';
 import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { suppressPageFocusRing } from './page-focus.js';
 import { LinkDialog } from './link/LinkDialog.js';
+import { DateTimeDialog } from './date-time/DateTimeDialog.js';
 import { PageSetupDialog } from './page-setup/PageSetupDialog.js';
 import { ExportDialog } from './export/ExportDialog.js';
 import { emptyExportAssets } from './export/assets.js';
 import { exportFormatFromCommand } from './export/model.js';
 import { EDITOR_SHELL_COMMAND, type EditorShellCommandDetail } from '../editor/editor-command-event.js';
 import type { LinkDraft } from '../editor/link/commands.js';
+import type { DateTimeDraft } from '../editor/date-time/commands.js';
+import type { DateChipFormat } from '../../shared/date-time/format.js';
 import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
 import {
   applyWheelSteps,
@@ -91,6 +94,7 @@ import './find/find-bar.css';
 import './page-setup/page-setup.css';
 import './preferences/preferences.css';
 import './export/export-dialog.css';
+import './date-time/date-time-dialog.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -98,6 +102,9 @@ function editorPageCommands(): {
   linkDraft?: () => LinkDraft | null;
   linkAddress?: () => string | null;
   applyLink?: (text: string, address: string) => boolean;
+  dateTimeDraft?: () => DateTimeDraft | null;
+  dateTimeFormatDraft?: () => DateTimeDraft | null;
+  applyDateTime?: (dateTime: string, format: DateChipFormat, mode: DateTimeDraft['mode']) => boolean;
 } | null {
   const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
   if (page === null) {
@@ -108,6 +115,9 @@ function editorPageCommands(): {
       linkDraft?: () => LinkDraft | null;
       linkAddress?: () => string | null;
       applyLink?: (text: string, address: string) => boolean;
+      dateTimeDraft?: () => DateTimeDraft | null;
+      dateTimeFormatDraft?: () => DateTimeDraft | null;
+      applyDateTime?: (dateTime: string, format: DateChipFormat, mode: DateTimeDraft['mode']) => boolean;
     };
   }).editorCommands;
   return commands ?? null;
@@ -124,6 +134,9 @@ export function Shell() {
   const [linkDialog, setLinkDialog] = useState<LinkDraft | null>(null);
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
+  const [dateTimeDialog, setDateTimeDialog] = useState<DateTimeDraft | null>(null);
+  const dateTimeDialogRef = useRef(dateTimeDialog);
+  dateTimeDialogRef.current = dateTimeDialog;
   const [pageSetupOpen, setPageSetupOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const exportDialogOpenRef = useRef(exportDialogOpen);
@@ -685,7 +698,7 @@ export function Shell() {
         return;
       }
       if (command === 'export') {
-        if (linkDialogRef.current === null && !pageSetupOpenRef.current) {
+        if (linkDialogRef.current === null && dateTimeDialogRef.current === null && !pageSetupOpenRef.current) {
           const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
           if (active !== undefined && !isShellTab(active)) {
             setExportDialogOpen(true);
@@ -707,11 +720,27 @@ export function Shell() {
         return;
       }
       if (command === 'insert-link' || command === 'link-edit') {
-        if (pageSetupOpenRef.current) {
+        if (pageSetupOpenRef.current || dateTimeDialogRef.current !== null) {
           return;
         }
         const draft = editorPageCommands()?.linkDraft?.() ?? null;
         setLinkDialog(draft);
+        return;
+      }
+      if (command === 'insert-date-time' || command === 'date-time-edit') {
+        if (pageSetupOpenRef.current || linkDialogRef.current !== null) {
+          return;
+        }
+        const draft = editorPageCommands()?.dateTimeDraft?.() ?? null;
+        setDateTimeDialog(draft);
+        return;
+      }
+      if (command === 'date-time-format') {
+        if (pageSetupOpenRef.current || linkDialogRef.current !== null) {
+          return;
+        }
+        const draft = editorPageCommands()?.dateTimeFormatDraft?.() ?? null;
+        setDateTimeDialog(draft);
         return;
       }
       if (command === 'format-header') {
@@ -739,7 +768,7 @@ export function Shell() {
         return;
       }
       if (command === 'format-page-setup') {
-        if (linkDialogRef.current !== null) {
+        if (linkDialogRef.current !== null || dateTimeDialogRef.current !== null) {
           return;
         }
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
@@ -928,7 +957,7 @@ export function Shell() {
         return;
       }
       const linkCommand = linkShellShortcut(event);
-      if (linkCommand !== null && linkDialogRef.current === null) {
+      if (linkCommand !== null && linkDialogRef.current === null && dateTimeDialogRef.current === null) {
         event.preventDefault();
         onMenuCommand(linkCommand);
         return;
@@ -1000,7 +1029,14 @@ export function Shell() {
         });
         return;
       }
-      if ((command === 'insert-link' || command === 'link-edit') && linkDialogRef.current === null) {
+      if ((command === 'insert-link' || command === 'link-edit') && linkDialogRef.current === null && dateTimeDialogRef.current === null) {
+        onMenuCommand(command);
+      }
+      if (
+        (command === 'insert-date-time' || command === 'date-time-edit' || command === 'date-time-format')
+        && dateTimeDialogRef.current === null
+        && linkDialogRef.current === null
+      ) {
         onMenuCommand(command);
       }
     }
@@ -1023,7 +1059,7 @@ export function Shell() {
       {!isShellTab(activeTab) ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}
-      {pageSetupOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+      {pageSetupOpen && linkDialog === null && dateTimeDialog === null && conflict === null && closePromptTab === undefined
         && !isShellTab(activeTab) ? (
         <PageSetupDialog
           initial={pageSetupFromUnknown(activeTab.baseDocument.page)}
@@ -1051,7 +1087,7 @@ export function Shell() {
           }}
         />
       ) : null}
-      {exportDialogOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+      {exportDialogOpen && linkDialog === null && dateTimeDialog === null && conflict === null && closePromptTab === undefined
         && !isShellTab(activeTab) ? (
         <ExportDialog
           onCancel={() => {
@@ -1063,7 +1099,7 @@ export function Shell() {
           }}
         />
       ) : null}
-      {linkDialog !== null && conflict === null && closePromptTab === undefined ? (
+      {linkDialog !== null && dateTimeDialog === null && conflict === null && closePromptTab === undefined ? (
         <LinkDialog
           draft={linkDialog}
           onCancel={() => setLinkDialog(null)}
@@ -1073,6 +1109,20 @@ export function Shell() {
               return 'Link address is not allowed.';
             }
             setLinkDialog(null);
+            return null;
+          }}
+        />
+      ) : null}
+      {dateTimeDialog !== null && linkDialog === null && conflict === null && closePromptTab === undefined ? (
+        <DateTimeDialog
+          draft={dateTimeDialog}
+          onCancel={() => setDateTimeDialog(null)}
+          onSubmit={(dateTime, format) => {
+            const applied = editorPageCommands()?.applyDateTime?.(dateTime, format, dateTimeDialog.mode) === true;
+            if (!applied) {
+              return 'Date and time could not be applied.';
+            }
+            setDateTimeDialog(null);
             return null;
           }}
         />

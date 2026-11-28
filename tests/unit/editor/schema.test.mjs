@@ -14,6 +14,7 @@ test('the editor schema includes every text block node', async () => {
       'checklist',
       'checklist_item',
       'code_block',
+      'date_chip',
       'doc',
       'foreign_block',
       'hard_break',

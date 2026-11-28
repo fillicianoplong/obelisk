@@ -190,6 +190,26 @@
   text-decoration-line: underline;
 }
 
+.page-sheet .date-time-item {
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-xs);
+  box-shadow: inset 0 0 0 calc(var(--space-2xs) / 2) var(--color-border-subtle);
+  cursor: default;
+  padding: 0 var(--space-2xs);
+  white-space: nowrap;
+}
+
+.page-sheet .date-time-item:hover {
+  background: color-mix(in srgb, var(--color-surface-subtle) 70%, var(--color-accent));
+  box-shadow: inset 0 0 0 calc(var(--space-2xs) / 2) var(--color-accent);
+}
+
+.page-sheet .ProseMirror-selectednode.date-time-item {
+  background: color-mix(in srgb, var(--color-surface-subtle) 55%, var(--color-selection));
+  box-shadow: inset 0 0 0 calc(var(--space-2xs) / 2) var(--color-accent);
+  color: var(--color-text-primary);
+}
+
 .page-sheet code.inline-code {
   font-family: Consolas, 'Courier New', monospace;
   background: var(--color-surface-subtle);

@@ -142,10 +142,10 @@ const INLINE_EQUATION_OWN: readonly MenuEntry[] = [
 ];
 
 const DATE_TIME_OWN: readonly MenuEntry[] = [
-  item({ id: 'date-time-edit', label: 'Edit date and time', accessKey: 'e', ellipsis: true }),
-  item({ id: 'date-time-format', label: 'Change format', accessKey: 'f' }),
-  item({ id: 'date-time-convert', label: 'Convert to text', accessKey: 't' }),
-  item({ id: 'date-time-remove', label: 'Remove', accessKey: 'r' }),
+  item({ id: 'date-time-edit', label: 'Edit date and time', accessKey: 'e', ellipsis: true, command: 'date-time-edit' }),
+  item({ id: 'date-time-format', label: 'Change format', accessKey: 'f', command: 'date-time-format' }),
+  item({ id: 'date-time-convert', label: 'Convert to text', accessKey: 't', command: 'date-time-convert' }),
+  item({ id: 'date-time-remove', label: 'Remove', accessKey: 'r', command: 'date-time-remove' }),
 ];
 
 export type ContextTargetKind =

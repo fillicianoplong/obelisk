@@ -22,6 +22,8 @@ import { closeFindOnEscape, findPlugin } from './find/find-plugin.js';
 import { editorPastePlugin } from '../clipboard/editor-paste.js';
 import { linkBubbleKeymap, linkBubblePlugin } from './link/link-bubble-plugin.js';
 import { tableSelectionPlugin } from '../blocks/table/selection.js';
+import { formatDateTime } from '../../shared/date-time/format.js';
+import type { DateChipFormat } from '../../shared/date-time/format.js';
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
   let next: EditorState | null = null;
@@ -69,6 +71,21 @@ export function createTabEditorState(doc?: Node): EditorState {
   });
 }
 
+function textblockPlainText(node: import('prosemirror-model').Node): string {
+  let text = '';
+  node.content.forEach((child) => {
+    if (child.isText) {
+      text += child.text ?? '';
+    } else if (child.type.name === 'date_chip') {
+      text += formatDateTime(
+        String(child.attrs.dateTime),
+        String(child.attrs.format) as DateChipFormat,
+      );
+    }
+  });
+  return text;
+}
+
 export function editorText(state: EditorState): string {
   const parts: string[] = [];
   state.doc.forEach((node) => {
@@ -76,14 +93,14 @@ export function editorText(state: EditorState): string {
       case 'paragraph':
       case 'heading':
       case 'blockquote':
-        parts.push(node.textContent);
+        parts.push(textblockPlainText(node));
         break;
       case 'bullet_list':
       case 'ordered_list':
       case 'checklist': {
         const itemTexts: string[] = [];
         node.forEach((item) => {
-          itemTexts.push(item.textContent);
+          itemTexts.push(textblockPlainText(item));
         });
         parts.push(itemTexts.join('\n'));
         break;

@@ -56,10 +56,6 @@ export const CONTEXT_ONLY_UNWIRED: ReadonlySet<string> = new Set([
   'signature-reset-size',
   'inline-equation-edit',
   'inline-equation-copy',
-  'date-time-edit',
-  'date-time-format',
-  'date-time-convert',
-  'date-time-remove',
 ]);
 
 export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
@@ -70,7 +66,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'insert-diagram',
   'insert-drawing',
   'insert-signature',
-  'insert-date-time',
   'format-paragraph',
   'help-shortcuts',
 ]);
