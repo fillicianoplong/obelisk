@@ -19,6 +19,7 @@ import { listBackspaceAtStartCommand, listEnterCommand } from './keymap/list-edi
 import { softBreakKeymap } from './keymap/soft-break.js';
 import { backspaceUnindentAtStartCommand, splitParagraphKeepingFormat } from './paragraph-format-commands.js';
 import { closeFindOnEscape, findPlugin } from './find/find-plugin.js';
+import { editorCopyPlugin } from '../clipboard/editor-copy.js';
 import { editorPastePlugin } from '../clipboard/editor-paste.js';
 import { linkBubbleKeymap, linkBubblePlugin } from './link/link-bubble-plugin.js';
 import { tableSelectionPlugin } from '../blocks/table/selection.js';
@@ -62,6 +63,7 @@ export function createTabEditorState(doc?: Node): EditorState {
       typedShortcutInputRulesPlugin(),
       editorColorStylesPlugin(),
       spellingViewPlugin(),
+      editorCopyPlugin(),
       editorPastePlugin(),
       linkBubblePlugin(),
       tableSelectionPlugin(),

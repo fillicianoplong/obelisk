@@ -28,7 +28,7 @@ function blockNodes(doc: ProseNode, from: number, to: number): ProseNode[] {
   return nodes;
 }
 
-function deleteBlockRange(tr: Transaction, from: number, to: number): Transaction {
+export function deleteBlockRange(tr: Transaction, from: number, to: number): Transaction {
   const start = blockPosAtIndex(tr.doc, from);
   const end = blockPosAtIndex(tr.doc, to) + tr.doc.child(to).nodeSize;
   return tr.delete(start, end);

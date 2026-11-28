@@ -378,7 +378,7 @@ function applyHandleBlockAttrs(gutter: HTMLElement, node: ProseNode): void {
   }
 }
 
-function blockSelectionIsActive(state: EditorState): boolean {
+export function blockSelectionIsActive(state: EditorState): boolean {
   if (blockHandleState(state).from !== null) {
     return true;
   }

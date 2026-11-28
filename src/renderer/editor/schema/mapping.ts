@@ -509,6 +509,16 @@ export function cloneBlockWithNewId(block: JsonObject, mint: () => string): Json
   return copy;
 }
 
+export function blocksJsonFromRange(doc: ProseNode, fromIndex: number, toIndex: number): JsonObject[] {
+  const from = Math.max(0, Math.min(fromIndex, doc.childCount - 1));
+  const to = Math.max(from, Math.min(toIndex, doc.childCount - 1));
+  const blocks: JsonObject[] = [];
+  for (let index = from; index <= to; index += 1) {
+    blocks.push(blockJsonFromNode(doc.child(index), null, () => ''));
+  }
+  return blocks;
+}
+
 export function visibleEditorText(document: DocumentMessage): string {
   const parts: string[] = [];
   for (const block of document.blocks) {

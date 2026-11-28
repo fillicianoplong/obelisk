@@ -4,6 +4,8 @@ import type { Block } from '../../shared/schema/types.js';
 export interface PasteInput {
   html?: string;
   text?: string;
+  /** Serialized Obelisk blocks from the clipboard MIME. */
+  obeliskBlocks?: string;
   image?: Uint8Array;
   alt?: string;
   plain?: boolean;

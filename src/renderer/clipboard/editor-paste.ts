@@ -3,8 +3,8 @@ import { NodeSelection, Plugin, TextSelection, type Command, type EditorState } 
 import type { EditorView } from 'prosemirror-view';
 import type { ClipboardReadResult, JsonObject } from '../../shared/ipc/types.js';
 import type { Block, BodyInline } from '../../shared/schema/types.js';
-import { newBlockId } from '../editor/block-id.js';
 import { blockNodeFromJson } from '../editor/schema/mapping.js';
+import { OBELISK_BLOCKS_MIME, parseObeliskClipboard, remintObeliskBlocks } from './blocks-json.js';
 import { parseDetachedHtml, sanitizePaste } from './sanitize.js';
 import type { PasteInput } from './types.js';
 
@@ -88,26 +88,6 @@ function nodesFromBlocks(blocks: readonly Block[], schema: EditorView['state']['
       }
       continue;
     }
-    if (block.type === 'table') {
-      for (const row of block.rows) {
-        const content: BodyInline[] = [];
-        row.cells.forEach((cell, index) => {
-          if (index > 0) {
-            content.push({ type: 'text', text: '\t' });
-          }
-          if (cell.kind === 'text') {
-            content.push(...cell.content);
-          } else if (cell.source.length > 0) {
-            content.push({ type: 'text', text: cell.source });
-          }
-        });
-        if (textOf(content).trim().length === 0) {
-          continue;
-        }
-        push(paragraphJson(newBlockId(), content));
-      }
-      continue;
-    }
     push(block as unknown as JsonObject);
   }
   return nodes;
@@ -164,13 +144,39 @@ function insertNodes(view: EditorView, nodes: readonly ProseNode[]): void {
   );
 }
 
+function obeliskBlocksFromInput(input: PasteInput, data: DataTransfer | null): ReturnType<typeof remintObeliskBlocks> | null {
+  const raw = input.obeliskBlocks
+    ?? (input.plain ? '' : data?.getData(OBELISK_BLOCKS_MIME) ?? '');
+  const parsed = parseObeliskClipboard(raw);
+  if (parsed === null) {
+    return null;
+  }
+  return remintObeliskBlocks(parsed);
+}
+
 export async function applySanitizedPaste(
   view: EditorView,
   input: PasteInput,
   belowBlockIndex: number | null = null,
+  clipboardData: DataTransfer | null = null,
 ): Promise<void> {
   if (view.isDestroyed) {
     return;
+  }
+  if (!input.plain) {
+    const obelisk = obeliskBlocksFromInput(input, clipboardData);
+    if (obelisk !== null) {
+      const nodes = nodesFromBlocks(obelisk, view.state.schema);
+      if (nodes.length === 0) {
+        return;
+      }
+      if (belowBlockIndex !== null) {
+        insertNodesBelow(view, belowBlockIndex, nodes);
+        return;
+      }
+      insertNodes(view, nodes);
+      return;
+    }
   }
   const inCode = belowBlockIndex === null && view.state.selection.$from.parent.type.spec.code === true;
   const Parser = parserFrom(view);
@@ -210,9 +216,10 @@ async function pasteFromEvent(view: EditorView, event: Event, plain: boolean): P
   await applySanitizedPaste(view, {
     html: data?.getData('text/html') ?? '',
     text: data?.getData('text/plain') || data?.getData('Text') || '',
+    obeliskBlocks: plain ? '' : data?.getData(OBELISK_BLOCKS_MIME) ?? '',
     image,
     plain,
-  });
+  }, null, data);
 }
 
 /** Ctrl+V and Ctrl+Shift+V. Stops ProseMirror from parsing the clipboard HTML itself. */
@@ -262,6 +269,7 @@ export function pasteMenuCommand(plain: boolean): Command {
       void applySanitizedPaste(target, {
         html: result.html,
         text: result.text,
+        obeliskBlocks: result.blocks,
         plain,
       }, belowBlock);
     }).catch(() => {

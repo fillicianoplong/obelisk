@@ -1,5 +1,8 @@
+import { OBELISK_BLOCKS_MIME } from '../../shared/clipboard.js';
+
 const TEXT_MAX = 1_000_000;
 const HTML_MAX = 2_000_000;
+const BLOCKS_MAX = 8_000_000;
 const START_FRAGMENT = '<!--StartFragment-->';
 const END_FRAGMENT = '<!--EndFragment-->';
 
@@ -38,21 +41,34 @@ async function asText(value: unknown): Promise<string> {
   return '';
 }
 
-export function clipboardPayload(text: string, html: string): { text: string; html: string } {
-  return {
+export function clipboardPayload(text: string, html: string, blocks = ''): {
+  text: string;
+  html: string;
+  blocks?: string;
+} {
+  const trimmedBlocks = typeof blocks === 'string' ? blocks : '';
+  const payload = {
     text: capped(text, TEXT_MAX),
     html: capped(clipboardHtmlFragment(html), HTML_MAX),
   };
+  if (trimmedBlocks.length === 0) {
+    return payload;
+  }
+  return { ...payload, blocks: capped(trimmedBlocks, BLOCKS_MAX) };
 }
 
 /** Text comes from readText. HTML comes from a text/html clipboard item. */
 export async function readClipboardItems(
   items: readonly ClipboardItemLike[],
   plainText = '',
-): Promise<{ text: string; html: string }> {
+): Promise<{ text: string; html: string; blocks?: string }> {
   let text = typeof plainText === 'string' ? plainText : '';
   let html = '';
+  let blocks = '';
   for (const item of items) {
+    if (blocks.length === 0 && item.types.includes(OBELISK_BLOCKS_MIME)) {
+      blocks = await asText(await item.getType(OBELISK_BLOCKS_MIME));
+    }
     if (html.length === 0 && item.types.includes('text/html')) {
       html = await asText(await item.getType('text/html'));
     }
@@ -60,5 +76,5 @@ export async function readClipboardItems(
       text = await asText(await item.getType('text/plain'));
     }
   }
-  return clipboardPayload(text, html);
+  return clipboardPayload(text, html, blocks);
 }

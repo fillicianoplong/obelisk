@@ -246,7 +246,7 @@ export interface SpellContextEvent {
 }
 
 export type ClipboardReadResult =
-  | { status: 'ok'; text: string; html: string }
+  | { status: 'ok'; text: string; html: string; blocks?: string }
   | IpcErrorResult;
 
 export interface RequestMap {
