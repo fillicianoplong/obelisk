@@ -11,6 +11,7 @@ import { encodeObk } from '../../../dist/main/codec/encode/index.js';
 import { NEWER_VERSION_MESSAGE } from '../../../dist/main/codec/migrate/index.js';
 import { PATH_NOT_ALLOWED_MESSAGE } from '../../../dist/main/file/handles.js';
 import { OBK_FILTER_NAME, openDialogOptions, pickOpenDialogOwner } from '../../../dist/main/file/openDialog.js';
+import { createStubExportService } from '../../../dist/main/export/stub.js';
 import { createFileService } from '../../../dist/main/file/service.js';
 import { checkUnissuedHandle } from '../../../dist/main/file/unissued.js';
 import { createAppHandlers } from '../../../dist/main/ipc/handlers.js';
@@ -192,7 +193,7 @@ test('a valid file opens with a handle and the file is unchanged', async () => {
     assert.equal(reads, 1);
     assertUnchanged(before, await snapshot(file), 'opened');
 
-    const registry = createIpcRegistry(createAppHandlers(files));
+    const registry = createIpcRegistry(createAppHandlers(files, createStubExportService()));
     const saved = await registry.dispatch({
       senderUrl: APP_PAGE_URL,
       channel: 'file:save',
@@ -244,7 +245,7 @@ test('a handle main did not issue returns PATH_NOT_ALLOWED and touches nothing',
         throw new Error('A file was read for an unknown handle.');
       },
     });
-    const registry = createIpcRegistry(createAppHandlers(files));
+    const registry = createIpcRegistry(createAppHandlers(files, createStubExportService()));
     const saved = await registry.dispatch({
       senderUrl: APP_PAGE_URL,
       channel: 'file:save',

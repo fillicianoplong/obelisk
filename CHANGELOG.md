@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.51.0] - 2026-11-27
+
+### Added
+
+- Export service with a format registry and placeholder PDF, Word, and Markdown writers, reached through `export:run` with validation and safe output path handling.
+- File > Export and the Export dialog (Ctrl+Shift+E) pick a format; exporting does not change the open `.obk` file, and canceling a replace prompt leaves the existing export file unchanged.
+
 ## [0.1.50.0] - 2026-11-27
 
 ### Added

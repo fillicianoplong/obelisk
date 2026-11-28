@@ -9,7 +9,13 @@ import { holdAnchorForZoom, holdCaretAnchor } from '../editor/layout/paginate-pl
 import { editorText } from '../editor/state.js';
 import { rememberCorrect } from '../editor/spell/client.js';
 import { spellingSuggestionAt, spellingWordToAdd, startSpellContextListener } from './spellcheck/context.js';
-import type { FileOpenResult, FileSaveAsResult, FileSaveResult, FileStat } from '../../shared/ipc/types.js';
+import type {
+  ExportFormat,
+  FileOpenResult,
+  FileSaveAsResult,
+  FileSaveResult,
+  FileStat,
+} from '../../shared/ipc/types.js';
 import { FocusCycle } from './focus/FocusCycle.js';
 import { STATUS_BAR_LABEL } from './focus/regions.js';
 import { ContextMenu } from './contextmenu/ContextMenu.js';
@@ -19,6 +25,9 @@ import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { suppressPageFocusRing } from './page-focus.js';
 import { LinkDialog } from './link/LinkDialog.js';
 import { PageSetupDialog } from './page-setup/PageSetupDialog.js';
+import { ExportDialog } from './export/ExportDialog.js';
+import { emptyExportAssets } from './export/assets.js';
+import { exportFormatFromCommand } from './export/model.js';
 import { EDITOR_SHELL_COMMAND, type EditorShellCommandDetail } from '../editor/editor-command-event.js';
 import type { LinkDraft } from '../editor/link/commands.js';
 import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
@@ -78,6 +87,7 @@ import './shell.css';
 import './find/find-bar.css';
 import './page-setup/page-setup.css';
 import './preferences/preferences.css';
+import './export/export-dialog.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -112,6 +122,9 @@ export function Shell() {
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
   const [pageSetupOpen, setPageSetupOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const exportDialogOpenRef = useRef(exportDialogOpen);
+  exportDialogOpenRef.current = exportDialogOpen;
   const [bandEdit, setBandEdit] = useState<BandEdit | null>(null);
   const bandEditRef = useRef(bandEdit);
   bandEditRef.current = bandEdit;
@@ -583,6 +596,28 @@ export function Shell() {
     applyZoom(zoomCommandResult(zoomRef.current, command));
   }, [applyZoom]);
 
+  const runExport = useCallback(async (format: ExportFormat) => {
+    const tab = tabsRef.current.find((item) => item.id === activeIdRef.current);
+    if (tab === undefined || tab.kind === 'settings') {
+      return;
+    }
+    setExportDialogOpen(false);
+    const built = documentForTab(tab);
+    try {
+      const result = await window.obelisk['export:run']({
+        format,
+        handle: tab.handle ?? null,
+        document: built.document,
+        assets: emptyExportAssets(),
+      });
+      if (result.status === 'error' || result.status === 'timeout') {
+        setOpenMessage(result.message);
+      }
+    } catch {
+      setOpenMessage('The export failed.');
+    }
+  }, []);
+
   const toggleSpelling = useCallback(() => {
     const next = !spellingOnRef.current;
     setSpellingOn(next);
@@ -630,6 +665,20 @@ export function Shell() {
       }
       if (command === 'save-as') {
         runSave('save-as');
+        return;
+      }
+      if (command === 'export') {
+        if (linkDialogRef.current === null && !pageSetupOpenRef.current) {
+          const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+          if (active !== undefined && active.kind !== 'settings') {
+            setExportDialogOpen(true);
+          }
+        }
+        return;
+      }
+      const exportFormat = exportFormatFromCommand(command);
+      if (exportFormat !== null) {
+        void runExport(exportFormat);
         return;
       }
       if (command === 'edit-find') {
@@ -764,7 +813,7 @@ export function Shell() {
         return;
       }
     },
-    [addMlaTab, addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runSave, runZoomCommand, toggleSpelling],
+    [addMlaTab, addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runExport, runSave, runZoomCommand, toggleSpelling],
   );
 
   const menuContext = useMemo(() => {
@@ -888,6 +937,10 @@ export function Shell() {
         runSave('save');
         return;
       }
+      if (command === 'export') {
+        onMenuCommand('export');
+        return;
+      }
       runSave('save-as');
     }
     window.addEventListener('keydown', onKeyDown);
@@ -978,6 +1031,18 @@ export function Shell() {
               return next;
             });
             document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+        />
+      ) : null}
+      {exportDialogOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+        && activeTab.kind !== 'settings' ? (
+        <ExportDialog
+          onCancel={() => {
+            setExportDialogOpen(false);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+          onChoose={(format) => {
+            void runExport(format);
           }}
         />
       ) : null}

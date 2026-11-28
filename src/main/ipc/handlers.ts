@@ -1,6 +1,7 @@
 import type { InvokeChannel } from '../../shared/ipc/channels.js';
 import { ipcError, type IpcErrorResult } from '../../shared/ipc/errors.js';
 import type { RequestMap, ResultMap } from '../../shared/ipc/types.js';
+import type { ExportService } from '../export/service.js';
 import type { FileService } from '../file/service.js';
 
 export type IpcHandler<C extends InvokeChannel> = (
@@ -41,7 +42,7 @@ export function createStubHandlers(): IpcHandlerMap {
 
 // file:open shows the dialog and decodes. file:save and file:saveAs write.
 // A handle main did not issue is refused before anything is read or written.
-export function createAppHandlers(files: FileService): IpcHandlerMap {
+export function createAppHandlers(files: FileService, exports: ExportService): IpcHandlerMap {
   return {
     ...createStubHandlers(),
     'file:open': () => files.openFromDialog(),
@@ -55,7 +56,7 @@ export function createAppHandlers(files: FileService): IpcHandlerMap {
           return blocked;
         }
       }
-      return notReady('export:run');
+      return exports.run(request);
     },
   };
 }
