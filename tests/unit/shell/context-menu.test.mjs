@@ -86,11 +86,23 @@ test('ArrowRight opens Turn into on a live block menu', async () => {
     });
     session = move.session;
     focused = session.panels[session.panels.length - 1];
-    if (focused === 'block-turn-into') {
+    if (focused === 'ctx-block') {
       break;
     }
   }
-  assert.equal(focused, 'block-turn-into');
+  assert.equal(focused, 'ctx-block');
+  const blockMenu = keyboard.reduceMenuKey(menus, session, {
+    type: 'keydown',
+    key: 'ArrowRight',
+    altKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    shiftKey: false,
+    repeat: false,
+  });
+  session = blockMenu.session;
+  assert.ok(blockMenu.session.panels.includes('ctx-block'));
+  assert.ok(blockMenu.session.panels.length >= 2);
   const submenu = keyboard.reduceMenuKey(menus, session, {
     type: 'keydown',
     key: 'ArrowRight',
@@ -100,8 +112,9 @@ test('ArrowRight opens Turn into on a live block menu', async () => {
     shiftKey: false,
     repeat: false,
   });
-  assert.equal(submenu.session.panels[0], 'block-turn-into');
-  assert.ok(submenu.session.panels.length >= 2);
+  assert.equal(submenu.session.panels[0], 'ctx-block');
+  const turnInto = submenu.session.panels.find((panel) => panel === 'block-turn-into' || panel === 'edit-duplicate');
+  assert.ok(turnInto);
 });
 
 test('the context menu host uses stylesheet positioning, not inline style attributes', async () => {

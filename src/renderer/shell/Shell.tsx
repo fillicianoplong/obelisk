@@ -30,7 +30,9 @@ import { emptyExportAssets } from './export/assets.js';
 import { exportFormatFromCommand } from './export/model.js';
 import { EDITOR_SHELL_COMMAND, type EditorShellCommandDetail } from '../editor/editor-command-event.js';
 import type { LinkDraft } from '../editor/link/commands.js';
-import { editShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
+import { editShellShortcut, formatFontShellShortcut, linkShellShortcut, shellShortcut } from './shortcuts.js';
+import { FontDialog } from './font/FontDialog.js';
+import type { FontDialogValue } from '../editor/font-dialog.js';
 import {
   applyWheelSteps,
   consumeZoomWheel,
@@ -91,6 +93,7 @@ import './find/find-bar.css';
 import './page-setup/page-setup.css';
 import './preferences/preferences.css';
 import './export/export-dialog.css';
+import './font/font-dialog.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -98,6 +101,8 @@ function editorPageCommands(): {
   linkDraft?: () => LinkDraft | null;
   linkAddress?: () => string | null;
   applyLink?: (text: string, address: string) => boolean;
+  fontDialogDraft?: () => { initial: FontDialogValue; preview: string } | null;
+  applyFontDialog?: (value: FontDialogValue) => boolean;
 } | null {
   const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
   if (page === null) {
@@ -108,6 +113,8 @@ function editorPageCommands(): {
       linkDraft?: () => LinkDraft | null;
       linkAddress?: () => string | null;
       applyLink?: (text: string, address: string) => boolean;
+      fontDialogDraft?: () => { initial: FontDialogValue; preview: string } | null;
+      applyFontDialog?: (value: FontDialogValue) => boolean;
     };
   }).editorCommands;
   return commands ?? null;
@@ -128,6 +135,9 @@ export function Shell() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const exportDialogOpenRef = useRef(exportDialogOpen);
   exportDialogOpenRef.current = exportDialogOpen;
+  const [fontDialogDraft, setFontDialogDraft] = useState<{ initial: FontDialogValue; preview: string } | null>(null);
+  const fontDialogOpenRef = useRef(fontDialogDraft);
+  fontDialogOpenRef.current = fontDialogDraft;
   const [bandEdit, setBandEdit] = useState<BandEdit | null>(null);
   const bandEditRef = useRef(bandEdit);
   bandEditRef.current = bandEdit;
@@ -684,8 +694,35 @@ export function Shell() {
         runSave('save-as');
         return;
       }
+      if (command === 'format-font-dialog') {
+        if (
+          linkDialogRef.current !== null
+          || pageSetupOpenRef.current
+          || exportDialogOpenRef.current
+          || fontDialogOpenRef.current !== null
+        ) {
+          return;
+        }
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active === undefined || isShellTab(active)) {
+          return;
+        }
+        const draft = editorPageCommands()?.fontDialogDraft?.() ?? null;
+        if (draft !== null) {
+          setFontDialogDraft(draft);
+        }
+        return;
+      }
+      if (command === 'format-paragraph') {
+        runActiveEditorMenuCommand(command);
+        return;
+      }
       if (command === 'export') {
-        if (linkDialogRef.current === null && !pageSetupOpenRef.current) {
+        if (
+          linkDialogRef.current === null
+          && !pageSetupOpenRef.current
+          && fontDialogOpenRef.current === null
+        ) {
           const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
           if (active !== undefined && !isShellTab(active)) {
             setExportDialogOpen(true);
@@ -707,7 +744,7 @@ export function Shell() {
         return;
       }
       if (command === 'insert-link' || command === 'link-edit') {
-        if (pageSetupOpenRef.current) {
+        if (pageSetupOpenRef.current || fontDialogOpenRef.current !== null) {
           return;
         }
         const draft = editorPageCommands()?.linkDraft?.() ?? null;
@@ -739,7 +776,7 @@ export function Shell() {
         return;
       }
       if (command === 'format-page-setup') {
-        if (linkDialogRef.current !== null) {
+        if (linkDialogRef.current !== null || fontDialogOpenRef.current !== null) {
           return;
         }
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
@@ -927,8 +964,14 @@ export function Shell() {
         onMenuCommand(editCommand);
         return;
       }
+      const fontCommand = formatFontShellShortcut(event);
+      if (fontCommand !== null && fontDialogOpenRef.current === null) {
+        event.preventDefault();
+        onMenuCommand(fontCommand);
+        return;
+      }
       const linkCommand = linkShellShortcut(event);
-      if (linkCommand !== null && linkDialogRef.current === null) {
+      if (linkCommand !== null && linkDialogRef.current === null && fontDialogOpenRef.current === null) {
         event.preventDefault();
         onMenuCommand(linkCommand);
         return;
@@ -1023,7 +1066,23 @@ export function Shell() {
       {!isShellTab(activeTab) ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}
-      {pageSetupOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+      {fontDialogDraft !== null && linkDialog === null && conflict === null && closePromptTab === undefined
+        && !isShellTab(activeTab) ? (
+        <FontDialog
+          initial={fontDialogDraft.initial}
+          preview={fontDialogDraft.preview}
+          onCancel={() => {
+            setFontDialogDraft(null);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+          onApply={(value) => {
+            editorPageCommands()?.applyFontDialog?.(value);
+            setFontDialogDraft(null);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+        />
+      ) : null}
+      {pageSetupOpen && linkDialog === null && fontDialogDraft === null && conflict === null && closePromptTab === undefined
         && !isShellTab(activeTab) ? (
         <PageSetupDialog
           initial={pageSetupFromUnknown(activeTab.baseDocument.page)}
@@ -1051,7 +1110,7 @@ export function Shell() {
           }}
         />
       ) : null}
-      {exportDialogOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+      {exportDialogOpen && linkDialog === null && fontDialogDraft === null && conflict === null && closePromptTab === undefined
         && !isShellTab(activeTab) ? (
         <ExportDialog
           onCancel={() => {
@@ -1063,7 +1122,7 @@ export function Shell() {
           }}
         />
       ) : null}
-      {linkDialog !== null && conflict === null && closePromptTab === undefined ? (
+      {linkDialog !== null && fontDialogDraft === null && conflict === null && closePromptTab === undefined ? (
         <LinkDialog
           draft={linkDialog}
           onCancel={() => setLinkDialog(null)}

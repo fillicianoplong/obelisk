@@ -222,7 +222,7 @@ test('Alt+Shift+Down on the last block does not move it', async () => {
   }
 });
 
-test('Ctrl+D duplicates two selected blocks below in order with new ids', async () => {
+test('Ctrl+Shift+D duplicates two selected blocks below in order with new ids', async () => {
   const { selectedBlockRange } = await loadRenderer(blockHandleUrl);
   const { editorBlockSnapshot } = await loadRenderer(mappingUrl);
   const { isBlockId } = await loadRenderer(blockIdUrl);
@@ -236,7 +236,7 @@ test('Ctrl+D duplicates two selected blocks below in order with new ids', async 
     dispatchHandleMouseDown(view, 1);
     dispatchHandleMouseDown(view, 2, { shiftKey: true });
     assert.deepEqual(selectedBlockRange(view.state), { from: 1, to: 2 });
-    dispatchEditorKeyDown(view, 'd', { ctrlKey: true });
+    dispatchEditorKeyDown(view, 'd', { ctrlKey: true, shiftKey: true });
     assert.deepEqual(blockTexts(view), ['One', 'Two', 'Three', 'Two', 'Three', 'Four']);
     assert.deepEqual(selectedBlockRange(view.state), { from: 3, to: 4 });
     assert.equal(view.dom.querySelectorAll('[data-block-selected="true"]').length, 2);
@@ -270,7 +270,7 @@ test('each move and duplicate is a single undo step and keeps block selection', 
     assert.deepEqual(blockTexts(view), ['A', 'B', 'C']);
 
     dispatchHandleMouseDown(view, 1);
-    dispatchEditorKeyDown(view, 'd', { ctrlKey: true });
+    dispatchEditorKeyDown(view, 'd', { ctrlKey: true, shiftKey: true });
     assert.equal(undoDepth(view.state), depthBefore + 1);
     assert.equal(selectedBlockCount(view.state), 1);
   } finally {

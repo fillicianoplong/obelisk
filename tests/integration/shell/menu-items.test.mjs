@@ -148,7 +148,8 @@ test('the menu bar enables formatting only with a selection and runs Insert', { 
     })()`,
   );
   await pressChord(client, 'o', 'KeyO', 79);
-  await pressKey(client, 'Enter', 'Enter', 13);
+  await pressKey(client, 't', 'KeyT', 84);
+  await pressKey(client, 'b', 'KeyB', 66);
   await pressKey(client, 'Enter', 'Enter', 13);
   await waitForState(client, (state) => state.hasBold === true, 'Format > Bold applies bold');
 

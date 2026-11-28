@@ -45,6 +45,12 @@ import {
   applyCharacterMarksCommand,
   formatMenuCommand,
 } from './format-commands.js';
+import {
+  applyFontDialogCommand,
+  fontDialogPreviewText,
+  fontDialogValueFromState,
+  type FontDialogValue,
+} from './font-dialog.js';
 import { applyLinkCommand, linkAround, linkDraftFromState, removeLinkCommand } from './link/commands.js';
 import { eventTargetsLink, linkClickAction } from './link/open-on-click.js';
 import { openLinkBubble } from './link/link-bubble-plugin.js';
@@ -331,6 +337,19 @@ function installEditorCommands(
       let applied = false;
       runWithSynchronousEditorUpdate(() => {
         applied = applyLinkCommand(text, address)(view.state, dispatch);
+      });
+      return applied;
+    },
+    fontDialogDraft() {
+      return {
+        initial: fontDialogValueFromState(view.state),
+        preview: fontDialogPreviewText(view.state),
+      };
+    },
+    applyFontDialog(value: FontDialogValue) {
+      let applied = false;
+      runWithSynchronousEditorUpdate(() => {
+        applied = applyFontDialogCommand(value)(view.state, dispatch);
       });
       return applied;
     },

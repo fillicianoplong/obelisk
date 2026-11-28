@@ -102,7 +102,7 @@ test('Alt+F opens File and Alt+O opens Format', async () => {
     initialMenuSession(),
   );
   assert.equal(format.session.menuId, 'format');
-  assert.deepEqual(format.session.panels, ['format-text']);
+  assert.deepEqual(format.session.panels, ['format-font-dialog']);
   assert.notEqual(format.session.menuId, 'file');
 });
 

@@ -161,12 +161,6 @@ const TEXT_ITEMS: readonly MenuEntry[] = [
   formatItem({ id: 'format-bold', label: 'Bold', accessKey: 'b', shortcut: 'Ctrl+B' }),
   formatItem({ id: 'format-italic', label: 'Italic', accessKey: 'i', shortcut: 'Ctrl+I' }),
   formatItem({ id: 'format-underline', label: 'Underline', accessKey: 'u', shortcut: 'Ctrl+U' }),
-  formatItem({ id: 'format-strikethrough', label: 'Strikethrough', accessKey: 'k', shortcut: 'Ctrl+Shift+X' }),
-  formatItem({ id: 'format-superscript', label: 'Superscript', accessKey: 's' }),
-  formatItem({ id: 'format-subscript', label: 'Subscript', accessKey: 'r' }),
-  formatItem({ id: 'format-code', label: 'Code', accessKey: 'c' }),
-  formatItem({ id: 'format-text-color', label: 'Text color', accessKey: 't' }),
-  formatItem({ id: 'format-highlight', label: 'Highlight', accessKey: 'h' }),
 ];
 
 export const APP_MENUS: readonly AppMenu[] = [
@@ -244,7 +238,7 @@ export const APP_MENUS: readonly AppMenu[] = [
         shortcut: 'Ctrl+Shift+V',
         command: 'edit-paste-plain',
       }),
-      item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+D', command: 'edit-duplicate' }),
+      item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+Shift+D', command: 'edit-duplicate' }),
       item({ id: 'edit-select-all', label: 'Select all', accessKey: 's', shortcut: 'Ctrl+A', command: 'edit-select-all' }),
       separator('edit-sep-2'),
       item({ id: 'edit-find', label: 'Find', accessKey: 'f', shortcut: 'Ctrl+F', command: 'edit-find' }),
@@ -302,10 +296,24 @@ export const APP_MENUS: readonly AppMenu[] = [
     label: 'Format',
     accessKey: 'o',
     entries: [
+      formatItem({
+        id: 'format-font-dialog',
+        label: 'Font',
+        accessKey: 'f',
+        ellipsis: true,
+        shortcut: 'Ctrl+D',
+        command: 'format-font-dialog',
+      }),
       submenu('format-text', 'Text', 't', TEXT_ITEMS),
-      submenu('format-font', 'Font', 'f', FONT_ITEMS),
+      submenu('format-font', 'Font family', 'm', FONT_ITEMS),
       submenu('format-size', 'Font size', 'z', FONT_SIZE_ITEMS),
-      item({ id: 'format-paragraph', label: 'Paragraph', accessKey: 'p', ellipsis: true }),
+      item({
+        id: 'format-paragraph',
+        label: 'Paragraph',
+        accessKey: 'p',
+        ellipsis: true,
+        command: 'format-paragraph',
+      }),
       formatItem({ id: 'format-indent-increase', label: 'Increase indent', accessKey: 'i', shortcut: 'Tab' }),
       formatItem({ id: 'format-indent-decrease', label: 'Decrease indent', accessKey: 'd', shortcut: 'Shift+Tab' }),
       formatItem({ id: 'format-clear', label: 'Clear formatting', accessKey: 'c', shortcut: 'Ctrl+Space' }),

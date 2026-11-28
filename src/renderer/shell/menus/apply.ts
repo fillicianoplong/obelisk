@@ -71,8 +71,12 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'insert-drawing',
   'insert-signature',
   'insert-date-time',
-  'format-paragraph',
   'help-shortcuts',
+]);
+
+const SHELL_DIALOG_COMMANDS = new Set([
+  'format-font-dialog',
+  'format-paragraph',
 ]);
 
 const SHELL_ALWAYS = new Set([
@@ -94,6 +98,7 @@ const SHELL_DOCUMENT = new Set([
   'file-export-pdf',
   'file-export-word',
   'file-export-markdown',
+  'format-font-dialog',
 ]);
 
 export interface LiveMenuContext {
@@ -122,6 +127,9 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
   }
   if (!context.documentTab || context.editorState === null) {
     return false;
+  }
+  if (SHELL_DIALOG_COMMANDS.has(item.id)) {
+    return true;
   }
   if (item.command === 'spell-add' || item.command?.startsWith('spell-replace:') === true) {
     return context.documentTab && context.editorState !== null;
@@ -164,7 +172,7 @@ function submenuParentEnabled(item: MenuItem, context: LiveMenuContext): boolean
   if (item.id === 'file-template') {
     return true;
   }
-  if (item.id === 'block-turn-into') {
+  if (item.id === 'block-turn-into' || item.id === 'ctx-block') {
     return context.documentTab && context.editorState !== null;
   }
   if (item.id.startsWith('format-') && hasSubmenu(item)) {

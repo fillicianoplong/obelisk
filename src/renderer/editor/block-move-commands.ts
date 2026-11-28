@@ -244,6 +244,6 @@ export function blockMoveKeymap(): Record<string, Command> {
   return {
     'Alt-Shift-ArrowUp': moveBlocksUpCommand(),
     'Alt-Shift-ArrowDown': moveBlocksDownCommand(),
-    'Mod-d': duplicateBlocksCommand(),
+    'Mod-Shift-d': duplicateBlocksCommand(),
   };
 }

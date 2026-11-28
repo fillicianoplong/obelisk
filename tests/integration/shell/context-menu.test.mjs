@@ -130,6 +130,24 @@ async function waitForMenu(client, predicate, label) {
   throw new Error(`${label} did not match within ${STEP_TIMEOUT_MS} ms: ${JSON.stringify(last)}`);
 }
 
+async function focusBlockTurnInto(client) {
+  let focused = '';
+  for (let index = 0; index < 12; index += 1) {
+    await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
+    const snap = await evaluate(client, SNAPSHOT);
+    focused = snap.focused ?? '';
+    if (focused === 'ctx-block') {
+      break;
+    }
+  }
+  if (focused !== 'ctx-block') {
+    return focused;
+  }
+  await pressKey(client, 'ArrowRight', 'ArrowRight', 39);
+  const snap = await evaluate(client, SNAPSHOT);
+  return snap.focused ?? '';
+}
+
 async function launchApp(t) {
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-context-menu-'));
   const session = { child: undefined, client: undefined, userDataDir };
@@ -358,15 +376,7 @@ test('opening Turn into does not move root menu items', { timeout: 60_000 }, asy
   await rightClickBlockHandle(client);
   await waitForMenu(client, (state) => state.open && state.kind === 'block', 'block menu');
   const before = await evaluate(client, ITEM_RECTS);
-  let focused = '';
-  for (let index = 0; index < 10; index += 1) {
-    await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
-    const snap = await evaluate(client, SNAPSHOT);
-    focused = snap.focused ?? '';
-    if (focused === 'block-turn-into') {
-      break;
-    }
-  }
+  const focused = await focusBlockTurnInto(client);
   assert.equal(focused, 'block-turn-into');
   await pressKey(client, 'ArrowRight', 'ArrowRight', 39);
   await waitForMenu(client, (state) => state.turnIntoOpen === 'true' && state.turnIntoChild === true, 'flyout open');
@@ -432,15 +442,7 @@ test('Turn into opens with ArrowRight in the flyout layer', { timeout: 60_000 },
   await sleep(80);
   await rightClickBlockHandle(client);
   await waitForMenu(client, (state) => state.open && state.kind === 'block', 'context menu');
-  let focused = '';
-  for (let index = 0; index < 10; index += 1) {
-    await pressKey(client, 'ArrowDown', 'ArrowDown', 40);
-    const snap = await evaluate(client, SNAPSHOT);
-    focused = snap.focused ?? '';
-    if (focused === 'block-turn-into') {
-      break;
-    }
-  }
+  const focused = await focusBlockTurnInto(client);
   assert.equal(focused, 'block-turn-into');
   await pressKey(client, 'ArrowRight', 'ArrowRight', 39);
   const nested = await waitForMenu(
@@ -466,7 +468,7 @@ test('block handle on a paragraph opens the block menu', { timeout: 60_000 }, as
   await sleep(80);
   await rightClickBlockHandle(client);
   await waitForMenu(client, (state) => state.open && state.kind === 'block' && state.blockType === 'paragraph', 'block menu');
-  assert.ok((await evaluate(client, SNAPSHOT)).labels.includes('Turn into'));
+  assert.ok((await evaluate(client, SNAPSHOT)).labels.includes('Block'));
 });
 
 test('Esc then Shift+F10 opens the block menu', { timeout: 60_000 }, async (t) => {
@@ -483,7 +485,7 @@ test('Esc then Shift+F10 opens the block menu', { timeout: 60_000 }, async (t) =
   await sleep(80);
   await pressKey(client, 'F10', 'F10', 121, 8);
   const menu = await waitForMenu(client, (state) => state.open && state.kind === 'block', 'block menu after Esc');
-  assert.ok(menu.labels.includes('Turn into'));
+  assert.ok(menu.labels.includes('Block'));
 });
 
 const SHELL_ALIVE = `(() => {

@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.70.0] - 2026-11-28
+
+### Added
+
+- Format > Font… (Ctrl+D) opens one dialog for font family, style, size, colors, underline, and effects, with a live preview. It works on the selection or on the next characters you type when nothing is selected.
+- The block right-click menu groups clipboard, Font… / Paragraph…, and a Block submenu. The grip menu keeps its full flat list.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

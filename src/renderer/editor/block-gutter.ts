@@ -50,7 +50,7 @@ export const BLOCK_MENU_ACTIONS: readonly BlockMenuAction[] = [
   { id: 'edit-cut', label: 'Cut', shortcut: 'Ctrl+X' },
   { id: 'edit-copy', label: 'Copy', shortcut: 'Ctrl+C' },
   { id: 'edit-paste', label: 'Paste', shortcut: 'Ctrl+V' },
-  { id: 'edit-duplicate', label: 'Duplicate', shortcut: 'Ctrl+D' },
+  { id: 'edit-duplicate', label: 'Duplicate', shortcut: 'Ctrl+Shift+D' },
   { id: 'block-delete', label: 'Delete' },
   ...TURN_INTO.map(({ id, label }) => ({ id, label })),
   { id: 'block-insert-above', label: 'Insert above' },

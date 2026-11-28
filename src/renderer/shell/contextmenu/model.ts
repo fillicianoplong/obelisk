@@ -24,8 +24,8 @@ function separator(id: string) {
   return { id, separator: true as const };
 }
 
-function submenu(id: string, label: string, accessKey: string, entries: readonly MenuEntry[]): MenuItem {
-  return item({ id, label, accessKey, enabled: true, submenu: entries });
+function submenu(id: string, label: string, accessKey: string, entries: readonly MenuEntry[], extra: Partial<ItemInit> = {}): MenuItem {
+  return item({ id, label, accessKey, enabled: true, submenu: entries, ...extra });
 }
 
 const TURN_INTO_ITEMS: readonly MenuEntry[] = [
@@ -38,6 +38,16 @@ const TURN_INTO_ITEMS: readonly MenuEntry[] = [
   item({ id: 'block-turn-into-checklist', label: 'Checklist', accessKey: 'k' }),
   item({ id: 'block-turn-into-quote', label: 'Quote', accessKey: 'q' }),
   item({ id: 'block-turn-into-code', label: 'Code block', accessKey: 'c' }),
+];
+
+const BLOCK_ACTION_ITEMS: readonly MenuEntry[] = [
+  submenu('block-turn-into', 'Turn into', 'u', TURN_INTO_ITEMS),
+  item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+Shift+D', command: 'edit-duplicate' }),
+  item({ id: 'block-insert-above', label: 'Insert above', accessKey: 'a', command: 'block-insert-above' }),
+  item({ id: 'block-insert-below', label: 'Insert below', accessKey: 'b', accessOccurrence: 1, command: 'block-insert-below' }),
+  item({ id: 'block-move-up', label: 'Move up', accessKey: 'u', accessOccurrence: 1, command: 'block-move-up' }),
+  item({ id: 'block-move-down', label: 'Move down', accessKey: 'w', command: 'block-move-down' }),
+  item({ id: 'block-delete', label: 'Delete', accessKey: 'e', command: 'block-delete' }),
 ];
 
 export const TEXT_MENU_ENTRIES: readonly MenuEntry[] = [
@@ -57,12 +67,13 @@ export const TEXT_MENU_ENTRIES: readonly MenuEntry[] = [
   item({ id: 'format-clear', label: 'Clear formatting', accessKey: 'r', shortcut: 'Ctrl+Space', command: 'format-clear' }),
 ];
 
+/** Block grip menu: full flat action list (unchanged layout). */
 export function blockHandleEntries(options: { omitTurnInto?: boolean } = {}): MenuEntry[] {
   const entries: MenuEntry[] = [
     item({ id: 'edit-cut', label: 'Cut', accessKey: 't', shortcut: 'Ctrl+X', command: 'edit-cut' }),
     item({ id: 'edit-copy', label: 'Copy', accessKey: 'c', shortcut: 'Ctrl+C', command: 'edit-copy' }),
     item({ id: 'edit-paste', label: 'Paste', accessKey: 'p', shortcut: 'Ctrl+V', command: 'edit-paste' }),
-    item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+D', command: 'edit-duplicate' }),
+    item({ id: 'edit-duplicate', label: 'Duplicate', accessKey: 'd', shortcut: 'Ctrl+Shift+D', command: 'edit-duplicate' }),
     item({ id: 'block-delete', label: 'Delete', accessKey: 'e', command: 'block-delete' }),
   ];
   if (options.omitTurnInto !== true) {
@@ -75,6 +86,36 @@ export function blockHandleEntries(options: { omitTurnInto?: boolean } = {}): Me
     item({ id: 'block-move-down', label: 'Move down', accessKey: 'w', command: 'block-move-down' }),
   );
   return entries;
+}
+
+/** Right-click block context menu with grouped sections. */
+export function blockContextEntries(options: { omitTurnInto?: boolean } = {}): MenuEntry[] {
+  const blockItems = options.omitTurnInto === true
+    ? BLOCK_ACTION_ITEMS.filter((entry) => !isSeparator(entry) && entry.id !== 'block-turn-into')
+    : [...BLOCK_ACTION_ITEMS];
+  return [
+    item({ id: 'edit-cut', label: 'Cut', accessKey: 't', shortcut: 'Ctrl+X', command: 'edit-cut' }),
+    item({ id: 'edit-copy', label: 'Copy', accessKey: 'c', shortcut: 'Ctrl+C', command: 'edit-copy' }),
+    item({ id: 'edit-paste', label: 'Paste', accessKey: 'p', shortcut: 'Ctrl+V', command: 'edit-paste' }),
+    separator('ctx-block-sep-1'),
+    item({
+      id: 'format-font-dialog',
+      label: 'Font',
+      accessKey: 'f',
+      ellipsis: true,
+      shortcut: 'Ctrl+D',
+      command: 'format-font-dialog',
+    }),
+    item({
+      id: 'format-paragraph',
+      label: 'Paragraph',
+      accessKey: 'p',
+      ellipsis: true,
+      command: 'format-paragraph',
+    }),
+    separator('ctx-block-sep-2'),
+    submenu('ctx-block', 'Block', 'b', blockItems),
+  ];
 }
 
 const TABLE_OWN: readonly MenuEntry[] = [
@@ -230,21 +271,21 @@ export function composeContextMenu(kind: ContextTargetKind): readonly MenuEntry[
     case 'text':
       return TEXT_MENU_ENTRIES;
     case 'block':
-      return blockHandleEntries();
+      return blockContextEntries();
     case 'table-cell':
-      return joinSections([blockHandleEntries(), TABLE_OWN]);
+      return joinSections([blockContextEntries(), TABLE_OWN]);
     case 'image':
-      return joinSections([blockHandleEntries(), IMAGE_OWN]);
+      return joinSections([blockContextEntries(), IMAGE_OWN]);
     case 'equation-block':
-      return joinSections([blockHandleEntries(), EQUATION_BLOCK_OWN]);
+      return joinSections([blockContextEntries(), EQUATION_BLOCK_OWN]);
     case 'column-row':
-      return joinSections([blockHandleEntries(), COLUMN_OWN]);
+      return joinSections([blockContextEntries(), COLUMN_OWN]);
     case 'drawing-pad':
-      return joinSections([blockHandleEntries(), DRAWING_OWN]);
+      return joinSections([blockContextEntries(), DRAWING_OWN]);
     case 'diagram':
-      return joinSections([blockHandleEntries(), DIAGRAM_OWN]);
+      return joinSections([blockContextEntries(), DIAGRAM_OWN]);
     case 'signature':
-      return joinSections([blockHandleEntries({ omitTurnInto: true }), SIGNATURE_OWN]);
+      return joinSections([blockContextEntries({ omitTurnInto: true }), SIGNATURE_OWN]);
     case 'link':
       return joinSections([TEXT_MENU_ENTRIES, LINK_OWN]);
     case 'inline-equation':

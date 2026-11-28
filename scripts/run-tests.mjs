@@ -39,6 +39,7 @@ const electronTestFiles = [
   path.join('tests', 'integration', 'shell', 'shell-frame.test.mjs'),
   path.join('tests', 'integration', 'shell', 'menu-keys.test.mjs'),
   path.join('tests', 'integration', 'shell', 'menu-items.test.mjs'),
+  path.join('tests', 'integration', 'shell', 'font-dialog.test.mjs'),
   path.join('tests', 'integration', 'shell', 'context-menu.test.mjs'),
   path.join('tests', 'integration', 'editor', 'block-menus.test.mjs'),
   path.join('tests', 'integration', 'editor', 'link-bubble.test.mjs'),

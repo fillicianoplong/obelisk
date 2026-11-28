@@ -51,6 +51,16 @@ export function linkShellShortcut(event: ShortcutKey): 'insert-link' | null {
   return null;
 }
 
+export function formatFontShellShortcut(event: ShortcutKey): 'format-font-dialog' | null {
+  if (event.altKey || event.shiftKey || event.repeat || !(event.ctrlKey || event.metaKey)) {
+    return null;
+  }
+  if (event.key.toLowerCase() === 'd') {
+    return 'format-font-dialog';
+  }
+  return null;
+}
+
 export function editShellShortcut(event: ShortcutKey): EditShellShortcut | null {
   if (event.altKey || event.repeat || !(event.ctrlKey || event.metaKey) || event.shiftKey) {
     return null;

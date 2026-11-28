@@ -60,8 +60,9 @@ export const MENU_REFERENCE_BY_MENU: Readonly<Record<string, readonly string[]>>
     'Page count',
   ],
   Format: [
+    'Font…',
     'Text',
-    'Font',
+    'Font family',
     'Font size',
     'Paragraph…',
     'Increase indent',
