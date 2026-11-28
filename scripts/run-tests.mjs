@@ -93,6 +93,12 @@ function readLcov(file) {
   }
 }
 
+const licenseCheck = run([path.join('scripts', 'check-licenses.mjs')]);
+const licenseCode = exitCode(licenseCheck);
+if (licenseCode !== 0) {
+  process.exit(licenseCode);
+}
+
 const build = run([path.join('scripts', 'build.mjs')]);
 const buildCode = exitCode(build);
 if (buildCode !== 0) {

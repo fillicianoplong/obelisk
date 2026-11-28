@@ -24,37 +24,13 @@ export const DEFAULT_FONT_SIZE = DEFAULT_FONT_SIZE_PT;
 export const DEFAULT_TEXT_COLOR = '#B3261E';
 export const DEFAULT_HIGHLIGHT_COLOR = '#F3E3A1';
 
-export const BUNDLED_FONT_FAMILIES: readonly string[] = [
-  'Liberation Serif',
-  'Liberation Sans',
-  'Liberation Mono',
-  'Caladea',
-  'Carlito',
-  'DejaVu Serif',
-  'DejaVu Sans',
-  'DejaVu Sans Mono',
-  'Linux Libertine G',
-  'Linux Biolinum G',
-  'Noto Serif',
-  'Noto Sans',
-  'Dancing Script',
-];
+import { BUNDLED_FONT_FAMILIES, BUNDLED_FONT_FAMILY_NAMES } from '../../../shared/fonts/manifest.js';
 
-const FONT_BY_MENU_ID: Record<string, string> = {
-  'format-font-liberation-serif': 'Liberation Serif',
-  'format-font-liberation-sans': 'Liberation Sans',
-  'format-font-liberation-mono': 'Liberation Mono',
-  'format-font-caladea': 'Caladea',
-  'format-font-carlito': 'Carlito',
-  'format-font-dejavu-serif': 'DejaVu Serif',
-  'format-font-dejavu-sans': 'DejaVu Sans',
-  'format-font-dejavu-mono': 'DejaVu Sans Mono',
-  'format-font-libertine': 'Linux Libertine G',
-  'format-font-biolinum': 'Linux Biolinum G',
-  'format-font-noto-serif': 'Noto Serif',
-  'format-font-noto-sans': 'Noto Sans',
-  'format-font-dancing': 'Dancing Script',
-};
+export { BUNDLED_FONT_FAMILY_NAMES as BUNDLED_FONT_FAMILIES };
+
+const FONT_BY_MENU_ID: Record<string, string> = Object.fromEntries(
+  BUNDLED_FONT_FAMILIES.map((row) => [row.menuId, row.family]),
+);
 
 export function fontFamilyFromMenuId(menuId: string): string | null {
   return FONT_BY_MENU_ID[menuId] ?? null;

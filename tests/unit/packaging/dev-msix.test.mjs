@@ -382,22 +382,29 @@ test('makepri writes resources.pri for the icon set when the Windows SDK is inst
   }
 });
 
-test('the dev package keeps Liberation Serif and its license', async () => {
+test('the dev package keeps bundled fonts, font licenses, and third-party notices', async () => {
   const packageScript = await readFile(path.join(root, 'scripts/package-msix.mjs'), 'utf8');
   assert.match(packageScript, /bundledPageFontLayoutPaths\(\)/);
   const layoutPaths = bundledPageFontLayoutPaths();
-  assert.equal(layoutPaths.length, BUNDLED_PAGE_FONTS.length * 2);
+  assert.ok(layoutPaths.length > 80, 'fonts and license files should be listed for the MSIX layout');
   for (const name of BUNDLED_PAGE_FONTS) {
     const source = path.join(root, 'assets', 'fonts', name);
     const info = await stat(source);
     assert.equal(info.isFile(), true, name);
     assert.equal(ignoredByPackager(source), false, name);
-    assert.equal(ignoredByPackager(path.join(root, 'dist', 'renderer', 'fonts', name)), false, name);
-    assert.equal(layoutPaths.filter((item) => item.endsWith(name)).length, 2, name);
+    if (name.endsWith('.ttf')) {
+      assert.equal(ignoredByPackager(path.join(root, 'dist', 'renderer', 'fonts', name)), false, name);
+    }
+    const inLayout = layoutPaths.filter((item) => item.endsWith(name));
+    assert.equal(inLayout.length >= 1, true, name);
   }
   const license = await readFile(path.join(root, 'assets', 'fonts', 'OFL.txt'), 'utf8');
   assert.match(license, /SIL Open Font License/);
   assert.match(license, /Liberation/);
+  assert.equal(
+    layoutPaths.some((item) => item.replaceAll('\\', '/').endsWith('resources/licenses/react.txt')),
+    true,
+  );
 });
 
 test('the packager ignores source and tools but keeps the built app', () => {

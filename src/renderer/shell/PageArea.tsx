@@ -4,12 +4,13 @@ import type { JsonObject } from '../../shared/ipc/types.js';
 import { EditorCore } from '../editor/EditorCore.js';
 import type { BandEdit } from '../editor/header/PageBands.js';
 import type { PageMargins } from '../editor/layout/paginate.js';
+import { AboutView } from './about/AboutView.js';
 import { DOCUMENT_LABEL } from './focus/regions.js';
 import type { ZoomPreset } from '../../shared/zoom.js';
 
 interface PageAreaProps {
   tabId: string;
-  kind?: 'document' | 'settings';
+  kind?: 'document' | 'settings' | 'about';
   state: EditorState;
   viewMode: 'pages' | 'pageless';
   orientation?: 'portrait' | 'landscape';
@@ -58,6 +59,21 @@ export function PageArea({
         tabIndex={-1}
       >
         <h1 className="settings-title">Settings</h1>
+      </section>
+    );
+  }
+  if (kind === 'about') {
+    return (
+      <section
+        className="page-region page-region-about"
+        data-region="page"
+        data-page="about"
+        role="tabpanel"
+        id={`panel-${tabId}`}
+        aria-label="About Obelisk"
+        tabIndex={-1}
+      >
+        <AboutView />
       </section>
     );
   }

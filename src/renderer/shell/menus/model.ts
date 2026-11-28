@@ -131,9 +131,6 @@ const FONT_ITEMS: readonly MenuEntry[] = [
   formatItem({ id: 'format-font-liberation-mono', label: 'Liberation Mono', accessKey: 'm' }),
   formatItem({ id: 'format-font-caladea', label: 'Caladea', accessKey: 'c' }),
   formatItem({ id: 'format-font-carlito', label: 'Carlito', accessKey: 'a' }),
-  formatItem({ id: 'format-font-dejavu-serif', label: 'DejaVu Serif', accessKey: 'd' }),
-  formatItem({ id: 'format-font-dejavu-sans', label: 'DejaVu Sans', accessKey: 'j' }),
-  formatItem({ id: 'format-font-dejavu-mono', label: 'DejaVu Sans Mono', accessKey: 'o' }),
   formatItem({ id: 'format-font-libertine', label: 'Linux Libertine G', accessKey: 'x' }),
   formatItem({ id: 'format-font-biolinum', label: 'Linux Biolinum G', accessKey: 'b' }),
   formatItem({ id: 'format-font-noto-serif', label: 'Noto Serif', accessKey: 'n' }),
@@ -352,7 +349,7 @@ export const APP_MENUS: readonly AppMenu[] = [
     accessKey: 'h',
     entries: [
       item({ id: 'help-shortcuts', label: 'Keyboard shortcuts', accessKey: 'k' }),
-      item({ id: 'help-about', label: 'About Obelisk', accessKey: 'a' }),
+      item({ id: 'help-about', label: 'About Obelisk', accessKey: 'a', command: 'about' }),
     ],
   },
 ];

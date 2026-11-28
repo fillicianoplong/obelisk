@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const MSIX_PACKAGE_NAME = 'Obelisk.Dev';
 
@@ -62,20 +63,38 @@ export const PRI_CONFIG_FILE = 'priconfig.xml';
 
 export const PRI_RESOURCE_FILE = 'resources.pri';
 
-// Liberation Serif only. The license file ships next to the faces.
-export const BUNDLED_PAGE_FONTS = [
-  'LiberationSerif-Regular.ttf',
-  'LiberationSerif-Bold.ttf',
-  'LiberationSerif-Italic.ttf',
-  'LiberationSerif-BoldItalic.ttf',
-  'OFL.txt',
-];
+function bundledFontSourceRoot() {
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+}
+
+export function readBundledFontFileNames() {
+  const fontsDir = path.join(bundledFontSourceRoot(), 'assets', 'fonts');
+  const manifest = JSON.parse(readFileSync(path.join(fontsDir, 'manifest.json'), 'utf8'));
+  const names = manifest.faces.map((face) => face.file);
+  for (const entry of readdirSync(fontsDir)) {
+    if (entry.endsWith('.txt')) {
+      names.push(entry);
+    }
+  }
+  return [...new Set(names)].sort();
+}
+
+/** Every bundled .ttf and license file under assets/fonts. */
+export const BUNDLED_PAGE_FONTS = readBundledFontFileNames();
 
 export function bundledPageFontPaths() {
   const paths = [];
   for (const name of BUNDLED_PAGE_FONTS) {
     paths.push(path.join('assets', 'fonts', name));
     paths.push(path.join('dist', 'renderer', 'fonts', name));
+  }
+  const licensesDir = path.join('resources', 'licenses');
+  for (const entry of readdirSync(path.join(bundledFontSourceRoot(), licensesDir))) {
+    if (entry === 'manifest.json' || !entry.endsWith('.txt')) {
+      continue;
+    }
+    paths.push(path.join(licensesDir, entry));
+    paths.push(path.join('dist', 'renderer', 'licenses', entry));
   }
   return paths;
 }

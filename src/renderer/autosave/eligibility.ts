@@ -3,7 +3,7 @@ import type { PageTab } from '../shell/tabs/model.js';
 import { isAutosavePaused } from './model.js';
 
 export function autosaveEligible(tab: PageTab): boolean {
-  if (tab.kind === 'settings') {
+  if (tab.kind === 'settings' || tab.kind === 'about') {
     return false;
   }
   if (!tab.handle) {

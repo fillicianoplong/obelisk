@@ -1,0 +1,87 @@
+{
+  "components": [
+    {
+      "id": "electron",
+      "name": "Electron and Chromium",
+      "licenseId": "MIT",
+      "noticeFile": "electron.txt",
+      "fullTextFile": "electron-full.txt",
+      "summary": "MIT; Chromium notices ship with Electron."
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "licenseId": "MIT",
+      "noticeFile": "react.txt",
+      "summary": "UI library.",
+      "npmPackage": "react"
+    },
+    {
+      "id": "prosemirror",
+      "name": "ProseMirror",
+      "licenseId": "MIT",
+      "noticeFile": "prosemirror.txt",
+      "summary": "Document editor core."
+    },
+    {
+      "id": "katex",
+      "name": "KaTeX",
+      "licenseId": "MIT",
+      "noticeFile": "katex.txt",
+      "summary": "Equation layout (equations feature)."
+    },
+    {
+      "id": "mathml2omml",
+      "name": "mathml2omml",
+      "licenseId": "LGPL-3.0-or-later",
+      "noticeFile": "mathml2omml.txt",
+      "fullTextFile": "mathml2omml-lgpl.txt",
+      "summary": "Word equation export; separate replaceable module.",
+      "sourceUrl": "https://github.com/fiduswriter/mathml2omml"
+    },
+    {
+      "id": "docx",
+      "name": "docx",
+      "licenseId": "MIT",
+      "noticeFile": "docx.txt",
+      "summary": "Word export."
+    },
+    {
+      "id": "jszip",
+      "name": "JSZip (used by docx)",
+      "licenseId": "MIT",
+      "noticeFile": "jszip.txt",
+      "summary": "Used under the MIT terms of the MIT or GPLv3 dual license."
+    },
+    {
+      "id": "yauzl",
+      "name": "yauzl",
+      "licenseId": "MIT",
+      "noticeFile": "yauzl.txt",
+      "summary": ".obk archive reader.",
+      "npmPackage": "yauzl"
+    },
+    {
+      "id": "yazl",
+      "name": "yazl",
+      "licenseId": "MIT",
+      "noticeFile": "yazl.txt",
+      "summary": ".obk archive writer.",
+      "npmPackage": "yazl"
+    },
+    {
+      "id": "mermaid",
+      "name": "Mermaid",
+      "licenseId": "MIT",
+      "noticeFile": "mermaid.txt",
+      "summary": "Diagram layout uses dagre (MIT); elkjs is not shipped."
+    },
+    {
+      "id": "bundled-fonts",
+      "name": "Bundled fonts",
+      "licenseId": "SIL-OFL-1.1",
+      "noticeFile": "bundled-fonts.txt",
+      "summary": "Per the fonts reference; full OFL text ships beside each family."
+    }
+  ]
+}

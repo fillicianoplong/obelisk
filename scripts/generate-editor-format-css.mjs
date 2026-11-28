@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,21 +15,11 @@ const INDENT_FIRST_MAX_IN = 1;
 const INDENT_HANGING_MAX_IN = 1;
 const FONT_SIZES_PT = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72];
 
-const BUNDLED_FONT_FAMILIES = [
-  'Liberation Serif',
-  'Liberation Sans',
-  'Liberation Mono',
-  'Caladea',
-  'Carlito',
-  'DejaVu Serif',
-  'DejaVu Sans',
-  'DejaVu Sans Mono',
-  'Linux Libertine G',
-  'Linux Biolinum G',
-  'Noto Serif',
-  'Noto Sans',
-  'Dancing Script',
-];
+const manifestSource = readFileSync(
+  path.join(root, 'src', 'shared', 'fonts', 'manifest.ts'),
+  'utf8',
+);
+const BUNDLED_FONT_FAMILIES = [...manifestSource.matchAll(/family: '([^']+)'/g)].map((match) => match[1]);
 
 function indentSteps(min, max) {
   const values = [];
