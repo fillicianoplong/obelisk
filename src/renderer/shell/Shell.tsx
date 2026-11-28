@@ -47,9 +47,12 @@ import { closeTab, firstUnsavedTabId } from './tabs/close.js';
 import type { ClosePromptChoice } from './tabs/close.js';
 import { PAGE_LABEL, statusViewLabel } from './statusbar/model.js';
 import {
+  ABOUT_TAB_ID,
   SETTINGS_TAB_ID,
   createMlaTab,
+  createAboutTab,
   createSettingsTab,
+  isShellTab,
   createTab,
   documentView,
   rememberDocumentView,
@@ -149,7 +152,7 @@ export function Shell() {
       clock: createAutosaveClock(),
       onFire: (tabId, revision) => {
         const tab = tabsRef.current.find((item) => item.id === tabId);
-        if (!tab || tab.revision !== revision || tab.kind === 'settings' || !tab.handle) {
+        if (!tab || tab.revision !== revision || isShellTab(tab) || !tab.handle) {
           return;
         }
         void saveTabNowRef.current(tabId, 'save').finally(() => {
@@ -200,7 +203,7 @@ export function Shell() {
         return 'failed';
       }
       const tab = tabsRef.current.find((item) => item.id === tabId);
-      if (!tab || tab.kind === 'settings') {
+      if (!tab || isShellTab(tab)) {
         return 'failed';
       }
       saving.current = true;
@@ -521,7 +524,7 @@ export function Shell() {
   );
 
   const openFindBar = useCallback((replace: boolean) => {
-    if (activeTab === undefined || activeTab.kind === 'settings') {
+    if (activeTab === undefined || isShellTab(activeTab)) {
       return;
     }
     const page = document.querySelector<HTMLElement>('[data-region="page-editor"]');
@@ -546,6 +549,16 @@ export function Shell() {
       return [...current, createSettingsTab()];
     });
     setActiveId(SETTINGS_TAB_ID);
+  }, []);
+
+  const openAbout = useCallback(() => {
+    setTabs((current) => {
+      if (current.some((tab) => tab.id === ABOUT_TAB_ID)) {
+        return current;
+      }
+      return [...current, createAboutTab()];
+    });
+    setActiveId(ABOUT_TAB_ID);
   }, []);
 
   useEffect(() => {
@@ -598,7 +611,7 @@ export function Shell() {
 
   const runExport = useCallback(async (format: ExportFormat) => {
     const tab = tabsRef.current.find((item) => item.id === activeIdRef.current);
-    if (tab === undefined || tab.kind === 'settings') {
+    if (tab === undefined || isShellTab(tab)) {
       return;
     }
     setExportDialogOpen(false);
@@ -659,6 +672,10 @@ export function Shell() {
         openSettings();
         return;
       }
+      if (command === 'about') {
+        openAbout();
+        return;
+      }
       if (command === 'save') {
         runSave('save');
         return;
@@ -670,7 +687,7 @@ export function Shell() {
       if (command === 'export') {
         if (linkDialogRef.current === null && !pageSetupOpenRef.current) {
           const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
-          if (active !== undefined && active.kind !== 'settings') {
+          if (active !== undefined && !isShellTab(active)) {
             setExportDialogOpen(true);
           }
         }
@@ -699,7 +716,7 @@ export function Shell() {
       }
       if (command === 'format-header') {
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
-        if (active === undefined || active.kind === 'settings' || documentView(active) === 'pageless') {
+        if (active === undefined || isShellTab(active) || documentView(active) === 'pageless') {
           return;
         }
         const page = document.querySelector<HTMLElement>('[data-region="page-editor"]') as HTMLElement & {
@@ -726,7 +743,7 @@ export function Shell() {
           return;
         }
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
-        if (active !== undefined && active.kind !== 'settings' && documentView(active) !== 'pageless') {
+        if (active !== undefined && !isShellTab(active) && documentView(active) !== 'pageless') {
           setPageSetupOpen(true);
         }
         return;
@@ -777,7 +794,7 @@ export function Shell() {
         setBandEdit(null);
         const nextView = command === 'view-pageless' ? 'pageless' : 'pages';
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
-        if (active === undefined || active.kind === 'settings' || documentView(active) === nextView) {
+        if (active === undefined || isShellTab(active) || documentView(active) === nextView) {
           return;
         }
         rememberDocumentView(nextView);
@@ -813,11 +830,11 @@ export function Shell() {
         return;
       }
     },
-    [addMlaTab, addTab, closeTabById, openDocument, openFindBar, openSettings, requestExit, runExport, runSave, runZoomCommand, toggleSpelling],
+    [addMlaTab, addTab, closeTabById, openAbout, openDocument, openFindBar, openSettings, requestExit, runExport, runSave, runZoomCommand, toggleSpelling],
   );
 
   const menuContext = useMemo(() => {
-    const documentTab = activeTab !== undefined && activeTab.kind !== 'settings';
+    const documentTab = activeTab !== undefined && !isShellTab(activeTab);
     const editorState = documentTab ? activeTab.editor : null;
     const selectionEmpty = editorState?.selection.empty ?? true;
     return {
@@ -854,7 +871,7 @@ export function Shell() {
   }, []);
 
   useLayoutEffect(() => {
-    if (activeTab === undefined || activeTab.kind === 'settings') {
+    if (activeTab === undefined || isShellTab(activeTab)) {
       setFindBarOpen(false);
       return;
     }
@@ -1003,11 +1020,11 @@ export function Shell() {
       <FocusCycle />
       <TitleBar />
       <MenuBar menuContext={menuContext} onCommand={onMenuCommand} />
-      {activeTab.kind !== 'settings' ? (
+      {!isShellTab(activeTab) ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}
       {pageSetupOpen && linkDialog === null && conflict === null && closePromptTab === undefined
-        && activeTab.kind !== 'settings' ? (
+        && !isShellTab(activeTab) ? (
         <PageSetupDialog
           initial={pageSetupFromUnknown(activeTab.baseDocument.page)}
           onCancel={() => {
@@ -1035,7 +1052,7 @@ export function Shell() {
         />
       ) : null}
       {exportDialogOpen && linkDialog === null && conflict === null && closePromptTab === undefined
-        && activeTab.kind !== 'settings' ? (
+        && !isShellTab(activeTab) ? (
         <ExportDialog
           onCancel={() => {
             setExportDialogOpen(false);
@@ -1134,11 +1151,11 @@ export function Shell() {
           setSpellingOn(enabled);
           setSpellcheckEnabled(enabled);
         }}
-        find={activeTab.kind === 'settings' ? null : (
+        find={isShellTab(activeTab) ? null : (
           <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
         )}
       />
-      {activeTab.kind === 'settings' ? (
+      {isShellTab(activeTab) ? (
         <footer
           className="status-bar"
           data-region="status-bar"

@@ -49,7 +49,8 @@ function returnToPage(page: HTMLElement): void {
 
 function focusWorkSurface(): void {
   const selected = document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
-  if (selected?.getAttribute('data-tab-id') === 'settings') {
+  const tabId = selected?.getAttribute('data-tab-id');
+  if (selected !== null && (tabId === 'settings' || tabId === 'about')) {
     selected.focus({ preventScroll: true });
     return;
   }

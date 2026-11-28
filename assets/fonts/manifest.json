@@ -1,0 +1,226 @@
+{
+  "faces": [
+    {
+      "file": "Caladea-Bold.ttf",
+      "family": "Caladea",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "Caladea-BoldItalic.ttf",
+      "family": "Caladea",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "Caladea-Italic.ttf",
+      "family": "Caladea",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "Caladea-Regular.ttf",
+      "family": "Caladea",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "Carlito-Bold.ttf",
+      "family": "Carlito",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "Carlito-BoldItalic.ttf",
+      "family": "Carlito",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "Carlito-Italic.ttf",
+      "family": "Carlito",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "Carlito-Regular.ttf",
+      "family": "Carlito",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "DancingScript-Bold.ttf",
+      "family": "Dancing Script",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "DancingScript-Regular.ttf",
+      "family": "Dancing Script",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "LiberationMono-Bold.ttf",
+      "family": "Liberation Mono",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "LiberationMono-BoldItalic.ttf",
+      "family": "Liberation Mono",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "LiberationMono-Italic.ttf",
+      "family": "Liberation Mono",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "LiberationMono-Regular.ttf",
+      "family": "Liberation Mono",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "LiberationSans-Bold.ttf",
+      "family": "Liberation Sans",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "LiberationSans-BoldItalic.ttf",
+      "family": "Liberation Sans",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "LiberationSans-Italic.ttf",
+      "family": "Liberation Sans",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "LiberationSans-Regular.ttf",
+      "family": "Liberation Sans",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "LiberationSerif-Bold.ttf",
+      "family": "Liberation Serif",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "LiberationSerif-BoldItalic.ttf",
+      "family": "Liberation Serif",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "LiberationSerif-Italic.ttf",
+      "family": "Liberation Serif",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "LiberationSerif-Regular.ttf",
+      "family": "Liberation Serif",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "LinuxBiolinumG-Bold.ttf",
+      "family": "Linux Biolinum G",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "LinuxBiolinumG-Italic.ttf",
+      "family": "Linux Biolinum G",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "LinuxBiolinumG-Regular.ttf",
+      "family": "Linux Biolinum G",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "LinuxLibertineG-Bold.ttf",
+      "family": "Linux Libertine G",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "LinuxLibertineG-BoldItalic.ttf",
+      "family": "Linux Libertine G",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "LinuxLibertineG-Italic.ttf",
+      "family": "Linux Libertine G",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "LinuxLibertineG-Regular.ttf",
+      "family": "Linux Libertine G",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "NotoSans-Bold.ttf",
+      "family": "Noto Sans",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "NotoSans-BoldItalic.ttf",
+      "family": "Noto Sans",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "NotoSans-Italic.ttf",
+      "family": "Noto Sans",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "NotoSans-Regular.ttf",
+      "family": "Noto Sans",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "file": "NotoSerif-Bold.ttf",
+      "family": "Noto Serif",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "file": "NotoSerif-BoldItalic.ttf",
+      "family": "Noto Serif",
+      "weight": 700,
+      "style": "italic"
+    },
+    {
+      "file": "NotoSerif-Italic.ttf",
+      "family": "Noto Serif",
+      "weight": 400,
+      "style": "italic"
+    },
+    {
+      "file": "NotoSerif-Regular.ttf",
+      "family": "Noto Serif",
+      "weight": 400,
+      "style": "normal"
+    }
+  ]
+}

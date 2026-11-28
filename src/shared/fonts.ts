@@ -1,19 +1,7 @@
+import { BUNDLED_FONT_FAMILY_NAMES } from './fonts/manifest.js';
+
 /** Bundled text fonts (SRS Fonts reference). Settings and the Format menu share this list. */
-export const BUNDLED_FONT_FAMILIES = [
-  'Liberation Serif',
-  'Liberation Sans',
-  'Liberation Mono',
-  'Caladea',
-  'Carlito',
-  'DejaVu Serif',
-  'DejaVu Sans',
-  'DejaVu Sans Mono',
-  'Linux Libertine G',
-  'Linux Biolinum G',
-  'Noto Serif',
-  'Noto Sans',
-  'Dancing Script',
-] as const;
+export const BUNDLED_FONT_FAMILIES: readonly string[] = BUNDLED_FONT_FAMILY_NAMES;
 
 const BUNDLED_FONT_SET: ReadonlySet<string> = new Set(BUNDLED_FONT_FAMILIES);
 

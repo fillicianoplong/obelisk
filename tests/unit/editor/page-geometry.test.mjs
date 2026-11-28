@@ -91,10 +91,10 @@ test('the page sheet uses the tokens and does not shrink to the window', async (
 
 test('typed text uses the bundled Liberation Serif, served from the app', async () => {
   const page = await loadRenderer(pageUrl);
-  const pageCss = await readFile(path.join(root, 'src/renderer/editor/layout/page.css'), 'utf8');
-  assert.equal(pageCss.includes('local('), false);
+  const fontCss = await readFile(path.join(root, 'src/renderer/editor/layout/bundled-fonts.css'), 'utf8');
+  assert.equal(fontCss.includes('local('), false);
   for (const name of page.PAGE_FONT_FILES) {
-    assert.match(pageCss, new RegExp(`url\\("/fonts/${name}"\\)`));
+    assert.match(fontCss, new RegExp(`url\\("/fonts/${name}"\\)`));
     const file = await readFile(path.join(root, 'assets', 'fonts', name));
     assert.equal(file.subarray(0, 4).toString('hex'), '00010000', name);
     const served = await readFile(path.join(root, 'dist', 'renderer', 'fonts', name));
@@ -108,7 +108,7 @@ test('typed text uses the bundled Liberation Serif, served from the app', async 
   assert.equal(servedLicense, license);
   assert.match(license, /SIL Open Font License/);
 
-  assert.match(pageCss, /font-family:\s*"Liberation Serif"/);
+  assert.match(fontCss, /font-family:\s*"Liberation Serif"/);
   assert.match(CONTENT_SECURITY_POLICY, /font-src app:/);
   assert.equal(mimeTypeFor('LiberationSerif-Regular.ttf'), 'font/ttf');
   const rendererRoot = path.join(root, 'dist', 'renderer');

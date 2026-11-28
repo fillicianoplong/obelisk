@@ -1,37 +1,4 @@
-/* Liberation Serif is bundled under assets/fonts and copied to /fonts.
-   The src is that file, so the page does not ask the system for the face. */
-
-@font-face {
-  font-family: "Liberation Serif";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("/fonts/LiberationSerif-Regular.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Liberation Serif";
-  font-style: italic;
-  font-weight: 400;
-  font-display: block;
-  src: url("/fonts/LiberationSerif-Italic.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Liberation Serif";
-  font-style: normal;
-  font-weight: 700;
-  font-display: block;
-  src: url("/fonts/LiberationSerif-Bold.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Liberation Serif";
-  font-style: italic;
-  font-weight: 700;
-  font-display: block;
-  src: url("/fonts/LiberationSerif-BoldItalic.ttf") format("truetype");
-}
+@import './bundled-fonts.css';
 
 /* The sheet stays centered when the window is wider than the page.
    width: max-content keeps it from shrinking, so a narrower window scrolls

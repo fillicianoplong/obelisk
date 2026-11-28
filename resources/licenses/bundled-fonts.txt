@@ -1,0 +1,54 @@
+Obelisk bundled fonts (SIL Open Font License 1.1).
+Full license text for each family is in assets/fonts alongside the font files.
+
+Families:
+- Liberation Serif (OFL.txt)
+- Liberation Sans (OFL-LiberationSans.txt)
+- Liberation Mono (OFL-LiberationMono.txt)
+- Caladea (OFL-Caladea.txt)
+- Carlito (OFL-Carlito.txt)
+- Linux Libertine G (OFL-Libertine.txt)
+- Linux Biolinum G (OFL-Libertine.txt)
+- Noto Serif (OFL-NotoSerif.txt)
+- Noto Sans (OFL-NotoSans.txt)
+- Dancing Script (OFL-DancingScript.txt)
+
+Font files:
+- Caladea-Bold.ttf
+- Caladea-BoldItalic.ttf
+- Caladea-Italic.ttf
+- Caladea-Regular.ttf
+- Carlito-Bold.ttf
+- Carlito-BoldItalic.ttf
+- Carlito-Italic.ttf
+- Carlito-Regular.ttf
+- DancingScript-Bold.ttf
+- DancingScript-Regular.ttf
+- LiberationMono-Bold.ttf
+- LiberationMono-BoldItalic.ttf
+- LiberationMono-Italic.ttf
+- LiberationMono-Regular.ttf
+- LiberationSans-Bold.ttf
+- LiberationSans-BoldItalic.ttf
+- LiberationSans-Italic.ttf
+- LiberationSans-Regular.ttf
+- LiberationSerif-Bold.ttf
+- LiberationSerif-BoldItalic.ttf
+- LiberationSerif-Italic.ttf
+- LiberationSerif-Regular.ttf
+- LinuxBiolinumG-Bold.ttf
+- LinuxBiolinumG-Italic.ttf
+- LinuxBiolinumG-Regular.ttf
+- LinuxLibertineG-Bold.ttf
+- LinuxLibertineG-BoldItalic.ttf
+- LinuxLibertineG-Italic.ttf
+- LinuxLibertineG-Regular.ttf
+- NotoSans-Bold.ttf
+- NotoSans-BoldItalic.ttf
+- NotoSans-Italic.ttf
+- NotoSans-Regular.ttf
+- NotoSerif-Bold.ttf
+- NotoSerif-BoldItalic.ttf
+- NotoSerif-Italic.ttf
+- NotoSerif-Regular.ttf
+

@@ -17,6 +17,10 @@ export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
 
 export const SETTINGS_TAB_ID = 'settings';
 
+export const ABOUT_TAB_ID = 'about';
+
+export type TabKind = 'document' | 'settings' | 'about';
+
 export type SavePhase = 'saving' | 'not-saved' | null;
 
 export interface PageTab {
@@ -26,8 +30,8 @@ export interface PageTab {
   path?: string;
   /** Opaque id main issued for this file. A new tab omits it. */
   handle?: string;
-  /** A document tab omits this. Settings is the Tools > Settings tab. */
-  kind?: 'document' | 'settings';
+  /** A document tab omits this. Settings and About are shell tabs. */
+  kind?: TabKind;
   editor: EditorState;
   /** The document at the last save, or the empty document for a new tab. */
   savedDoc: Node;
@@ -51,12 +55,16 @@ export interface PageTab {
   blockIds: string[];
 }
 
+export function isShellTab(tab: Pick<PageTab, 'kind'>): boolean {
+  return tab.kind === 'settings' || tab.kind === 'about';
+}
+
 export function documentView(tab: Pick<PageTab, 'baseDocument'>): DocumentView {
   return tab.baseDocument.view === 'pageless' ? 'pageless' : 'pages';
 }
 
 export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
-  if (tab.kind === 'settings' || documentView(tab) === view) {
+  if (isShellTab(tab) || documentView(tab) === view) {
     return tab;
   }
   return {
@@ -67,7 +75,7 @@ export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
 }
 
 export function withPageSetup(tab: PageTab, page: PageSetupValue): PageTab {
-  if (tab.kind === 'settings' || samePageSetup(pageSetupFromUnknown(tab.baseDocument.page), page)) {
+  if (isShellTab(tab) || samePageSetup(pageSetupFromUnknown(tab.baseDocument.page), page)) {
     return tab;
   }
   return {
@@ -94,7 +102,7 @@ function sameJson(left: unknown, right: unknown): boolean {
 }
 
 export function withBand(tab: PageTab, part: 'header' | 'footer', paragraph: JsonObject): PageTab {
-  if (tab.kind === 'settings' || sameJson(tab.baseDocument[part], paragraph)) {
+  if (isShellTab(tab) || sameJson(tab.baseDocument[part], paragraph)) {
     return tab;
   }
   return {
@@ -180,8 +188,29 @@ export function createSettingsTab(): PageTab {
   };
 }
 
+export function createAboutTab(): PageTab {
+  const base = createBaseDocument();
+  const editor = createTabEditorState(editorDocFromDocument(base.document));
+  return {
+    id: ABOUT_TAB_ID,
+    title: 'About Obelisk',
+    kind: 'about',
+    editor,
+    savedDoc: editor.doc,
+    revision: 0,
+    stat: null,
+    savePhase: null,
+    baseDocument: base.document,
+    savedView: 'pages',
+    savedPage: defaultPageSetup(),
+    savedHeader: base.document.header,
+    savedFooter: base.document.footer,
+    blockIds: base.blockIds,
+  };
+}
+
 export function tabHasUnsavedChanges(tab: PageTab): boolean {
-  if (tab.kind === 'settings') {
+  if (isShellTab(tab)) {
     return false;
   }
   if (documentView(tab) !== tab.savedView) {
@@ -197,7 +226,7 @@ export function tabHasUnsavedChanges(tab: PageTab): boolean {
 }
 
 export function isReplaceableUntitledTab(tab: PageTab): boolean {
-  if (tab.kind === 'settings' || tab.handle !== undefined) {
+  if (isShellTab(tab) || tab.handle !== undefined) {
     return false;
   }
   if (!tab.id.startsWith('untitled-')) {

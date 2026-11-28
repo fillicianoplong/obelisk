@@ -1,0 +1,7 @@
+mathml2omml (LGPL-3.0-or-later)
+
+Obelisk ships mathml2omml as a separate replaceable module for Word equation export (NFR-29).
+
+Source: https://github.com/fiduswriter/mathml2omml
+
+The full GNU Lesser General Public License v3.0 text is in mathml2omml-lgpl.txt in this folder.
