@@ -6,7 +6,7 @@
  *   Match Windows (default): no data-theme attribute; prefers-color-scheme decides.
  *   Light / Dark preference: <html data-theme="light"> or <html data-theme="dark">.
  *   Windows contrast themes: the forced-colors block at the end maps tokens to system colors.
- *   Windows animation effects off: the reduced-motion block sets every duration to 0 ms.
+ *   Windows animation effects off: prefers-reduced-motion and data-reduced-motion set durations to 0 ms.
  *
  * Use only semantic tokens in components. Never hard-code a color or size.
  */
@@ -105,6 +105,7 @@
   --duration-fast: 83ms;     /* hover and pressed fades */
   --duration-normal: 167ms;  /* menus, tooltips, tab moves */
   --duration-slow: 250ms;    /* dialogs */
+  --scroll-behavior: auto;
   --easing-standard: cubic-bezier(0.33, 0, 0.67, 1);
   --easing-decelerate: cubic-bezier(0, 0, 0, 1);
   --easing-accelerate: cubic-bezier(1, 0, 1, 1);
@@ -330,7 +331,15 @@
     --duration-fast: 0ms;
     --duration-normal: 0ms;
     --duration-slow: 0ms;
+    --scroll-behavior: auto;
   }
+}
+
+:root[data-reduced-motion] {
+  --duration-fast: 0ms;
+  --duration-normal: 0ms;
+  --duration-slow: 0ms;
+  --scroll-behavior: auto;
 }
 
 /* ---------- Windows contrast themes (NFR-17) ---------- */

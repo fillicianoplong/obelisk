@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { exposeObeliskApi } from './bridge.js';
+import { installReducedMotion } from './reduced-motion.js';
 import { installThemeBridge } from './theme.js';
 import { installViewBridge } from './view.js';
 import { installZoomBridge } from './zoom.js';
@@ -22,9 +23,21 @@ function nodeFileSystemAvailable(): boolean {
 
 exposeObeliskApi(contextBridge, ipcRenderer);
 
-const themeRoot = (globalThis as { document?: { documentElement?: { dataset: { theme?: string } } | null } }).document
-  ?.documentElement;
-installThemeBridge(contextBridge, ipcRenderer, process.argv, themeRoot ?? null);
+const doc = (globalThis as {
+  document?: { documentElement?: { dataset: { theme?: string; reducedMotion?: string } } } | null;
+  matchMedia?: (query: string) => {
+    matches: boolean;
+    addEventListener(type: 'change', listener: () => void): void;
+    removeEventListener(type: 'change', listener: () => void): void;
+  };
+}).document;
+installReducedMotion(
+  doc?.documentElement && typeof globalThis.matchMedia === 'function'
+    ? { documentElement: doc.documentElement, matchMedia: globalThis.matchMedia.bind(globalThis) }
+    : null,
+);
+const themeRoot = doc?.documentElement ?? null;
+installThemeBridge(contextBridge, ipcRenderer, process.argv, themeRoot);
 installZoomBridge(contextBridge, process.argv);
 installViewBridge(contextBridge, process.argv);
 

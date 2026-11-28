@@ -2,6 +2,10 @@
 @import './styles/focus.css';
 @import './styles/scrollbar.css';
 
+html {
+  scroll-behavior: var(--scroll-behavior);
+}
+
 html,
 body,
 #root {

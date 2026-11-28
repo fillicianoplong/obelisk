@@ -36,6 +36,10 @@ test('contrast keeps the page edge, active tab, unsaved mark, and focus ring vis
   assert.match(tokens.slice(motionStart, contrastStart), /--duration-fast:\s*0ms/);
   assert.match(tokens.slice(motionStart, contrastStart), /--duration-normal:\s*0ms/);
   assert.match(tokens.slice(motionStart, contrastStart), /--duration-slow:\s*0ms/);
+  const attrStart = tokens.indexOf(':root[data-reduced-motion]');
+  assert.ok(attrStart !== -1);
+  const attrBlock = tokens.slice(attrStart, tokens.indexOf('}', attrStart));
+  assert.match(attrBlock, /--duration-fast:\s*0ms/);
 
   const open = css.indexOf('@media (forced-colors: active)');
   const body = css.slice(css.indexOf('{', open) + 1, findMatchingBrace(css, css.indexOf('{', open)));

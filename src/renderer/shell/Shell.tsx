@@ -80,6 +80,7 @@ import {
 } from './tabs/save.js';
 import type { ConflictChoice } from './tabs/save.js';
 import { TabStrip } from './tabs/TabStrip.js';
+import { ReducedMotionSync } from './theme/ReducedMotionSync.js';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
 import { createAutosaveClock } from '../autosave/clock.js';
@@ -1017,6 +1018,7 @@ export function Shell() {
   return (
     <div className="shell" data-show-page-edges={showPageEdges ? 'true' : 'false'}>
       <ThemeSync />
+      <ReducedMotionSync />
       <FocusCycle />
       <TitleBar />
       <MenuBar menuContext={menuContext} onCommand={onMenuCommand} />

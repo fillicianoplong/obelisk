@@ -186,6 +186,7 @@ test('every theme token is defined for light and both dark blocks, and the dark 
   assert.equal(shared.get('--duration-fast'), '83ms');
   assert.equal(shared.get('--duration-normal'), '167ms');
   assert.equal(shared.get('--duration-slow'), '250ms');
+  assert.equal(shared.get('--scroll-behavior'), 'auto');
 
   for (const name of ['--font-ui', '--font-ui-display']) {
     const families = shared.get(name).split(',').map((family) => family.trim().replace(/^"|"$/g, ''));

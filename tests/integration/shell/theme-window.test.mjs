@@ -33,6 +33,7 @@ function themeProbe() {
       attribute: document.documentElement.getAttribute('data-theme'),
       dark: window.matchMedia('(prefers-color-scheme: dark)').matches,
       reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      reducedAttr: document.documentElement.hasAttribute('data-reduced-motion'),
       forced: window.matchMedia('(forced-colors: active)').matches,
       result,
       hasInvoke: Object.prototype.hasOwnProperty.call(window.obelisk, 'theme:get'),
@@ -146,6 +147,7 @@ test('the settings file chooses Light or Dark, and Match Windows leaves data-the
         return {
           forced: window.matchMedia('(forced-colors: active)').matches,
           reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      reducedAttr: document.documentElement.hasAttribute('data-reduced-motion'),
           pageBorder: pageStyle.borderTopWidth,
           pageBorderStyle: pageStyle.borderTopStyle,
           tabBorder: tabStyle.borderTopWidth,
@@ -166,6 +168,7 @@ test('the settings file chooses Light or Dark, and Match Windows leaves data-the
     );
     assert.equal(contrast.forced, true, JSON.stringify(contrast));
     assert.equal(contrast.reduced, true, JSON.stringify(contrast));
+    assert.equal(contrast.reducedAttr, true, JSON.stringify(contrast));
     assert.equal(contrast.pageBorderStyle, 'solid', JSON.stringify(contrast));
     assert.ok(parseFloat(contrast.pageBorder) > 0, JSON.stringify(contrast));
     assert.equal(contrast.tabBorderStyle, 'solid', JSON.stringify(contrast));

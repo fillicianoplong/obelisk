@@ -455,6 +455,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  scroll-behavior: var(--scroll-behavior);
   scrollbar-width: none;
 }
 
@@ -628,6 +629,7 @@
   overflow: auto;
   overflow-anchor: none;
   padding: var(--page-gap);
+  scroll-behavior: var(--scroll-behavior);
   position: relative;
 }
 
