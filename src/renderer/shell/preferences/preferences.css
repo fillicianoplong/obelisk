@@ -4,7 +4,7 @@
   font-family: var(--font-ui);
   margin-inline: auto;
   max-width: 32rem;
-  padding: var(--space-xl) var(--space-lg);
+  padding: var(--space-xl) var(--space-l);
   width: 100%;
 }
 
@@ -14,7 +14,7 @@
   font-size: var(--font-size-title);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-title);
-  margin: 0 0 var(--space-lg);
+  margin: 0 0 var(--space-l);
 }
 
 .preferences-hint {
@@ -26,7 +26,7 @@
 .preferences-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-m);
 }
 
 .preferences-fieldset {
@@ -55,7 +55,7 @@
   cursor: pointer;
   display: flex;
   gap: var(--space-xs);
-  min-height: var(--size-control-height);
+  min-height: var(--size-control);
 }
 
 .preferences-option input {
@@ -65,7 +65,7 @@
 .preferences-row {
   align-items: center;
   display: grid;
-  gap: var(--space-sm);
+  gap: var(--space-s);
   grid-template-columns: 1fr minmax(8rem, auto);
 }
 
@@ -81,7 +81,7 @@
   color: var(--color-text-primary);
   font-family: var(--font-ui);
   font-size: var(--font-size-body);
-  min-height: var(--size-control-height);
+  min-height: var(--size-control);
   padding: var(--space-2xs) var(--space-xs);
 }
 
@@ -96,7 +96,7 @@
   display: inline-flex;
   gap: var(--space-xs);
   justify-self: end;
-  min-height: var(--size-control-height);
+  min-height: var(--size-control);
 }
 
 .preferences-toggle input {

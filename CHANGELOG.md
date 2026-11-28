@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.60.0] - 2026-11-28
+
+### Fixed
+
+- The About tab scrolls with the main page scrollbar at the window edge instead of an inset column scrollbar.
+- The Export dialog presents formats as a selectable list with descriptions, with Export and Cancel actions in a footer row aligned to other dialogs and theme tokens.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

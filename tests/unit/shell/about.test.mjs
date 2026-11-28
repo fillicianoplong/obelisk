@@ -35,6 +35,15 @@ test('APP_VERSION matches package.json', async () => {
   assert.equal(APP_VERSION, pkg.version);
 });
 
+test('About page scrolls with the page region, not inside the content column', () => {
+  const css = readFileSync(path.join(root, 'src/renderer/shell/about/about.css'), 'utf8');
+  const block = css.match(/\.about-page\s*\{([^}]*)\}/s);
+  assert.ok(block, 'missing .about-page rule');
+  const body = block[1];
+  assert.equal(/\bheight\s*:\s*100%/.test(body), false, 'About must not set height: 100% on .about-page');
+  assert.equal(/\boverflow\s*:\s*auto/.test(body), false, 'About must not create its own scrollport');
+});
+
 test('About lists every open-source component from the license manifest', async () => {
   const manifest = JSON.parse(
     readFileSync(path.join(root, 'resources', 'licenses', 'manifest.json'), 'utf8'),

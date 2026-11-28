@@ -17,6 +17,7 @@
 .status-zoom:focus-visible,
 .link-dialog-button:focus-visible,
 .page-setup-button:focus-visible,
+.export-dialog-button:focus-visible,
 .status-zoom-host[data-input='keyboard'] .menu-item[data-focused='true'],
 .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
   outline: var(--size-focus-ring) solid var(--color-focus-outer);
@@ -71,6 +72,7 @@
   .status-zoom:focus-visible,
   .link-dialog-button:focus-visible,
   .page-setup-button:focus-visible,
+  .export-dialog-button:focus-visible,
   .status-zoom-host[data-input='keyboard'] .menu-item[data-focused='true'],
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
     outline-color: Highlight;
@@ -102,6 +104,7 @@
   .status-zoom:focus-visible,
   .link-dialog-button:focus-visible,
   .page-setup-button:focus-visible,
+  .export-dialog-button:focus-visible,
   .status-zoom-host[data-input='keyboard'] .menu-item[data-focused='true'],
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true'] {
     position: relative;
@@ -115,6 +118,7 @@
   .status-save:focus-visible::after,
   .status-zoom:focus-visible::after,
   .link-dialog-button:focus-visible::after,
+  .export-dialog-button:focus-visible::after,
   .status-zoom-host[data-input='keyboard'] .menu-item[data-focused='true']::after,
   .page-frame[data-caret-focus='true']::after,
   .menu-bar[data-input='keyboard'] .menu-item[data-focused='true']::after {

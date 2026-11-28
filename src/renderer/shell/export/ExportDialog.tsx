@@ -1,10 +1,26 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ExportFormat } from '../../../shared/ipc/types.js';
 
-const EXPORT_CHOICES: readonly { format: ExportFormat; label: string }[] = [
-  { format: 'pdf', label: 'PDF' },
-  { format: 'docx', label: 'Word' },
-  { format: 'markdown', label: 'Markdown' },
+const EXPORT_CHOICES: readonly {
+  format: ExportFormat;
+  label: string;
+  description: string;
+}[] = [
+  {
+    format: 'pdf',
+    label: 'PDF',
+    description: 'A fixed-layout file for sharing and printing.',
+  },
+  {
+    format: 'docx',
+    label: 'Word',
+    description: 'A Microsoft Word document you can edit in Word.',
+  },
+  {
+    format: 'markdown',
+    label: 'Markdown',
+    description: 'A plain-text file with lightweight markup.',
+  },
 ];
 
 interface ExportDialogProps {
@@ -15,7 +31,8 @@ interface ExportDialogProps {
 export function ExportDialog({ onCancel, onChoose }: ExportDialogProps) {
   const titleId = useId();
   const hintId = useId();
-  const firstRef = useRef<HTMLButtonElement>(null);
+  const [format, setFormat] = useState<ExportFormat>('pdf');
+  const firstRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     firstRef.current?.focus();
@@ -39,25 +56,42 @@ export function ExportDialog({ onCancel, onChoose }: ExportDialogProps) {
         }}
       >
         <h2 id={titleId} className="export-dialog-title">Export</h2>
-        <p id={hintId} className="export-dialog-hint">Choose a format. Your Obelisk document file is not changed.</p>
-        <div className="export-dialog-formats" role="group" aria-label="Export format">
-          {EXPORT_CHOICES.map((choice, index) => (
-            <div key={choice.format} className="export-dialog-format">
-              <button
-                ref={index === 0 ? firstRef : undefined}
-                type="button"
-                className="export-dialog-button export-dialog-button-primary"
-                data-export-format={choice.format}
-                onClick={() => onChoose(choice.format)}
-              >
-                {choice.label}…
-              </button>
-            </div>
-          ))}
+        <div className="export-dialog-body">
+          <p id={hintId} className="export-dialog-hint">
+            Choose a format. Your Obelisk document file is not changed.
+          </p>
+          <div className="export-dialog-options" role="radiogroup" aria-labelledby={titleId}>
+            {EXPORT_CHOICES.map((choice, index) => (
+              <label key={choice.format} className="export-dialog-option">
+                <input
+                  ref={index === 0 ? firstRef : undefined}
+                  type="radio"
+                  name="export-format"
+                  value={choice.format}
+                  checked={format === choice.format}
+                  data-export-format={choice.format}
+                  onChange={() => setFormat(choice.format)}
+                />
+                <span className="export-dialog-option-text">
+                  <span className="export-dialog-option-title">{choice.label}</span>
+                  <span className="export-dialog-option-description">{choice.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
-        <div className="export-dialog-actions">
-          <button type="button" className="export-dialog-button" onClick={onCancel}>Cancel</button>
-        </div>
+        <footer className="export-dialog-footer">
+          <button type="button" className="export-dialog-button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="export-dialog-button export-dialog-button-ok"
+            onClick={() => onChoose(format)}
+          >
+            Export…
+          </button>
+        </footer>
       </div>
     </div>
   );
