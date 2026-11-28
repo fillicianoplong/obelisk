@@ -249,6 +249,22 @@ export type ClipboardReadResult =
   | { status: 'ok'; text: string; html: string }
   | IpcErrorResult;
 
+export interface RecentsListEntry {
+  id: string;
+  name: string;
+  location: string;
+}
+
+export type RecentsListResult =
+  | { status: 'ok'; entries: RecentsListEntry[] }
+  | IpcErrorResult;
+
+export interface RecentsOpenRequest {
+  id: string;
+}
+
+export type RecentsOpenResult = FileOpenResult | { status: 'notFound' };
+
 export interface RequestMap {
   'file:open': void;
   'file:save': FileSaveRequest;
@@ -271,6 +287,8 @@ export interface RequestMap {
   'spell:check': SpellCheckRequest;
   'spell:suggest': SpellSuggestRequest;
   'clipboard:read': void;
+  'recents:list': void;
+  'recents:open': RecentsOpenRequest;
 }
 
 export interface ResultMap {
@@ -295,6 +313,8 @@ export interface ResultMap {
   'spell:check': SpellCheckResult;
   'spell:suggest': SpellSuggestResult;
   'clipboard:read': ClipboardReadResult;
+  'recents:list': RecentsListResult;
+  'recents:open': RecentsOpenResult;
 }
 
 export type IpcDispatchResult = ResultMap[keyof ResultMap];

@@ -18,6 +18,8 @@ import type {
   SpellCheckResult,
   SpellSuggestResult,
   ClipboardReadResult,
+  RecentsListResult,
+  RecentsOpenResult,
   SigDeleteResult,
   SigGetResult,
   SigListResult,
@@ -120,6 +122,8 @@ export function createObeliskApi(ipc: PreloadIpc): ObeliskApi {
     'spell:check': (request) => ipc.invoke('spell:check', request) as Promise<SpellCheckResult>,
     'spell:suggest': (request) => ipc.invoke('spell:suggest', request) as Promise<SpellSuggestResult>,
     'clipboard:read': () => ipc.invoke('clipboard:read') as Promise<ClipboardReadResult>,
+    'recents:list': () => ipc.invoke('recents:list') as Promise<RecentsListResult>,
+    'recents:open': (request) => ipc.invoke('recents:open', request) as Promise<RecentsOpenResult>,
     'file:activated': createFileActivatedApi(ipc),
     'spell:context': createSpellContextApi(ipc),
   };

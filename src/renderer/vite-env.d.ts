@@ -11,5 +11,8 @@ declare global {
     obeliskTheme: ObeliskThemeApi;
     obeliskZoom?: ZoomPreset;
     obeliskView?: AppDocumentView;
+    obeliskE2e?: {
+      openDocument?: boolean;
+    };
   }
 }

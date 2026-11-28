@@ -73,7 +73,16 @@ test('find and replace through the real shell handlers (AC-18)', { timeout: 45_0
               return null;
             }
             session.client = openCdp(url);
-            const ready = await evaluate(session.client, `document.documentElement.dataset.shellCommands === 'ready'`);
+            const ready = await evaluate(
+              session.client,
+              `(() => {
+                if (document.documentElement.dataset.shellCommands !== 'ready') return false;
+                if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+                  document.querySelector('.start-action-primary')?.click();
+                }
+                return Boolean(document.querySelector('[data-region="page-editor"]'));
+              })()`,
+            );
             return ready ? true : null;
           },
           20_000,

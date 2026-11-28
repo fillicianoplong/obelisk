@@ -12,6 +12,7 @@ import { handlePrefsGet, handlePrefsSet, type PrefsHandlerOptions } from './pref
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
 import { createAppHandlers } from './handlers.js';
 import { createIpcRegistry } from './registry.js';
+import { recentsStore } from '../recents/store.js';
 
 function dialogOwner(): { window: BrowserWindow } | null {
   return pickOpenDialogOwner(
@@ -70,6 +71,8 @@ export function installIpc(
   ipc: IpcMainLike = wrapIpcMain(),
   prefsOptions?: Pick<PrefsHandlerOptions, 'onThemeChanged'>,
 ): ReturnType<typeof createFileService> {
+  const userDataPath = app.getPath('userData');
+  const recents = recentsStore(userDataPath);
   const files = createFileService({
     showOpenDialog,
     showSaveDialog,
@@ -77,9 +80,11 @@ export function installIpc(
     readObk: (filePath) => readInUtilityProcess(filePath),
     documentsDirectory: () => app.getPath('documents'),
     writer: app.getVersion(),
-    privateAppData: [app.getPath('userData')],
+    privateAppData: [userDataPath],
+    onDocumentOpened: (filePath, name) => {
+      recents.touch(filePath, name);
+    },
   });
-  const userDataPath = app.getPath('userData');
   const exports = createExportService({
     showExportDialog: showSaveDialog,
     confirmReplace,
@@ -88,7 +93,7 @@ export function installIpc(
     privateAppData: [userDataPath],
     platform: process.platform,
   });
-  const registry = createIpcRegistry(createAppHandlers(files, exports));
+  const registry = createIpcRegistry(createAppHandlers(files, exports, recents));
   const userData = () => app.getPath('userData');
   const spell = new SpellHost(userData, () => app.getAppPath());
   registry.setHandler('spell:add', async (request) => {

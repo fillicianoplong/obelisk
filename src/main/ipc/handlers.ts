@@ -3,6 +3,8 @@ import { ipcError, type IpcErrorResult } from '../../shared/ipc/errors.js';
 import type { RequestMap, ResultMap } from '../../shared/ipc/types.js';
 import type { ExportService } from '../export/service.js';
 import type { FileService } from '../file/service.js';
+import { handleRecentsList, handleRecentsOpen } from './recents.js';
+import type { RecentsStore } from '../recents/store.js';
 
 export type IpcHandler<C extends InvokeChannel> = (
   request: RequestMap[C],
@@ -37,18 +39,30 @@ export function createStubHandlers(): IpcHandlerMap {
     'spell:check': (_request) => notReady('spell:check'),
     'spell:suggest': (_request) => notReady('spell:suggest'),
     'clipboard:read': () => notReady('clipboard:read'),
+    'recents:list': () => notReady('recents:list'),
+    'recents:open': (_request) => notReady('recents:open'),
   };
 }
 
 // file:open shows the dialog and decodes. file:save and file:saveAs write.
 // A handle main did not issue is refused before anything is read or written.
-export function createAppHandlers(files: FileService, exports: ExportService): IpcHandlerMap {
+export function createAppHandlers(
+  files: FileService,
+  exports: ExportService,
+  recents?: RecentsStore,
+): IpcHandlerMap {
   return {
     ...createStubHandlers(),
     'file:open': () => files.openFromDialog(),
     'file:save': (request) => files.save(request),
     'file:saveAs': (request) => files.saveAs(request),
     'session:set': (request) => files.retainOpenHandles(request.handles),
+    'recents:list': () => (recents === undefined ? notReady('recents:list') : handleRecentsList(recents)),
+    'recents:open': (request) => (
+      recents === undefined
+        ? notReady('recents:open')
+        : handleRecentsOpen(request, recents, files)
+    ),
     'export:run': (request) => {
       if (request.handle !== null) {
         const blocked = files.guardHandle(request.handle);

@@ -15,8 +15,15 @@ import {
   waitFor,
 } from '../electron-launch.mjs';
 
-const READY = `document.documentElement.dataset.shellCommands === 'ready'
-  && Boolean(document.querySelector('[data-region="page-editor"]')?.editorCommands)`;
+const READY = `(() => {
+  if (document.documentElement.dataset.shellCommands !== 'ready') {
+    return false;
+  }
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
+  return Boolean(document.querySelector('[data-region="page-editor"]')?.editorCommands);
+})()`;
 
 async function pageUrl(port) {
   const pages = (await debuggerTargets(port)).filter(

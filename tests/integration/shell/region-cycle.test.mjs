@@ -24,6 +24,9 @@ const READY = `(() => {
   if (document.documentElement.dataset.shellCommands !== 'ready') {
     return null;
   }
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
   if (!editor || !editor.editorCommands || !menu || !tab || !status) {
     return null;
   }

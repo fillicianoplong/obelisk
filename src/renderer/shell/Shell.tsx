@@ -80,6 +80,8 @@ import {
 } from './tabs/save.js';
 import type { ConflictChoice } from './tabs/save.js';
 import { TabStrip } from './tabs/TabStrip.js';
+import { StartPage } from './start/StartPage.js';
+import './start/start.css';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
 import { createAutosaveClock } from '../autosave/clock.js';
@@ -175,9 +177,53 @@ export function Shell() {
     const number = nextNumber.current;
     nextNumber.current += 1;
     const tab = createTab(number);
-    setTabs((current) => [...current, tab]);
+    const current = tabsRef.current;
+    tabsRef.current = [...current, tab];
+    activeIdRef.current = tab.id;
+    setTabs([...current, tab]);
     setActiveId(tab.id);
   }, []);
+
+  const reorderTabsById = useCallback((orderedIds: readonly string[]) => {
+    setTabs((current) => {
+      const byId = new Map(current.map((tab) => [tab.id, tab]));
+      const next = orderedIds.flatMap((id) => {
+        const tab = byId.get(id);
+        return tab === undefined ? [] : [tab];
+      });
+      if (next.length !== current.length) {
+        return current;
+      }
+      tabsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const applyOpen = useCallback((result: FileOpenResult) => {
+    const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
+    tabsRef.current = applied.tabs;
+    activeIdRef.current = applied.activeId;
+    setTabs(applied.tabs);
+    setActiveId(applied.activeId);
+    setOpenMessage(applied.message);
+  }, []);
+
+  const openRecent = useCallback((id: string) => {
+    void (async () => {
+      let result: FileOpenResult | { status: 'notFound' };
+      try {
+        result = await window.obelisk['recents:open']({ id });
+      } catch {
+        setOpenMessage('This file could not be opened.');
+        return;
+      }
+      if (result.status === 'notFound') {
+        setOpenMessage('That recent file is no longer available.');
+        return;
+      }
+      applyOpen(result);
+    })();
+  }, [applyOpen]);
 
   const addMlaTab = useCallback(() => {
     const number = nextNumber.current;
@@ -360,13 +406,11 @@ export function Shell() {
           finishQuit();
           return;
         }
-        const number = nextNumber.current;
-        nextNumber.current += 1;
-        const created = createTab(number);
-        tabsRef.current = [created];
-        activeIdRef.current = created.id;
-        setTabs([created]);
-        setActiveId(created.id);
+        nextNumber.current = 1;
+        tabsRef.current = [];
+        activeIdRef.current = '';
+        setTabs([]);
+        setActiveId('');
         continueQuitIfNeeded();
         return;
       }
@@ -448,12 +492,7 @@ export function Shell() {
         launchResults.push(result);
         return;
       }
-      const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
-      tabsRef.current = applied.tabs;
-      activeIdRef.current = applied.activeId;
-      setTabs(applied.tabs);
-      setActiveId(applied.activeId);
-      setOpenMessage(applied.message);
+      applyOpen(result);
     });
 
     const startup = startupTabsAfterLaunch(launchResults);
@@ -469,7 +508,7 @@ export function Shell() {
     return () => {
       window.obelisk['file:activated'].unsubscribe(subscriptionId);
     };
-  }, []);
+  }, [applyOpen]);
 
   const openDocument = useCallback(() => {
     if (opening.current) {
@@ -488,14 +527,9 @@ export function Shell() {
         opening.current = false;
         suppressPageFocusRing();
       }
-      const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
-      tabsRef.current = applied.tabs;
-      activeIdRef.current = applied.activeId;
-      setTabs(applied.tabs);
-      setActiveId(applied.activeId);
-      setOpenMessage(applied.message);
+      applyOpen(result);
     })();
-  }, []);
+  }, [applyOpen]);
 
   const chooseConflict = useCallback(
     (choice: ConflictChoice) => {
@@ -1010,9 +1044,11 @@ export function Shell() {
     };
   }, [onMenuCommand]);
 
-  if (!shellReady || activeTab === undefined) {
+  if (!shellReady) {
     return null;
   }
+
+  const documentTab = activeTab !== undefined && !isShellTab(activeTab);
 
   return (
     <div className="shell" data-show-page-edges={showPageEdges ? 'true' : 'false'}>
@@ -1020,11 +1056,11 @@ export function Shell() {
       <FocusCycle />
       <TitleBar />
       <MenuBar menuContext={menuContext} onCommand={onMenuCommand} />
-      {!isShellTab(activeTab) ? (
+      {documentTab ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}
       {pageSetupOpen && linkDialog === null && conflict === null && closePromptTab === undefined
-        && !isShellTab(activeTab) ? (
+        && documentTab ? (
         <PageSetupDialog
           initial={pageSetupFromUnknown(activeTab.baseDocument.page)}
           onCancel={() => {
@@ -1052,7 +1088,7 @@ export function Shell() {
         />
       ) : null}
       {exportDialogOpen && linkDialog === null && conflict === null && closePromptTab === undefined
-        && !isShellTab(activeTab) ? (
+        && documentTab ? (
         <ExportDialog
           onCancel={() => {
             setExportDialogOpen(false);
@@ -1091,75 +1127,80 @@ export function Shell() {
       ) : null}
       <TabStrip
         tabs={tabs}
-        activeId={activeTab.id}
+        activeId={activeId}
         closePromptId={closePromptId}
         onSelect={selectTab}
         onClose={closeTabById}
         onNew={addTab}
+        onReorder={reorderTabsById}
       />
-      <PageArea
-        tabId={activeTab.id}
-        kind={activeTab.kind}
-        state={activeTab.editor}
-        viewMode={documentView(activeTab)}
-        orientation={pageSetupFromUnknown(activeTab.baseDocument.page).orientation}
-        margins={pageSetupFromUnknown(activeTab.baseDocument.page).margins}
-        header={activeTab.baseDocument.header}
-        footer={activeTab.baseDocument.footer}
-        bandEdit={documentView(activeTab) === 'pages' ? bandEdit : null}
-        zoom={zoom}
-        onChange={updateEditor}
-        onPageLabel={setPageLabel}
-        onBandEdit={(part, page) => setBandEdit({ part, page })}
-        onBandClose={(reason) => {
-          const editedPage = bandEditRef.current?.page ?? 1;
-          setBandEdit(null);
-          const page = document.querySelector<HTMLElement & {
-            editorCommands?: { focusEditedPage?: (pageNumber: number) => void };
-          }>('[data-region="page-editor"]');
-          if (reason === 'escape') {
-            page?.editorCommands?.focusEditedPage?.(editedPage);
-            return;
-          }
-          page?.focus();
-        }}
-        onBandChange={(part, paragraph) => {
-          setTabs((current) => {
-            const next = current.map((tab) => {
-              if (tab.id !== activeIdRef.current) {
-                return tab;
-              }
-              const updated = withBand(tab, part, paragraph);
-              if (updated !== tab) {
-                syncTabAutosave(autosaveScheduler.current, updated);
-              }
-              return updated;
+      {activeTab === undefined ? (
+        <StartPage onNew={addTab} onOpen={openDocument} onOpenRecent={openRecent} />
+      ) : (
+        <PageArea
+          tabId={activeTab.id}
+          kind={activeTab.kind}
+          state={activeTab.editor}
+          viewMode={documentView(activeTab)}
+          orientation={pageSetupFromUnknown(activeTab.baseDocument.page).orientation}
+          margins={pageSetupFromUnknown(activeTab.baseDocument.page).margins}
+          header={activeTab.baseDocument.header}
+          footer={activeTab.baseDocument.footer}
+          bandEdit={documentView(activeTab) === 'pages' ? bandEdit : null}
+          zoom={zoom}
+          onChange={updateEditor}
+          onPageLabel={setPageLabel}
+          onBandEdit={(part, page) => setBandEdit({ part, page })}
+          onBandClose={(reason) => {
+            const editedPage = bandEditRef.current?.page ?? 1;
+            setBandEdit(null);
+            const page = document.querySelector<HTMLElement & {
+              editorCommands?: { focusEditedPage?: (pageNumber: number) => void };
+            }>('[data-region="page-editor"]');
+            if (reason === 'escape') {
+              page?.editorCommands?.focusEditedPage?.(editedPage);
+              return;
+            }
+            page?.focus();
+          }}
+          onBandChange={(part, paragraph) => {
+            setTabs((current) => {
+              const next = current.map((tab) => {
+                if (tab.id !== activeIdRef.current) {
+                  return tab;
+                }
+                const updated = withBand(tab, part, paragraph);
+                if (updated !== tab) {
+                  syncTabAutosave(autosaveScheduler.current, updated);
+                }
+                return updated;
+              });
+              tabsRef.current = next;
+              return next;
             });
-            tabsRef.current = next;
-            return next;
-          });
-        }}
-        onBandMove={() => {
-          setBandEdit((current) => (
-            current === null
-              ? null
-              : { ...current, part: current.part === 'header' ? 'footer' : 'header' }
-          ));
-        }}
-        onShowPageEdgesChange={setShowPageEdges}
-        onSpellingPrefChange={(enabled) => {
-          setSpellingOn(enabled);
-          setSpellcheckEnabled(enabled);
-        }}
-        find={isShellTab(activeTab) ? null : (
-          <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
-        )}
-      />
-      {isShellTab(activeTab) ? (
+          }}
+          onBandMove={() => {
+            setBandEdit((current) => (
+              current === null
+                ? null
+                : { ...current, part: current.part === 'header' ? 'footer' : 'header' }
+            ));
+          }}
+          onShowPageEdgesChange={setShowPageEdges}
+          onSpellingPrefChange={(enabled) => {
+            setSpellingOn(enabled);
+            setSpellcheckEnabled(enabled);
+          }}
+          find={isShellTab(activeTab) ? null : (
+            <FindBar visible={findBarOpen} onVisibilityChange={setFindBarOpen} />
+          )}
+        />
+      )}
+      {activeTab === undefined || isShellTab(activeTab) ? (
         <footer
           className="status-bar"
           data-region="status-bar"
-          data-status-mode="settings"
+          data-status-mode={activeTab === undefined ? 'start' : 'settings'}
           role="status"
           aria-label={STATUS_BAR_LABEL}
           tabIndex={-1}

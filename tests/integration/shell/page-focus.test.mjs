@@ -26,7 +26,10 @@ const READY = `(() => {
   if (document.documentElement.dataset.shellCommands !== 'ready') {
     return null;
   }
-  return true;
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
+  return document.querySelector('.page-sheet') ? true : null;
 })()`;
 
 function ringExpression() {

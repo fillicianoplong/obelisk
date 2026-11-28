@@ -11,6 +11,10 @@ export interface StartupTabs {
   message: string | null;
 }
 
+function e2eOpenDocument(): boolean {
+  return typeof window !== 'undefined' && window.obeliskE2e?.openDocument === true;
+}
+
 /** After cold-start file:activated events, open tabs or one Untitled when nothing opened. */
 export function startupTabsAfterLaunch(
   launchResults: readonly FileOpenResult[],
@@ -19,7 +23,7 @@ export function startupTabsAfterLaunch(
   let tabs: PageTab[] = [];
   let activeId = '';
   let message: string | null = null;
-  let nextUntitledNumber = firstUntitledNumber;
+  const nextUntitledNumber = firstUntitledNumber;
 
   for (const result of launchResults) {
     const applied = applyOpenResult(tabs, activeId, result);
@@ -31,12 +35,19 @@ export function startupTabsAfterLaunch(
   }
 
   if (tabs.length === 0) {
-    const tab = createTab(nextUntitledNumber);
-    nextUntitledNumber += 1;
+    if (e2eOpenDocument()) {
+      const tab = createTab(firstUntitledNumber);
+      return {
+        tabs: [tab],
+        activeId: tab.id,
+        nextUntitledNumber: firstUntitledNumber + 1,
+        message,
+      };
+    }
     return {
-      tabs: [tab],
-      activeId: tab.id,
-      nextUntitledNumber,
+      tabs: [],
+      activeId: '',
+      nextUntitledNumber: firstUntitledNumber,
       message,
     };
   }

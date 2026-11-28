@@ -28,14 +28,12 @@ function openedFile(name = 'Lab notes.obk') {
   };
 }
 
-test('startup with no launch events creates Untitled 1', async () => {
+test('startup with no launch events shows the start page', async () => {
   const { startupTabsAfterLaunch } = await loadRenderer(launchUrl);
-  const { untitledTitle } = await loadRenderer(modelUrl);
   const startup = startupTabsAfterLaunch([]);
-  assert.equal(startup.tabs.length, 1);
-  assert.equal(startup.tabs[0].title, untitledTitle(1));
-  assert.equal(startup.activeId, 'untitled-1');
-  assert.equal(startup.nextUntitledNumber, 2);
+  assert.equal(startup.tabs.length, 0);
+  assert.equal(startup.activeId, '');
+  assert.equal(startup.nextUntitledNumber, 1);
   assert.equal(startup.message, null);
 });
 
@@ -54,8 +52,8 @@ test('startup with only failed launch opens creates Untitled after the errors', 
   const startup = startupTabsAfterLaunch([
     { status: 'refused', reason: 'not-a-zip', message },
   ]);
-  assert.equal(startup.tabs.length, 1);
-  assert.equal(startup.tabs[0].id, 'untitled-1');
+  assert.equal(startup.tabs.length, 0);
+  assert.equal(startup.activeId, '');
   assert.equal(startup.message, message);
 });
 

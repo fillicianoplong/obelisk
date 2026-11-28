@@ -16,7 +16,13 @@ import {
   waitFor,
 } from '../electron-launch.mjs';
 
-const READY = `(() => document.querySelector('.tab[aria-selected="true"]') && document.documentElement.dataset.shellCommands === 'ready' ? true : null)()`;
+const READY = `(() => {
+  if (document.documentElement.dataset.shellCommands !== 'ready') return null;
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
+  return document.querySelector('.tab[aria-selected="true"]') ? true : null;
+})()`;
 
 const LAYOUT = `(() => {
   const strip = document.querySelector('.tab-strip');

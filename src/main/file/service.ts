@@ -57,6 +57,7 @@ export interface FileServiceDeps {
   platform?: NodeJS.Platform;
   privateAppData?: readonly string[];
   atomic?: WriteAtomicOptions;
+  onDocumentOpened?: (filePath: string, name: string) => void;
 }
 
 export interface FileService {
@@ -218,6 +219,7 @@ export function createFileService(deps: FileServiceDeps): FileService {
       return { status: 'alreadyOpen', tabId: again };
     }
     const handle = handles.issue(filePath, name, inspected.stat);
+    deps.onDocumentOpened?.(filePath, name);
     return {
       status: 'ok',
       handle,
@@ -309,12 +311,14 @@ export function createFileService(deps: FileServiceDeps): FileService {
     const sameFile = previous !== null && handles.handleForPath(filePath) === previous.handle;
     if (sameFile && previous) {
       handles.remember(previous.handle, stat);
+      deps.onDocumentOpened?.(filePath, name);
       return { status: 'ok', handle: previous.handle, name, stat, revision };
     }
     if (previous) {
       handles.forget(previous.handle);
     }
     const handle = handles.issue(filePath, name, stat);
+    deps.onDocumentOpened?.(filePath, name);
     return { status: 'ok', handle, name, stat, revision };
   }
 
@@ -352,6 +356,7 @@ export function createFileService(deps: FileServiceDeps): FileService {
       );
       if (written.status === 'ok') {
         handles.remember(request.handle, written.stat);
+        deps.onDocumentOpened?.(issued.filePath, issued.name);
       }
       return written;
     },

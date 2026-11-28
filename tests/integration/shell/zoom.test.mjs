@@ -22,6 +22,10 @@ const READY = `(() => {
   const zoom = document.querySelector('.status-zoom');
   if (!frame || !sheet || !zoom || !sheet.editorCommands) return null;
   if (document.documentElement.dataset.shellCommands !== 'ready') return null;
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
+
   return true;
 })()`;
 

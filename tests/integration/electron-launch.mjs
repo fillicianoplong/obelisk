@@ -466,9 +466,19 @@ export async function waitFor(child, check, timeoutMs) {
   throw new Error(`Timed out (${lastNote}). ${child.output}`);
 }
 
-export async function launchWithSandboxFallback({ binary, args, env, ready }) {
-  const launchArgs = [...args, ...FOREGROUND_ARGS];
-  let child = launch(binary, launchArgs, env);
+export const E2E_DOCUMENT_ARG = '--obelisk-e2e-document';
+
+export async function launchWithSandboxFallback({ binary, args, env, ready, startPage = false }) {
+  const launchArgs = [
+    ...args,
+  ...(startPage ? [] : [E2E_DOCUMENT_ARG]),
+    ...FOREGROUND_ARGS,
+  ];
+  const launchEnv = {
+    ...env,
+    ...(startPage ? {} : { OBELISK_E2E_DOCUMENT: '1' }),
+  };
+  let child = launch(binary, launchArgs, launchEnv);
   try {
     await ready(child);
     return child;
@@ -481,7 +491,7 @@ export async function launchWithSandboxFallback({ binary, args, env, ready }) {
     }
   }
 
-  child = launch(binary, [...launchArgs, '--no-sandbox'], env);
+  child = launch(binary, [...launchArgs, '--no-sandbox'], launchEnv);
   try {
     await ready(child);
     return child;

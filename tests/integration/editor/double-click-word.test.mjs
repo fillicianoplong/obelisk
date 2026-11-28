@@ -21,7 +21,11 @@ const READY = `(() => {
   if (!editor || editor.getAttribute('contenteditable') !== 'true' || !editor.editorCommands) {
     return null;
   }
-  return document.documentElement.dataset.shellCommands === 'ready' ? true : null;
+  if (document.documentElement.dataset.shellCommands !== 'ready') return null;
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
+  return document.querySelector('[data-region="page-editor"]') ? true : null;
 })()`;
 
 const SETUP = `(() => {

@@ -61,7 +61,7 @@ test('the channel list matches the architecture IPC table', async () => {
     }
   }
   assert.deepEqual([...names].sort(), [...IPC_CHANNELS].sort());
-  assert.equal(IPC_INVOKE_CHANNELS.length, 21);
+  assert.equal(IPC_INVOKE_CHANNELS.length, 23);
   assert.equal(IPC_CHANNELS.includes(IPC_EVENT_CHANNEL), true);
   assert.equal(IPC_INVOKE_CHANNELS.includes(IPC_EVENT_CHANNEL), false);
   assert.equal(IPC_INVOKE_CHANNELS.includes('prefs:get'), true);
@@ -354,7 +354,13 @@ test('preload exposes only listed channels', async () => {
   const api = createObeliskApi(ipc);
   for (const channel of IPC_INVOKE_CHANNELS) {
     const before = invocations.length;
-    if (channel === 'file:open' || channel === 'sig:list' || channel === 'recovery:list' || channel === 'clipboard:read') {
+    if (
+      channel === 'file:open'
+      || channel === 'sig:list'
+      || channel === 'recovery:list'
+      || channel === 'clipboard:read'
+      || channel === 'recents:list'
+    ) {
       await api[channel]();
       assert.equal(invocations.at(-1).channel, channel);
       assert.deepEqual(invocations.at(-1).args, []);

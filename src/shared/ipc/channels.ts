@@ -24,6 +24,8 @@ export const IPC_CHANNELS = [
   'spell:suggest',
   'spell:context',
   'clipboard:read',
+  'recents:list',
+  'recents:open',
 ] as const;
 
 export type IpcChannelName = (typeof IPC_CHANNELS)[number];
@@ -66,6 +68,8 @@ export const IPC_DIRECTION = {
   'spell:suggest': 'renderer-to-main',
   'spell:context': 'main-to-renderer',
   'clipboard:read': 'renderer-to-main',
+  'recents:list': 'renderer-to-main',
+  'recents:open': 'renderer-to-main',
 } as const satisfies Record<IpcChannelName, 'renderer-to-main' | 'main-to-renderer'>;
 
 const INVOKE_CHANNEL_SET: ReadonlySet<string> = /* @__PURE__ */ new Set(IPC_INVOKE_CHANNELS);

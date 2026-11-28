@@ -15,8 +15,15 @@ import {
   waitFor,
 } from '../electron-launch.mjs';
 
-const SHELL_READY = `document.documentElement.dataset.shellCommands === 'ready'
-  && Boolean(document.querySelector('[data-region="page-editor"]')?.editorCommands)`;
+const SHELL_READY = `(() => {
+  if (document.documentElement.dataset.shellCommands !== 'ready') {
+    return false;
+  }
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
+  return Boolean(document.querySelector('[data-region="page-editor"]')?.editorCommands);
+})()`;
 
 const READ_COLOR = `(() => {
   const editor = document.querySelector('[data-region="page-editor"]');

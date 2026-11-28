@@ -100,7 +100,10 @@ export function parseInvokeRequest(channel: InvokeChannel, args: readonly unknow
     case 'spell:suggest':
       return parsed(parseSpellSuggest(args));
     case 'clipboard:read':
+    case 'recents:list':
       return args.length === 0 ? { ok: true, request: undefined } : { ok: false };
+    case 'recents:open':
+      return parsed(parseRecentsOpen(args));
     default: {
       const neverChannel: never = channel;
       return neverChannel;
@@ -552,6 +555,24 @@ function parseIdRequest(args: readonly unknown[]): SigGetRequest & SigDeleteRequ
     return null;
   }
   const id = parseToken(value.id);
+  return id === null ? null : { id };
+}
+
+const RECENT_ID = /^[a-f0-9]{32}$/;
+
+function parseRecentId(value: unknown): string | null {
+  if (typeof value !== 'string' || !RECENT_ID.test(value)) {
+    return null;
+  }
+  return value;
+}
+
+function parseRecentsOpen(args: readonly unknown[]): import('./types.js').RecentsOpenRequest | null {
+  const value = oneObject(args);
+  if (value === null || !hasExactKeys(value, ['id'])) {
+    return null;
+  }
+  const id = parseRecentId(value.id);
   return id === null ? null : { id };
 }
 

@@ -23,6 +23,9 @@ const READ_TABS = `(() => {
   if (document.documentElement.dataset.shellCommands !== 'ready') {
     return null;
   }
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
   if (!strip || !list || !editor || !editor.editorCommands) {
     return null;
   }

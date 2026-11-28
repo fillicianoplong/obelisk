@@ -25,6 +25,9 @@ const READ_PAGE = `(() => {
   if (document.documentElement.dataset.shellCommands !== 'ready') {
     return null;
   }
+  if (document.querySelector('[data-page="start"]') && !document.querySelector('[data-region="page-editor"]')) {
+    document.querySelector('.start-action-primary')?.click();
+  }
   if (!editor || editor.getAttribute('contenteditable') !== 'true' || !status || !editor.editorCommands) {
     return null;
   }
