@@ -15,6 +15,7 @@ import { createStubExportService } from '../../../dist/main/export/stub.js';
 import { createFileService } from '../../../dist/main/file/service.js';
 import { checkUnissuedHandle } from '../../../dist/main/file/unissued.js';
 import { createAppHandlers } from '../../../dist/main/ipc/handlers.js';
+import { createStubRecoveryService } from '../../../dist/main/recovery/stub.js';
 import { createIpcRegistry } from '../../../dist/main/ipc/registry.js';
 import { APP_PAGE_URL } from '../../../dist/shared/app-page.js';
 import { emptyManifest, minimalDocument, paragraph, textRun } from '../../../scripts/make-hostile-fixtures/documents.mjs';
@@ -193,7 +194,7 @@ test('a valid file opens with a handle and the file is unchanged', async () => {
     assert.equal(reads, 1);
     assertUnchanged(before, await snapshot(file), 'opened');
 
-    const registry = createIpcRegistry(createAppHandlers(files, createStubExportService()));
+    const registry = createIpcRegistry(createAppHandlers(files, createStubExportService(), createStubRecoveryService()));
     const saved = await registry.dispatch({
       senderUrl: APP_PAGE_URL,
       channel: 'file:save',
@@ -245,7 +246,7 @@ test('a handle main did not issue returns PATH_NOT_ALLOWED and touches nothing',
         throw new Error('A file was read for an unknown handle.');
       },
     });
-    const registry = createIpcRegistry(createAppHandlers(files, createStubExportService()));
+    const registry = createIpcRegistry(createAppHandlers(files, createStubExportService(), createStubRecoveryService()));
     const saved = await registry.dispatch({
       senderUrl: APP_PAGE_URL,
       channel: 'file:save',

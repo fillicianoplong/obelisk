@@ -30,6 +30,8 @@ export interface PageTab {
   path?: string;
   /** Opaque id main issued for this file. A new tab omits it. */
   handle?: string;
+  /** Recovery copy id in app data for a never-saved tab. */
+  recoveryId?: string;
   /** A document tab omits this. Settings and About are shell tabs. */
   kind?: TabKind;
   editor: EditorState;

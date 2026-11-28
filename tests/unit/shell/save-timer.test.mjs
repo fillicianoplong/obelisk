@@ -38,18 +38,26 @@ async function autosaveModules() {
   };
 }
 
-test('a never-saved tab is not eligible and never fires autosave', async () => {
-  const { AUTOSAVE_DELAY_MS, autosaveEligible, createAutosaveScheduler, createFakeAutosaveClock, syncTabAutosave } =
-    await autosaveModules();
+test('a never-saved tab is not eligible for file autosave but schedules recovery', async () => {
+  const {
+    AUTOSAVE_DELAY_MS,
+    autosaveEligible,
+    createAutosaveScheduler,
+    createFakeAutosaveClock,
+    syncTabAutosave,
+  } = await autosaveModules();
+  const { recoveryEligible } = await loadRenderer(eligibilityUrl);
   const { createTab } = await loadRenderer(modelUrl);
   const { noteEditorChange } = await loadRenderer(saveUrl);
   const { insertText: insert } = await loadRenderer(stateUrl);
 
   const tab = createTab(1);
   assert.equal(autosaveEligible(tab), false);
+  assert.equal(recoveryEligible(tab), false);
 
   const edited = noteEditorChange(tab, insert(tab.editor, 'Draft'));
   assert.equal(autosaveEligible(edited), false);
+  assert.equal(recoveryEligible(edited), true);
 
   const clock = createFakeAutosaveClock();
   const fires = [];
@@ -62,7 +70,7 @@ test('a never-saved tab is not eligible and never fires autosave', async () => {
   });
   syncTabAutosave(scheduler, edited);
   clock.advance(AUTOSAVE_DELAY_MS);
-  assert.deepEqual(fires, []);
+  assert.deepEqual(fires, [edited.id]);
 });
 
 test('a saved tab autosaves within 30 s of the last edit (FR-14, AC-05)', async () => {

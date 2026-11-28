@@ -73,7 +73,8 @@ export interface RefusedResult {
 export type FileOpenResult =
   | {
       status: 'ok';
-      handle: string;
+      handle?: string;
+      recoveryId?: string;
       name: string;
       document: DocumentMessage;
       stat: FileStat;

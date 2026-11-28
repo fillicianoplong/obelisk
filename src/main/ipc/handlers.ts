@@ -3,6 +3,7 @@ import { ipcError, type IpcErrorResult } from '../../shared/ipc/errors.js';
 import type { RequestMap, ResultMap } from '../../shared/ipc/types.js';
 import type { ExportService } from '../export/service.js';
 import type { FileService } from '../file/service.js';
+import type { RecoveryService } from '../recovery/service.js';
 
 export type IpcHandler<C extends InvokeChannel> = (
   request: RequestMap[C],
@@ -42,7 +43,11 @@ export function createStubHandlers(): IpcHandlerMap {
 
 // file:open shows the dialog and decodes. file:save and file:saveAs write.
 // A handle main did not issue is refused before anything is read or written.
-export function createAppHandlers(files: FileService, exports: ExportService): IpcHandlerMap {
+export function createAppHandlers(
+  files: FileService,
+  exports: ExportService,
+  recovery: RecoveryService,
+): IpcHandlerMap {
   return {
     ...createStubHandlers(),
     'file:open': () => files.openFromDialog(),
@@ -58,5 +63,9 @@ export function createAppHandlers(files: FileService, exports: ExportService): I
       }
       return exports.run(request);
     },
+    'recovery:put': (request) => recovery.put(request),
+    'recovery:list': () => recovery.list(),
+    'recovery:restore': (request) => recovery.restore(request),
+    'recovery:drop': (request) => recovery.drop(request.recoveryId),
   };
 }

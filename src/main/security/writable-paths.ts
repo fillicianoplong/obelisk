@@ -24,11 +24,13 @@ export function configureWritablePaths(): string {
   const logsDir = path.join(userData, 'logs');
   const crashDir = path.join(userData, 'crashes');
   const sessionDir = path.join(userData, 'session');
+  const recoveryDir = path.join(userData, 'recovery');
   const cacheDir = path.join(userData, 'cache');
   ensureDir(userData);
   ensureDir(logsDir);
   ensureDir(crashDir);
   ensureDir(sessionDir);
+  ensureDir(recoveryDir);
   ensureDir(cacheDir);
 
   app.setPath('userData', userData);

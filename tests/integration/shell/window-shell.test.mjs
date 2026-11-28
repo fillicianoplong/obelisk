@@ -192,10 +192,13 @@ const CHROMIUM_PROFILE_DIRECTORIES = new Set([
   'WebStorage',
 ]);
 
-const APP_OWNED_DIRECTORIES = new Set(['recovery', 'documents', 'temp-save']);
+const APP_OWNED_DIRECTORIES = new Set(['documents', 'temp-save']);
 
 function isDocumentWrite(relativePath) {
   const segments = relativePath.split(/[\\/]/);
+  if (segments.some((segment) => segment.toLowerCase() === 'recovery')) {
+    return false;
+  }
   const name = segments[segments.length - 1] ?? '';
   const lower = name.toLowerCase();
   if (lower.endsWith('.obk') || lower.endsWith('.obk.tmp') || name.includes('.~obk-')) {

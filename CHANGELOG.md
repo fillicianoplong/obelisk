@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.72.0] - 2026-11-28
+
+### Added
+
+- Never-saved tabs write recovery copies to app data every 30 seconds after an edit, and Obelisk offers them on the next launch to restore or discard until you choose.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

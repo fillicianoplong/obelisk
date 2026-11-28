@@ -19,6 +19,7 @@ import {
 import { createExportService } from '../../../dist/main/export/service.js';
 import { createFileService } from '../../../dist/main/file/service.js';
 import { createAppHandlers } from '../../../dist/main/ipc/handlers.js';
+import { createStubRecoveryService } from '../../../dist/main/recovery/stub.js';
 import { createIpcRegistry } from '../../../dist/main/ipc/registry.js';
 import { APP_PAGE_URL } from '../../../dist/shared/app-page.js';
 import { emptyManifest, minimalDocument, paragraph, textRun } from '../../../scripts/make-hostile-fixtures/documents.mjs';
@@ -118,7 +119,7 @@ function exportService(files, directory, extras = {}) {
 }
 
 function registry(files, directory, extras = {}) {
-  return createIpcRegistry(createAppHandlers(files, exportService(files, directory, extras)));
+  return createIpcRegistry(createAppHandlers(files, exportService(files, directory, extras), createStubRecoveryService()));
 }
 
 async function dispatch(files, directory, channel, args, extras = {}) {

@@ -10,6 +10,7 @@ import { createExportService } from '../../../dist/main/export/service.js';
 import { EXPORT_DIALOG_TITLE } from '../../../dist/main/export/dialog.js';
 import { createFileService } from '../../../dist/main/file/service.js';
 import { createAppHandlers } from '../../../dist/main/ipc/handlers.js';
+import { createStubRecoveryService } from '../../../dist/main/recovery/stub.js';
 import { createIpcRegistry } from '../../../dist/main/ipc/registry.js';
 import { APP_PAGE_URL } from '../../../dist/shared/app-page.js';
 import { emptyManifest, minimalDocument, paragraph, textRun } from '../../../scripts/make-hostile-fixtures/documents.mjs';
@@ -92,7 +93,7 @@ function harness(directory, extras = {}) {
     atomic: extras.atomic,
     exportTimeoutMs: extras.exportTimeoutMs,
   });
-  return { files, calls, registry: createIpcRegistry(createAppHandlers(files, exports)) };
+  return { files, calls, registry: createIpcRegistry(createAppHandlers(files, exports, createStubRecoveryService())) };
 }
 
 test('export dialog options name each format and export leaves the .obk unchanged', async () => {

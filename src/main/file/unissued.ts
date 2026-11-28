@@ -1,6 +1,7 @@
 import { APP_PAGE_URL } from '../../shared/app-page.js';
 import type { DocumentMessage } from '../../shared/ipc/types.js';
 import { createStubExportService } from '../export/stub.js';
+import { createStubRecoveryService } from '../recovery/stub.js';
 import { createAppHandlers } from '../ipc/handlers.js';
 import { createIpcRegistry } from '../ipc/registry.js';
 import { createFileService } from './service.js';
@@ -72,7 +73,7 @@ export async function checkUnissuedHandle(call: UnissuedCall): Promise<UnissuedC
       },
     },
   });
-  const registry = createIpcRegistry(createAppHandlers(files, createStubExportService()));
+  const registry = createIpcRegistry(createAppHandlers(files, createStubExportService(), createStubRecoveryService()));
   const result = await registry.dispatch({
     senderUrl: APP_PAGE_URL,
     channel: call.channel,

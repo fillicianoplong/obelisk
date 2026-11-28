@@ -10,6 +10,32 @@ export function editorFromDocument(document: DocumentMessage): EditorState {
   return createTabEditorState(doc);
 }
 
+export function createRecoveredTab(opened: {
+  recoveryId: string;
+  name: string;
+  document: DocumentMessage;
+}): PageTab {
+  const editor = editorFromDocument(opened.document);
+  const view = documentView({ baseDocument: opened.document });
+  const page = pageSetupFromUnknown(opened.document.page);
+  return {
+    id: `recovery-${opened.recoveryId}`,
+    title: opened.name,
+    recoveryId: opened.recoveryId,
+    editor,
+    savedDoc: editor.doc,
+    revision: 0,
+    stat: null,
+    savePhase: null,
+    baseDocument: opened.document,
+    savedView: view,
+    savedPage: page,
+    savedHeader: opened.document.header,
+    savedFooter: opened.document.footer,
+    blockIds: blockIdsFromDocument(opened.document),
+  };
+}
+
 export function createOpenedTab(opened: {
   handle: string;
   name: string;
@@ -50,6 +76,33 @@ export function applyOpenResult(
     return { tabs: tabs as PageTab[], activeId, message: null };
   }
   if (result.status === 'ok') {
+    if (result.recoveryId !== undefined && result.handle === undefined) {
+      const existing = tabs.find((tab) => tab.recoveryId === result.recoveryId);
+      if (existing) {
+        return {
+          tabs: withoutLoneReplaceableUntitled(tabs, existing.id),
+          activeId: existing.id,
+          message: null,
+        };
+      }
+      const tab = createRecoveredTab({
+        recoveryId: result.recoveryId,
+        name: result.name,
+        document: result.document,
+      });
+      if (tabs.length === 0 || (tabs.length === 1 && isReplaceableUntitledTab(tabs[0]))) {
+        return { tabs: [tab], activeId: tab.id, message: null };
+      }
+      const merged = [...tabs, tab];
+      return {
+        tabs: withoutLoneReplaceableUntitled(merged, tab.id),
+        activeId: tab.id,
+        message: null,
+      };
+    }
+    if (result.handle === undefined) {
+      return { tabs: tabs as PageTab[], activeId, message: 'This file could not be opened.' };
+    }
     const existing = tabs.find((tab) => tab.id === result.handle || tab.handle === result.handle);
     if (existing) {
       const nextActive = existing.id;
@@ -59,7 +112,8 @@ export function applyOpenResult(
         message: null,
       };
     }
-    const tab = createOpenedTab(result);
+    const handle = result.handle;
+    const tab = createOpenedTab({ handle, name: result.name, document: result.document, stat: result.stat });
     if (tabs.length === 0 || (tabs.length === 1 && isReplaceableUntitledTab(tabs[0]))) {
       return { tabs: [tab], activeId: tab.id, message: null };
     }

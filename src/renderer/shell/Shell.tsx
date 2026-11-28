@@ -83,14 +83,19 @@ import { TabStrip } from './tabs/TabStrip.js';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { TitleBar } from './TitleBar.js';
 import { createAutosaveClock } from '../autosave/clock.js';
+import { recoveryEligible } from '../autosave/eligibility.js';
+import { firstLineFromEditor } from '../autosave/first-line.js';
 import { pauseAutosave } from '../autosave/model.js';
 import { createAutosaveScheduler } from '../autosave/scheduler.js';
 import { syncTabAutosave } from '../autosave/sync.js';
+import { RecoveryPrompt, type RecoveryEntryState } from './recovery/RecoveryPrompt.js';
+import { dropRecoveryCopy } from './recovery/drop.js';
 import './shell.css';
 import './find/find-bar.css';
 import './page-setup/page-setup.css';
 import './preferences/preferences.css';
 import './export/export-dialog.css';
+import './recovery/recovery-dialog.css';
 
 type SaveWaitResult = 'saved' | 'cancelled' | 'failed' | 'conflict';
 
@@ -120,6 +125,9 @@ export function Shell() {
   const [closePromptId, setClosePromptId] = useState<string | null>(null);
   const [openMessage, setOpenMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState<{ tabId: string; stat: FileStat } | null>(null);
+  const [recoveryEntries, setRecoveryEntries] = useState<RecoveryEntryState[] | null>(null);
+  const recoveryEntriesRef = useRef(recoveryEntries);
+  recoveryEntriesRef.current = recoveryEntries;
   const [findBarOpen, setFindBarOpen] = useState(false);
   const [linkDialog, setLinkDialog] = useState<LinkDraft | null>(null);
   const linkDialogRef = useRef(linkDialog);
@@ -152,21 +160,29 @@ export function Shell() {
       clock: createAutosaveClock(),
       onFire: (tabId, revision) => {
         const tab = tabsRef.current.find((item) => item.id === tabId);
-        if (!tab || tab.revision !== revision || isShellTab(tab) || !tab.handle) {
+        if (!tab || tab.revision !== revision || isShellTab(tab)) {
           return;
         }
-        void saveTabNowRef.current(tabId, 'save').finally(() => {
+        const after = () => {
           const latest = tabsRef.current.find((item) => item.id === tabId);
           if (latest) {
             syncTabAutosave(autosaveScheduler.current, latest);
           }
-        });
+        };
+        if (tab.handle) {
+          void saveTabNowRef.current(tabId, 'save').finally(after);
+          return;
+        }
+        if (recoveryEligible(tab)) {
+          void putRecoveryRef.current(tabId, revision).finally(after);
+        }
       },
     }),
   );
   const saveTabNowRef = useRef<
     (tabId: string, kind: 'save' | 'save-as', overwriteStat?: FileStat | null) => Promise<SaveWaitResult>
   >(async () => 'failed');
+  const putRecoveryRef = useRef<(tabId: string, revision: number) => Promise<void>>(async () => {});
 
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
   const closePromptTab = closePromptId === null ? undefined : tabs.find((tab) => tab.id === closePromptId);
@@ -196,6 +212,35 @@ export function Shell() {
     tabsRef.current = current;
     setTabs(current);
   }, []);
+
+  const putRecovery = useCallback(
+    async (tabId: string, revision: number) => {
+      const tab = tabsRef.current.find((item) => item.id === tabId);
+      if (!tab || tab.revision !== revision || !recoveryEligible(tab)) {
+        return;
+      }
+      const built = documentForTab(tab);
+      try {
+        const result = await window.obelisk['recovery:put']({
+          recoveryId: tab.recoveryId ?? null,
+          document: built.document,
+          firstLine: firstLineFromEditor(tab.editor),
+        });
+        if (result.status !== 'ok') {
+          return;
+        }
+        const latest = tabsRef.current.find((item) => item.id === tabId);
+        if (!latest || latest.revision !== revision) {
+          return;
+        }
+        putTab({ ...latest, recoveryId: result.recoveryId });
+      } catch {
+        // The next edit schedules another recovery copy.
+      }
+    },
+    [putTab],
+  );
+  putRecoveryRef.current = putRecovery;
 
   const saveTabNow = useCallback(
     async (tabId: string, kind: 'save' | 'save-as', overwriteStat: FileStat | null = null): Promise<SaveWaitResult> => {
@@ -239,9 +284,13 @@ export function Shell() {
             handle: 'handle' in result ? result.handle : current.handle,
             name: 'name' in result ? result.name : undefined,
           });
-          putTab(next);
-          syncTabAutosave(autosaveScheduler.current, next);
-          if (next.handle !== savingTab.handle) {
+          const cleared = { ...next, recoveryId: undefined };
+          putTab(cleared);
+          if (current.recoveryId) {
+            await dropRecoveryCopy(current.recoveryId);
+          }
+          syncTabAutosave(autosaveScheduler.current, cleared);
+          if (cleared.handle !== savingTab.handle) {
             const session = sessionHandles(tabsRef.current, activeIdRef.current);
             try {
               const response = await window.obelisk['session:set'](session);
@@ -333,6 +382,9 @@ export function Shell() {
       const closing = existing.find((tab) => tab.id === tabId);
       const remaining = existing.filter((tab) => tab.id !== tabId);
       autosaveScheduler.current.cancel(tabId);
+      if (closing?.recoveryId) {
+        await dropRecoveryCopy(closing.recoveryId);
+      }
       if (closing?.handle) {
         const handles = remaining.flatMap((tab) => (tab.handle ? [tab.handle] : []));
         const nextActiveId = remaining.length === 0 ? null : (result.activeId ?? remaining[0].id);
@@ -420,6 +472,11 @@ export function Shell() {
             }
             return;
           }
+        } else {
+          const tab = tabsRef.current.find((item) => item.id === tabId);
+          if (tab?.recoveryId) {
+            await dropRecoveryCopy(tab.recoveryId);
+          }
         }
         setClosePromptId(null);
         await applyCloseTab(tabId);
@@ -470,6 +527,126 @@ export function Shell() {
       window.obelisk['file:activated'].unsubscribe(subscriptionId);
     };
   }, []);
+
+  useEffect(() => {
+    if (!shellReady) {
+      return;
+    }
+    void (async () => {
+      try {
+        const result = await window.obelisk['recovery:list']();
+        if (result.status === 'ok' && result.entries.length > 0) {
+          setRecoveryEntries(result.entries);
+        }
+      } catch {
+        // Recovery copies stay on disk and can be offered on a later launch.
+      }
+    })();
+  }, [shellReady]);
+
+  const dismissRecoveryPrompt = useCallback(() => {
+    setRecoveryEntries(null);
+  }, []);
+
+  const applyRestoredRecovery = useCallback((result: FileOpenResult) => {
+    if (result.status !== 'ok') {
+      return false;
+    }
+    const applied = applyOpenResult(tabsRef.current, activeIdRef.current, result);
+    tabsRef.current = applied.tabs;
+    activeIdRef.current = applied.activeId;
+    setTabs(applied.tabs);
+    setActiveId(applied.activeId);
+    if (applied.message) {
+      setOpenMessage(applied.message);
+    }
+    return true;
+  }, []);
+
+  const chooseRecovery = useCallback(
+    (recoveryId: string, choice: 'restore' | 'discard') => {
+      void (async () => {
+        if (choice === 'discard') {
+          await dropRecoveryCopy(recoveryId);
+          setRecoveryEntries((current) => {
+            if (current === null) {
+              return null;
+            }
+            const remaining = current.filter((entry) => entry.id !== recoveryId);
+            return remaining.length === 0 ? null : remaining;
+          });
+          return;
+        }
+        let result: FileOpenResult;
+        try {
+          result = await window.obelisk['recovery:restore']({ recoveryId });
+        } catch {
+          setRecoveryEntries((current) =>
+            current?.map((entry) => (entry.id === recoveryId ? { ...entry, damaged: true } : entry)) ?? null,
+          );
+          return;
+        }
+        if (!applyRestoredRecovery(result)) {
+          setRecoveryEntries((current) =>
+            current?.map((entry) => (entry.id === recoveryId ? { ...entry, damaged: true } : entry)) ?? null,
+          );
+          return;
+        }
+        setRecoveryEntries((current) => {
+          if (current === null) {
+            return null;
+          }
+          const remaining = current.filter((entry) => entry.id !== recoveryId);
+          return remaining.length === 0 ? null : remaining;
+        });
+      })();
+    },
+    [applyRestoredRecovery],
+  );
+
+  const discardAllRecovery = useCallback(() => {
+    void (async () => {
+      const current = recoveryEntriesRef.current;
+      if (current === null) {
+        return;
+      }
+      await Promise.all(current.map((entry) => dropRecoveryCopy(entry.id)));
+      setRecoveryEntries(null);
+    })();
+  }, []);
+
+  const restoreAllRecovery = useCallback(() => {
+    void (async () => {
+      const current = recoveryEntriesRef.current;
+      if (current === null) {
+        return;
+      }
+      const damagedIds = new Set(
+        current.filter((entry) => entry.damaged === true).map((entry) => entry.id),
+      );
+      for (const entry of current) {
+        if (entry.damaged === true) {
+          continue;
+        }
+        let result: FileOpenResult;
+        try {
+          result = await window.obelisk['recovery:restore']({ recoveryId: entry.id });
+        } catch {
+          damagedIds.add(entry.id);
+          continue;
+        }
+        if (!applyRestoredRecovery(result)) {
+          damagedIds.add(entry.id);
+        }
+      }
+      setRecoveryEntries(() => {
+        const remaining = current
+          .filter((entry) => damagedIds.has(entry.id))
+          .map((entry) => ({ ...entry, damaged: true as const }));
+        return remaining.length === 0 ? null : remaining;
+      });
+    })();
+  }, [applyRestoredRecovery]);
 
   const openDocument = useCallback(() => {
     if (opening.current) {
@@ -1078,6 +1255,19 @@ export function Shell() {
         />
       ) : null}
       {conflict !== null ? <SaveConflict onChoose={chooseConflict} /> : null}
+      {recoveryEntries !== null
+        && conflict === null
+        && closePromptTab === undefined
+        && linkDialog === null
+        && !exportDialogOpen ? (
+        <RecoveryPrompt
+          entries={recoveryEntries}
+          onChoose={chooseRecovery}
+          onDismiss={dismissRecoveryPrompt}
+          onDiscardAll={discardAllRecovery}
+          onRestoreAll={restoreAllRecovery}
+        />
+      ) : null}
       {closePromptTab !== undefined && conflict === null ? (
         <ClosePrompt tabTitle={closePromptTab.title} onChoose={chooseClosePrompt} />
       ) : null}

@@ -10,6 +10,7 @@ import { openAllowedLink } from '../security/links.js';
 import { readClipboardItems } from '../clipboard/read.js';
 import { handlePrefsGet, handlePrefsSet, type PrefsHandlerOptions } from './prefs.js';
 import { bindIpcHandlers, type IpcMainLike } from './bind.js';
+import { createRecoveryService } from '../recovery/index.js';
 import { createAppHandlers } from './handlers.js';
 import { createIpcRegistry } from './registry.js';
 
@@ -88,7 +89,13 @@ export function installIpc(
     privateAppData: [userDataPath],
     platform: process.platform,
   });
-  const registry = createIpcRegistry(createAppHandlers(files, exports));
+  const recovery = createRecoveryService({
+    userDataDir: userDataPath,
+    readObk: (filePath) => readInUtilityProcess(filePath),
+    writer: app.getVersion(),
+    privateAppData: [userDataPath],
+  });
+  const registry = createIpcRegistry(createAppHandlers(files, exports, recovery));
   const userData = () => app.getPath('userData');
   const spell = new SpellHost(userData, () => app.getAppPath());
   registry.setHandler('spell:add', async (request) => {

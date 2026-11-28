@@ -14,3 +14,16 @@ export function autosaveEligible(tab: PageTab): boolean {
   }
   return tabHasUnsavedChanges(tab);
 }
+
+export function recoveryEligible(tab: PageTab): boolean {
+  if (tab.kind === 'settings' || tab.kind === 'about') {
+    return false;
+  }
+  if (tab.handle) {
+    return false;
+  }
+  if (isAutosavePaused(tab)) {
+    return false;
+  }
+  return tabHasUnsavedChanges(tab);
+}
