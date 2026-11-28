@@ -10,6 +10,7 @@ import {
   TABLE_CELL_MAX_CHARS,
   TEXT_AREA_MIN_IN,
   TEXT_MAX_CHARS,
+  DIAGRAM_MAX_CHARS,
   DRAWING_POINT_MAX,
 } from './limits.js';
 import { failure, type SchemaFailure } from './result.js';
@@ -317,8 +318,12 @@ function blockIssue(block: Block, path: string, ids: Set<string>): SchemaFailure
       return drawingIssue(block, path);
     case 'signature':
       return decimalIssue(block.width, `${path}/width`);
-    case 'diagram':
+    case 'diagram': {
+      if (characterLength(block.source) > DIAGRAM_MAX_CHARS) {
+        return failure('out-of-range', `${path}/source`, `Use at most ${DIAGRAM_MAX_CHARS} characters.`);
+      }
       return null;
+    }
     default: {
       const unexpected: never = block;
       return unexpected;

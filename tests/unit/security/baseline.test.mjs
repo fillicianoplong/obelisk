@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { readAppFile } from '../../../dist/main/security/app-files.js';
 import { resolveAppFile } from '../../../dist/main/security/app-path.js';
 import { CONTENT_SECURITY_POLICY } from '../../../dist/main/security/csp.js';
+import { DIAGRAM_STYLE_NONCE } from '../../../dist/main/security/style-nonce.js';
 import { isAllowedRequestUrl } from '../../../dist/main/security/request-policy.js';
 import { secureWebPreferences } from '../../../dist/main/security/window-options.js';
 
@@ -16,6 +17,8 @@ const ARCHITECTURE_POLICY = [
   "default-src 'none'",
   "script-src app:",
   "style-src app:",
+  `style-src-elem app: 'nonce-${DIAGRAM_STYLE_NONCE}'`,
+  "style-src-attr 'none'",
   "font-src app:",
   "img-src app: data: blob:",
   "connect-src 'none'",

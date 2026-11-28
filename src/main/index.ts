@@ -2,7 +2,9 @@ import { app, BrowserWindow, Menu, nativeTheme, session, systemPreferences } fro
 import fs from 'node:fs';
 import path from 'node:path';
 import { APP_NAME } from '../shared/app-info.js';
+import { styleNonceLaunchArgument } from '../shared/style-nonce.js';
 import { THEME_CHANGED_CHANNEL, themeLaunchArgument, type ThemeSetting } from '../shared/theme.js';
+import { DIAGRAM_STYLE_NONCE } from './security/style-nonce.js';
 import { openLaunchPaths, sendFileActivated } from './file/activation.js';
 import { launchPathsFromArgv } from './file/launchPaths.js';
 import type { FileService } from './file/service.js';
@@ -72,7 +74,12 @@ function createWindow(theme: ThemeSetting, zoom: ZoomPreset, view: AppDocumentVi
   const frame = frameForNativeTheme(nativeTheme, readContrastColors);
   const webPreferences = {
     ...secureWebPreferences(path.join(__dirname, '../preload/index.js')),
-    additionalArguments: [themeLaunchArgument(theme), zoomLaunchArgument(zoom), viewLaunchArgument(view)],
+    additionalArguments: [
+      themeLaunchArgument(theme),
+      zoomLaunchArgument(zoom),
+      viewLaunchArgument(view),
+      styleNonceLaunchArgument(DIAGRAM_STYLE_NONCE),
+    ],
   };
   reportSecurity(
     `OBELISK_WINDOW_OPTIONS ${JSON.stringify({

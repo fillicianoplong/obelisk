@@ -9,6 +9,8 @@ import {
   mergeAdjacentRuns,
 } from './inline-json.js';
 import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
+import { createDiagramNode, diagramBlockJsonFromAttrs, diagramPayloadEqual } from '../../blocks/diagram/commands.js';
+import { diagramPayloadFromBlock } from '../../blocks/diagram/document.js';
 import { createTableNode, tableBlockJsonFromAttrs } from '../../blocks/table/commands.js';
 import { payloadEqual } from '../../blocks/structured/payload.js';
 import { tablePayloadFromBlock } from '../../blocks/table/document.js';
@@ -150,6 +152,9 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
   }
   if (type === 'table') {
     return createTableNode(schema, block, blockId);
+  }
+  if (type === 'diagram') {
+    return createDiagramNode(schema, block, blockId);
   }
   if (typeof type === 'string') {
     return schema.nodes.foreign_block.create({ blockId, blockType: type });
@@ -359,6 +364,16 @@ function blockJsonFromNode(
         const basePayload = base && base.type === 'table' ? tablePayloadFromBlock(base) : null;
         const nextPayload = tablePayloadFromBlock(next);
         if (base && base.type === 'table' && base.id === blockId && payloadEqual(basePayload, nextPayload)) {
+          return base;
+        }
+        return next;
+      }
+      if (node.attrs.blockType === 'diagram') {
+        const next = diagramBlockJsonFromAttrs(blockId, node.attrs);
+        const basePayload = base && base.type === 'diagram' ? diagramPayloadFromBlock(base) : null;
+        const nextPayload = diagramPayloadFromBlock(next);
+        if (base && base.type === 'diagram' && base.id === blockId
+          && basePayload !== null && diagramPayloadEqual(basePayload, nextPayload)) {
           return base;
         }
         return next;

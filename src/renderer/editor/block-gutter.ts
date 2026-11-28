@@ -234,9 +234,20 @@ function caretInEmptyHintBlock(state: EditorState): number | null {
   return from.pos;
 }
 
+function documentHasNonEmptyBody(state: EditorState): boolean {
+  let hasBody = false;
+  state.doc.forEach((node) => {
+    if (node.type.name === 'paragraph' && node.content.size === 0) {
+      return;
+    }
+    hasBody = true;
+  });
+  return hasBody;
+}
+
 export function emptyBlockHintDecoration(state: EditorState): Decoration | null {
   const pos = caretInEmptyHintBlock(state);
-  if (pos === null) {
+  if (pos === null || documentHasNonEmptyBody(state)) {
     return null;
   }
   const from = state.selection.$from;

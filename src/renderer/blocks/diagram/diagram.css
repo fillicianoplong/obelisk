@@ -1,0 +1,82 @@
+.diagram-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin: 0.75em 0;
+}
+
+.diagram-source {
+  box-sizing: border-box;
+  width: 100%;
+  font-family: var(--font-code);
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  padding: var(--space-s);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+  resize: vertical;
+  min-height: 4.5em;
+}
+
+.diagram-source:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.diagram-block[data-mode="display"] .diagram-source {
+  display: none;
+}
+
+.diagram-block[data-mode="display"] .diagram-preview {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.diagram-block[data-mode="edit"] .diagram-preview {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.diagram-preview {
+  overflow-x: auto;
+  min-height: 1.5em;
+}
+
+.diagram-preview svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  width: 100%;
+  text-align: left;
+}
+
+.diagram-error p {
+  margin: 0;
+}
+
+.diagram-error .diagram-error-text {
+  color: var(--color-error);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.diagram-error .diagram-error-detail {
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+}

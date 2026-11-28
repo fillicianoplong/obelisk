@@ -1,6 +1,6 @@
 {
   "name": "obelisk",
-  "version": "0.1.52.0",
+  "version": "0.1.67.0",
   "private": true,
   "description": "Obelisk is a Windows document editor.",
   "main": "dist/main/index.js",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "dictionary-en": "4.0.0",
+    "mermaid": "12.2.0",
     "nspell": "2.1.5",
     "prosemirror-commands": "1.7.2",
     "prosemirror-history": "1.5.1",

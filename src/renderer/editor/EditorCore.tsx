@@ -21,6 +21,13 @@ import {
   setChecklistItemChecked,
 } from './block-commands.js';
 import type { TextBlockKind } from './schema.js';
+import {
+  mountDiagramExportPreview,
+  PROBE_FLOWCHART_WITH_EDGE,
+  probeDiagramEdgeStroke,
+} from '../blocks/diagram/probe.js';
+import { sampleDiagramEdgeStroke } from '../../shared/diagram/mermaid-palette.js';
+import type { DiagramRenderTarget } from '../../shared/diagram/render-target.js';
 import { editorBlockSnapshot } from './schema/mapping.js';
 import { newBlockId } from './block-id.js';
 import { cssPixelsAt96Dpi, PAGE_HEADER_OFFSET_IN, pageZoomVars } from './layout/page.js';
@@ -228,6 +235,63 @@ function installEditorCommands(
     },
     blockSnapshot() {
       return editorBlockSnapshot(view.state.doc);
+    },
+    diagramPreviews() {
+      const blocks = view.dom.querySelectorAll('.diagram-block');
+      return [...blocks].map((block) => {
+        const root = block as HTMLElement;
+        const svg = block.querySelector<SVGSVGElement>('.diagram-preview svg');
+        const rect = svg?.getBoundingClientRect();
+        const labels = svg
+          ? [...svg.querySelectorAll('text, tspan')]
+            .map((node) => (node.textContent ?? '').trim())
+            .filter((text) => text.length > 0)
+          : [];
+        const mode = root.dataset.mode ?? 'display';
+        return {
+          source: block.querySelector<HTMLTextAreaElement>('.diagram-source')?.value ?? '',
+          error: block.querySelector('.diagram-error:not([hidden])') !== null,
+          message: block.querySelector('.diagram-error-text')?.textContent ?? null,
+          errorRegions: block.querySelectorAll('.diagram-error:not([hidden])').length,
+          errorHeadlines: block.querySelectorAll('.diagram-error-text').length,
+          sourceVisible: (() => {
+            const source = block.querySelector<HTMLTextAreaElement>('.diagram-source');
+            if (!source) {
+              return false;
+            }
+            return getComputedStyle(source).display !== 'none';
+          })(),
+          edgeStroke: svg ? sampleDiagramEdgeStroke(svg) : null,
+          svg: svg !== null,
+          width: rect?.width ?? 0,
+          height: rect?.height ?? 0,
+          labels,
+          mode,
+        };
+      });
+    },
+    async diagramProbeEdgeStroke(target: DiagramRenderTarget) {
+      const source = view.dom.querySelector<HTMLTextAreaElement>('.diagram-source')?.value
+        ?? PROBE_FLOWCHART_WITH_EDGE;
+      return probeDiagramEdgeStroke(source, target, `probe-${target}`);
+    },
+    async prepareDiagramExportPrintPreview() {
+      const source = view.dom.querySelector<HTMLTextAreaElement>('.diagram-source')?.value
+        ?? PROBE_FLOWCHART_WITH_EDGE;
+      const prior = document.getElementById('obelisk-export-print-host');
+      prior?.remove();
+      const host = document.createElement('div');
+      host.id = 'obelisk-export-print-host';
+      host.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#ffffff;padding:1.5in 1in;box-sizing:border-box;';
+      const mount = document.createElement('div');
+      mount.style.cssText = 'display:flex;justify-content:center;width:100%;';
+      host.append(mount);
+      document.body.append(host);
+      const stroke = await mountDiagramExportPreview(source, mount, 'export-print-page');
+      return { stroke };
+    },
+    clearDiagramExportPrintPreview() {
+      document.getElementById('obelisk-export-print-host')?.remove();
     },
     runFormatMenu(menuId: string) {
       runWithSynchronousEditorUpdate(() => {

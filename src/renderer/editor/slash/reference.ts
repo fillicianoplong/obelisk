@@ -10,7 +10,8 @@ export type SlashMenuBlockRef =
   | { kind: 'code' }
   | { kind: 'divider' }
   | { kind: 'page-break' }
-  | { kind: 'table' };
+  | { kind: 'table' }
+  | { kind: 'diagram' };
 
 export interface SlashMenuItem {
   id: string;
@@ -46,7 +47,7 @@ const EXISTING: SlashMenuItem[] = [
   { id: 'table', label: 'Table', block: { kind: 'table' } },
   { id: 'image', label: 'Image', block: null },
   { id: 'equation', label: 'Equation', block: null },
-  { id: 'diagram', label: 'Diagram', block: null },
+  { id: 'diagram', label: 'Diagram', block: { kind: 'diagram' } },
   { id: 'drawing', label: 'Drawing', block: null },
   { id: 'signature', label: 'Signature', block: null },
   { id: 'date', label: 'Date', block: null },

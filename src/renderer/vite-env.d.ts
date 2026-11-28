@@ -11,5 +11,6 @@ declare global {
     obeliskTheme: ObeliskThemeApi;
     obeliskZoom?: ZoomPreset;
     obeliskView?: AppDocumentView;
+    obeliskStyleNonce?: string;
   }
 }

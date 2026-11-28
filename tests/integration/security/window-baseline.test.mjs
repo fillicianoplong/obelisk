@@ -28,6 +28,10 @@ function blockedUrls(output) {
   return [...output.matchAll(/OBELISK_REQUEST_BLOCKED (\S+)/g)].map((match) => match[1]);
 }
 
+function stripStyleNonce(policy) {
+  return policy.replace(/'nonce-[a-f0-9]+'/g, "'nonce-session'");
+}
+
 test('the secured window blocks fetch, navigation, popups, webviews, and permissions', { timeout: 45_000 }, async (t) => {
   const binary = electronBinary();
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'obelisk-security-'));
@@ -110,7 +114,8 @@ test('the secured window blocks fetch, navigation, popups, webviews, and permiss
     assert.equal(policy.includes("connect-src 'none'"), true, policy);
     assert.equal(policy.includes("frame-src 'none'"), true, policy);
     assert.equal(policy.includes("object-src 'none'"), true, policy);
-    assert.equal(policy.includes(CONTENT_SECURITY_POLICY), true, policy);
+    assert.equal(stripStyleNonce(policy), stripStyleNonce(CONTENT_SECURITY_POLICY), policy);
+    assert.match(policy, /style-src-elem app: 'nonce-[a-f0-9]{32}'/);
     assert.equal(
       probe.violations.some((violation) => String(violation.directive).includes('script-src')),
       true,
