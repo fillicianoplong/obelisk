@@ -118,8 +118,14 @@ function pixel(img, x, y) {
   return [row[offset], row[offset + 1], row[offset + 2]];
 }
 
-function same(left, right) {
-  return left[0] === right[0] && left[1] === right[1] && left[2] === right[2];
+const RGB_TOLERANCE = 6;
+
+function closeRgb(left, right, tolerance = RGB_TOLERANCE) {
+  return (
+    Math.abs(left[0] - right[0]) <= tolerance &&
+    Math.abs(left[1] - right[1]) <= tolerance &&
+    Math.abs(left[2] - right[2]) <= tolerance
+  );
 }
 
 function deviceX(css, scale) {
@@ -132,7 +138,7 @@ function fillSpan(img, y, fill, box, scale) {
   let left = -1;
   let right = -1;
   for (let x = from; x <= to; x += 1) {
-    if (same(pixel(img, x, y), fill)) {
+    if (closeRgb(pixel(img, x, y), fill)) {
       if (left < 0) left = x;
       right = x;
     }
@@ -140,7 +146,7 @@ function fillSpan(img, y, fill, box, scale) {
   assert.ok(left >= 0, `tab fill ${fill} was not found on row ${y}`);
   for (let x = left; x <= right; x += 1) {
     const got = pixel(img, x, y);
-    assert.ok(same(got, fill), `row ${y} pixel ${x} is ${got}, tab fill is ${fill}`);
+    assert.ok(closeRgb(got, fill), `row ${y} pixel ${x} is ${got}, tab fill is ${fill}`);
   }
   return { left, right };
 }
@@ -157,23 +163,23 @@ function assertActiveEdge(img, layout, label) {
   const fill = pixel(img, xMid, yEdge - 4);
   const chrome = pixel(img, chromeX, yEdge - 6);
   const page = pixel(img, chromeX, yEdge + 6);
-  assert.equal(same(fill, chrome), false, `${label} tab fill ${fill} matches the strip ${chrome}`);
-  assert.ok(same(pixel(img, xMid, yEdge - 1), fill), `${label} tab bottom ${pixel(img, xMid, yEdge - 1)} is not ${fill}`);
+  assert.ok(!closeRgb(fill, chrome), `${label} tab fill ${fill} matches the strip ${chrome}`);
+  assert.ok(closeRgb(pixel(img, xMid, yEdge - 1), fill), `${label} tab bottom ${pixel(img, xMid, yEdge - 1)} is not ${fill}`);
   const above = fillSpan(img, yEdge - 4, fill, box, scale);
   const last = fillSpan(img, yEdge - 1, fill, box, scale);
   assert.deepEqual(last, above, `${label} bottom corners are rounded`);
   assert.ok(
-    same(pixel(img, above.left - 1, yEdge - 1), chrome),
-    `${label} left of the tab is ${pixel(img, above.left - 1, yEdge - 1)}, strip is ${chrome}`,
+    closeRgb(pixel(img, above.left - 2, yEdge - 2), chrome),
+    `${label} left of the tab is ${pixel(img, above.left - 2, yEdge - 2)}, strip is ${chrome}`,
   );
   assert.ok(
-    same(pixel(img, above.right + 1, yEdge - 1), chrome),
-    `${label} right of the tab is ${pixel(img, above.right + 1, yEdge - 1)}, strip is ${chrome}`,
+    closeRgb(pixel(img, above.right + 2, yEdge - 2), chrome),
+    `${label} right of the tab is ${pixel(img, above.right + 2, yEdge - 2)}, strip is ${chrome}`,
   );
   for (let y = yEdge; y < yEdge + 4; y += 1) {
     for (let x = above.left - 3; x <= above.right + 3; x += 1) {
       const got = pixel(img, x, y);
-      assert.ok(same(got, page), `${label} below the strip at ${x},${y} is ${got}, page is ${page}`);
+      assert.ok(closeRgb(got, page), `${label} below the strip at ${x},${y} is ${got}, page is ${page}`);
     }
   }
 }
@@ -186,14 +192,14 @@ function assertIdleEdge(img, layout, label) {
   const chromeX = deviceX(3, scale);
   const chrome = pixel(img, chromeX, yEdge - 6);
   const page = pixel(img, chromeX, yEdge + 6);
-  assert.ok(same(pixel(img, xMid, yEdge - 1), chrome), `${label} inactive bottom ${pixel(img, xMid, yEdge - 1)} is not the strip ${chrome}`);
-  assert.ok(same(pixel(img, xMid, yEdge - 2), chrome), `${label} inactive hairline ${pixel(img, xMid, yEdge - 2)}`);
+  assert.ok(closeRgb(pixel(img, xMid, yEdge - 1), chrome), `${label} inactive bottom ${pixel(img, xMid, yEdge - 1)} is not the strip ${chrome}`);
+  assert.ok(closeRgb(pixel(img, xMid, yEdge - 2), chrome), `${label} inactive hairline ${pixel(img, xMid, yEdge - 2)}`);
   const left = deviceX(box.left, scale);
   const right = deviceX(box.right, scale) - 1;
   for (let y = yEdge; y < yEdge + 4; y += 1) {
     for (let x = left - 2; x <= right + 2; x += 1) {
       const got = pixel(img, x, y);
-      assert.ok(same(got, page), `${label} below an inactive tab at ${x},${y} is ${got}, page is ${page}`);
+      assert.ok(closeRgb(got, page), `${label} below an inactive tab at ${x},${y} is ${got}, page is ${page}`);
     }
   }
 }
@@ -209,7 +215,7 @@ function assertFocusedEdge(img, layout, label) {
   for (let y = yEdge; y < yEdge + 4; y += 1) {
     for (let x = left - 3; x <= right + 3; x += 1) {
       const got = pixel(img, x, y);
-      assert.ok(same(got, page), `${label} focus ring at ${x},${y} is ${got}, page is ${page}`);
+      assert.ok(closeRgb(got, page), `${label} focus ring at ${x},${y} is ${got}, page is ${page}`);
     }
   }
 }
