@@ -2,6 +2,8 @@ import type { Node as ProseNode } from 'prosemirror-model';
 import type { EditorState, Transaction } from 'prosemirror-state';
 import { TextSelection } from 'prosemirror-state';
 import { blockIndexAtPos } from '../block-handle-plugin.js';
+import { createEquationNode } from '../../blocks/equation/commands.js';
+import { defaultFormulaLatex } from '../../blocks/equation/document.js';
 import { createTableNode } from '../../blocks/table/commands.js';
 import { defaultTableBody } from '../../blocks/table/document.js';
 import { caretInsideBlock, createTextBlockNode } from '../block-commands.js';
@@ -118,6 +120,10 @@ const EXACT_SLASH_IDS: Readonly<Record<string, string>> = {
   table: 'table',
   grid: 'table',
   tab: 'table',
+  equation: 'equation',
+  math: 'equation',
+  latex: 'equation',
+  formula: 'equation',
 };
 
 function slashItemById(itemId: string): SlashMenuItem | null {
@@ -163,6 +169,8 @@ function blockRefToKind(ref: SlashMenuBlockRef): { kind: TextBlockKind; level?: 
       return { kind: 'page-break' };
     case 'table':
       return { kind: 'paragraph' };
+    case 'equation':
+      return { kind: 'paragraph' };
     default:
       return { kind: 'paragraph' };
   }
@@ -179,12 +187,18 @@ function replaceTopLevelBlock(tr: Transaction, blockIndex: number, ref: SlashMen
   if (ref.kind === 'table') {
     const body = defaultTableBody();
     node = createTableNode(tr.doc.type.schema, { type: 'table', id: priorBlockId, ...body } as never, priorBlockId);
+  } else if (ref.kind === 'equation') {
+    node = createEquationNode(
+      tr.doc.type.schema,
+      { type: 'formula', id: priorBlockId, latex: defaultFormulaLatex() },
+      priorBlockId,
+    );
   } else {
     const { kind, level } = blockRefToKind(ref);
     node = createTextBlockNode(kind, tr.doc.type.schema, () => priorBlockId, { level });
   }
   const replaced = tr.replaceWith(pos, pos + old.nodeSize, node);
-  if (ref.kind === 'table') {
+  if (ref.kind === 'table' || ref.kind === 'equation') {
     return replaced;
   }
   const selection = caretInsideBlock(replaced.doc, blockIndex, 0);

@@ -2,6 +2,13 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.55.0] - 2026-11-28
+
+### Added
+
+- Insert > Equation and `/equation` insert a display math block with LaTeX source and a live KaTeX preview (FR-53 to FR-55).
+- KaTeX 0.19.1 ships with trust off, size limits, strict mode, and fresh macros on each render (NFR-06).
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

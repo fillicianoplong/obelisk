@@ -66,7 +66,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'file-print',
   'insert-columns',
   'insert-image',
-  'insert-equation',
   'insert-diagram',
   'insert-drawing',
   'insert-signature',

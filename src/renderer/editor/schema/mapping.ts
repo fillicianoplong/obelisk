@@ -9,6 +9,12 @@ import {
   mergeAdjacentRuns,
 } from './inline-json.js';
 import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
+import {
+  createEquationNode,
+  equationBlockJsonFromAttrs,
+  formulaPayloadEqual,
+} from '../../blocks/equation/commands.js';
+import { formulaPayloadFromBlock } from '../../blocks/equation/document.js';
 import { createTableNode, tableBlockJsonFromAttrs } from '../../blocks/table/commands.js';
 import { payloadEqual } from '../../blocks/structured/payload.js';
 import { tablePayloadFromBlock } from '../../blocks/table/document.js';
@@ -150,6 +156,9 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
   }
   if (type === 'table') {
     return createTableNode(schema, block, blockId);
+  }
+  if (type === 'formula') {
+    return createEquationNode(schema, block, blockId);
   }
   if (typeof type === 'string') {
     return schema.nodes.foreign_block.create({ blockId, blockType: type });
@@ -359,6 +368,16 @@ function blockJsonFromNode(
         const basePayload = base && base.type === 'table' ? tablePayloadFromBlock(base) : null;
         const nextPayload = tablePayloadFromBlock(next);
         if (base && base.type === 'table' && base.id === blockId && payloadEqual(basePayload, nextPayload)) {
+          return base;
+        }
+        return next;
+      }
+      if (node.attrs.blockType === 'formula') {
+        const next = equationBlockJsonFromAttrs(blockId, node.attrs);
+        const basePayload = base && base.type === 'formula' ? formulaPayloadFromBlock(base) : null;
+        const nextPayload = formulaPayloadFromBlock(next);
+        if (base && base.type === 'formula' && base.id === blockId
+          && basePayload !== null && formulaPayloadEqual(basePayload, nextPayload)) {
           return base;
         }
         return next;

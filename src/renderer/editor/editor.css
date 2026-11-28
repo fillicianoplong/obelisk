@@ -3,6 +3,7 @@
 @import './block-handle-layout.css';
 @import './slash/slash-menu-layout.css';
 @import '../blocks/table/table.css';
+@import '../blocks/equation/equation.css';
 @import './link/link-bubble.css';
 
 .block-handle-layer {

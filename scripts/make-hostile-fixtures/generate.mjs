@@ -765,8 +765,8 @@ function buildSpecs(writer) {
       key: 'H-22-formula',
       fileName: 'H-22-formula.json',
       title: 'Formula commands',
-      pending: [54],
-      outcome: 'safe',
+      check: 'document',
+      outcome: 'accepted',
       json: minimalDocument([{
         type: 'formula',
         id: blockId(3),
@@ -779,12 +779,21 @@ function buildSpecs(writer) {
       }]),
     }),
     spec({
+      id: 'H-22',
+      key: 'H-22-display',
+      fileName: 'H-22-formula.json',
+      title: 'Shown as an error',
+      check: 'app',
+      outcome: 'safe',
+      shared: true,
+    }),
+    spec({
       id: 'H-23',
       key: 'H-23-formula',
       fileName: 'H-23-formula.json',
       title: 'Huge formula, deep macro, and a carried gdef',
-      pending: [54],
-      outcome: 'safe',
+      check: 'document',
+      outcome: 'accepted',
       json: minimalDocument([
         {
           type: 'formula',
@@ -793,6 +802,15 @@ function buildSpecs(writer) {
         },
         { type: 'formula', id: blockId(4), latex: 'x' },
       ]),
+    }),
+    spec({
+      id: 'H-23',
+      key: 'H-23-display',
+      fileName: 'H-23-formula.json',
+      title: 'Error; other formulas unchanged',
+      check: 'app',
+      outcome: 'safe',
+      shared: true,
     }),
     spec({
       id: 'H-24',

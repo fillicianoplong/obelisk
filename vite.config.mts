@@ -23,5 +23,7 @@ export default defineConfig({
   build: {
     outDir: path.join(rootDir, 'dist/renderer'),
     emptyOutDir: true,
+    // KaTeX fonts must stay app: URLs; data: URLs are blocked by font-src app:.
+    assetsInlineLimit: 0,
   },
 });

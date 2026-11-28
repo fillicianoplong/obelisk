@@ -52,6 +52,8 @@ const electronTestFiles = [
   path.join('tests', 'integration', 'editor', 'spellcheck.test.mjs'),
   path.join('tests', 'integration', 'editor', 'find-replace.test.mjs'),
   path.join('tests', 'integration', 'editor', 'text-as-markup.test.mjs'),
+  path.join('tests', 'integration', 'editor', 'equation-blocks.test.mjs'),
+  path.join('tests', 'integration', 'editor', 'formula-hostile.test.mjs'),
   path.join('tests', 'integration', 'packaging', 'writes-app-data.test.mjs'),
 ];
 

@@ -16,6 +16,7 @@ import { insertPageBreakCommand } from './keymap/editor-keys.js';
 import { linkMenuCommand } from './link/commands.js';
 import { copyMenuCommand } from '../clipboard/editor-copy.js';
 import { pasteMenuCommand } from '../clipboard/editor-paste.js';
+import { insertEquationCommand } from '../blocks/equation/commands.js';
 import { tableCommandEnabled, tableMenuCommand } from '../blocks/table/commands.js';
 
 const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null> = {
@@ -32,7 +33,6 @@ const INSERT_KIND: Record<string, { kind: TextBlockKind; level?: number } | null
   'insert-page-break': { kind: 'page-break' },
   'insert-columns': null,
   'insert-image': null,
-  'insert-equation': null,
   'insert-diagram': null,
   'insert-drawing': null,
   'insert-signature': null,
@@ -89,6 +89,9 @@ export function editorMenuCommand(menuId: string): Command | null {
   }
   if (menuId === 'insert-page-break') {
     return insertPageBreakCommand();
+  }
+  if (menuId === 'insert-equation') {
+    return insertEquationCommand();
   }
   const insert = INSERT_KIND[menuId];
   if (insert !== undefined) {

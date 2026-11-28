@@ -56,6 +56,7 @@ import { AllSelection } from 'prosemirror-state';
 import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
 import { findCommands } from './find/find-plugin.js';
 import { markCloseHistoryGroup } from './history/groups.js';
+import { updateEquationLatexCommand } from '../blocks/equation/commands.js';
 import { tableNodeViews } from '../blocks/table/view.js';
 
 interface EditorCoreProps {
@@ -337,6 +338,24 @@ function installEditorCommands(
     removeLink() {
       runWithSynchronousEditorUpdate(() => {
         removeLinkCommand()(view.state, dispatch);
+      });
+    },
+    setEquationLatex(blockIndex: number, latex: string) {
+      runWithSynchronousEditorUpdate(() => {
+        updateEquationLatexCommand(blockIndex, latex)(view.state, view.dispatch.bind(view));
+      });
+    },
+    equationPreviews() {
+      const blocks = view.dom.querySelectorAll('.equation-block');
+      return [...blocks].map((block) => {
+        const preview = block.querySelector('.equation-preview');
+        return {
+          error: preview?.classList.contains('equation-error') === true,
+          hasKatex: block.querySelector('.katex') !== null,
+          hasLink: block.querySelector('a') !== null,
+          hasImage: block.querySelector('img') !== null,
+          message: block.querySelector('.equation-error-text')?.textContent ?? null,
+        };
       });
     },
   };

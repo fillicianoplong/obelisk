@@ -28,7 +28,8 @@
       "name": "KaTeX",
       "licenseId": "MIT",
       "noticeFile": "katex.txt",
-      "summary": "Equation layout (equations feature)."
+      "summary": "Equation layout (equations feature).",
+      "npmPackage": "katex"
     },
     {
       "id": "mathml2omml",
