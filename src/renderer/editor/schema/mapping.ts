@@ -9,6 +9,9 @@ import {
   mergeAdjacentRuns,
 } from './inline-json.js';
 import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
+import { createTableNode, tableBlockJsonFromAttrs } from '../../blocks/table/commands.js';
+import { payloadEqual } from '../../blocks/structured/payload.js';
+import { tablePayloadFromBlock } from '../../blocks/table/document.js';
 
 const TEXT_TYPES = new Set([
   'paragraph',
@@ -144,6 +147,9 @@ export function blockNodeFromJson(block: JsonObject, schema: Schema = editorSche
   }
   if (type === 'pageBreak') {
     return schema.nodes.page_break.create({ blockId });
+  }
+  if (type === 'table') {
+    return createTableNode(schema, block, blockId);
   }
   if (typeof type === 'string') {
     return schema.nodes.foreign_block.create({ blockId, blockType: type });
@@ -346,6 +352,22 @@ function blockJsonFromNode(
       return atomBlockJson('divider', node, base, mint);
     case 'page_break':
       return atomBlockJson('pageBreak', node, base, mint);
+    case 'structured_block': {
+      const blockId = node.attrs.blockId || mint();
+      if (node.attrs.blockType === 'table') {
+        const next = tableBlockJsonFromAttrs(blockId, node.attrs);
+        const basePayload = base && base.type === 'table' ? tablePayloadFromBlock(base) : null;
+        const nextPayload = tablePayloadFromBlock(next);
+        if (base && base.type === 'table' && base.id === blockId && payloadEqual(basePayload, nextPayload)) {
+          return base;
+        }
+        return next;
+      }
+      if (base) {
+        return base;
+      }
+      return { type: node.attrs.blockType ?? 'unknown', id: blockId };
+    }
     case 'foreign_block':
       if (base) {
         return base;
@@ -467,6 +489,9 @@ export function editorBlockSnapshot(doc: ProseNode): EditorBlockSnapshot[] {
         break;
       case 'page_break':
         snapshots.push({ type: 'pageBreak', id: node.attrs.blockId });
+        break;
+      case 'structured_block':
+        snapshots.push({ type: node.attrs.blockType, id: node.attrs.blockId });
         break;
       case 'foreign_block':
         snapshots.push({ type: node.attrs.blockType, id: node.attrs.blockId });

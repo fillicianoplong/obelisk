@@ -58,6 +58,9 @@ function inlineKindFromDom(target: EventTarget | null): ContextTargetKind | null
   if (target.closest('[data-date-time]') !== null) {
     return 'date-time';
   }
+  if (target.closest('[data-table-cell]') !== null) {
+    return 'table-cell';
+  }
   return null;
 }
 
@@ -98,6 +101,8 @@ export function proseBlockType(node: ProseNode): ContextBlockType {
     case 'page_break':
       return 'page-break';
     case 'foreign_block':
+      return typeof node.attrs.blockType === 'string' ? node.attrs.blockType : 'unknown';
+    case 'structured_block':
       return typeof node.attrs.blockType === 'string' ? node.attrs.blockType : 'unknown';
     default:
       return 'paragraph';
@@ -201,7 +206,7 @@ export function resolveContextTarget(
     : blockIndexAtPointer(view, clientX, clientY);
   const node = view.state.doc.child(blockIndex);
   const blockType = proseBlockType(node);
-  if (node.type.name === 'foreign_block') {
+  if (node.type.name === 'foreign_block' || node.type.name === 'structured_block') {
     return targetForForeign(String(node.attrs.blockType), blockIndex, { clientX, clientY, keyboard }, selection);
   }
   const kind = resolveMenuKind(view.state, blockType, keyboard ? null : domTarget, keyboard);
