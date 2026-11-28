@@ -1,6 +1,7 @@
 import type { Node as ProseNode } from 'prosemirror-model';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
+import { posAtCoordsForEditor } from './layout/page-pointer.js';
 
 // A plain double-click that moves farther than this is a drag, and the
 // selection follows the pointer instead of staying on the word.
@@ -308,7 +309,7 @@ export function watchSelectionDrag(
     dragged = true;
     onDrag?.();
     move.preventDefault();
-    const hit = view.posAtCoords({ left: move.clientX, top: move.clientY });
+    const hit = posAtCoordsForEditor(view, move.clientX, move.clientY);
     if (hit === null) {
       return;
     }

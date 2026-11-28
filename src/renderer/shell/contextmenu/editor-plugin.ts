@@ -7,6 +7,7 @@ import {
   textSelectionForEditorPointer,
   textSelectionFromDocumentCoords,
 } from '../../editor/block-handle-plugin.js';
+import { posAtCoordsForEditor } from '../../editor/layout/page-pointer.js';
 import { suggestWord } from '../../editor/spell/client.js';
 import { spanAt, wordSpans } from '../../editor/spell/ranges.js';
 import { spellcheckEnabled } from '../../editor/spellcheck-mode.js';
@@ -69,7 +70,7 @@ export function pointerInsideTextSelection(view: EditorView, event: MouseEvent):
   }
   let hit: { pos: number; inside: number } | null;
   try {
-    hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
+    hit = posAtCoordsForEditor(view, event.clientX, event.clientY);
   } catch {
     hit = null;
   }

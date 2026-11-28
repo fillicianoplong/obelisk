@@ -34,6 +34,7 @@ import {
   paginationSnapshot,
   takeScrollAnchor,
 } from './layout/paginate-plugin.js';
+import { posAtCoordsForEditor } from './layout/page-pointer.js';
 import { bindPageOriginScroll } from './layout/page-scroll.js';
 import {
   createWordClickSession,
@@ -589,7 +590,7 @@ export function EditorCore({
           if (action?.kind === 'open') {
             requestShellCommand('link-open', clickView.dom.ownerDocument.defaultView, action.address);
           } else if (action?.kind === 'bubble') {
-            const at = clickView.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+            const at = posAtCoordsForEditor(clickView, event.clientX, event.clientY)?.pos;
             const tr = openLinkBubble(clickView.state, null, at);
             if (tr !== null) {
               clickView.dispatch(tr);

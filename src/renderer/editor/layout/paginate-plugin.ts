@@ -1,7 +1,12 @@
 import type { Node as ProseNode } from 'prosemirror-model';
+import { TextSelection } from 'prosemirror-state';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import type { EditorView } from 'prosemirror-view';
+import {
+  pointerSelectionNeedsPageClamp,
+  posAtCoordsForEditor,
+} from './page-pointer.js';
 import { caretLineVisible } from '../../../shared/zoom.js';
 import type { FlowUnit, PageBox, PageLayout } from './paginate.js';
 import {
@@ -123,6 +128,34 @@ export function paginationPlugin(host: PaginationHost): Plugin<PaginationState> 
     props: {
       decorations(state) {
         return paginationKey.getState(state)?.decorations ?? DecorationSet.empty;
+      },
+      handleDOMEvents: {
+        mousedown(view, event) {
+          if (event.button !== 0 || !(event.target instanceof HTMLElement)) {
+            return false;
+          }
+          if (event.target.closest('.block-handle') !== null) {
+            return false;
+          }
+          if (!pointerSelectionNeedsPageClamp(view, event.clientX, event.clientY)) {
+            return false;
+          }
+          const hit = posAtCoordsForEditor(view, event.clientX, event.clientY);
+          if (hit === null) {
+            return false;
+          }
+          const { doc } = view.state;
+          try {
+            const $pos = doc.resolve(Math.max(0, Math.min(hit.pos, doc.content.size)));
+            const tr = view.state.tr
+              .setSelection(TextSelection.near($pos, 1))
+              .setMeta('pointer', true);
+            view.dispatch(tr);
+          } catch {
+            return false;
+          }
+          return true;
+        },
       },
     },
     view(editorView) {

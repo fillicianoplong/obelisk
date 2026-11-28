@@ -2,6 +2,12 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.58.0] - 2026-11-28
+
+### Fixed
+
+- In Pages view, clicking blank space below a block (for example under the MLA Title) no longer jumps the caret across a page break onto the next page.
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

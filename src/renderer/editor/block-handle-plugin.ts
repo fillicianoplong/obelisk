@@ -5,6 +5,7 @@ import { NodeSelection, Selection, TextSelection } from 'prosemirror-state';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
+import { posAtCoordsForEditor } from './layout/page-pointer.js';
 import { resetPageFocusToPointer } from '../shell/page-focus.js';
 import { watchOutsidePress } from '../shell/outside-press.js';
 import {
@@ -250,7 +251,7 @@ function blockIndexFromPointer(view: EditorView, event: MouseEvent): number | nu
     return null;
   }
   try {
-    const hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
+    const hit = posAtCoordsForEditor(view, event.clientX, event.clientY);
     if (hit !== null) {
       const index = blockIndexAtPos(doc, hit.pos);
       if (index >= doc.childCount) {
@@ -407,7 +408,7 @@ const BLOCK_CONTENT_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, p
 
 const DRAG_START_PX = 4;
 
-function blockContentElement(view: EditorView, blockIndex: number): HTMLElement | null {
+export function blockContentElement(view: EditorView, blockIndex: number): HTMLElement | null {
   const pos = blockPosAtIndex(view.state.doc, blockIndex) + 1;
   const dom = view.nodeDOM(pos);
   if (dom instanceof HTMLElement) {
@@ -429,7 +430,7 @@ function blockContentElement(view: EditorView, blockIndex: number): HTMLElement 
   return null;
 }
 
-function gapCenterY(view: EditorView, dropIndex: number): number | null {
+export function gapCenterY(view: EditorView, dropIndex: number): number | null {
   const { doc } = view.state;
   try {
     if (dropIndex <= 0) {
@@ -620,7 +621,7 @@ export function textSelectionForEditorPointer(
   const { doc } = tr;
   const hit = (() => {
     try {
-      return view.posAtCoords({ left: event.clientX, top: event.clientY });
+      return posAtCoordsForEditor(view, event.clientX, event.clientY);
     } catch {
       return null;
     }

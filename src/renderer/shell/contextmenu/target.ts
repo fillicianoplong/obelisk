@@ -3,6 +3,7 @@ import type { EditorState } from 'prosemirror-state';
 import { NodeSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { blockHandleState, blockIndexAtPos, dropIndexFromClientY } from '../../editor/block-handle-plugin.js';
+import { posAtCoordsForEditor } from '../../editor/layout/page-pointer.js';
 import { linkAround } from '../../editor/link/commands.js';
 import type { ContextTargetKind } from './model.js';
 
@@ -124,7 +125,7 @@ function blockIndexAtPointer(view: EditorView, clientX: number, clientY: number)
   const { doc } = view.state;
   const hit = (() => {
     try {
-      return view.posAtCoords({ left: clientX, top: clientY });
+      return posAtCoordsForEditor(view, clientX, clientY);
     } catch {
       return null;
     }
