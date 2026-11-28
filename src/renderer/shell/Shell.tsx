@@ -25,6 +25,8 @@ import { runActiveEditorMenuCommand } from './run-editor-menu.js';
 import { suppressPageFocusRing } from './page-focus.js';
 import { LinkDialog } from './link/LinkDialog.js';
 import { PageSetupDialog } from './page-setup/PageSetupDialog.js';
+import { ParagraphDialog, paragraphDialogApplyOptions } from './paragraph/ParagraphDialog.js';
+import { paragraphDialogInitial, paragraphDialogValueToFormat, selectionHasParagraph } from './paragraph/model.js';
 import { ExportDialog } from './export/ExportDialog.js';
 import { emptyExportAssets } from './export/assets.js';
 import { exportFormatFromCommand } from './export/model.js';
@@ -59,6 +61,7 @@ import {
   tabHasUnsavedChanges,
   withBand,
   withDocumentView,
+  withDefaultParagraphFormat,
   withPageSetup,
 } from './tabs/model.js';
 import type { PageTab } from './tabs/model.js';
@@ -89,6 +92,7 @@ import { syncTabAutosave } from '../autosave/sync.js';
 import './shell.css';
 import './find/find-bar.css';
 import './page-setup/page-setup.css';
+import './paragraph/paragraph.css';
 import './preferences/preferences.css';
 import './export/export-dialog.css';
 
@@ -125,6 +129,7 @@ export function Shell() {
   const linkDialogRef = useRef(linkDialog);
   linkDialogRef.current = linkDialog;
   const [pageSetupOpen, setPageSetupOpen] = useState(false);
+  const [paragraphDialogOpen, setParagraphDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const exportDialogOpenRef = useRef(exportDialogOpen);
   exportDialogOpenRef.current = exportDialogOpen;
@@ -133,6 +138,8 @@ export function Shell() {
   bandEditRef.current = bandEdit;
   const pageSetupOpenRef = useRef(pageSetupOpen);
   pageSetupOpenRef.current = pageSetupOpen;
+  const paragraphDialogOpenRef = useRef(paragraphDialogOpen);
+  paragraphDialogOpenRef.current = paragraphDialogOpen;
   const [spellingOn, setSpellingOn] = useState(true);
   const [showPageEdges, setShowPageEdges] = useState(true);
   const [zoom, setZoom] = useState<ZoomPreset>(() => zoomFromSaved(window.obeliskZoom));
@@ -739,12 +746,22 @@ export function Shell() {
         return;
       }
       if (command === 'format-page-setup') {
-        if (linkDialogRef.current !== null) {
+        if (linkDialogRef.current !== null || paragraphDialogOpenRef.current) {
           return;
         }
         const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
         if (active !== undefined && !isShellTab(active) && documentView(active) !== 'pageless') {
           setPageSetupOpen(true);
+        }
+        return;
+      }
+      if (command === 'format-paragraph') {
+        if (linkDialogRef.current !== null || pageSetupOpenRef.current) {
+          return;
+        }
+        const active = tabsRef.current.find((tab) => tab.id === activeIdRef.current);
+        if (active !== undefined && !isShellTab(active)) {
+          setParagraphDialogOpen(true);
         }
         return;
       }
@@ -1023,8 +1040,62 @@ export function Shell() {
       {!isShellTab(activeTab) ? (
         <ContextMenu tabId={activeTab.id} menuContext={menuContext} onCommand={onMenuCommand} />
       ) : null}
+      {paragraphDialogOpen && linkDialog === null && conflict === null && closePromptTab === undefined
+        && pageSetupOpen === false && !isShellTab(activeTab) ? (
+        <ParagraphDialog
+          initial={paragraphDialogInitial(activeTab.baseDocument, activeTab.editor)}
+          showScopeChoice={selectionHasParagraph(activeTab.editor)}
+          onCancel={() => {
+            setParagraphDialogOpen(false);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+          onApply={(value) => {
+            setParagraphDialogOpen(false);
+            const page = document.querySelector<HTMLElement & {
+              editorCommands?: {
+                applyParagraphDialog?: (options: ReturnType<typeof paragraphDialogApplyOptions>) => boolean;
+              };
+            }>('[data-region="page-editor"]');
+            const options = paragraphDialogApplyOptions(value);
+            if (value.scope === 'document') {
+              setTabs((current) => {
+                const next = current.map((tab) => {
+                  if (tab.id !== activeIdRef.current) {
+                    return tab;
+                  }
+                  const updated = withDefaultParagraphFormat(tab, paragraphDialogValueToFormat(value));
+                  if (updated !== tab) {
+                    syncTabAutosave(autosaveScheduler.current, updated);
+                  }
+                  return updated;
+                });
+                tabsRef.current = next;
+                return next;
+              });
+            }
+            page?.editorCommands?.applyParagraphDialog?.(options);
+            document.querySelector<HTMLElement>('[data-region="page-editor"]')?.focus();
+          }}
+          onSetDefault={(format) => {
+            setTabs((current) => {
+              const next = current.map((tab) => {
+                if (tab.id !== activeIdRef.current) {
+                  return tab;
+                }
+                const updated = withDefaultParagraphFormat(tab, format);
+                if (updated !== tab) {
+                  syncTabAutosave(autosaveScheduler.current, updated);
+                }
+                return updated;
+              });
+              tabsRef.current = next;
+              return next;
+            });
+          }}
+        />
+      ) : null}
       {pageSetupOpen && linkDialog === null && conflict === null && closePromptTab === undefined
-        && !isShellTab(activeTab) ? (
+        && paragraphDialogOpen === false && !isShellTab(activeTab) ? (
         <PageSetupDialog
           initial={pageSetupFromUnknown(activeTab.baseDocument.page)}
           onCancel={() => {
@@ -1108,6 +1179,8 @@ export function Shell() {
         footer={activeTab.baseDocument.footer}
         bandEdit={documentView(activeTab) === 'pages' ? bandEdit : null}
         zoom={zoom}
+        defaultLineSpacing={activeTab.baseDocument.defaultLineSpacing}
+        defaultParagraph={activeTab.baseDocument.defaultParagraph}
         onChange={updateEditor}
         onPageLabel={setPageLabel}
         onBandEdit={(part, page) => setBandEdit({ part, page })}

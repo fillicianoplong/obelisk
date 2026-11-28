@@ -28,7 +28,11 @@ function headerFields(id: string): JsonObject {
 function paragraphBlock(id: string, text: string): JsonObject {
   return {
     type: 'paragraph',
-    ...headerFields(id),
+    id,
+    align: 'left',
+    spaceBefore: 0,
+    spaceAfter: 0,
+    indents: { left: 0, first: 0, hanging: 0 },
     content: text.length === 0 ? [] : [{ type: 'text', text }],
   };
 }

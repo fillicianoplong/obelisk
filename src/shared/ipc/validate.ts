@@ -333,9 +333,20 @@ function parseJsonObject(value: unknown): JsonObject | null {
   return parsedJson.value;
 }
 
+const DOCUMENT_KEYS = ['view', 'page', 'header', 'footer', 'blocks', 'defaultLineSpacing'] as const;
+
 function parseDocument(value: unknown): DocumentMessage | null {
-  if (!isPlainRecord(value) || !hasExactKeys(value, ['view', 'page', 'header', 'footer', 'blocks'])) {
+  if (!isPlainRecord(value)) {
     return null;
+  }
+  const keys = Object.keys(value);
+  if (!DOCUMENT_KEYS.slice(0, 5).every((key) => Object.hasOwn(value, key))) {
+    return null;
+  }
+  for (const key of keys) {
+    if (!(DOCUMENT_KEYS as readonly string[]).includes(key)) {
+      return null;
+    }
   }
   if (value.view !== 'pages' && value.view !== 'pageless') {
     return null;
@@ -354,7 +365,11 @@ function parseDocument(value: unknown): DocumentMessage | null {
     }
     blocks.push(parsedBlock);
   }
-  return { view: value.view, page, header, footer, blocks };
+  const document: DocumentMessage = { view: value.view, page, header, footer, blocks };
+  if (typeof value.defaultLineSpacing === 'string') {
+    document.defaultLineSpacing = value.defaultLineSpacing;
+  }
+  return document;
 }
 
 function parseStringArray(value: unknown, maxChars: number | null): string[] | null {

@@ -96,6 +96,7 @@ export function lineSpacingFromMenuId(menuId: string): (typeof LINE_SPACINGS)[nu
   const map: Record<string, (typeof LINE_SPACINGS)[number]> = {
     'format-line-single': 'single',
     'format-line-115': '1.15',
+    'format-line-125': '1.25',
     'format-line-150': '1.5',
     'format-line-double': 'double',
   };

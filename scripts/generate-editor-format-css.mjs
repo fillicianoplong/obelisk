@@ -6,13 +6,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outPath = path.join(root, 'src/renderer/editor/format/csp-format.css');
 
 const ALIGNMENTS = ['left', 'center', 'right', 'justify'];
-const LINE_SPACINGS = ['single', '1.15', '1.5', 'double'];
+const LINE_SPACINGS = ['single', '1.15', '1.25', '1.5', 'double'];
 const SPACE_BEFORE_AFTER_PT = [0, 6, 12, 18, 24];
 const INDENT_STEP_IN = 0.25;
 const INDENT_LEFT_MIN_IN = 0;
 const INDENT_LEFT_MAX_IN = 3;
+const INDENT_RIGHT_MAX_IN = 3;
 const INDENT_FIRST_MAX_IN = 1;
 const INDENT_HANGING_MAX_IN = 1;
+const LINE_SPACING_PT_MIN = 6;
+const LINE_SPACING_PT_MAX = 72;
+const LINE_SPACING_MULTIPLE_MIN = 0.25;
+const LINE_SPACING_MULTIPLE_MAX = 3;
+const LINE_SPACING_MULTIPLE_STEP = 0.05;
 const FONT_SIZES_PT = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72];
 
 const manifestSource = readFileSync(
@@ -58,7 +64,10 @@ lines.push('');
 
 for (const spacing of LINE_SPACINGS) {
   const height = spacing === 'single' ? '1' : spacing === 'double' ? '2' : spacing;
+  lines.push(`.page-sheet[data-default-line-spacing=${cssQuote(spacing)}] p:not([data-line-spacing]) { line-height: ${height}; }`);
+  lines.push(`.page-canvas[data-default-line-spacing=${cssQuote(spacing)}] .page-sheet p:not([data-line-spacing]) { line-height: ${height}; }`);
   lines.push(`.page-sheet p[data-line-spacing=${cssQuote(spacing)}] { line-height: ${height}; }`);
+  lines.push(`.page-band-text p[data-line-spacing=${cssQuote(spacing)}], .page-band-editor p[data-line-spacing=${cssQuote(spacing)}] { line-height: ${height}; }`);
 }
 lines.push('');
 
@@ -73,6 +82,28 @@ for (const pt of SPACE_BEFORE_AFTER_PT) {
     continue;
   }
   lines.push(`.page-sheet p[data-space-after="${pt}"] { margin-block-end: ${pt}pt; }`);
+}
+for (const pt of SPACE_BEFORE_AFTER_PT) {
+  lines.push(`.page-sheet p[data-effective-space-before="${pt}"] { margin-block-start: ${pt}pt; }`);
+  lines.push(`.page-sheet p[data-effective-space-after="${pt}"] { margin-block-end: ${pt}pt; }`);
+  lines.push(`.paragraph-dialog-preview-sheet p[data-effective-space-before="${pt}"] { margin-block-start: ${pt}pt; }`);
+  lines.push(`.paragraph-dialog-preview-sheet p[data-effective-space-after="${pt}"] { margin-block-end: ${pt}pt; }`);
+}
+lines.push('');
+
+const sheetScopes = ['.page-sheet', '.page-canvas .page-sheet', '.paragraph-dialog-preview-sheet'];
+for (const scope of sheetScopes) {
+  for (const pt of Array.from({ length: LINE_SPACING_PT_MAX - LINE_SPACING_PT_MIN + 1 }, (_, i) => i + LINE_SPACING_PT_MIN)) {
+    lines.push(`${scope} p[data-line-spacing="atLeast"][data-line-spacing-at="${pt}"] { line-height: ${pt}pt; }`);
+    lines.push(`${scope}[data-default-line-spacing="atLeast"][data-default-line-spacing-at="${pt}"] p:not([data-line-spacing]) { line-height: ${pt}pt; }`);
+    lines.push(`${scope} p[data-line-spacing="exactly"][data-line-spacing-at="${pt}"] { line-height: ${pt}pt; min-height: ${pt}pt; }`);
+    lines.push(`${scope}[data-default-line-spacing="exactly"][data-default-line-spacing-at="${pt}"] p:not([data-line-spacing]) { line-height: ${pt}pt; min-height: ${pt}pt; }`);
+  }
+  for (let mult = LINE_SPACING_MULTIPLE_MIN; mult <= LINE_SPACING_MULTIPLE_MAX + 1e-9; mult += LINE_SPACING_MULTIPLE_STEP) {
+    const key = String(Math.round(mult * 100) / 100);
+    lines.push(`${scope} p[data-line-spacing="multiple"][data-line-spacing-at="${key}"] { line-height: ${key}; }`);
+    lines.push(`${scope}[data-default-line-spacing="multiple"][data-default-line-spacing-at="${key}"] p:not([data-line-spacing]) { line-height: ${key}; }`);
+  }
 }
 lines.push('');
 
@@ -106,20 +137,35 @@ for (const hanging of hangingValues) {
     lines.push(
       `.page-sheet p[data-indent-left="${indentKey(left)}"][data-indent-first="0"][data-indent-hanging="${indentKey(hanging)}"] { padding-inline-start: ${total}in; text-indent: -${hanging}in; }`,
     );
+    lines.push(
+      `.paragraph-dialog-preview-sheet p[data-indent-left="${indentKey(left)}"][data-indent-first="0"][data-indent-hanging="${indentKey(hanging)}"] { padding-inline-start: ${total}in; text-indent: -${hanging}in; }`,
+    );
   }
+}
+
+const rightValues = indentSteps(INDENT_STEP_IN, INDENT_RIGHT_MAX_IN);
+for (const right of rightValues) {
+  lines.push(`.page-sheet p[data-indent-right="${indentKey(right)}"] { padding-inline-end: ${right}in; }`);
+  lines.push(`.paragraph-dialog-preview-sheet p[data-indent-right="${indentKey(right)}"] { padding-inline-end: ${right}in; }`);
 }
 lines.push('');
 
 lines.push('.page-sheet span[data-underline="true"] { text-decoration: underline; }');
 lines.push('');
 
-for (const pt of FONT_SIZES_PT) {
-  lines.push(`.page-sheet span[data-font-size="${pt}"] { font-size: ${pt}pt; }`);
+const fontSizeScopes = ['.page-sheet', '.page-band-text', '.page-band-editor'];
+for (const scope of fontSizeScopes) {
+  for (const pt of FONT_SIZES_PT) {
+    lines.push(`${scope} span[data-font-size="${pt}"] { font-size: calc(${pt}pt * var(--page-zoom, 1)); }`);
+  }
+  lines.push('');
 }
-lines.push('');
 
-for (const family of BUNDLED_FONT_FAMILIES) {
-  lines.push(`.page-sheet span[data-font-family=${cssQuote(family)}] { font-family: ${family}; }`);
+for (const scope of fontSizeScopes) {
+  for (const family of BUNDLED_FONT_FAMILIES) {
+    lines.push(`${scope} span[data-font-family=${cssQuote(family)}] { font-family: ${family}; }`);
+  }
+  lines.push('');
 }
 lines.push('');
 

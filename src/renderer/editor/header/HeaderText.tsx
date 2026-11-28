@@ -32,20 +32,25 @@ function markWrap(text: string, marks: JsonObject | undefined, key: string) {
   if (marks.subscript === true) {
     node = <sub>{node}</sub>;
   }
-  const style: Record<string, string> = {};
+  const attrs: Record<string, string> = {};
   if (typeof marks.font === 'string') {
-    style.fontFamily = marks.font;
+    attrs['data-font-family'] = marks.font;
   }
   if (typeof marks.size === 'number') {
-    style.fontSize = `${marks.size}pt`;
+    attrs['data-font-size'] = String(marks.size);
   }
+  const style: Record<string, string> = {};
   if (typeof marks.color === 'string') {
     style.color = marks.color;
   }
   if (typeof marks.highlight === 'string') {
     style.background = marks.highlight;
   }
-  return <span key={key} style={style}>{node}</span>;
+  return (
+    <span key={key} {...attrs} style={Object.keys(style).length > 0 ? style : undefined}>
+      {node}
+    </span>
+  );
 }
 
 export function HeaderText({

@@ -1,4 +1,5 @@
 import type { DocumentMessage, JsonObject } from '../../shared/ipc/types.js';
+import { documentDefaultLineSpacing, effectiveLineSpacing, isLineSpacing } from '../../shared/schema/line-spacing.js';
 import {
   MLA_BODY_FIRST_INDENT_IN,
   MLA_FONT,
@@ -59,17 +60,29 @@ function assertFontOnRuns(runs: JsonObject[], issues: MlaInspectionIssue[], area
   }
 }
 
-function assertParagraphSpacing(block: JsonObject, issues: MlaInspectionIssue[], area: MlaInspectionIssue['area']): void {
-  if (block.lineSpacing !== MLA_LINE_SPACING) {
+function assertParagraphSpacing(
+  block: JsonObject,
+  document: DocumentMessage,
+  issues: MlaInspectionIssue[],
+  area: MlaInspectionIssue['area'],
+): void {
+  const spacing = effectiveLineSpacing(block.lineSpacing, document);
+  if (spacing !== MLA_LINE_SPACING) {
     issues.push({
       area: 'lineSpacing',
-      message: `${area}: expected line spacing ${MLA_LINE_SPACING}, got ${String(block.lineSpacing)}`,
+      message: `${area}: expected line spacing ${MLA_LINE_SPACING}, got ${String(spacing)}`,
     });
   }
   if (block.spaceBefore !== 0 || block.spaceAfter !== 0) {
     issues.push({
       area: 'lineSpacing',
       message: `${area}: expected no space before or after, got ${block.spaceBefore}/${block.spaceAfter}`,
+    });
+  }
+  if (area !== 'header' && area !== 'lineSpacing' && Object.hasOwn(block, 'lineSpacing') && isLineSpacing(block.lineSpacing)) {
+    issues.push({
+      area: 'lineSpacing',
+      message: `${area}: MLA body blocks should inherit document line spacing, not set ${block.lineSpacing}`,
     });
   }
 }
@@ -92,7 +105,13 @@ export function inspectMlaDocument(document: DocumentMessage): MlaInspectionIssu
   if (header.align !== 'right') {
     issues.push({ area: 'header', message: `header align expected right, got ${String(header.align)}` });
   }
-  assertParagraphSpacing(header, issues, 'header');
+  if (documentDefaultLineSpacing(document) !== MLA_LINE_SPACING) {
+    issues.push({
+      area: 'lineSpacing',
+      message: `document default line spacing expected ${MLA_LINE_SPACING}, got ${documentDefaultLineSpacing(document)}`,
+    });
+  }
+  assertParagraphSpacing(header, document, issues, 'header');
   const headerRuns = Array.isArray(header.content) ? (header.content as JsonObject[]) : [];
   if (headerRuns.length < 2
     || headerRuns[0].type !== 'text'
@@ -105,7 +124,7 @@ export function inspectMlaDocument(document: DocumentMessage): MlaInspectionIssu
   assertFontOnRuns(headerRuns, issues, 'header');
 
   const footer = document.footer as JsonObject;
-  assertParagraphSpacing(footer, issues, 'lineSpacing');
+  assertParagraphSpacing(footer, document, issues, 'lineSpacing');
 
   const paragraphs = paragraphBlocks(document);
   if (paragraphs.length < 8) {
@@ -118,7 +137,7 @@ export function inspectMlaDocument(document: DocumentMessage): MlaInspectionIssu
     if (block.align !== 'left') {
       issues.push({ area: 'headingLines', message: `heading line ${index + 1} must be left-aligned` });
     }
-    assertParagraphSpacing(block, issues, 'headingLines');
+    assertParagraphSpacing(block, document, issues, 'headingLines');
     const content = Array.isArray(block.content) ? (block.content as JsonObject[]) : [];
     const text = content[0]?.type === 'text' ? content[0].text : '';
     const expected = MLA_HEADING_PLACEHOLDERS[index];
@@ -132,7 +151,7 @@ export function inspectMlaDocument(document: DocumentMessage): MlaInspectionIssu
   if (title.align !== 'center') {
     issues.push({ area: 'title', message: 'title must be centered' });
   }
-  assertParagraphSpacing(title, issues, 'title');
+  assertParagraphSpacing(title, document, issues, 'title');
   const titleRuns = Array.isArray(title.content) ? (title.content as JsonObject[]) : [];
   if (titleRuns[0]?.text !== MLA_TITLE_PLACEHOLDER) {
     issues.push({ area: 'title', message: `title placeholder expected ${MLA_TITLE_PLACEHOLDER}` });
@@ -140,7 +159,7 @@ export function inspectMlaDocument(document: DocumentMessage): MlaInspectionIssu
   assertFontOnRuns(titleRuns, issues, 'title');
 
   const body = paragraphs[5];
-  assertParagraphSpacing(body, issues, 'body');
+  assertParagraphSpacing(body, document, issues, 'body');
   const bodyIndents = body.indents as JsonObject;
   if (bodyIndents?.first !== MLA_BODY_FIRST_INDENT_IN) {
     issues.push({
@@ -171,7 +190,7 @@ export function inspectMlaDocument(document: DocumentMessage): MlaInspectionIssu
       message: `Works Cited entry hanging indent expected ${MLA_WORKS_CITED_HANGING_IN} in, got ${String(hanging)}`,
     });
   }
-  assertParagraphSpacing(worksEntry, issues, 'worksCited');
+  assertParagraphSpacing(worksEntry, document, issues, 'worksCited');
 
   return issues;
 }

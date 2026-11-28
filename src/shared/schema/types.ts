@@ -5,6 +5,8 @@ export interface Document {
   page: PageSetup;
   header: HeaderParagraph;
   footer: HeaderParagraph;
+  defaultLineSpacing?: LineSpacing;
+  defaultParagraph?: DefaultParagraphFormat;
   blocks: Block[];
 }
 
@@ -23,10 +25,25 @@ export interface Margins {
 
 export type MarginInches = number;
 
+export type LineSpacing = "single" | "1.15" | "1.25" | "1.5" | "double" | "atLeast" | "exactly" | "multiple";
+
+export type LineSpacingAt = number;
+
 export interface Indents {
   left: number;
+  right?: number;
   first: number;
   hanging: number;
+}
+
+export interface DefaultParagraphFormat {
+  align?: "left" | "center" | "right" | "justify";
+  lineSpacing?: LineSpacing;
+  lineSpacingAt?: LineSpacingAt;
+  spaceBefore?: 0 | 6 | 12 | 18 | 24;
+  spaceAfter?: 0 | 6 | 12 | 18 | 24;
+  indents?: Indents;
+  dontAddSpaceBetweenSameStyle?: boolean;
 }
 
 export type BlockId = string;
@@ -91,7 +108,7 @@ export type HeaderInline =
 export interface HeaderParagraph {
   id: BlockId;
   align: "left" | "center" | "right" | "justify";
-  lineSpacing: "single" | "1.15" | "1.5" | "double";
+  lineSpacing: LineSpacing;
   spaceBefore: 0 | 6 | 12 | 18 | 24;
   spaceAfter: 0 | 6 | 12 | 18 | 24;
   indents: Indents;
@@ -102,7 +119,9 @@ export interface ParagraphBlock {
   type: "paragraph";
   id: BlockId;
   align: "left" | "center" | "right" | "justify";
-  lineSpacing: "single" | "1.15" | "1.5" | "double";
+  lineSpacing?: LineSpacing;
+  lineSpacingAt?: LineSpacingAt;
+  dontAddSpaceBetweenSameStyle?: boolean;
   spaceBefore: 0 | 6 | 12 | 18 | 24;
   spaceAfter: 0 | 6 | 12 | 18 | 24;
   indents: Indents;

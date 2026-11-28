@@ -71,7 +71,6 @@ export const UNWIRED_MENU_IDS: ReadonlySet<string> = new Set([
   'insert-drawing',
   'insert-signature',
   'insert-date-time',
-  'format-paragraph',
   'help-shortcuts',
 ]);
 
@@ -137,6 +136,9 @@ function leafEnabled(item: MenuItem, context: LiveMenuContext): boolean {
     && context.selectionEmpty
   ) {
     return false;
+  }
+  if (item.id === 'format-paragraph') {
+    return context.documentTab && context.editorState !== null;
   }
   if (item.id === 'format-page-setup') {
     return context.documentView !== 'pageless';

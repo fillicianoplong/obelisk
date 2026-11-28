@@ -31,7 +31,6 @@ function paragraphFields(
     type: 'paragraph',
     id,
     align,
-    lineSpacing: MLA_LINE_SPACING,
     spaceBefore: 0,
     spaceAfter: 0,
     indents,
@@ -108,6 +107,7 @@ export function createMlaDocument(mint: Mint): {
   return {
     document: {
       view: 'pages',
+      defaultLineSpacing: MLA_LINE_SPACING,
       page: {
         paper: 'letter',
         orientation: 'portrait',

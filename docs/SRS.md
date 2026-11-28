@@ -1094,7 +1094,7 @@ Items are listed in this order, in six groups with a separator between groups.
 | Font | Any font in the [*Fonts reference*](#fonts-reference); default Liberation Serif |
 | Font size | 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72 pt; default 12 pt |
 | Alignment | Left, center, right, justify |
-| Line spacing | Single, 1.15, 1.5, double |
+| Line spacing | Single, 1.15, 1.25, 1.5, double |
 | Space before and after | 0, 6, 12, 18, 24 pt |
 | Indents | Left 0 to 3 in; first line 0 to 1 in; hanging 0 to 1 in; steps of 0.25 in. Increase indent and Decrease indent move the left indent one 0.25 in step. |
 | Clear formatting | Removes Text formatting, font, and font size; keeps the block type and links |

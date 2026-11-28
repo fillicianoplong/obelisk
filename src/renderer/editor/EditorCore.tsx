@@ -51,7 +51,15 @@ import { openLinkBubble } from './link/link-bubble-plugin.js';
 import { requestShellCommand } from './editor-command-event.js';
 import { editorMenuCommand } from './menu-commands.js';
 import { replaceSpellingSuggestion } from './spell-replace.js';
-import { splitParagraphKeepingFormat } from './paragraph-format-commands.js';
+import { applyParagraphDialogCommand, splitParagraphKeepingFormat } from './paragraph-format-commands.js';
+import type { ParagraphDialogApply } from './paragraph-format-commands.js';
+import { paragraphSpacingPlugin } from './paragraph-spacing-plugin.js';
+import {
+  documentDefaultLineSpacingAt,
+  documentDefaultLineSpacingRule,
+  lineSpacingRuleNeedsAt,
+} from '../../shared/schema/line-spacing.js';
+import type { DocumentMessage } from '../../shared/ipc/types.js';
 import { AllSelection } from 'prosemirror-state';
 import { contextMenuEditorPlugin } from '../shell/contextmenu/editor-plugin.js';
 import { findCommands } from './find/find-plugin.js';
@@ -74,6 +82,8 @@ interface EditorCoreProps {
   onBandClose?: (reason?: 'escape') => void;
   onBandChange?: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onBandMove?: (direction: 1 | -1) => void;
+  defaultLineSpacing?: string;
+  defaultParagraph?: JsonObject;
 }
 
 
@@ -190,7 +200,7 @@ function installEditorCommands(
           {
             blockId: newBlockId(),
             align: 'left',
-            lineSpacing: 'single',
+            lineSpacing: null,
             spaceBefore: 0,
             spaceAfter: 0,
             indentLeft: 0,
@@ -339,6 +349,13 @@ function installEditorCommands(
         removeLinkCommand()(view.state, dispatch);
       });
     },
+    applyParagraphDialog(options: ParagraphDialogApply) {
+      let applied = false;
+      runWithSynchronousEditorUpdate(() => {
+        applied = applyParagraphDialogCommand(options)(view.state, dispatch);
+      });
+      return applied;
+    },
   };
   Object.defineProperty(view.dom, 'editorCommands', {
     configurable: true,
@@ -405,8 +422,15 @@ export function EditorCore({
   onBandClose,
   onBandChange,
   onBandMove,
+  defaultLineSpacing,
+  defaultParagraph,
 }: EditorCoreProps) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const paragraphDocumentRef = useRef<Pick<DocumentMessage, 'defaultLineSpacing' | 'defaultParagraph'>>({
+    defaultLineSpacing,
+    defaultParagraph,
+  });
+  paragraphDocumentRef.current = { defaultLineSpacing, defaultParagraph };
   const onChangeRef = useRef(onChange);
   const onPageLabelRef = useRef(onPageLabel);
   const viewModeRef = useRef(viewMode);
@@ -509,7 +533,19 @@ export function EditorCore({
     }
     const plugins = state.plugins.filter((plugin) => plugin.spec.key !== paginationPluginKey());
     const viewState = state.reconfigure({
-      plugins: [...plugins, contextMenuEditorPlugin(ownedTabId), paginationPlugin(layoutHost)],
+      plugins: [
+        ...plugins,
+        contextMenuEditorPlugin(ownedTabId),
+        paginationPlugin(layoutHost),
+        paragraphSpacingPlugin(() => ({
+          ...paragraphDocumentRef.current,
+          view: 'pages',
+          page: {},
+          header: {},
+          footer: {},
+          blocks: [],
+        } as DocumentMessage)),
+      ],
     });
     const wordClicks = createWordClickSession();
     const view = new EditorView(host, {
@@ -631,6 +667,20 @@ export function EditorCore({
     });
     writeReportedCaret(view);
     installEditorCommands(view, placeSelectionInDom, layoutHost);
+    const source = paragraphDocumentRef.current;
+    const rule = documentDefaultLineSpacingRule(source);
+    view.dom.setAttribute('data-default-line-spacing', rule);
+    const at = documentDefaultLineSpacingAt(source);
+    if (lineSpacingRuleNeedsAt(rule) && at !== null) {
+      view.dom.setAttribute('data-default-line-spacing-at', String(at));
+    }
+    const canvas = host.closest('.page-canvas');
+    if (canvas instanceof HTMLElement) {
+      canvas.setAttribute('data-default-line-spacing', rule);
+      if (lineSpacingRuleNeedsAt(rule) && at !== null) {
+        canvas.setAttribute('data-default-line-spacing-at', String(at));
+      }
+    }
     viewRef.current = view;
     // Put the stored caret into the DOM even when the window is not focused.
     // selectionToDOM does nothing until the editor owns document focus.
@@ -707,6 +757,31 @@ export function EditorCore({
 
   useLayoutEffect(() => {
     const view = viewRef.current;
+    if (view === null || view.isDestroyed) {
+      return;
+    }
+    const source = paragraphDocumentRef.current;
+    const rule = documentDefaultLineSpacingRule(source);
+    view.dom.setAttribute('data-default-line-spacing', rule);
+    const at = documentDefaultLineSpacingAt(source);
+    if (lineSpacingRuleNeedsAt(rule) && at !== null) {
+      view.dom.setAttribute('data-default-line-spacing-at', String(at));
+    } else {
+      view.dom.removeAttribute('data-default-line-spacing-at');
+    }
+    const canvas = view.dom.closest('.page-canvas');
+    if (canvas instanceof HTMLElement) {
+      canvas.setAttribute('data-default-line-spacing', rule);
+      if (lineSpacingRuleNeedsAt(rule) && at !== null) {
+        canvas.setAttribute('data-default-line-spacing-at', String(at));
+      } else {
+        canvas.removeAttribute('data-default-line-spacing-at');
+      }
+    }
+  }, [defaultLineSpacing, defaultParagraph]);
+
+  useLayoutEffect(() => {
+    const view = viewRef.current;
     const layoutHost = layoutHostRef.current;
     if (view === null || view.isDestroyed || layoutHost === null) {
       return;
@@ -772,6 +847,8 @@ export function EditorCore({
   };
   const box: PageBox = scalePageBox(pageBoxFromMargins(bodyMargins, orientation), zoom);
   const zoomStyle = pageZoomVars(zoom, orientation) as CSSProperties | undefined;
+  const sheetDefaultLineSpacing = documentDefaultLineSpacingRule({ defaultLineSpacing, defaultParagraph });
+  const sheetDefaultLineSpacingAt = documentDefaultLineSpacingAt({ defaultLineSpacing, defaultParagraph });
   const headerOffset = cssPixelsAt96Dpi(PAGE_HEADER_OFFSET_IN) * (zoom / 100);
   const frames = viewMode === 'pages'
     ? Array.from({ length: pageCount }, (_, index) => index)
@@ -782,6 +859,12 @@ export function EditorCore({
       className="page-canvas"
       data-page-view={viewMode}
       data-page-orientation={orientation}
+      data-default-line-spacing={sheetDefaultLineSpacing}
+      data-default-line-spacing-at={
+        lineSpacingRuleNeedsAt(sheetDefaultLineSpacing) && sheetDefaultLineSpacingAt !== null
+          ? sheetDefaultLineSpacingAt
+          : undefined
+      }
       data-band-editing={bandEdit !== null ? 'true' : undefined}
       style={zoomStyle}
     >

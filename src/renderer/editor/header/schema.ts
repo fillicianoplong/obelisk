@@ -11,15 +11,21 @@ export const headerSchema = new Schema({
       content: '(text | page_field)*',
       attrs: paragraphLayoutAttrs,
       toDOM(node) {
-        return ['p', {
-          'data-align': node.attrs.align,
-          'data-line-spacing': node.attrs.lineSpacing,
-          'data-space-before': node.attrs.spaceBefore,
-          'data-space-after': node.attrs.spaceAfter,
-          'data-indent-left': node.attrs.indentLeft,
-          'data-indent-first': node.attrs.indentFirst,
-          'data-indent-hanging': node.attrs.indentHanging,
-        }, 0];
+        const {
+          align, lineSpacing, spaceBefore, spaceAfter, indentLeft, indentFirst, indentHanging,
+        } = node.attrs;
+        const attrs: Record<string, string | number> = {
+          'data-align': align,
+          'data-space-before': spaceBefore,
+          'data-space-after': spaceAfter,
+          'data-indent-left': indentLeft,
+          'data-indent-first': indentFirst,
+          'data-indent-hanging': indentHanging,
+        };
+        if (lineSpacing !== null && lineSpacing !== undefined) {
+          attrs['data-line-spacing'] = lineSpacing;
+        }
+        return ['p', attrs, 0];
       },
     },
     page_field: {

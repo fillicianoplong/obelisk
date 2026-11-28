@@ -3,6 +3,11 @@ import type { Node as ProseNode } from 'prosemirror-model';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
 import { INDENT_FIRST_MAX_IN } from '../../shared/schema/limits.js';
 import {
+  isLineSpacingRule,
+  lineSpacingRuleNeedsAt,
+  type LineSpacingRule,
+} from '../../shared/schema/line-spacing.js';
+import {
   ALIGNMENTS,
   INDENT_LEFT_MAX_IN,
   INDENT_LEFT_MIN_IN,
@@ -23,6 +28,7 @@ import { markCloseHistoryGroup } from './history/groups.js';
 
 type Align = (typeof ALIGNMENTS)[number];
 type LineSpacing = (typeof LINE_SPACINGS)[number];
+type DialogLineSpacing = LineSpacingRule;
 type SpacePt = (typeof SPACE_BEFORE_AFTER_PT)[number];
 
 function applyCommand(state: EditorState, command: Command): EditorState | null {
@@ -331,8 +337,17 @@ export function applyParagraphFormatCommand(format: Record<string, unknown>): Co
   if (typeof format.align === 'string' && (ALIGNMENTS as readonly string[]).includes(format.align)) {
     fields.align = format.align;
   }
-  if (typeof format.lineSpacing === 'string' && (LINE_SPACINGS as readonly string[]).includes(format.lineSpacing)) {
+  if (typeof format.lineSpacing === 'string' && isLineSpacingRule(format.lineSpacing)) {
     fields.lineSpacing = format.lineSpacing;
+    if (lineSpacingRuleNeedsAt(format.lineSpacing) && typeof format.lineSpacingAt === 'number') {
+      fields.lineSpacingAt = format.lineSpacingAt;
+    }
+  }
+  if (typeof format.indentRight === 'number') {
+    fields.indentRight = format.indentRight;
+  }
+  if (format.dontAddSpaceBetweenSameStyle === true) {
+    fields.dontAddSpaceBetweenSameStyle = true;
   }
   if (typeof format.spaceBefore === 'number' && (SPACE_BEFORE_AFTER_PT as readonly number[]).includes(format.spaceBefore)) {
     fields.spaceBefore = format.spaceBefore;
@@ -363,15 +378,148 @@ export function applyParagraphFormatForTest(
 }
 
 export function paragraphFieldsFromNode(node: ProseNode): Record<string, unknown> {
-  return {
+  const right = Number(node.attrs.indentRight ?? 0);
+  const fields: Record<string, unknown> = {
     align: node.attrs.align ?? 'left',
-    lineSpacing: node.attrs.lineSpacing ?? 'single',
     spaceBefore: node.attrs.spaceBefore ?? 0,
     spaceAfter: node.attrs.spaceAfter ?? 0,
     indents: {
       left: node.attrs.indentLeft ?? 0,
+      right: right > 0 ? right : undefined,
       first: node.attrs.indentFirst ?? 0,
       hanging: node.attrs.indentHanging ?? 0,
     },
+  };
+  const indents = fields.indents as Record<string, unknown>;
+  if (!indents.right) {
+    delete indents.right;
+  }
+  if (typeof node.attrs.lineSpacing === 'string' && isLineSpacingRule(node.attrs.lineSpacing)) {
+    fields.lineSpacing = node.attrs.lineSpacing;
+    if (lineSpacingRuleNeedsAt(node.attrs.lineSpacing) && typeof node.attrs.lineSpacingAt === 'number') {
+      fields.lineSpacingAt = node.attrs.lineSpacingAt;
+    }
+  }
+  if (node.attrs.dontAddSpaceBetweenSameStyle === true) {
+    fields.dontAddSpaceBetweenSameStyle = true;
+  }
+  return fields;
+}
+
+export type ParagraphDialogScope = 'document' | 'selection';
+
+export interface ParagraphDialogApply {
+  scope: ParagraphDialogScope;
+  lineSpacing?: DialogLineSpacing;
+  lineSpacingAt?: number | null;
+  spaceBefore?: SpacePt;
+  spaceAfter?: SpacePt;
+  clearLineSpacingOverride?: boolean;
+  align?: Align;
+  indentLeft?: number;
+  indentRight?: number;
+  indentFirst?: number;
+  indentHanging?: number;
+  dontAddSpaceBetweenSameStyle?: boolean | null;
+}
+
+function paragraphsInScope(state: EditorState, scope: ParagraphDialogScope): Array<{ pos: number; node: ProseNode }> {
+  const matches: Array<{ pos: number; node: ProseNode }> = [];
+  const { $from, $to } = state.selection;
+  const seen = new Set<number>();
+  if (scope === 'selection') {
+    state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+      if (node.type.name !== 'paragraph' || seen.has(pos)) {
+        return;
+      }
+      seen.add(pos);
+      matches.push({ pos, node });
+    });
+    if (matches.length === 0) {
+      const depth = paragraphDepth($from);
+      if (depth !== null) {
+        matches.push({ pos: $from.before(depth), node: $from.node(depth) });
+      }
+    }
+    return matches;
+  }
+  state.doc.descendants((node, pos) => {
+    if (node.type.name !== 'paragraph') {
+      return;
+    }
+    matches.push({ pos, node });
+  });
+  return matches;
+}
+
+export function applyParagraphDialogCommand(options: ParagraphDialogApply): Command {
+  return (state, dispatch) => {
+    const targets = paragraphsInScope(state, options.scope);
+    if (targets.length === 0) {
+      return false;
+    }
+    const tr = state.tr;
+    let changed = false;
+    for (const { pos, node } of targets) {
+      const nextAttrs: Record<string, unknown> = { ...node.attrs };
+      let next = false;
+      if (options.clearLineSpacingOverride) {
+        nextAttrs.lineSpacing = null;
+        nextAttrs.lineSpacingAt = null;
+        next = true;
+      } else if (typeof options.lineSpacing === 'string') {
+        nextAttrs.lineSpacing = options.lineSpacing;
+        if (lineSpacingRuleNeedsAt(options.lineSpacing)) {
+          nextAttrs.lineSpacingAt = options.lineSpacingAt ?? null;
+        } else {
+          nextAttrs.lineSpacingAt = null;
+        }
+        next = true;
+      }
+      if (typeof options.spaceBefore === 'number') {
+        nextAttrs.spaceBefore = options.spaceBefore;
+        next = true;
+      }
+      if (typeof options.spaceAfter === 'number') {
+        nextAttrs.spaceAfter = options.spaceAfter;
+        next = true;
+      }
+      if (typeof options.align === 'string') {
+        nextAttrs.align = options.align;
+        next = true;
+      }
+      if (typeof options.indentLeft === 'number') {
+        nextAttrs.indentLeft = options.indentLeft;
+        next = true;
+      }
+      if (typeof options.indentFirst === 'number') {
+        nextAttrs.indentFirst = options.indentFirst;
+        next = true;
+      }
+      if (typeof options.indentHanging === 'number') {
+        nextAttrs.indentHanging = options.indentHanging;
+        next = true;
+      }
+      if (typeof options.indentRight === 'number') {
+        nextAttrs.indentRight = options.indentRight;
+        next = true;
+      }
+      if (options.dontAddSpaceBetweenSameStyle !== undefined) {
+        nextAttrs.dontAddSpaceBetweenSameStyle = options.dontAddSpaceBetweenSameStyle;
+        next = true;
+      }
+      if (!next) {
+        continue;
+      }
+      updateParagraphAttrs(tr, pos, node, nextAttrs);
+      changed = true;
+    }
+    if (!changed) {
+      return false;
+    }
+    if (dispatch) {
+      dispatch(tr);
+    }
+    return true;
   };
 }

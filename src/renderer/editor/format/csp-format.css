@@ -10,10 +10,26 @@
 .page-sheet p[data-align="right"] { text-align: right; }
 .page-sheet p[data-align="justify"] { text-align: justify; }
 
+.page-sheet[data-default-line-spacing="single"] p:not([data-line-spacing]) { line-height: 1; }
+.page-canvas[data-default-line-spacing="single"] .page-sheet p:not([data-line-spacing]) { line-height: 1; }
 .page-sheet p[data-line-spacing="single"] { line-height: 1; }
+.page-band-text p[data-line-spacing="single"], .page-band-editor p[data-line-spacing="single"] { line-height: 1; }
+.page-sheet[data-default-line-spacing="1.15"] p:not([data-line-spacing]) { line-height: 1.15; }
+.page-canvas[data-default-line-spacing="1.15"] .page-sheet p:not([data-line-spacing]) { line-height: 1.15; }
 .page-sheet p[data-line-spacing="1.15"] { line-height: 1.15; }
+.page-band-text p[data-line-spacing="1.15"], .page-band-editor p[data-line-spacing="1.15"] { line-height: 1.15; }
+.page-sheet[data-default-line-spacing="1.25"] p:not([data-line-spacing]) { line-height: 1.25; }
+.page-canvas[data-default-line-spacing="1.25"] .page-sheet p:not([data-line-spacing]) { line-height: 1.25; }
+.page-sheet p[data-line-spacing="1.25"] { line-height: 1.25; }
+.page-band-text p[data-line-spacing="1.25"], .page-band-editor p[data-line-spacing="1.25"] { line-height: 1.25; }
+.page-sheet[data-default-line-spacing="1.5"] p:not([data-line-spacing]) { line-height: 1.5; }
+.page-canvas[data-default-line-spacing="1.5"] .page-sheet p:not([data-line-spacing]) { line-height: 1.5; }
 .page-sheet p[data-line-spacing="1.5"] { line-height: 1.5; }
+.page-band-text p[data-line-spacing="1.5"], .page-band-editor p[data-line-spacing="1.5"] { line-height: 1.5; }
+.page-sheet[data-default-line-spacing="double"] p:not([data-line-spacing]) { line-height: 2; }
+.page-canvas[data-default-line-spacing="double"] .page-sheet p:not([data-line-spacing]) { line-height: 2; }
 .page-sheet p[data-line-spacing="double"] { line-height: 2; }
+.page-band-text p[data-line-spacing="double"], .page-band-editor p[data-line-spacing="double"] { line-height: 2; }
 
 .page-sheet p[data-space-before="6"] { margin-block-start: 6pt; }
 .page-sheet p[data-space-before="12"] { margin-block-start: 12pt; }
@@ -23,6 +39,1167 @@
 .page-sheet p[data-space-after="12"] { margin-block-end: 12pt; }
 .page-sheet p[data-space-after="18"] { margin-block-end: 18pt; }
 .page-sheet p[data-space-after="24"] { margin-block-end: 24pt; }
+.page-sheet p[data-effective-space-before="0"] { margin-block-start: 0pt; }
+.page-sheet p[data-effective-space-after="0"] { margin-block-end: 0pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-before="0"] { margin-block-start: 0pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-after="0"] { margin-block-end: 0pt; }
+.page-sheet p[data-effective-space-before="6"] { margin-block-start: 6pt; }
+.page-sheet p[data-effective-space-after="6"] { margin-block-end: 6pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-before="6"] { margin-block-start: 6pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-after="6"] { margin-block-end: 6pt; }
+.page-sheet p[data-effective-space-before="12"] { margin-block-start: 12pt; }
+.page-sheet p[data-effective-space-after="12"] { margin-block-end: 12pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-before="12"] { margin-block-start: 12pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-after="12"] { margin-block-end: 12pt; }
+.page-sheet p[data-effective-space-before="18"] { margin-block-start: 18pt; }
+.page-sheet p[data-effective-space-after="18"] { margin-block-end: 18pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-before="18"] { margin-block-start: 18pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-after="18"] { margin-block-end: 18pt; }
+.page-sheet p[data-effective-space-before="24"] { margin-block-start: 24pt; }
+.page-sheet p[data-effective-space-after="24"] { margin-block-end: 24pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-before="24"] { margin-block-start: 24pt; }
+.paragraph-dialog-preview-sheet p[data-effective-space-after="24"] { margin-block-end: 24pt; }
+
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="6"] { line-height: 6pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="6"] p:not([data-line-spacing]) { line-height: 6pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="6"] { line-height: 6pt; min-height: 6pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="6"] p:not([data-line-spacing]) { line-height: 6pt; min-height: 6pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="7"] { line-height: 7pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="7"] p:not([data-line-spacing]) { line-height: 7pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="7"] { line-height: 7pt; min-height: 7pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="7"] p:not([data-line-spacing]) { line-height: 7pt; min-height: 7pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="8"] { line-height: 8pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="8"] p:not([data-line-spacing]) { line-height: 8pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="8"] { line-height: 8pt; min-height: 8pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="8"] p:not([data-line-spacing]) { line-height: 8pt; min-height: 8pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="9"] { line-height: 9pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="9"] p:not([data-line-spacing]) { line-height: 9pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="9"] { line-height: 9pt; min-height: 9pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="9"] p:not([data-line-spacing]) { line-height: 9pt; min-height: 9pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="10"] { line-height: 10pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="10"] p:not([data-line-spacing]) { line-height: 10pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="10"] { line-height: 10pt; min-height: 10pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="10"] p:not([data-line-spacing]) { line-height: 10pt; min-height: 10pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="11"] { line-height: 11pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="11"] p:not([data-line-spacing]) { line-height: 11pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="11"] { line-height: 11pt; min-height: 11pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="11"] p:not([data-line-spacing]) { line-height: 11pt; min-height: 11pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="12"] { line-height: 12pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="12"] p:not([data-line-spacing]) { line-height: 12pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="12"] { line-height: 12pt; min-height: 12pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="12"] p:not([data-line-spacing]) { line-height: 12pt; min-height: 12pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="13"] { line-height: 13pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="13"] p:not([data-line-spacing]) { line-height: 13pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="13"] { line-height: 13pt; min-height: 13pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="13"] p:not([data-line-spacing]) { line-height: 13pt; min-height: 13pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="14"] { line-height: 14pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="14"] p:not([data-line-spacing]) { line-height: 14pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="14"] { line-height: 14pt; min-height: 14pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="14"] p:not([data-line-spacing]) { line-height: 14pt; min-height: 14pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="15"] { line-height: 15pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="15"] p:not([data-line-spacing]) { line-height: 15pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="15"] { line-height: 15pt; min-height: 15pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="15"] p:not([data-line-spacing]) { line-height: 15pt; min-height: 15pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="16"] { line-height: 16pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="16"] p:not([data-line-spacing]) { line-height: 16pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="16"] { line-height: 16pt; min-height: 16pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="16"] p:not([data-line-spacing]) { line-height: 16pt; min-height: 16pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="17"] { line-height: 17pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="17"] p:not([data-line-spacing]) { line-height: 17pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="17"] { line-height: 17pt; min-height: 17pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="17"] p:not([data-line-spacing]) { line-height: 17pt; min-height: 17pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="18"] { line-height: 18pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="18"] p:not([data-line-spacing]) { line-height: 18pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="18"] { line-height: 18pt; min-height: 18pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="18"] p:not([data-line-spacing]) { line-height: 18pt; min-height: 18pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="19"] { line-height: 19pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="19"] p:not([data-line-spacing]) { line-height: 19pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="19"] { line-height: 19pt; min-height: 19pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="19"] p:not([data-line-spacing]) { line-height: 19pt; min-height: 19pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="20"] { line-height: 20pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="20"] p:not([data-line-spacing]) { line-height: 20pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="20"] { line-height: 20pt; min-height: 20pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="20"] p:not([data-line-spacing]) { line-height: 20pt; min-height: 20pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="21"] { line-height: 21pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="21"] p:not([data-line-spacing]) { line-height: 21pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="21"] { line-height: 21pt; min-height: 21pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="21"] p:not([data-line-spacing]) { line-height: 21pt; min-height: 21pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="22"] { line-height: 22pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="22"] p:not([data-line-spacing]) { line-height: 22pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="22"] { line-height: 22pt; min-height: 22pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="22"] p:not([data-line-spacing]) { line-height: 22pt; min-height: 22pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="23"] { line-height: 23pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="23"] p:not([data-line-spacing]) { line-height: 23pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="23"] { line-height: 23pt; min-height: 23pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="23"] p:not([data-line-spacing]) { line-height: 23pt; min-height: 23pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="24"] { line-height: 24pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="24"] p:not([data-line-spacing]) { line-height: 24pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="24"] { line-height: 24pt; min-height: 24pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="24"] p:not([data-line-spacing]) { line-height: 24pt; min-height: 24pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="25"] { line-height: 25pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="25"] p:not([data-line-spacing]) { line-height: 25pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="25"] { line-height: 25pt; min-height: 25pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="25"] p:not([data-line-spacing]) { line-height: 25pt; min-height: 25pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="26"] { line-height: 26pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="26"] p:not([data-line-spacing]) { line-height: 26pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="26"] { line-height: 26pt; min-height: 26pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="26"] p:not([data-line-spacing]) { line-height: 26pt; min-height: 26pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="27"] { line-height: 27pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="27"] p:not([data-line-spacing]) { line-height: 27pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="27"] { line-height: 27pt; min-height: 27pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="27"] p:not([data-line-spacing]) { line-height: 27pt; min-height: 27pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="28"] { line-height: 28pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="28"] p:not([data-line-spacing]) { line-height: 28pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="28"] { line-height: 28pt; min-height: 28pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="28"] p:not([data-line-spacing]) { line-height: 28pt; min-height: 28pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="29"] { line-height: 29pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="29"] p:not([data-line-spacing]) { line-height: 29pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="29"] { line-height: 29pt; min-height: 29pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="29"] p:not([data-line-spacing]) { line-height: 29pt; min-height: 29pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="30"] { line-height: 30pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="30"] p:not([data-line-spacing]) { line-height: 30pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="30"] { line-height: 30pt; min-height: 30pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="30"] p:not([data-line-spacing]) { line-height: 30pt; min-height: 30pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="31"] { line-height: 31pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="31"] p:not([data-line-spacing]) { line-height: 31pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="31"] { line-height: 31pt; min-height: 31pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="31"] p:not([data-line-spacing]) { line-height: 31pt; min-height: 31pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="32"] { line-height: 32pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="32"] p:not([data-line-spacing]) { line-height: 32pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="32"] { line-height: 32pt; min-height: 32pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="32"] p:not([data-line-spacing]) { line-height: 32pt; min-height: 32pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="33"] { line-height: 33pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="33"] p:not([data-line-spacing]) { line-height: 33pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="33"] { line-height: 33pt; min-height: 33pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="33"] p:not([data-line-spacing]) { line-height: 33pt; min-height: 33pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="34"] { line-height: 34pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="34"] p:not([data-line-spacing]) { line-height: 34pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="34"] { line-height: 34pt; min-height: 34pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="34"] p:not([data-line-spacing]) { line-height: 34pt; min-height: 34pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="35"] { line-height: 35pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="35"] p:not([data-line-spacing]) { line-height: 35pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="35"] { line-height: 35pt; min-height: 35pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="35"] p:not([data-line-spacing]) { line-height: 35pt; min-height: 35pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="36"] { line-height: 36pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="36"] p:not([data-line-spacing]) { line-height: 36pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="36"] { line-height: 36pt; min-height: 36pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="36"] p:not([data-line-spacing]) { line-height: 36pt; min-height: 36pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="37"] { line-height: 37pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="37"] p:not([data-line-spacing]) { line-height: 37pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="37"] { line-height: 37pt; min-height: 37pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="37"] p:not([data-line-spacing]) { line-height: 37pt; min-height: 37pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="38"] { line-height: 38pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="38"] p:not([data-line-spacing]) { line-height: 38pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="38"] { line-height: 38pt; min-height: 38pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="38"] p:not([data-line-spacing]) { line-height: 38pt; min-height: 38pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="39"] { line-height: 39pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="39"] p:not([data-line-spacing]) { line-height: 39pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="39"] { line-height: 39pt; min-height: 39pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="39"] p:not([data-line-spacing]) { line-height: 39pt; min-height: 39pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="40"] { line-height: 40pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="40"] p:not([data-line-spacing]) { line-height: 40pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="40"] { line-height: 40pt; min-height: 40pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="40"] p:not([data-line-spacing]) { line-height: 40pt; min-height: 40pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="41"] { line-height: 41pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="41"] p:not([data-line-spacing]) { line-height: 41pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="41"] { line-height: 41pt; min-height: 41pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="41"] p:not([data-line-spacing]) { line-height: 41pt; min-height: 41pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="42"] { line-height: 42pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="42"] p:not([data-line-spacing]) { line-height: 42pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="42"] { line-height: 42pt; min-height: 42pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="42"] p:not([data-line-spacing]) { line-height: 42pt; min-height: 42pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="43"] { line-height: 43pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="43"] p:not([data-line-spacing]) { line-height: 43pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="43"] { line-height: 43pt; min-height: 43pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="43"] p:not([data-line-spacing]) { line-height: 43pt; min-height: 43pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="44"] { line-height: 44pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="44"] p:not([data-line-spacing]) { line-height: 44pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="44"] { line-height: 44pt; min-height: 44pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="44"] p:not([data-line-spacing]) { line-height: 44pt; min-height: 44pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="45"] { line-height: 45pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="45"] p:not([data-line-spacing]) { line-height: 45pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="45"] { line-height: 45pt; min-height: 45pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="45"] p:not([data-line-spacing]) { line-height: 45pt; min-height: 45pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="46"] { line-height: 46pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="46"] p:not([data-line-spacing]) { line-height: 46pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="46"] { line-height: 46pt; min-height: 46pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="46"] p:not([data-line-spacing]) { line-height: 46pt; min-height: 46pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="47"] { line-height: 47pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="47"] p:not([data-line-spacing]) { line-height: 47pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="47"] { line-height: 47pt; min-height: 47pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="47"] p:not([data-line-spacing]) { line-height: 47pt; min-height: 47pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="48"] { line-height: 48pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="48"] p:not([data-line-spacing]) { line-height: 48pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="48"] { line-height: 48pt; min-height: 48pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="48"] p:not([data-line-spacing]) { line-height: 48pt; min-height: 48pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="49"] { line-height: 49pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="49"] p:not([data-line-spacing]) { line-height: 49pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="49"] { line-height: 49pt; min-height: 49pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="49"] p:not([data-line-spacing]) { line-height: 49pt; min-height: 49pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="50"] { line-height: 50pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="50"] p:not([data-line-spacing]) { line-height: 50pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="50"] { line-height: 50pt; min-height: 50pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="50"] p:not([data-line-spacing]) { line-height: 50pt; min-height: 50pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="51"] { line-height: 51pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="51"] p:not([data-line-spacing]) { line-height: 51pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="51"] { line-height: 51pt; min-height: 51pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="51"] p:not([data-line-spacing]) { line-height: 51pt; min-height: 51pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="52"] { line-height: 52pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="52"] p:not([data-line-spacing]) { line-height: 52pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="52"] { line-height: 52pt; min-height: 52pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="52"] p:not([data-line-spacing]) { line-height: 52pt; min-height: 52pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="53"] { line-height: 53pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="53"] p:not([data-line-spacing]) { line-height: 53pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="53"] { line-height: 53pt; min-height: 53pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="53"] p:not([data-line-spacing]) { line-height: 53pt; min-height: 53pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="54"] { line-height: 54pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="54"] p:not([data-line-spacing]) { line-height: 54pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="54"] { line-height: 54pt; min-height: 54pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="54"] p:not([data-line-spacing]) { line-height: 54pt; min-height: 54pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="55"] { line-height: 55pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="55"] p:not([data-line-spacing]) { line-height: 55pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="55"] { line-height: 55pt; min-height: 55pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="55"] p:not([data-line-spacing]) { line-height: 55pt; min-height: 55pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="56"] { line-height: 56pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="56"] p:not([data-line-spacing]) { line-height: 56pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="56"] { line-height: 56pt; min-height: 56pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="56"] p:not([data-line-spacing]) { line-height: 56pt; min-height: 56pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="57"] { line-height: 57pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="57"] p:not([data-line-spacing]) { line-height: 57pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="57"] { line-height: 57pt; min-height: 57pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="57"] p:not([data-line-spacing]) { line-height: 57pt; min-height: 57pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="58"] { line-height: 58pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="58"] p:not([data-line-spacing]) { line-height: 58pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="58"] { line-height: 58pt; min-height: 58pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="58"] p:not([data-line-spacing]) { line-height: 58pt; min-height: 58pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="59"] { line-height: 59pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="59"] p:not([data-line-spacing]) { line-height: 59pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="59"] { line-height: 59pt; min-height: 59pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="59"] p:not([data-line-spacing]) { line-height: 59pt; min-height: 59pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="60"] { line-height: 60pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="60"] p:not([data-line-spacing]) { line-height: 60pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="60"] { line-height: 60pt; min-height: 60pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="60"] p:not([data-line-spacing]) { line-height: 60pt; min-height: 60pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="61"] { line-height: 61pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="61"] p:not([data-line-spacing]) { line-height: 61pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="61"] { line-height: 61pt; min-height: 61pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="61"] p:not([data-line-spacing]) { line-height: 61pt; min-height: 61pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="62"] { line-height: 62pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="62"] p:not([data-line-spacing]) { line-height: 62pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="62"] { line-height: 62pt; min-height: 62pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="62"] p:not([data-line-spacing]) { line-height: 62pt; min-height: 62pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="63"] { line-height: 63pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="63"] p:not([data-line-spacing]) { line-height: 63pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="63"] { line-height: 63pt; min-height: 63pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="63"] p:not([data-line-spacing]) { line-height: 63pt; min-height: 63pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="64"] { line-height: 64pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="64"] p:not([data-line-spacing]) { line-height: 64pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="64"] { line-height: 64pt; min-height: 64pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="64"] p:not([data-line-spacing]) { line-height: 64pt; min-height: 64pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="65"] { line-height: 65pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="65"] p:not([data-line-spacing]) { line-height: 65pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="65"] { line-height: 65pt; min-height: 65pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="65"] p:not([data-line-spacing]) { line-height: 65pt; min-height: 65pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="66"] { line-height: 66pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="66"] p:not([data-line-spacing]) { line-height: 66pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="66"] { line-height: 66pt; min-height: 66pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="66"] p:not([data-line-spacing]) { line-height: 66pt; min-height: 66pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="67"] { line-height: 67pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="67"] p:not([data-line-spacing]) { line-height: 67pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="67"] { line-height: 67pt; min-height: 67pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="67"] p:not([data-line-spacing]) { line-height: 67pt; min-height: 67pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="68"] { line-height: 68pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="68"] p:not([data-line-spacing]) { line-height: 68pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="68"] { line-height: 68pt; min-height: 68pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="68"] p:not([data-line-spacing]) { line-height: 68pt; min-height: 68pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="69"] { line-height: 69pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="69"] p:not([data-line-spacing]) { line-height: 69pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="69"] { line-height: 69pt; min-height: 69pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="69"] p:not([data-line-spacing]) { line-height: 69pt; min-height: 69pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="70"] { line-height: 70pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="70"] p:not([data-line-spacing]) { line-height: 70pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="70"] { line-height: 70pt; min-height: 70pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="70"] p:not([data-line-spacing]) { line-height: 70pt; min-height: 70pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="71"] { line-height: 71pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="71"] p:not([data-line-spacing]) { line-height: 71pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="71"] { line-height: 71pt; min-height: 71pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="71"] p:not([data-line-spacing]) { line-height: 71pt; min-height: 71pt; }
+.page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="72"] { line-height: 72pt; }
+.page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="72"] p:not([data-line-spacing]) { line-height: 72pt; }
+.page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="72"] { line-height: 72pt; min-height: 72pt; }
+.page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="72"] p:not([data-line-spacing]) { line-height: 72pt; min-height: 72pt; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.25"] { line-height: 0.25; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.25"] p:not([data-line-spacing]) { line-height: 0.25; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.3"] { line-height: 0.3; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.3"] p:not([data-line-spacing]) { line-height: 0.3; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.35"] { line-height: 0.35; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.35"] p:not([data-line-spacing]) { line-height: 0.35; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.4"] { line-height: 0.4; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.4"] p:not([data-line-spacing]) { line-height: 0.4; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.45"] { line-height: 0.45; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.45"] p:not([data-line-spacing]) { line-height: 0.45; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.5"] { line-height: 0.5; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.5"] p:not([data-line-spacing]) { line-height: 0.5; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.55"] { line-height: 0.55; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.55"] p:not([data-line-spacing]) { line-height: 0.55; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.6"] { line-height: 0.6; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.6"] p:not([data-line-spacing]) { line-height: 0.6; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.65"] { line-height: 0.65; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.65"] p:not([data-line-spacing]) { line-height: 0.65; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.7"] { line-height: 0.7; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.7"] p:not([data-line-spacing]) { line-height: 0.7; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.75"] { line-height: 0.75; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.75"] p:not([data-line-spacing]) { line-height: 0.75; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.8"] { line-height: 0.8; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.8"] p:not([data-line-spacing]) { line-height: 0.8; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.85"] { line-height: 0.85; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.85"] p:not([data-line-spacing]) { line-height: 0.85; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.9"] { line-height: 0.9; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.9"] p:not([data-line-spacing]) { line-height: 0.9; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.95"] { line-height: 0.95; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.95"] p:not([data-line-spacing]) { line-height: 0.95; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1"] { line-height: 1; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1"] p:not([data-line-spacing]) { line-height: 1; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.05"] { line-height: 1.05; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.05"] p:not([data-line-spacing]) { line-height: 1.05; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.1"] { line-height: 1.1; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.1"] p:not([data-line-spacing]) { line-height: 1.1; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.15"] { line-height: 1.15; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.15"] p:not([data-line-spacing]) { line-height: 1.15; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.2"] { line-height: 1.2; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.2"] p:not([data-line-spacing]) { line-height: 1.2; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.25"] { line-height: 1.25; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.25"] p:not([data-line-spacing]) { line-height: 1.25; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.3"] { line-height: 1.3; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.3"] p:not([data-line-spacing]) { line-height: 1.3; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.35"] { line-height: 1.35; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.35"] p:not([data-line-spacing]) { line-height: 1.35; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.4"] { line-height: 1.4; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.4"] p:not([data-line-spacing]) { line-height: 1.4; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.45"] { line-height: 1.45; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.45"] p:not([data-line-spacing]) { line-height: 1.45; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.5"] { line-height: 1.5; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.5"] p:not([data-line-spacing]) { line-height: 1.5; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.55"] { line-height: 1.55; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.55"] p:not([data-line-spacing]) { line-height: 1.55; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.6"] { line-height: 1.6; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.6"] p:not([data-line-spacing]) { line-height: 1.6; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.65"] { line-height: 1.65; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.65"] p:not([data-line-spacing]) { line-height: 1.65; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.7"] { line-height: 1.7; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.7"] p:not([data-line-spacing]) { line-height: 1.7; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.75"] { line-height: 1.75; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.75"] p:not([data-line-spacing]) { line-height: 1.75; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.8"] { line-height: 1.8; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.8"] p:not([data-line-spacing]) { line-height: 1.8; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.85"] { line-height: 1.85; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.85"] p:not([data-line-spacing]) { line-height: 1.85; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.9"] { line-height: 1.9; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.9"] p:not([data-line-spacing]) { line-height: 1.9; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.95"] { line-height: 1.95; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.95"] p:not([data-line-spacing]) { line-height: 1.95; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2"] { line-height: 2; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2"] p:not([data-line-spacing]) { line-height: 2; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.05"] { line-height: 2.05; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.05"] p:not([data-line-spacing]) { line-height: 2.05; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.1"] { line-height: 2.1; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.1"] p:not([data-line-spacing]) { line-height: 2.1; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.15"] { line-height: 2.15; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.15"] p:not([data-line-spacing]) { line-height: 2.15; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.2"] { line-height: 2.2; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.2"] p:not([data-line-spacing]) { line-height: 2.2; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.25"] { line-height: 2.25; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.25"] p:not([data-line-spacing]) { line-height: 2.25; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.3"] { line-height: 2.3; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.3"] p:not([data-line-spacing]) { line-height: 2.3; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.35"] { line-height: 2.35; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.35"] p:not([data-line-spacing]) { line-height: 2.35; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.4"] { line-height: 2.4; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.4"] p:not([data-line-spacing]) { line-height: 2.4; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.45"] { line-height: 2.45; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.45"] p:not([data-line-spacing]) { line-height: 2.45; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.5"] { line-height: 2.5; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.5"] p:not([data-line-spacing]) { line-height: 2.5; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.55"] { line-height: 2.55; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.55"] p:not([data-line-spacing]) { line-height: 2.55; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.6"] { line-height: 2.6; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.6"] p:not([data-line-spacing]) { line-height: 2.6; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.65"] { line-height: 2.65; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.65"] p:not([data-line-spacing]) { line-height: 2.65; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.7"] { line-height: 2.7; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.7"] p:not([data-line-spacing]) { line-height: 2.7; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.75"] { line-height: 2.75; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.75"] p:not([data-line-spacing]) { line-height: 2.75; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.8"] { line-height: 2.8; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.8"] p:not([data-line-spacing]) { line-height: 2.8; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.85"] { line-height: 2.85; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.85"] p:not([data-line-spacing]) { line-height: 2.85; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.9"] { line-height: 2.9; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.9"] p:not([data-line-spacing]) { line-height: 2.9; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.95"] { line-height: 2.95; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.95"] p:not([data-line-spacing]) { line-height: 2.95; }
+.page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="3"] { line-height: 3; }
+.page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="3"] p:not([data-line-spacing]) { line-height: 3; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="6"] { line-height: 6pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="6"] p:not([data-line-spacing]) { line-height: 6pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="6"] { line-height: 6pt; min-height: 6pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="6"] p:not([data-line-spacing]) { line-height: 6pt; min-height: 6pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="7"] { line-height: 7pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="7"] p:not([data-line-spacing]) { line-height: 7pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="7"] { line-height: 7pt; min-height: 7pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="7"] p:not([data-line-spacing]) { line-height: 7pt; min-height: 7pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="8"] { line-height: 8pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="8"] p:not([data-line-spacing]) { line-height: 8pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="8"] { line-height: 8pt; min-height: 8pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="8"] p:not([data-line-spacing]) { line-height: 8pt; min-height: 8pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="9"] { line-height: 9pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="9"] p:not([data-line-spacing]) { line-height: 9pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="9"] { line-height: 9pt; min-height: 9pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="9"] p:not([data-line-spacing]) { line-height: 9pt; min-height: 9pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="10"] { line-height: 10pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="10"] p:not([data-line-spacing]) { line-height: 10pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="10"] { line-height: 10pt; min-height: 10pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="10"] p:not([data-line-spacing]) { line-height: 10pt; min-height: 10pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="11"] { line-height: 11pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="11"] p:not([data-line-spacing]) { line-height: 11pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="11"] { line-height: 11pt; min-height: 11pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="11"] p:not([data-line-spacing]) { line-height: 11pt; min-height: 11pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="12"] { line-height: 12pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="12"] p:not([data-line-spacing]) { line-height: 12pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="12"] { line-height: 12pt; min-height: 12pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="12"] p:not([data-line-spacing]) { line-height: 12pt; min-height: 12pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="13"] { line-height: 13pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="13"] p:not([data-line-spacing]) { line-height: 13pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="13"] { line-height: 13pt; min-height: 13pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="13"] p:not([data-line-spacing]) { line-height: 13pt; min-height: 13pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="14"] { line-height: 14pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="14"] p:not([data-line-spacing]) { line-height: 14pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="14"] { line-height: 14pt; min-height: 14pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="14"] p:not([data-line-spacing]) { line-height: 14pt; min-height: 14pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="15"] { line-height: 15pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="15"] p:not([data-line-spacing]) { line-height: 15pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="15"] { line-height: 15pt; min-height: 15pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="15"] p:not([data-line-spacing]) { line-height: 15pt; min-height: 15pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="16"] { line-height: 16pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="16"] p:not([data-line-spacing]) { line-height: 16pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="16"] { line-height: 16pt; min-height: 16pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="16"] p:not([data-line-spacing]) { line-height: 16pt; min-height: 16pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="17"] { line-height: 17pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="17"] p:not([data-line-spacing]) { line-height: 17pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="17"] { line-height: 17pt; min-height: 17pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="17"] p:not([data-line-spacing]) { line-height: 17pt; min-height: 17pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="18"] { line-height: 18pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="18"] p:not([data-line-spacing]) { line-height: 18pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="18"] { line-height: 18pt; min-height: 18pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="18"] p:not([data-line-spacing]) { line-height: 18pt; min-height: 18pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="19"] { line-height: 19pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="19"] p:not([data-line-spacing]) { line-height: 19pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="19"] { line-height: 19pt; min-height: 19pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="19"] p:not([data-line-spacing]) { line-height: 19pt; min-height: 19pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="20"] { line-height: 20pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="20"] p:not([data-line-spacing]) { line-height: 20pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="20"] { line-height: 20pt; min-height: 20pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="20"] p:not([data-line-spacing]) { line-height: 20pt; min-height: 20pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="21"] { line-height: 21pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="21"] p:not([data-line-spacing]) { line-height: 21pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="21"] { line-height: 21pt; min-height: 21pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="21"] p:not([data-line-spacing]) { line-height: 21pt; min-height: 21pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="22"] { line-height: 22pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="22"] p:not([data-line-spacing]) { line-height: 22pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="22"] { line-height: 22pt; min-height: 22pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="22"] p:not([data-line-spacing]) { line-height: 22pt; min-height: 22pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="23"] { line-height: 23pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="23"] p:not([data-line-spacing]) { line-height: 23pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="23"] { line-height: 23pt; min-height: 23pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="23"] p:not([data-line-spacing]) { line-height: 23pt; min-height: 23pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="24"] { line-height: 24pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="24"] p:not([data-line-spacing]) { line-height: 24pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="24"] { line-height: 24pt; min-height: 24pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="24"] p:not([data-line-spacing]) { line-height: 24pt; min-height: 24pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="25"] { line-height: 25pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="25"] p:not([data-line-spacing]) { line-height: 25pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="25"] { line-height: 25pt; min-height: 25pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="25"] p:not([data-line-spacing]) { line-height: 25pt; min-height: 25pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="26"] { line-height: 26pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="26"] p:not([data-line-spacing]) { line-height: 26pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="26"] { line-height: 26pt; min-height: 26pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="26"] p:not([data-line-spacing]) { line-height: 26pt; min-height: 26pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="27"] { line-height: 27pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="27"] p:not([data-line-spacing]) { line-height: 27pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="27"] { line-height: 27pt; min-height: 27pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="27"] p:not([data-line-spacing]) { line-height: 27pt; min-height: 27pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="28"] { line-height: 28pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="28"] p:not([data-line-spacing]) { line-height: 28pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="28"] { line-height: 28pt; min-height: 28pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="28"] p:not([data-line-spacing]) { line-height: 28pt; min-height: 28pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="29"] { line-height: 29pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="29"] p:not([data-line-spacing]) { line-height: 29pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="29"] { line-height: 29pt; min-height: 29pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="29"] p:not([data-line-spacing]) { line-height: 29pt; min-height: 29pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="30"] { line-height: 30pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="30"] p:not([data-line-spacing]) { line-height: 30pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="30"] { line-height: 30pt; min-height: 30pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="30"] p:not([data-line-spacing]) { line-height: 30pt; min-height: 30pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="31"] { line-height: 31pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="31"] p:not([data-line-spacing]) { line-height: 31pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="31"] { line-height: 31pt; min-height: 31pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="31"] p:not([data-line-spacing]) { line-height: 31pt; min-height: 31pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="32"] { line-height: 32pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="32"] p:not([data-line-spacing]) { line-height: 32pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="32"] { line-height: 32pt; min-height: 32pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="32"] p:not([data-line-spacing]) { line-height: 32pt; min-height: 32pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="33"] { line-height: 33pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="33"] p:not([data-line-spacing]) { line-height: 33pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="33"] { line-height: 33pt; min-height: 33pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="33"] p:not([data-line-spacing]) { line-height: 33pt; min-height: 33pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="34"] { line-height: 34pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="34"] p:not([data-line-spacing]) { line-height: 34pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="34"] { line-height: 34pt; min-height: 34pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="34"] p:not([data-line-spacing]) { line-height: 34pt; min-height: 34pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="35"] { line-height: 35pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="35"] p:not([data-line-spacing]) { line-height: 35pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="35"] { line-height: 35pt; min-height: 35pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="35"] p:not([data-line-spacing]) { line-height: 35pt; min-height: 35pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="36"] { line-height: 36pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="36"] p:not([data-line-spacing]) { line-height: 36pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="36"] { line-height: 36pt; min-height: 36pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="36"] p:not([data-line-spacing]) { line-height: 36pt; min-height: 36pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="37"] { line-height: 37pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="37"] p:not([data-line-spacing]) { line-height: 37pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="37"] { line-height: 37pt; min-height: 37pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="37"] p:not([data-line-spacing]) { line-height: 37pt; min-height: 37pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="38"] { line-height: 38pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="38"] p:not([data-line-spacing]) { line-height: 38pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="38"] { line-height: 38pt; min-height: 38pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="38"] p:not([data-line-spacing]) { line-height: 38pt; min-height: 38pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="39"] { line-height: 39pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="39"] p:not([data-line-spacing]) { line-height: 39pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="39"] { line-height: 39pt; min-height: 39pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="39"] p:not([data-line-spacing]) { line-height: 39pt; min-height: 39pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="40"] { line-height: 40pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="40"] p:not([data-line-spacing]) { line-height: 40pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="40"] { line-height: 40pt; min-height: 40pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="40"] p:not([data-line-spacing]) { line-height: 40pt; min-height: 40pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="41"] { line-height: 41pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="41"] p:not([data-line-spacing]) { line-height: 41pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="41"] { line-height: 41pt; min-height: 41pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="41"] p:not([data-line-spacing]) { line-height: 41pt; min-height: 41pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="42"] { line-height: 42pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="42"] p:not([data-line-spacing]) { line-height: 42pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="42"] { line-height: 42pt; min-height: 42pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="42"] p:not([data-line-spacing]) { line-height: 42pt; min-height: 42pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="43"] { line-height: 43pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="43"] p:not([data-line-spacing]) { line-height: 43pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="43"] { line-height: 43pt; min-height: 43pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="43"] p:not([data-line-spacing]) { line-height: 43pt; min-height: 43pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="44"] { line-height: 44pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="44"] p:not([data-line-spacing]) { line-height: 44pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="44"] { line-height: 44pt; min-height: 44pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="44"] p:not([data-line-spacing]) { line-height: 44pt; min-height: 44pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="45"] { line-height: 45pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="45"] p:not([data-line-spacing]) { line-height: 45pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="45"] { line-height: 45pt; min-height: 45pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="45"] p:not([data-line-spacing]) { line-height: 45pt; min-height: 45pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="46"] { line-height: 46pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="46"] p:not([data-line-spacing]) { line-height: 46pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="46"] { line-height: 46pt; min-height: 46pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="46"] p:not([data-line-spacing]) { line-height: 46pt; min-height: 46pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="47"] { line-height: 47pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="47"] p:not([data-line-spacing]) { line-height: 47pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="47"] { line-height: 47pt; min-height: 47pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="47"] p:not([data-line-spacing]) { line-height: 47pt; min-height: 47pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="48"] { line-height: 48pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="48"] p:not([data-line-spacing]) { line-height: 48pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="48"] { line-height: 48pt; min-height: 48pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="48"] p:not([data-line-spacing]) { line-height: 48pt; min-height: 48pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="49"] { line-height: 49pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="49"] p:not([data-line-spacing]) { line-height: 49pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="49"] { line-height: 49pt; min-height: 49pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="49"] p:not([data-line-spacing]) { line-height: 49pt; min-height: 49pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="50"] { line-height: 50pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="50"] p:not([data-line-spacing]) { line-height: 50pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="50"] { line-height: 50pt; min-height: 50pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="50"] p:not([data-line-spacing]) { line-height: 50pt; min-height: 50pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="51"] { line-height: 51pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="51"] p:not([data-line-spacing]) { line-height: 51pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="51"] { line-height: 51pt; min-height: 51pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="51"] p:not([data-line-spacing]) { line-height: 51pt; min-height: 51pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="52"] { line-height: 52pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="52"] p:not([data-line-spacing]) { line-height: 52pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="52"] { line-height: 52pt; min-height: 52pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="52"] p:not([data-line-spacing]) { line-height: 52pt; min-height: 52pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="53"] { line-height: 53pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="53"] p:not([data-line-spacing]) { line-height: 53pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="53"] { line-height: 53pt; min-height: 53pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="53"] p:not([data-line-spacing]) { line-height: 53pt; min-height: 53pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="54"] { line-height: 54pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="54"] p:not([data-line-spacing]) { line-height: 54pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="54"] { line-height: 54pt; min-height: 54pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="54"] p:not([data-line-spacing]) { line-height: 54pt; min-height: 54pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="55"] { line-height: 55pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="55"] p:not([data-line-spacing]) { line-height: 55pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="55"] { line-height: 55pt; min-height: 55pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="55"] p:not([data-line-spacing]) { line-height: 55pt; min-height: 55pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="56"] { line-height: 56pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="56"] p:not([data-line-spacing]) { line-height: 56pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="56"] { line-height: 56pt; min-height: 56pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="56"] p:not([data-line-spacing]) { line-height: 56pt; min-height: 56pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="57"] { line-height: 57pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="57"] p:not([data-line-spacing]) { line-height: 57pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="57"] { line-height: 57pt; min-height: 57pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="57"] p:not([data-line-spacing]) { line-height: 57pt; min-height: 57pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="58"] { line-height: 58pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="58"] p:not([data-line-spacing]) { line-height: 58pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="58"] { line-height: 58pt; min-height: 58pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="58"] p:not([data-line-spacing]) { line-height: 58pt; min-height: 58pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="59"] { line-height: 59pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="59"] p:not([data-line-spacing]) { line-height: 59pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="59"] { line-height: 59pt; min-height: 59pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="59"] p:not([data-line-spacing]) { line-height: 59pt; min-height: 59pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="60"] { line-height: 60pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="60"] p:not([data-line-spacing]) { line-height: 60pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="60"] { line-height: 60pt; min-height: 60pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="60"] p:not([data-line-spacing]) { line-height: 60pt; min-height: 60pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="61"] { line-height: 61pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="61"] p:not([data-line-spacing]) { line-height: 61pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="61"] { line-height: 61pt; min-height: 61pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="61"] p:not([data-line-spacing]) { line-height: 61pt; min-height: 61pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="62"] { line-height: 62pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="62"] p:not([data-line-spacing]) { line-height: 62pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="62"] { line-height: 62pt; min-height: 62pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="62"] p:not([data-line-spacing]) { line-height: 62pt; min-height: 62pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="63"] { line-height: 63pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="63"] p:not([data-line-spacing]) { line-height: 63pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="63"] { line-height: 63pt; min-height: 63pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="63"] p:not([data-line-spacing]) { line-height: 63pt; min-height: 63pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="64"] { line-height: 64pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="64"] p:not([data-line-spacing]) { line-height: 64pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="64"] { line-height: 64pt; min-height: 64pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="64"] p:not([data-line-spacing]) { line-height: 64pt; min-height: 64pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="65"] { line-height: 65pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="65"] p:not([data-line-spacing]) { line-height: 65pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="65"] { line-height: 65pt; min-height: 65pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="65"] p:not([data-line-spacing]) { line-height: 65pt; min-height: 65pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="66"] { line-height: 66pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="66"] p:not([data-line-spacing]) { line-height: 66pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="66"] { line-height: 66pt; min-height: 66pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="66"] p:not([data-line-spacing]) { line-height: 66pt; min-height: 66pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="67"] { line-height: 67pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="67"] p:not([data-line-spacing]) { line-height: 67pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="67"] { line-height: 67pt; min-height: 67pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="67"] p:not([data-line-spacing]) { line-height: 67pt; min-height: 67pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="68"] { line-height: 68pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="68"] p:not([data-line-spacing]) { line-height: 68pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="68"] { line-height: 68pt; min-height: 68pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="68"] p:not([data-line-spacing]) { line-height: 68pt; min-height: 68pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="69"] { line-height: 69pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="69"] p:not([data-line-spacing]) { line-height: 69pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="69"] { line-height: 69pt; min-height: 69pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="69"] p:not([data-line-spacing]) { line-height: 69pt; min-height: 69pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="70"] { line-height: 70pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="70"] p:not([data-line-spacing]) { line-height: 70pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="70"] { line-height: 70pt; min-height: 70pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="70"] p:not([data-line-spacing]) { line-height: 70pt; min-height: 70pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="71"] { line-height: 71pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="71"] p:not([data-line-spacing]) { line-height: 71pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="71"] { line-height: 71pt; min-height: 71pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="71"] p:not([data-line-spacing]) { line-height: 71pt; min-height: 71pt; }
+.page-canvas .page-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="72"] { line-height: 72pt; }
+.page-canvas .page-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="72"] p:not([data-line-spacing]) { line-height: 72pt; }
+.page-canvas .page-sheet p[data-line-spacing="exactly"][data-line-spacing-at="72"] { line-height: 72pt; min-height: 72pt; }
+.page-canvas .page-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="72"] p:not([data-line-spacing]) { line-height: 72pt; min-height: 72pt; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.25"] { line-height: 0.25; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.25"] p:not([data-line-spacing]) { line-height: 0.25; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.3"] { line-height: 0.3; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.3"] p:not([data-line-spacing]) { line-height: 0.3; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.35"] { line-height: 0.35; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.35"] p:not([data-line-spacing]) { line-height: 0.35; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.4"] { line-height: 0.4; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.4"] p:not([data-line-spacing]) { line-height: 0.4; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.45"] { line-height: 0.45; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.45"] p:not([data-line-spacing]) { line-height: 0.45; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.5"] { line-height: 0.5; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.5"] p:not([data-line-spacing]) { line-height: 0.5; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.55"] { line-height: 0.55; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.55"] p:not([data-line-spacing]) { line-height: 0.55; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.6"] { line-height: 0.6; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.6"] p:not([data-line-spacing]) { line-height: 0.6; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.65"] { line-height: 0.65; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.65"] p:not([data-line-spacing]) { line-height: 0.65; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.7"] { line-height: 0.7; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.7"] p:not([data-line-spacing]) { line-height: 0.7; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.75"] { line-height: 0.75; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.75"] p:not([data-line-spacing]) { line-height: 0.75; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.8"] { line-height: 0.8; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.8"] p:not([data-line-spacing]) { line-height: 0.8; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.85"] { line-height: 0.85; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.85"] p:not([data-line-spacing]) { line-height: 0.85; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.9"] { line-height: 0.9; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.9"] p:not([data-line-spacing]) { line-height: 0.9; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.95"] { line-height: 0.95; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.95"] p:not([data-line-spacing]) { line-height: 0.95; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1"] { line-height: 1; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1"] p:not([data-line-spacing]) { line-height: 1; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.05"] { line-height: 1.05; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.05"] p:not([data-line-spacing]) { line-height: 1.05; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.1"] { line-height: 1.1; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.1"] p:not([data-line-spacing]) { line-height: 1.1; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.15"] { line-height: 1.15; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.15"] p:not([data-line-spacing]) { line-height: 1.15; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.2"] { line-height: 1.2; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.2"] p:not([data-line-spacing]) { line-height: 1.2; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.25"] { line-height: 1.25; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.25"] p:not([data-line-spacing]) { line-height: 1.25; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.3"] { line-height: 1.3; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.3"] p:not([data-line-spacing]) { line-height: 1.3; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.35"] { line-height: 1.35; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.35"] p:not([data-line-spacing]) { line-height: 1.35; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.4"] { line-height: 1.4; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.4"] p:not([data-line-spacing]) { line-height: 1.4; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.45"] { line-height: 1.45; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.45"] p:not([data-line-spacing]) { line-height: 1.45; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.5"] { line-height: 1.5; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.5"] p:not([data-line-spacing]) { line-height: 1.5; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.55"] { line-height: 1.55; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.55"] p:not([data-line-spacing]) { line-height: 1.55; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.6"] { line-height: 1.6; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.6"] p:not([data-line-spacing]) { line-height: 1.6; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.65"] { line-height: 1.65; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.65"] p:not([data-line-spacing]) { line-height: 1.65; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.7"] { line-height: 1.7; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.7"] p:not([data-line-spacing]) { line-height: 1.7; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.75"] { line-height: 1.75; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.75"] p:not([data-line-spacing]) { line-height: 1.75; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.8"] { line-height: 1.8; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.8"] p:not([data-line-spacing]) { line-height: 1.8; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.85"] { line-height: 1.85; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.85"] p:not([data-line-spacing]) { line-height: 1.85; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.9"] { line-height: 1.9; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.9"] p:not([data-line-spacing]) { line-height: 1.9; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.95"] { line-height: 1.95; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.95"] p:not([data-line-spacing]) { line-height: 1.95; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2"] { line-height: 2; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2"] p:not([data-line-spacing]) { line-height: 2; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.05"] { line-height: 2.05; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.05"] p:not([data-line-spacing]) { line-height: 2.05; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.1"] { line-height: 2.1; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.1"] p:not([data-line-spacing]) { line-height: 2.1; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.15"] { line-height: 2.15; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.15"] p:not([data-line-spacing]) { line-height: 2.15; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.2"] { line-height: 2.2; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.2"] p:not([data-line-spacing]) { line-height: 2.2; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.25"] { line-height: 2.25; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.25"] p:not([data-line-spacing]) { line-height: 2.25; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.3"] { line-height: 2.3; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.3"] p:not([data-line-spacing]) { line-height: 2.3; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.35"] { line-height: 2.35; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.35"] p:not([data-line-spacing]) { line-height: 2.35; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.4"] { line-height: 2.4; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.4"] p:not([data-line-spacing]) { line-height: 2.4; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.45"] { line-height: 2.45; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.45"] p:not([data-line-spacing]) { line-height: 2.45; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.5"] { line-height: 2.5; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.5"] p:not([data-line-spacing]) { line-height: 2.5; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.55"] { line-height: 2.55; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.55"] p:not([data-line-spacing]) { line-height: 2.55; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.6"] { line-height: 2.6; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.6"] p:not([data-line-spacing]) { line-height: 2.6; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.65"] { line-height: 2.65; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.65"] p:not([data-line-spacing]) { line-height: 2.65; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.7"] { line-height: 2.7; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.7"] p:not([data-line-spacing]) { line-height: 2.7; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.75"] { line-height: 2.75; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.75"] p:not([data-line-spacing]) { line-height: 2.75; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.8"] { line-height: 2.8; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.8"] p:not([data-line-spacing]) { line-height: 2.8; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.85"] { line-height: 2.85; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.85"] p:not([data-line-spacing]) { line-height: 2.85; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.9"] { line-height: 2.9; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.9"] p:not([data-line-spacing]) { line-height: 2.9; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.95"] { line-height: 2.95; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.95"] p:not([data-line-spacing]) { line-height: 2.95; }
+.page-canvas .page-sheet p[data-line-spacing="multiple"][data-line-spacing-at="3"] { line-height: 3; }
+.page-canvas .page-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="3"] p:not([data-line-spacing]) { line-height: 3; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="6"] { line-height: 6pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="6"] p:not([data-line-spacing]) { line-height: 6pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="6"] { line-height: 6pt; min-height: 6pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="6"] p:not([data-line-spacing]) { line-height: 6pt; min-height: 6pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="7"] { line-height: 7pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="7"] p:not([data-line-spacing]) { line-height: 7pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="7"] { line-height: 7pt; min-height: 7pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="7"] p:not([data-line-spacing]) { line-height: 7pt; min-height: 7pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="8"] { line-height: 8pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="8"] p:not([data-line-spacing]) { line-height: 8pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="8"] { line-height: 8pt; min-height: 8pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="8"] p:not([data-line-spacing]) { line-height: 8pt; min-height: 8pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="9"] { line-height: 9pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="9"] p:not([data-line-spacing]) { line-height: 9pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="9"] { line-height: 9pt; min-height: 9pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="9"] p:not([data-line-spacing]) { line-height: 9pt; min-height: 9pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="10"] { line-height: 10pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="10"] p:not([data-line-spacing]) { line-height: 10pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="10"] { line-height: 10pt; min-height: 10pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="10"] p:not([data-line-spacing]) { line-height: 10pt; min-height: 10pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="11"] { line-height: 11pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="11"] p:not([data-line-spacing]) { line-height: 11pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="11"] { line-height: 11pt; min-height: 11pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="11"] p:not([data-line-spacing]) { line-height: 11pt; min-height: 11pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="12"] { line-height: 12pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="12"] p:not([data-line-spacing]) { line-height: 12pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="12"] { line-height: 12pt; min-height: 12pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="12"] p:not([data-line-spacing]) { line-height: 12pt; min-height: 12pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="13"] { line-height: 13pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="13"] p:not([data-line-spacing]) { line-height: 13pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="13"] { line-height: 13pt; min-height: 13pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="13"] p:not([data-line-spacing]) { line-height: 13pt; min-height: 13pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="14"] { line-height: 14pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="14"] p:not([data-line-spacing]) { line-height: 14pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="14"] { line-height: 14pt; min-height: 14pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="14"] p:not([data-line-spacing]) { line-height: 14pt; min-height: 14pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="15"] { line-height: 15pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="15"] p:not([data-line-spacing]) { line-height: 15pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="15"] { line-height: 15pt; min-height: 15pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="15"] p:not([data-line-spacing]) { line-height: 15pt; min-height: 15pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="16"] { line-height: 16pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="16"] p:not([data-line-spacing]) { line-height: 16pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="16"] { line-height: 16pt; min-height: 16pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="16"] p:not([data-line-spacing]) { line-height: 16pt; min-height: 16pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="17"] { line-height: 17pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="17"] p:not([data-line-spacing]) { line-height: 17pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="17"] { line-height: 17pt; min-height: 17pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="17"] p:not([data-line-spacing]) { line-height: 17pt; min-height: 17pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="18"] { line-height: 18pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="18"] p:not([data-line-spacing]) { line-height: 18pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="18"] { line-height: 18pt; min-height: 18pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="18"] p:not([data-line-spacing]) { line-height: 18pt; min-height: 18pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="19"] { line-height: 19pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="19"] p:not([data-line-spacing]) { line-height: 19pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="19"] { line-height: 19pt; min-height: 19pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="19"] p:not([data-line-spacing]) { line-height: 19pt; min-height: 19pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="20"] { line-height: 20pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="20"] p:not([data-line-spacing]) { line-height: 20pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="20"] { line-height: 20pt; min-height: 20pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="20"] p:not([data-line-spacing]) { line-height: 20pt; min-height: 20pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="21"] { line-height: 21pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="21"] p:not([data-line-spacing]) { line-height: 21pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="21"] { line-height: 21pt; min-height: 21pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="21"] p:not([data-line-spacing]) { line-height: 21pt; min-height: 21pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="22"] { line-height: 22pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="22"] p:not([data-line-spacing]) { line-height: 22pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="22"] { line-height: 22pt; min-height: 22pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="22"] p:not([data-line-spacing]) { line-height: 22pt; min-height: 22pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="23"] { line-height: 23pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="23"] p:not([data-line-spacing]) { line-height: 23pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="23"] { line-height: 23pt; min-height: 23pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="23"] p:not([data-line-spacing]) { line-height: 23pt; min-height: 23pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="24"] { line-height: 24pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="24"] p:not([data-line-spacing]) { line-height: 24pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="24"] { line-height: 24pt; min-height: 24pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="24"] p:not([data-line-spacing]) { line-height: 24pt; min-height: 24pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="25"] { line-height: 25pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="25"] p:not([data-line-spacing]) { line-height: 25pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="25"] { line-height: 25pt; min-height: 25pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="25"] p:not([data-line-spacing]) { line-height: 25pt; min-height: 25pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="26"] { line-height: 26pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="26"] p:not([data-line-spacing]) { line-height: 26pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="26"] { line-height: 26pt; min-height: 26pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="26"] p:not([data-line-spacing]) { line-height: 26pt; min-height: 26pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="27"] { line-height: 27pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="27"] p:not([data-line-spacing]) { line-height: 27pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="27"] { line-height: 27pt; min-height: 27pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="27"] p:not([data-line-spacing]) { line-height: 27pt; min-height: 27pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="28"] { line-height: 28pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="28"] p:not([data-line-spacing]) { line-height: 28pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="28"] { line-height: 28pt; min-height: 28pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="28"] p:not([data-line-spacing]) { line-height: 28pt; min-height: 28pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="29"] { line-height: 29pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="29"] p:not([data-line-spacing]) { line-height: 29pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="29"] { line-height: 29pt; min-height: 29pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="29"] p:not([data-line-spacing]) { line-height: 29pt; min-height: 29pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="30"] { line-height: 30pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="30"] p:not([data-line-spacing]) { line-height: 30pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="30"] { line-height: 30pt; min-height: 30pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="30"] p:not([data-line-spacing]) { line-height: 30pt; min-height: 30pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="31"] { line-height: 31pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="31"] p:not([data-line-spacing]) { line-height: 31pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="31"] { line-height: 31pt; min-height: 31pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="31"] p:not([data-line-spacing]) { line-height: 31pt; min-height: 31pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="32"] { line-height: 32pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="32"] p:not([data-line-spacing]) { line-height: 32pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="32"] { line-height: 32pt; min-height: 32pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="32"] p:not([data-line-spacing]) { line-height: 32pt; min-height: 32pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="33"] { line-height: 33pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="33"] p:not([data-line-spacing]) { line-height: 33pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="33"] { line-height: 33pt; min-height: 33pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="33"] p:not([data-line-spacing]) { line-height: 33pt; min-height: 33pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="34"] { line-height: 34pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="34"] p:not([data-line-spacing]) { line-height: 34pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="34"] { line-height: 34pt; min-height: 34pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="34"] p:not([data-line-spacing]) { line-height: 34pt; min-height: 34pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="35"] { line-height: 35pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="35"] p:not([data-line-spacing]) { line-height: 35pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="35"] { line-height: 35pt; min-height: 35pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="35"] p:not([data-line-spacing]) { line-height: 35pt; min-height: 35pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="36"] { line-height: 36pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="36"] p:not([data-line-spacing]) { line-height: 36pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="36"] { line-height: 36pt; min-height: 36pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="36"] p:not([data-line-spacing]) { line-height: 36pt; min-height: 36pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="37"] { line-height: 37pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="37"] p:not([data-line-spacing]) { line-height: 37pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="37"] { line-height: 37pt; min-height: 37pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="37"] p:not([data-line-spacing]) { line-height: 37pt; min-height: 37pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="38"] { line-height: 38pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="38"] p:not([data-line-spacing]) { line-height: 38pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="38"] { line-height: 38pt; min-height: 38pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="38"] p:not([data-line-spacing]) { line-height: 38pt; min-height: 38pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="39"] { line-height: 39pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="39"] p:not([data-line-spacing]) { line-height: 39pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="39"] { line-height: 39pt; min-height: 39pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="39"] p:not([data-line-spacing]) { line-height: 39pt; min-height: 39pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="40"] { line-height: 40pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="40"] p:not([data-line-spacing]) { line-height: 40pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="40"] { line-height: 40pt; min-height: 40pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="40"] p:not([data-line-spacing]) { line-height: 40pt; min-height: 40pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="41"] { line-height: 41pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="41"] p:not([data-line-spacing]) { line-height: 41pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="41"] { line-height: 41pt; min-height: 41pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="41"] p:not([data-line-spacing]) { line-height: 41pt; min-height: 41pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="42"] { line-height: 42pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="42"] p:not([data-line-spacing]) { line-height: 42pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="42"] { line-height: 42pt; min-height: 42pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="42"] p:not([data-line-spacing]) { line-height: 42pt; min-height: 42pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="43"] { line-height: 43pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="43"] p:not([data-line-spacing]) { line-height: 43pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="43"] { line-height: 43pt; min-height: 43pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="43"] p:not([data-line-spacing]) { line-height: 43pt; min-height: 43pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="44"] { line-height: 44pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="44"] p:not([data-line-spacing]) { line-height: 44pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="44"] { line-height: 44pt; min-height: 44pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="44"] p:not([data-line-spacing]) { line-height: 44pt; min-height: 44pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="45"] { line-height: 45pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="45"] p:not([data-line-spacing]) { line-height: 45pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="45"] { line-height: 45pt; min-height: 45pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="45"] p:not([data-line-spacing]) { line-height: 45pt; min-height: 45pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="46"] { line-height: 46pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="46"] p:not([data-line-spacing]) { line-height: 46pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="46"] { line-height: 46pt; min-height: 46pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="46"] p:not([data-line-spacing]) { line-height: 46pt; min-height: 46pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="47"] { line-height: 47pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="47"] p:not([data-line-spacing]) { line-height: 47pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="47"] { line-height: 47pt; min-height: 47pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="47"] p:not([data-line-spacing]) { line-height: 47pt; min-height: 47pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="48"] { line-height: 48pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="48"] p:not([data-line-spacing]) { line-height: 48pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="48"] { line-height: 48pt; min-height: 48pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="48"] p:not([data-line-spacing]) { line-height: 48pt; min-height: 48pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="49"] { line-height: 49pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="49"] p:not([data-line-spacing]) { line-height: 49pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="49"] { line-height: 49pt; min-height: 49pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="49"] p:not([data-line-spacing]) { line-height: 49pt; min-height: 49pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="50"] { line-height: 50pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="50"] p:not([data-line-spacing]) { line-height: 50pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="50"] { line-height: 50pt; min-height: 50pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="50"] p:not([data-line-spacing]) { line-height: 50pt; min-height: 50pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="51"] { line-height: 51pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="51"] p:not([data-line-spacing]) { line-height: 51pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="51"] { line-height: 51pt; min-height: 51pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="51"] p:not([data-line-spacing]) { line-height: 51pt; min-height: 51pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="52"] { line-height: 52pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="52"] p:not([data-line-spacing]) { line-height: 52pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="52"] { line-height: 52pt; min-height: 52pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="52"] p:not([data-line-spacing]) { line-height: 52pt; min-height: 52pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="53"] { line-height: 53pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="53"] p:not([data-line-spacing]) { line-height: 53pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="53"] { line-height: 53pt; min-height: 53pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="53"] p:not([data-line-spacing]) { line-height: 53pt; min-height: 53pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="54"] { line-height: 54pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="54"] p:not([data-line-spacing]) { line-height: 54pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="54"] { line-height: 54pt; min-height: 54pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="54"] p:not([data-line-spacing]) { line-height: 54pt; min-height: 54pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="55"] { line-height: 55pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="55"] p:not([data-line-spacing]) { line-height: 55pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="55"] { line-height: 55pt; min-height: 55pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="55"] p:not([data-line-spacing]) { line-height: 55pt; min-height: 55pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="56"] { line-height: 56pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="56"] p:not([data-line-spacing]) { line-height: 56pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="56"] { line-height: 56pt; min-height: 56pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="56"] p:not([data-line-spacing]) { line-height: 56pt; min-height: 56pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="57"] { line-height: 57pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="57"] p:not([data-line-spacing]) { line-height: 57pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="57"] { line-height: 57pt; min-height: 57pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="57"] p:not([data-line-spacing]) { line-height: 57pt; min-height: 57pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="58"] { line-height: 58pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="58"] p:not([data-line-spacing]) { line-height: 58pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="58"] { line-height: 58pt; min-height: 58pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="58"] p:not([data-line-spacing]) { line-height: 58pt; min-height: 58pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="59"] { line-height: 59pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="59"] p:not([data-line-spacing]) { line-height: 59pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="59"] { line-height: 59pt; min-height: 59pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="59"] p:not([data-line-spacing]) { line-height: 59pt; min-height: 59pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="60"] { line-height: 60pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="60"] p:not([data-line-spacing]) { line-height: 60pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="60"] { line-height: 60pt; min-height: 60pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="60"] p:not([data-line-spacing]) { line-height: 60pt; min-height: 60pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="61"] { line-height: 61pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="61"] p:not([data-line-spacing]) { line-height: 61pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="61"] { line-height: 61pt; min-height: 61pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="61"] p:not([data-line-spacing]) { line-height: 61pt; min-height: 61pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="62"] { line-height: 62pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="62"] p:not([data-line-spacing]) { line-height: 62pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="62"] { line-height: 62pt; min-height: 62pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="62"] p:not([data-line-spacing]) { line-height: 62pt; min-height: 62pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="63"] { line-height: 63pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="63"] p:not([data-line-spacing]) { line-height: 63pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="63"] { line-height: 63pt; min-height: 63pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="63"] p:not([data-line-spacing]) { line-height: 63pt; min-height: 63pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="64"] { line-height: 64pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="64"] p:not([data-line-spacing]) { line-height: 64pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="64"] { line-height: 64pt; min-height: 64pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="64"] p:not([data-line-spacing]) { line-height: 64pt; min-height: 64pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="65"] { line-height: 65pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="65"] p:not([data-line-spacing]) { line-height: 65pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="65"] { line-height: 65pt; min-height: 65pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="65"] p:not([data-line-spacing]) { line-height: 65pt; min-height: 65pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="66"] { line-height: 66pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="66"] p:not([data-line-spacing]) { line-height: 66pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="66"] { line-height: 66pt; min-height: 66pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="66"] p:not([data-line-spacing]) { line-height: 66pt; min-height: 66pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="67"] { line-height: 67pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="67"] p:not([data-line-spacing]) { line-height: 67pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="67"] { line-height: 67pt; min-height: 67pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="67"] p:not([data-line-spacing]) { line-height: 67pt; min-height: 67pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="68"] { line-height: 68pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="68"] p:not([data-line-spacing]) { line-height: 68pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="68"] { line-height: 68pt; min-height: 68pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="68"] p:not([data-line-spacing]) { line-height: 68pt; min-height: 68pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="69"] { line-height: 69pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="69"] p:not([data-line-spacing]) { line-height: 69pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="69"] { line-height: 69pt; min-height: 69pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="69"] p:not([data-line-spacing]) { line-height: 69pt; min-height: 69pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="70"] { line-height: 70pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="70"] p:not([data-line-spacing]) { line-height: 70pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="70"] { line-height: 70pt; min-height: 70pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="70"] p:not([data-line-spacing]) { line-height: 70pt; min-height: 70pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="71"] { line-height: 71pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="71"] p:not([data-line-spacing]) { line-height: 71pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="71"] { line-height: 71pt; min-height: 71pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="71"] p:not([data-line-spacing]) { line-height: 71pt; min-height: 71pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="atLeast"][data-line-spacing-at="72"] { line-height: 72pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="atLeast"][data-default-line-spacing-at="72"] p:not([data-line-spacing]) { line-height: 72pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="exactly"][data-line-spacing-at="72"] { line-height: 72pt; min-height: 72pt; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="exactly"][data-default-line-spacing-at="72"] p:not([data-line-spacing]) { line-height: 72pt; min-height: 72pt; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.25"] { line-height: 0.25; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.25"] p:not([data-line-spacing]) { line-height: 0.25; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.3"] { line-height: 0.3; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.3"] p:not([data-line-spacing]) { line-height: 0.3; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.35"] { line-height: 0.35; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.35"] p:not([data-line-spacing]) { line-height: 0.35; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.4"] { line-height: 0.4; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.4"] p:not([data-line-spacing]) { line-height: 0.4; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.45"] { line-height: 0.45; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.45"] p:not([data-line-spacing]) { line-height: 0.45; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.5"] { line-height: 0.5; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.5"] p:not([data-line-spacing]) { line-height: 0.5; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.55"] { line-height: 0.55; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.55"] p:not([data-line-spacing]) { line-height: 0.55; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.6"] { line-height: 0.6; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.6"] p:not([data-line-spacing]) { line-height: 0.6; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.65"] { line-height: 0.65; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.65"] p:not([data-line-spacing]) { line-height: 0.65; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.7"] { line-height: 0.7; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.7"] p:not([data-line-spacing]) { line-height: 0.7; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.75"] { line-height: 0.75; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.75"] p:not([data-line-spacing]) { line-height: 0.75; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.8"] { line-height: 0.8; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.8"] p:not([data-line-spacing]) { line-height: 0.8; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.85"] { line-height: 0.85; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.85"] p:not([data-line-spacing]) { line-height: 0.85; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.9"] { line-height: 0.9; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.9"] p:not([data-line-spacing]) { line-height: 0.9; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="0.95"] { line-height: 0.95; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="0.95"] p:not([data-line-spacing]) { line-height: 0.95; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1"] { line-height: 1; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1"] p:not([data-line-spacing]) { line-height: 1; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.05"] { line-height: 1.05; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.05"] p:not([data-line-spacing]) { line-height: 1.05; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.1"] { line-height: 1.1; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.1"] p:not([data-line-spacing]) { line-height: 1.1; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.15"] { line-height: 1.15; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.15"] p:not([data-line-spacing]) { line-height: 1.15; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.2"] { line-height: 1.2; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.2"] p:not([data-line-spacing]) { line-height: 1.2; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.25"] { line-height: 1.25; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.25"] p:not([data-line-spacing]) { line-height: 1.25; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.3"] { line-height: 1.3; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.3"] p:not([data-line-spacing]) { line-height: 1.3; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.35"] { line-height: 1.35; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.35"] p:not([data-line-spacing]) { line-height: 1.35; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.4"] { line-height: 1.4; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.4"] p:not([data-line-spacing]) { line-height: 1.4; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.45"] { line-height: 1.45; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.45"] p:not([data-line-spacing]) { line-height: 1.45; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.5"] { line-height: 1.5; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.5"] p:not([data-line-spacing]) { line-height: 1.5; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.55"] { line-height: 1.55; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.55"] p:not([data-line-spacing]) { line-height: 1.55; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.6"] { line-height: 1.6; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.6"] p:not([data-line-spacing]) { line-height: 1.6; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.65"] { line-height: 1.65; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.65"] p:not([data-line-spacing]) { line-height: 1.65; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.7"] { line-height: 1.7; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.7"] p:not([data-line-spacing]) { line-height: 1.7; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.75"] { line-height: 1.75; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.75"] p:not([data-line-spacing]) { line-height: 1.75; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.8"] { line-height: 1.8; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.8"] p:not([data-line-spacing]) { line-height: 1.8; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.85"] { line-height: 1.85; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.85"] p:not([data-line-spacing]) { line-height: 1.85; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.9"] { line-height: 1.9; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.9"] p:not([data-line-spacing]) { line-height: 1.9; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="1.95"] { line-height: 1.95; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="1.95"] p:not([data-line-spacing]) { line-height: 1.95; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2"] { line-height: 2; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2"] p:not([data-line-spacing]) { line-height: 2; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.05"] { line-height: 2.05; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.05"] p:not([data-line-spacing]) { line-height: 2.05; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.1"] { line-height: 2.1; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.1"] p:not([data-line-spacing]) { line-height: 2.1; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.15"] { line-height: 2.15; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.15"] p:not([data-line-spacing]) { line-height: 2.15; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.2"] { line-height: 2.2; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.2"] p:not([data-line-spacing]) { line-height: 2.2; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.25"] { line-height: 2.25; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.25"] p:not([data-line-spacing]) { line-height: 2.25; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.3"] { line-height: 2.3; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.3"] p:not([data-line-spacing]) { line-height: 2.3; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.35"] { line-height: 2.35; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.35"] p:not([data-line-spacing]) { line-height: 2.35; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.4"] { line-height: 2.4; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.4"] p:not([data-line-spacing]) { line-height: 2.4; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.45"] { line-height: 2.45; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.45"] p:not([data-line-spacing]) { line-height: 2.45; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.5"] { line-height: 2.5; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.5"] p:not([data-line-spacing]) { line-height: 2.5; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.55"] { line-height: 2.55; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.55"] p:not([data-line-spacing]) { line-height: 2.55; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.6"] { line-height: 2.6; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.6"] p:not([data-line-spacing]) { line-height: 2.6; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.65"] { line-height: 2.65; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.65"] p:not([data-line-spacing]) { line-height: 2.65; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.7"] { line-height: 2.7; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.7"] p:not([data-line-spacing]) { line-height: 2.7; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.75"] { line-height: 2.75; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.75"] p:not([data-line-spacing]) { line-height: 2.75; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.8"] { line-height: 2.8; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.8"] p:not([data-line-spacing]) { line-height: 2.8; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.85"] { line-height: 2.85; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.85"] p:not([data-line-spacing]) { line-height: 2.85; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.9"] { line-height: 2.9; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.9"] p:not([data-line-spacing]) { line-height: 2.9; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="2.95"] { line-height: 2.95; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="2.95"] p:not([data-line-spacing]) { line-height: 2.95; }
+.paragraph-dialog-preview-sheet p[data-line-spacing="multiple"][data-line-spacing-at="3"] { line-height: 3; }
+.paragraph-dialog-preview-sheet[data-default-line-spacing="multiple"][data-default-line-spacing-at="3"] p:not([data-line-spacing]) { line-height: 3; }
 
 .page-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0"] { padding-inline-start: 0.25in; }
 .page-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0"] { padding-inline-start: 0.5in; }
@@ -89,74 +1266,180 @@
 .page-sheet p[data-indent-left="2.75"][data-indent-first="1"][data-indent-hanging="0"] { padding-inline-start: 2.75in; text-indent: 1in; }
 .page-sheet p[data-indent-left="3"][data-indent-first="1"][data-indent-hanging="0"] { padding-inline-start: 3in; text-indent: 1in; }
 .page-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 0.25in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 0.25in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 0.5in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 0.5in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 0.75in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 0.75in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1.25in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1.25in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1.5in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1.5in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1.75in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 1.75in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2.25in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2.25in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2.5in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2.5in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2.75in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 2.75in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 3in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 3in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 3.25in; text-indent: -0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="0.25"] { padding-inline-start: 3.25in; text-indent: -0.25in; }
 .page-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 0.5in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 0.5in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 0.75in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 0.75in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1.25in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1.25in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1.5in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1.5in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1.75in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 1.75in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2.25in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2.25in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2.5in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2.5in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2.75in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 2.75in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 3in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 3in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 3.25in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 3.25in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 3.5in; text-indent: -0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="0.5"] { padding-inline-start: 3.5in; text-indent: -0.5in; }
 .page-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 0.75in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 0.75in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1.25in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1.25in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1.5in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1.5in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1.75in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 1.75in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2.25in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2.25in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2.5in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2.5in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2.75in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 2.75in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3.25in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3.25in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3.5in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3.5in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3.75in; text-indent: -0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="0.75"] { padding-inline-start: 3.75in; text-indent: -0.75in; }
 .page-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1in; text-indent: -1in; }
 .page-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1.25in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.25"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1.25in; text-indent: -1in; }
 .page-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1.5in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.5"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1.5in; text-indent: -1in; }
 .page-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1.75in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="0.75"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 1.75in; text-indent: -1in; }
 .page-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2in; text-indent: -1in; }
 .page-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2.25in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.25"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2.25in; text-indent: -1in; }
 .page-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2.5in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.5"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2.5in; text-indent: -1in; }
 .page-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2.75in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="1.75"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 2.75in; text-indent: -1in; }
 .page-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3in; text-indent: -1in; }
 .page-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3.25in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.25"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3.25in; text-indent: -1in; }
 .page-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3.5in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.5"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3.5in; text-indent: -1in; }
 .page-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3.75in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="2.75"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 3.75in; text-indent: -1in; }
 .page-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 4in; text-indent: -1in; }
+.paragraph-dialog-preview-sheet p[data-indent-left="3"][data-indent-first="0"][data-indent-hanging="1"] { padding-inline-start: 4in; text-indent: -1in; }
+.page-sheet p[data-indent-right="0.25"] { padding-inline-end: 0.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="0.25"] { padding-inline-end: 0.25in; }
+.page-sheet p[data-indent-right="0.5"] { padding-inline-end: 0.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="0.5"] { padding-inline-end: 0.5in; }
+.page-sheet p[data-indent-right="0.75"] { padding-inline-end: 0.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="0.75"] { padding-inline-end: 0.75in; }
+.page-sheet p[data-indent-right="1"] { padding-inline-end: 1in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="1"] { padding-inline-end: 1in; }
+.page-sheet p[data-indent-right="1.25"] { padding-inline-end: 1.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="1.25"] { padding-inline-end: 1.25in; }
+.page-sheet p[data-indent-right="1.5"] { padding-inline-end: 1.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="1.5"] { padding-inline-end: 1.5in; }
+.page-sheet p[data-indent-right="1.75"] { padding-inline-end: 1.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="1.75"] { padding-inline-end: 1.75in; }
+.page-sheet p[data-indent-right="2"] { padding-inline-end: 2in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="2"] { padding-inline-end: 2in; }
+.page-sheet p[data-indent-right="2.25"] { padding-inline-end: 2.25in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="2.25"] { padding-inline-end: 2.25in; }
+.page-sheet p[data-indent-right="2.5"] { padding-inline-end: 2.5in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="2.5"] { padding-inline-end: 2.5in; }
+.page-sheet p[data-indent-right="2.75"] { padding-inline-end: 2.75in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="2.75"] { padding-inline-end: 2.75in; }
+.page-sheet p[data-indent-right="3"] { padding-inline-end: 3in; }
+.paragraph-dialog-preview-sheet p[data-indent-right="3"] { padding-inline-end: 3in; }
 
 .page-sheet span[data-underline="true"] { text-decoration: underline; }
 
-.page-sheet span[data-font-size="8"] { font-size: 8pt; }
-.page-sheet span[data-font-size="9"] { font-size: 9pt; }
-.page-sheet span[data-font-size="10"] { font-size: 10pt; }
-.page-sheet span[data-font-size="11"] { font-size: 11pt; }
-.page-sheet span[data-font-size="12"] { font-size: 12pt; }
-.page-sheet span[data-font-size="14"] { font-size: 14pt; }
-.page-sheet span[data-font-size="16"] { font-size: 16pt; }
-.page-sheet span[data-font-size="18"] { font-size: 18pt; }
-.page-sheet span[data-font-size="20"] { font-size: 20pt; }
-.page-sheet span[data-font-size="24"] { font-size: 24pt; }
-.page-sheet span[data-font-size="28"] { font-size: 28pt; }
-.page-sheet span[data-font-size="36"] { font-size: 36pt; }
-.page-sheet span[data-font-size="48"] { font-size: 48pt; }
-.page-sheet span[data-font-size="72"] { font-size: 72pt; }
+.page-sheet span[data-font-size="8"] { font-size: calc(8pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="9"] { font-size: calc(9pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="10"] { font-size: calc(10pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="11"] { font-size: calc(11pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="12"] { font-size: calc(12pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="14"] { font-size: calc(14pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="16"] { font-size: calc(16pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="18"] { font-size: calc(18pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="20"] { font-size: calc(20pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="24"] { font-size: calc(24pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="28"] { font-size: calc(28pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="36"] { font-size: calc(36pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="48"] { font-size: calc(48pt * var(--page-zoom, 1)); }
+.page-sheet span[data-font-size="72"] { font-size: calc(72pt * var(--page-zoom, 1)); }
+
+.page-band-text span[data-font-size="8"] { font-size: calc(8pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="9"] { font-size: calc(9pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="10"] { font-size: calc(10pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="11"] { font-size: calc(11pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="12"] { font-size: calc(12pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="14"] { font-size: calc(14pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="16"] { font-size: calc(16pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="18"] { font-size: calc(18pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="20"] { font-size: calc(20pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="24"] { font-size: calc(24pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="28"] { font-size: calc(28pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="36"] { font-size: calc(36pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="48"] { font-size: calc(48pt * var(--page-zoom, 1)); }
+.page-band-text span[data-font-size="72"] { font-size: calc(72pt * var(--page-zoom, 1)); }
+
+.page-band-editor span[data-font-size="8"] { font-size: calc(8pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="9"] { font-size: calc(9pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="10"] { font-size: calc(10pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="11"] { font-size: calc(11pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="12"] { font-size: calc(12pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="14"] { font-size: calc(14pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="16"] { font-size: calc(16pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="18"] { font-size: calc(18pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="20"] { font-size: calc(20pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="24"] { font-size: calc(24pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="28"] { font-size: calc(28pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="36"] { font-size: calc(36pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="48"] { font-size: calc(48pt * var(--page-zoom, 1)); }
+.page-band-editor span[data-font-size="72"] { font-size: calc(72pt * var(--page-zoom, 1)); }
 
 .page-sheet span[data-font-family="Liberation Serif"] { font-family: Liberation Serif; }
 .page-sheet span[data-font-family="Liberation Sans"] { font-family: Liberation Sans; }
@@ -168,4 +1451,27 @@
 .page-sheet span[data-font-family="Noto Serif"] { font-family: Noto Serif; }
 .page-sheet span[data-font-family="Noto Sans"] { font-family: Noto Sans; }
 .page-sheet span[data-font-family="Dancing Script"] { font-family: Dancing Script; }
+
+.page-band-text span[data-font-family="Liberation Serif"] { font-family: Liberation Serif; }
+.page-band-text span[data-font-family="Liberation Sans"] { font-family: Liberation Sans; }
+.page-band-text span[data-font-family="Liberation Mono"] { font-family: Liberation Mono; }
+.page-band-text span[data-font-family="Caladea"] { font-family: Caladea; }
+.page-band-text span[data-font-family="Carlito"] { font-family: Carlito; }
+.page-band-text span[data-font-family="Linux Libertine G"] { font-family: Linux Libertine G; }
+.page-band-text span[data-font-family="Linux Biolinum G"] { font-family: Linux Biolinum G; }
+.page-band-text span[data-font-family="Noto Serif"] { font-family: Noto Serif; }
+.page-band-text span[data-font-family="Noto Sans"] { font-family: Noto Sans; }
+.page-band-text span[data-font-family="Dancing Script"] { font-family: Dancing Script; }
+
+.page-band-editor span[data-font-family="Liberation Serif"] { font-family: Liberation Serif; }
+.page-band-editor span[data-font-family="Liberation Sans"] { font-family: Liberation Sans; }
+.page-band-editor span[data-font-family="Liberation Mono"] { font-family: Liberation Mono; }
+.page-band-editor span[data-font-family="Caladea"] { font-family: Caladea; }
+.page-band-editor span[data-font-family="Carlito"] { font-family: Carlito; }
+.page-band-editor span[data-font-family="Linux Libertine G"] { font-family: Linux Libertine G; }
+.page-band-editor span[data-font-family="Linux Biolinum G"] { font-family: Linux Biolinum G; }
+.page-band-editor span[data-font-family="Noto Serif"] { font-family: Noto Serif; }
+.page-band-editor span[data-font-family="Noto Sans"] { font-family: Noto Sans; }
+.page-band-editor span[data-font-family="Dancing Script"] { font-family: Dancing Script; }
+
 

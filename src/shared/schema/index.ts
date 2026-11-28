@@ -1,5 +1,11 @@
 export { checkDocument, checkManifest, checkPair } from './check.js';
 export {
+  documentDefaultLineSpacing,
+  effectiveLineSpacing,
+  isLineSpacing,
+  type LineSpacing,
+} from './line-spacing.js';
+export {
   ALIGNMENTS,
   ALT_TEXT_MAX_CHARS,
   ANIMATION_FRAME_MAX,

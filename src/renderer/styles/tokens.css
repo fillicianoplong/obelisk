@@ -61,6 +61,10 @@
   --size-control: 32px;
   --size-control-small: 24px;
   --size-page-setup: 560px;
+  --size-paragraph-dialog: 520px;
+  --size-paragraph-dialog-max-height: 560px;
+  --size-paragraph-dialog-spin: 4.25rem;
+  --size-paragraph-preview-height: 6.875rem;
   --size-page-setup-preview-width: 120px;
   --size-page-setup-preview-height: 156px;
   --size-page-setup-thumb-width: 28px;

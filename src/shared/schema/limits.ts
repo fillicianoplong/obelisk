@@ -54,6 +54,8 @@ export const HEADER_OFFSET_IN = 0.5;
 
 export const INDENT_LEFT_MIN_IN = 0;
 export const INDENT_LEFT_MAX_IN = 3;
+export const INDENT_RIGHT_MIN_IN = 0;
+export const INDENT_RIGHT_MAX_IN = 3;
 export const INDENT_FIRST_MAX_IN = 1;
 export const INDENT_HANGING_MAX_IN = 1;
 // Stored indents stay on a quarter-inch grid so an older file still opens
@@ -77,7 +79,14 @@ export const COLUMN_SHARE_SUM_TOLERANCE = 0.001;
 export const DOCUMENT_VIEWS = ['pages', 'pageless'] as const;
 export const ORIENTATIONS = ['portrait', 'landscape'] as const;
 export const ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
-export const LINE_SPACINGS = ['single', '1.15', '1.5', 'double'] as const;
+export const LINE_SPACINGS = ['single', '1.15', '1.25', '1.5', 'double'] as const;
+export const LINE_SPACING_ADVANCED = ['atLeast', 'exactly', 'multiple'] as const;
+export const LINE_SPACING_RULES = [...LINE_SPACINGS, ...LINE_SPACING_ADVANCED] as const;
+export const LINE_SPACING_PT_MIN = 6;
+export const LINE_SPACING_PT_MAX = 72;
+export const LINE_SPACING_MULTIPLE_MIN = 0.25;
+export const LINE_SPACING_MULTIPLE_MAX = 3;
+export const LINE_SPACING_MULTIPLE_STEP = 0.05;
 export const ROTATIONS = [0, 90, 180, 270] as const;
 export const IMAGE_TYPES = ['png', 'jpeg', 'gif', 'webp'] as const;
 export const STILL_IMAGE_TYPES = ['png', 'jpeg'] as const;

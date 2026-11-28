@@ -1,0 +1,267 @@
+@import '../../editor/format/csp-format.css';
+
+.paragraph-dialog-backdrop {
+  align-items: center;
+  background: var(--color-surface-overlay);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: var(--space-m);
+  position: fixed;
+  z-index: var(--z-index-menu);
+}
+
+.paragraph-dialog {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-dialog);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  gap: var(--space-s);
+  line-height: var(--line-height-body);
+  max-height: var(--size-paragraph-dialog-max-height);
+  max-width: calc(100% - var(--space-l));
+  overflow: hidden;
+  padding: var(--space-m) var(--space-l) var(--space-l);
+  width: var(--size-paragraph-dialog);
+}
+
+.paragraph-dialog-header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-s);
+  justify-content: space-between;
+  margin: 0;
+}
+
+.paragraph-dialog-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+.paragraph-dialog-close {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  line-height: 1;
+  margin: 0;
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.paragraph-dialog-close:hover {
+  color: var(--color-text-primary);
+}
+
+.paragraph-dialog-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.paragraph-dialog-section-block {
+  border-top: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding-block: var(--space-s);
+}
+
+.paragraph-dialog-section-block:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.paragraph-dialog-preview-block {
+  flex: 0 0 auto;
+}
+
+.paragraph-dialog-section {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-caption);
+  margin: 0 0 var(--space-2xs);
+}
+
+.paragraph-dialog-inline-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-s);
+}
+
+.paragraph-dialog-grid-row {
+  align-items: center;
+  display: grid;
+  gap: var(--space-s) var(--space-m);
+  grid-template-columns: 1fr 1fr;
+}
+
+.paragraph-dialog-inline-field {
+  align-items: center;
+  display: flex;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.paragraph-dialog-inline-label {
+  color: var(--color-text-secondary);
+  flex: 0 0 auto;
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+}
+
+.paragraph-dialog-field-line {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.paragraph-dialog-input {
+  background: var(--color-surface-input);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  font: inherit;
+  min-height: var(--size-control-small);
+  padding: var(--space-2xs) var(--space-xs);
+  width: 100%;
+}
+
+.paragraph-dialog-input-spin {
+  width: var(--size-paragraph-dialog-spin);
+}
+
+.paragraph-dialog-select-grow {
+  flex: 1 1 auto;
+  min-width: 8rem;
+}
+
+.paragraph-dialog-input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.paragraph-dialog-input:disabled {
+  opacity: 0.5;
+}
+
+.paragraph-dialog-suffix {
+  color: var(--color-text-secondary);
+  flex: 0 0 auto;
+  font-size: var(--font-size-caption);
+}
+
+.paragraph-dialog-checkbox {
+  align-items: center;
+  display: flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+}
+
+.paragraph-dialog-checkbox input {
+  accent-color: var(--color-accent);
+  margin: 0;
+}
+
+.paragraph-dialog-radio {
+  align-items: center;
+  display: flex;
+  font-size: var(--font-size-body-small);
+  gap: var(--space-2xs);
+}
+
+.paragraph-dialog-radio input {
+  accent-color: var(--color-accent);
+  margin: 0;
+}
+
+.paragraph-dialog-preview-sheet {
+  background: var(--color-surface-page);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+  font-family: var(--font-page);
+  font-size: calc(var(--font-size-page) * 0.82);
+  height: var(--size-paragraph-preview-height);
+  line-height: 1.15;
+  overflow: hidden;
+  padding: var(--space-2xs) var(--space-s);
+  width: 100%;
+}
+
+.paragraph-dialog-preview-sheet p {
+  margin: 0;
+}
+
+.paragraph-dialog-preview-muted {
+  color: var(--color-text-secondary);
+  font-size: calc(var(--font-size-page) * 0.78);
+}
+
+.paragraph-dialog-preview-sample {
+  color: var(--color-text-primary);
+}
+
+.paragraph-dialog-footer {
+  align-items: center;
+  border-top: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  justify-content: space-between;
+  padding-top: var(--space-s);
+}
+
+.paragraph-dialog-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.paragraph-dialog-button {
+  background: var(--color-surface-raised);
+  border: calc(var(--space-2xs) / 2) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: var(--space-xs) var(--space-s);
+}
+
+.paragraph-dialog-button-default {
+  padding-inline: var(--space-s);
+}
+
+.paragraph-dialog-button-ok {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+.paragraph-dialog-button-ok:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.paragraph-dialog-button:hover:not(:disabled):not(.paragraph-dialog-button-ok) {
+  background: var(--color-surface-raised-hover);
+}

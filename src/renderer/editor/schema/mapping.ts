@@ -8,6 +8,7 @@ import {
   inlineRunsFromFragment,
   mergeAdjacentRuns,
 } from './inline-json.js';
+import { isLineSpacingRule, lineSpacingRuleNeedsAt } from '../../../shared/schema/line-spacing.js';
 import { paragraphFieldsFromNode } from '../paragraph-format-commands.js';
 import { createTableNode, tableBlockJsonFromAttrs } from '../../blocks/table/commands.js';
 import { payloadEqual } from '../../blocks/structured/payload.js';
@@ -54,26 +55,46 @@ function textRunsFromNode(node: ProseNode): JsonObject[] {
 }
 
 function paragraphFieldsFrom(block: JsonObject): Record<string, JsonValue> {
-  return {
+  const fields: Record<string, JsonValue> = {
     align: block.align ?? 'left',
-    lineSpacing: block.lineSpacing ?? 'single',
     spaceBefore: block.spaceBefore ?? 0,
     spaceAfter: block.spaceAfter ?? 0,
     indents: block.indents ?? { left: 0, first: 0, hanging: 0 },
   };
+  if (isLineSpacingRule(block.lineSpacing)) {
+    fields.lineSpacing = block.lineSpacing;
+    if (lineSpacingRuleNeedsAt(block.lineSpacing) && typeof block.lineSpacingAt === 'number') {
+      fields.lineSpacingAt = block.lineSpacingAt;
+    }
+  }
+  if (block.dontAddSpaceBetweenSameStyle === true) {
+    fields.dontAddSpaceBetweenSameStyle = true;
+  }
+  return fields;
 }
 
 function paragraphAttrsFrom(block: JsonObject, blockId: string): Record<string, JsonValue> {
-  const indents = (block.indents ?? { left: 0, first: 0, hanging: 0 }) as JsonObject;
+  const indents = (block.indents ?? { left: 0, right: 0, first: 0, hanging: 0 }) as JsonObject;
+  const lineSpacing = isLineSpacingRule(block.lineSpacing) ? block.lineSpacing : null;
+  const lineSpacingAt = lineSpacing !== null && lineSpacingRuleNeedsAt(lineSpacing) && typeof block.lineSpacingAt === 'number'
+    ? block.lineSpacingAt
+    : null;
   return {
     blockId,
     align: block.align ?? 'left',
-    lineSpacing: block.lineSpacing ?? 'single',
+    lineSpacing,
+    lineSpacingAt,
     spaceBefore: block.spaceBefore ?? 0,
     spaceAfter: block.spaceAfter ?? 0,
     indentLeft: indents.left ?? 0,
+    indentRight: indents.right ?? 0,
     indentFirst: indents.first ?? 0,
     indentHanging: indents.hanging ?? 0,
+    dontAddSpaceBetweenSameStyle: block.dontAddSpaceBetweenSameStyle === true
+      ? true
+      : block.dontAddSpaceBetweenSameStyle === false
+        ? false
+        : null,
   };
 }
 
@@ -416,14 +437,21 @@ export function documentFromEditorDoc(
   if (unchanged) {
     return { document: base, blockIds: blockIdsFromDocument(base), unchanged: true };
   }
+  const nextDocument: DocumentMessage = {
+    view: base.view,
+    page: base.page,
+    header: base.header,
+    footer: base.footer,
+    blocks,
+  };
+  if (isLineSpacingRule(base.defaultLineSpacing)) {
+    nextDocument.defaultLineSpacing = base.defaultLineSpacing;
+  }
+  if (base.defaultParagraph && typeof base.defaultParagraph === 'object') {
+    nextDocument.defaultParagraph = base.defaultParagraph;
+  }
   return {
-    document: {
-      view: base.view,
-      page: base.page,
-      header: base.header,
-      footer: base.footer,
-      blocks,
-    },
+    document: nextDocument,
     blockIds: ids,
     unchanged: false,
   };

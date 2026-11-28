@@ -50,6 +50,7 @@ test('each limit matches the File format reference and the schema', async () => 
   assert.match(schemaSection, /Up to 100,000 characters per block/);
   assert.match(schemaSection, /up to 2,048 characters/);
   assert.match(formatting, /8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72 pt; default 12 pt/);
+  assert.match(formatting, /Single, 1\.15, 1\.25, 1\.5, double/);
   assert.match(formatting, /0, 6, 12, 18, 24 pt/);
   assert.match(formatting, /Left 0 to 3 in; first line 0 to 1 in; hanging 0 to 1 in; steps of 0\.25 in/);
   assert.match(pageSetup, /Letter \(8\.5 by 11 in\) only/);

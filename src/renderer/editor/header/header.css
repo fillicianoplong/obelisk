@@ -123,7 +123,7 @@
 .page-band-editor p {
   font-family: var(--font-page);
   font-size: var(--font-size-page);
-  line-height: var(--line-height-page);
+  line-height: 1;
   margin: 0;
   min-height: 0;
 }

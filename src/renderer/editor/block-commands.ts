@@ -30,7 +30,7 @@ export function createTextBlockNode(
       return schema.nodes.paragraph.create({
         blockId,
         align: 'left',
-        lineSpacing: 'single',
+        lineSpacing: null,
         spaceBefore: 0,
         spaceAfter: 0,
         indentLeft: 0,
@@ -63,7 +63,7 @@ export function createTextBlockNode(
       return schema.nodes.paragraph.create({
         blockId,
         align: 'left',
-        lineSpacing: 'single',
+        lineSpacing: null,
         spaceBefore: 0,
         spaceAfter: 0,
         indentLeft: 0,

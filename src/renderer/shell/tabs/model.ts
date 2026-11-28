@@ -11,6 +11,12 @@ import {
 import { createTabEditorState } from '../../editor/state.js';
 import { editorDocFromDocument } from '../../editor/schema/mapping.js';
 import { createMlaDocument } from '../../../templates/mla/document.js';
+import { documentDefaultLineSpacing, isLineSpacing, isLineSpacingPreset, type LineSpacing } from '../../../shared/schema/line-spacing.js';
+import {
+  formatToDefaultParagraph,
+  isDefaultParagraphEqual,
+  type ParagraphFormatValue,
+} from '../../../shared/schema/paragraph-defaults.js';
 import { createBaseDocument, newBlockId } from './document.js';
 
 export const UNSAVED_CHANGES_NAME = 'Unsaved changes';
@@ -70,6 +76,79 @@ export function withDocumentView(tab: PageTab, view: DocumentView): PageTab {
   return {
     ...tab,
     baseDocument: { ...tab.baseDocument, view },
+    revision: tab.revision + 1,
+  };
+}
+
+export function defaultLineSpacingForTab(tab: Pick<PageTab, 'baseDocument'>): LineSpacing {
+  return documentDefaultLineSpacing(tab.baseDocument);
+}
+
+export function withDefaultLineSpacing(tab: PageTab, lineSpacing: LineSpacing): PageTab {
+  if (isShellTab(tab)) {
+    return tab;
+  }
+  const current = documentDefaultLineSpacing(tab.baseDocument);
+  const hadField = isLineSpacing(tab.baseDocument.defaultLineSpacing);
+  const same = current === lineSpacing && (lineSpacing === 'single' ? !hadField : tab.baseDocument.defaultLineSpacing === lineSpacing);
+  if (same) {
+    return tab;
+  }
+  const baseDocument: DocumentMessage = {
+    ...tab.baseDocument,
+    blocks: tab.baseDocument.blocks,
+  };
+  if (lineSpacing === 'single') {
+    delete baseDocument.defaultLineSpacing;
+  } else {
+    baseDocument.defaultLineSpacing = lineSpacing;
+  }
+  return {
+    ...tab,
+    baseDocument,
+    revision: tab.revision + 1,
+  };
+}
+
+function lineSpacingFromFormat(format: ParagraphFormatValue): string | undefined {
+  if (isLineSpacingPreset(format.lineSpacing)) {
+    return format.lineSpacing === 'single' ? undefined : format.lineSpacing;
+  }
+  return format.lineSpacing;
+}
+
+export function withDefaultParagraphFormat(tab: PageTab, format: ParagraphFormatValue): PageTab {
+  if (isShellTab(tab)) {
+    return tab;
+  }
+  const nextDefault = formatToDefaultParagraph(format);
+  const same = isDefaultParagraphEqual(
+    tab.baseDocument.defaultParagraph as Parameters<typeof isDefaultParagraphEqual>[0],
+    nextDefault,
+  );
+  const lineSpacing = lineSpacingFromFormat(format);
+  const spacingSame = (lineSpacing === undefined && !tab.baseDocument.defaultLineSpacing)
+    || tab.baseDocument.defaultLineSpacing === lineSpacing;
+  if (same && spacingSame) {
+    return tab;
+  }
+  const baseDocument: DocumentMessage = {
+    ...tab.baseDocument,
+    blocks: tab.baseDocument.blocks,
+  };
+  if (Object.keys(nextDefault).length === 0) {
+    delete baseDocument.defaultParagraph;
+  } else {
+    baseDocument.defaultParagraph = nextDefault as unknown as JsonObject;
+  }
+  if (lineSpacing === undefined) {
+    delete baseDocument.defaultLineSpacing;
+  } else {
+    baseDocument.defaultLineSpacing = lineSpacing;
+  }
+  return {
+    ...tab,
+    baseDocument,
     revision: tab.revision + 1,
   };
 }

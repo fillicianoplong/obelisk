@@ -31,30 +31,63 @@ const READY = `(() => {
   return true;
 })()`;
 
+function lineHeightRatio(element) {
+  if (!(element instanceof HTMLElement)) {
+    return null;
+  }
+  const style = getComputedStyle(element);
+  const fontSize = Number.parseFloat(style.fontSize);
+  if (!Number.isFinite(fontSize) || fontSize <= 0) {
+    return null;
+  }
+  const lineHeight = style.lineHeight;
+  const linePx = typeof lineHeight === 'string' && lineHeight.endsWith('px')
+    ? Number.parseFloat(lineHeight)
+    : Number.parseFloat(lineHeight) * fontSize;
+  if (!Number.isFinite(linePx)) {
+    return null;
+  }
+  return linePx / fontSize;
+}
+
 const MLA_DOM = `(() => {
   const editor = document.querySelector('[data-region="page-editor"]');
+  const canvas = document.querySelector('.page-canvas');
   const headerBand = document.querySelector('.page-band[data-page-part="header"] .page-band-text p');
   const headerStyle = headerBand ? getComputedStyle(headerBand) : null;
   const paragraphs = editor ? [...editor.querySelectorAll(':scope > p')] : [];
   const body = paragraphs[5];
   const worksEntry = paragraphs[7];
   const nameParagraph = paragraphs[0];
+  const titleParagraph = paragraphs[4];
   const nameStyle = nameParagraph ? getComputedStyle(nameParagraph) : null;
+  const bodyStyle = body ? getComputedStyle(body) : null;
+  const sheetDefault = editor?.getAttribute('data-default-line-spacing') ?? null;
+  const canvasDefault = canvas?.getAttribute('data-default-line-spacing') ?? null;
+  const lineHeightRatio = ${lineHeightRatio.toString()};
   return {
-    view: document.querySelector('.page-canvas')?.getAttribute('data-page-view'),
+    view: canvas?.getAttribute('data-page-view'),
     tabCount: document.querySelectorAll('[data-region="tab-strip"] [role="tab"]').length,
     activeTitle: document.querySelector('[role="tab"][aria-selected="true"]')?.getAttribute('data-title'),
     headerAlign: headerBand?.getAttribute('data-align'),
     headerText: headerBand?.textContent?.trim() ?? '',
     headerLineSpacing: headerBand?.getAttribute('data-line-spacing'),
     bodyFirstIndent: body?.getAttribute('data-indent-first'),
-    bodyLineSpacing: body?.getAttribute('data-line-spacing'),
+    bodyLineSpacingAttr: body?.getAttribute('data-line-spacing'),
+    bodyLineHeight: bodyStyle?.lineHeight ?? '',
+    documentDefaultLineSpacing: sheetDefault,
+    canvasDefaultLineSpacing: canvasDefault,
+    nameLineHeightRatio: lineHeightRatio(nameParagraph),
+    titleLineHeightRatio: lineHeightRatio(titleParagraph),
+    bodyLineHeightRatio: lineHeightRatio(body),
+    headerLineHeightRatio: lineHeightRatio(headerBand),
     worksHanging: worksEntry?.getAttribute('data-indent-hanging'),
     computedFontFamily: nameStyle?.fontFamily ?? '',
     computedFontSize: nameStyle?.fontSize ?? '',
     textAlignRight: headerStyle?.textAlign === 'right',
     pageBreakCount: document.querySelectorAll('.page-break').length,
     placeholders: paragraphs.map((node) => (node.textContent || '').replace(/\\u200b/g, '').trim()),
+    zoom: getComputedStyle(document.querySelector('.page-region') || document.documentElement).getPropertyValue('--page-zoom').trim(),
   };
 })()`;
 
@@ -146,7 +179,20 @@ test('File > New from template > MLA opens a tab that matches the MLA reference 
   assert.equal(dom.headerAlign, 'right');
   assert.equal(dom.headerLineSpacing, 'double');
   assert.equal(dom.textAlignRight, true);
-  assert.equal(dom.bodyLineSpacing, 'double');
+  assert.equal(dom.documentDefaultLineSpacing, 'double');
+  assert.equal(dom.canvasDefaultLineSpacing, 'double');
+  assert.equal(dom.bodyLineSpacingAttr, null);
+  for (const [label, ratio] of [
+    ['name', dom.nameLineHeightRatio],
+    ['title', dom.titleLineHeightRatio],
+    ['body', dom.bodyLineHeightRatio],
+    ['header', dom.headerLineHeightRatio],
+  ]) {
+    assert.ok(
+      ratio !== null && ratio >= 1.95 && ratio <= 2.05,
+      `${label} line-height ratio for double spacing: ${ratio}`,
+    );
+  }
   assert.equal(dom.bodyFirstIndent, '0.5');
   assert.equal(dom.worksHanging, '0.5');
   assert.match(dom.computedFontFamily, /Liberation Serif/i, dom.computedFontFamily);

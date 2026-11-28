@@ -41,6 +41,8 @@ export interface DocumentMessage {
   header: JsonObject;
   footer: JsonObject;
   blocks: JsonObject[];
+  defaultLineSpacing?: string;
+  defaultParagraph?: JsonObject;
 }
 
 export interface FileStat {

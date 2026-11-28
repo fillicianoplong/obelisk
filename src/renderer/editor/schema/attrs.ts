@@ -10,12 +10,15 @@ export const blockIdAttr: AttributeSpec = {
 export const paragraphLayoutAttrs: Record<string, AttributeSpec> = {
   blockId: blockIdAttr,
   align: { default: 'left' },
-  lineSpacing: { default: 'single' },
+  lineSpacing: { default: null },
+  lineSpacingAt: { default: null },
   spaceBefore: { default: 0 },
   spaceAfter: { default: 0 },
   indentLeft: { default: 0 },
+  indentRight: { default: 0 },
   indentFirst: { default: 0 },
   indentHanging: { default: 0 },
+  dontAddSpaceBetweenSameStyle: { default: null },
 };
 
 export const headingAttrs: Record<string, AttributeSpec> = {

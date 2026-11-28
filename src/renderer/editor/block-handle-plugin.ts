@@ -4,6 +4,7 @@ import type { Node as ProseNode } from 'prosemirror-model';
 import { NodeSelection, Selection, TextSelection } from 'prosemirror-state';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import type { Command, EditorState, Transaction } from 'prosemirror-state';
+import { effectiveLineSpacing, isLineSpacing } from '../../shared/schema/line-spacing.js';
 import { blockMoveKeymap, moveBlockRangeToDropCommand } from './block-move-commands.js';
 import { resetPageFocusToPointer } from '../shell/page-focus.js';
 import { watchOutsidePress } from '../shell/outside-press.js';
@@ -363,14 +364,18 @@ export function blockHandleKindForNode(node: ProseNode): string {
   return node.type.name;
 }
 
-function applyHandleBlockAttrs(gutter: HTMLElement, node: ProseNode): void {
+function applyHandleBlockAttrs(gutter: HTMLElement, node: ProseNode, view: EditorView): void {
   const kind = blockHandleKindForNode(node);
   gutter.setAttribute('data-block-kind', kind);
   if (typeof node.attrs.blockId === 'string' && node.attrs.blockId.length > 0) {
     gutter.setAttribute('data-block-id', node.attrs.blockId);
   }
   if (node.type.name === 'paragraph') {
-    gutter.setAttribute('data-line-spacing', String(node.attrs.lineSpacing ?? 'single'));
+    const sheetDefault = view.dom.getAttribute('data-default-line-spacing');
+    const spacing = effectiveLineSpacing(node.attrs.lineSpacing, {
+      defaultLineSpacing: isLineSpacing(sheetDefault) ? sheetDefault : undefined,
+    });
+    gutter.setAttribute('data-line-spacing', spacing);
     gutter.setAttribute('data-space-before', String(node.attrs.spaceBefore ?? 0));
   }
   if (node.type.name === 'heading') {
@@ -1303,7 +1308,7 @@ function mountBlockHandleOverlay(view: EditorView): BlockHandleOverlay {
     gutter.hidden = false;
     gutter.setAttribute('data-block-index', String(index));
     gutter.setAttribute('data-hover-active', 'true');
-    applyHandleBlockAttrs(gutter, node);
+    applyHandleBlockAttrs(gutter, node, editorView);
     if (menuOpen) {
       const menuIndex = Number(menu.root.dataset.blockIndex);
       if (menuIndex === index) {

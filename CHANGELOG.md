@@ -2,6 +2,17 @@
 
 Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the date is the day that version landed on main, in Pacific time.
 
+## [0.1.57.0] - 2026-11-28
+
+### Added
+
+- Format > Paragraph opens a compact Word-style dialog: alignment, left/right/special indents, spacing (including At least, Exactly, and Multiple with an At value), optional collapsed spacing between same-style paragraphs, and a live multi-line preview. Set as default stores the full paragraph default on the document. Apply to the whole document or to selected paragraph blocks.
+- Documents store an optional `defaultLineSpacing` (like the Normal style). Paragraph blocks inherit it unless they set their own line spacing.
+
+### Fixed
+
+- New blocks inherit the document line spacing, so MLA papers stay double spaced and block hover bands match when spacing matches (OBL-228, OBL-225).
+
 ## [0.1.52.0] - 2026-11-27
 
 ### Added

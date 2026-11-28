@@ -305,7 +305,7 @@ export const APP_MENUS: readonly AppMenu[] = [
       submenu('format-text', 'Text', 't', TEXT_ITEMS),
       submenu('format-font', 'Font', 'f', FONT_ITEMS),
       submenu('format-size', 'Font size', 'z', FONT_SIZE_ITEMS),
-      item({ id: 'format-paragraph', label: 'Paragraph', accessKey: 'p', ellipsis: true }),
+      item({ id: 'format-paragraph', label: 'Paragraph', accessKey: 'p', ellipsis: true, command: 'format-paragraph' }),
       formatItem({ id: 'format-indent-increase', label: 'Increase indent', accessKey: 'i', shortcut: 'Tab' }),
       formatItem({ id: 'format-indent-decrease', label: 'Decrease indent', accessKey: 'd', shortcut: 'Shift+Tab' }),
       formatItem({ id: 'format-clear', label: 'Clear formatting', accessKey: 'c', shortcut: 'Ctrl+Space' }),

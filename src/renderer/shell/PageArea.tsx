@@ -26,6 +26,8 @@ interface PageAreaProps {
   onBandClose?: (reason?: 'escape') => void;
   onBandChange?: (part: 'header' | 'footer', paragraph: JsonObject) => void;
   onBandMove?: (direction: 1 | -1) => void;
+  defaultLineSpacing?: string;
+  defaultParagraph?: JsonObject;
   find?: ReactNode;
   onShowPageEdgesChange?: (enabled: boolean) => void;
   onSpellingPrefChange?: (enabled: boolean) => void;
@@ -48,6 +50,8 @@ export function PageArea({
   onBandClose,
   onBandChange,
   onBandMove,
+  defaultLineSpacing,
+  defaultParagraph,
   find = null,
   onShowPageEdgesChange,
   onSpellingPrefChange,
@@ -116,6 +120,8 @@ export function PageArea({
           onBandClose={onBandClose}
           onBandChange={onBandChange}
           onBandMove={onBandMove}
+          defaultLineSpacing={defaultLineSpacing}
+          defaultParagraph={defaultParagraph}
         />
       </div>
     </section>

@@ -35,6 +35,12 @@ export const documentSchema: JsonSchema = {
         "footer": {
           "$ref": "#/$defs/headerParagraph"
         },
+        "defaultLineSpacing": {
+          "$ref": "#/$defs/lineSpacing"
+        },
+        "defaultParagraph": {
+          "$ref": "#/$defs/defaultParagraphFormat"
+        },
         "blocks": {
           "type": "array",
           "maxItems": 20000,
@@ -99,6 +105,26 @@ export const documentSchema: JsonSchema = {
       "minimum": 0.25,
       "maximum": 3
     },
+    "lineSpacing": {
+      "title": "LineSpacing",
+      "type": "string",
+      "enum": [
+        "single",
+        "1.15",
+        "1.25",
+        "1.5",
+        "double",
+        "atLeast",
+        "exactly",
+        "multiple"
+      ]
+    },
+    "lineSpacingAt": {
+      "title": "LineSpacingAt",
+      "type": "number",
+      "minimum": 0.25,
+      "maximum": 72
+    },
     "indents": {
       "title": "Indents",
       "type": "object",
@@ -115,6 +141,12 @@ export const documentSchema: JsonSchema = {
           "maximum": 3,
           "multipleOf": 0.25
         },
+        "right": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3,
+          "multipleOf": 0.25
+        },
         "first": {
           "type": "number",
           "minimum": 0,
@@ -126,6 +158,51 @@ export const documentSchema: JsonSchema = {
           "minimum": 0,
           "maximum": 1,
           "multipleOf": 0.25
+        }
+      }
+    },
+    "defaultParagraphFormat": {
+      "title": "DefaultParagraphFormat",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "align": {
+          "enum": [
+            "left",
+            "center",
+            "right",
+            "justify"
+          ]
+        },
+        "lineSpacing": {
+          "$ref": "#/$defs/lineSpacing"
+        },
+        "lineSpacingAt": {
+          "$ref": "#/$defs/lineSpacingAt"
+        },
+        "spaceBefore": {
+          "enum": [
+            0,
+            6,
+            12,
+            18,
+            24
+          ]
+        },
+        "spaceAfter": {
+          "enum": [
+            0,
+            6,
+            12,
+            18,
+            24
+          ]
+        },
+        "indents": {
+          "$ref": "#/$defs/indents"
+        },
+        "dontAddSpaceBetweenSameStyle": {
+          "type": "boolean"
         }
       }
     },
@@ -379,12 +456,7 @@ export const documentSchema: JsonSchema = {
           ]
         },
         "lineSpacing": {
-          "enum": [
-            "single",
-            "1.15",
-            "1.5",
-            "double"
-          ]
+          "$ref": "#/$defs/lineSpacing"
         },
         "spaceBefore": {
           "enum": [
@@ -423,7 +495,6 @@ export const documentSchema: JsonSchema = {
         "type",
         "id",
         "align",
-        "lineSpacing",
         "spaceBefore",
         "spaceAfter",
         "indents",
@@ -445,12 +516,13 @@ export const documentSchema: JsonSchema = {
           ]
         },
         "lineSpacing": {
-          "enum": [
-            "single",
-            "1.15",
-            "1.5",
-            "double"
-          ]
+          "$ref": "#/$defs/lineSpacing"
+        },
+        "lineSpacingAt": {
+          "$ref": "#/$defs/lineSpacingAt"
+        },
+        "dontAddSpaceBetweenSameStyle": {
+          "type": "boolean"
         },
         "spaceBefore": {
           "enum": [

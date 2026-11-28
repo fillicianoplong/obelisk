@@ -14,6 +14,7 @@ const nodeIntegrationFiles = [
   path.join('tests', 'integration', 'file', 'kill-during-save.test.mjs'),
   path.join('tests', 'integration', 'file', 'open.test.mjs'),
   path.join('tests', 'integration', 'file', 'save.test.mjs'),
+  path.join('tests', 'integration', 'file', 'paragraph-spacing.test.mjs'),
   path.join('tests', 'integration', 'export', 'run.test.mjs'),
   path.join('tests', 'integration', 'hostile.test.mjs'),
 ];
